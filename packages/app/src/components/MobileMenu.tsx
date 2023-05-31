@@ -16,14 +16,14 @@ export const MobileMenu: React.FC<Props> = ({ children }) => {
       <div className="drawer-side">
         <label htmlFor="my-drawer" className="drawer-overlay gap-6"></label>
 
-        <ul className="p-4 overflow-y-auto w-80 bg-shrub-blue gap-10 sm:flex flex-col items-center">
+        <ul className="p-4 overflow-y-auto w-80 bg-shrub-blue gap-10 sm:flex flex-col items-center gap-4">
           <li>
           <NavElement
             label="Home"
             href="/"
           />
           </li>
-          <li>
+          <li >
             <NavElement
               label="Dashboard"
               href="/dashboard"
