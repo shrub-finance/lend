@@ -40,7 +40,7 @@ const NavElement = ({
             }
 
         }
-    }, [isActive]);
+    }, [isActive, chipLabel]);
 
     return (
         <Link
