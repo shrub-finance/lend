@@ -13,6 +13,7 @@ module.exports = {
       },
       boxShadow: {
         'shrub': '0px 4px 250px rgba(138, 204, 164, 0.25)',
+        'shrub-thin': '0px 1px 2px rgba(16, 24, 40, 0.05), 0px 0px 0px 4px #CCFBEF'
       }
     },
 
