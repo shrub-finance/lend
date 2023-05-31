@@ -26,7 +26,7 @@ export const MobileMenu: React.FC<Props> = ({ children }) => {
           <li>
             <NavElement
               label="Dashboard"
-              href="/"
+              href="/dashboard"
             />
           </li>
           <li>

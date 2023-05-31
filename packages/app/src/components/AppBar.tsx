@@ -139,7 +139,7 @@ export const AppBar: React.FC = () => {
           <div className="hidden md:inline-flex align-items-center justify-items gap-4 ">
             <NavElement
               label="Dashboard"
-              href="/"
+              href="/dashboard"
               navigationStarts={() => setIsNavOpen(false)}
             />
         <NavElement
