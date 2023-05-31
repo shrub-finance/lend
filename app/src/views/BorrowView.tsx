@@ -64,7 +64,7 @@ export const BorrowView: FC = ({}) => {
                         <input type="radio" id="smallest-loan" name="loan" value="smallest-loan" className="hidden peer"
                                required/>
                         <label htmlFor="smallest-loan"
-                               className="inline-flex items-center justify-center w-full px-8 py-3 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-50 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               className="inline-flex items-center justify-center w-full px-8 py-3 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-50 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">0%</div>
                           </div>
