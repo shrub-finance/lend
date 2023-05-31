@@ -34,8 +34,8 @@ const NavElement = ({
                 divRef.current.className = cn(
                   'transition-all duration-300 ease-out ',
                   isActive
-                    ? 'bg-shrub-grey text-shrub-green-50 rounded-btn font-semibold'
-                    : 'group-hover:bg-gray-800 rounded-btn group-hover:text-shrub-green-50',
+                    ? 'bg-gray-800 text-shrub-green-50 rounded-btn font-semibold'
+                    : 'group-hover:bg-shrub-grey rounded-btn',
                 );
             }
 
