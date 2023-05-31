@@ -1,4 +1,14 @@
 {
   "name": "shrub-lend",
-  "packageManager": "yarn@3.1.1"
+  "workspaces": [
+    "packages/app"
+  ],
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "scripts": {
+    "app": "yarn workspace @shrub-lend/app dev",
+    "program": "yarn workspace @shrub-lend/program dev",
+    "build:app": "yarn workspace @shrub-lend/app build",
+    "build:program": "yarn workspace @shrub-lend/program build"
+  }
 }
