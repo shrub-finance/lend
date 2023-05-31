@@ -10,8 +10,12 @@ module.exports = {
         'shrub-green-100': '#8ACCA4',
         'shrub-green-50':'#73E2A3',
         'shrub-blue': '#101828',
-        'shrub-grey': '#475467'
-      },
+
+        'shrub-grey-50': '#D0D5DD',
+        'shrub-grey-100': '#98A2B3',
+        'shrub-grey': '#475467',
+
+},
       boxShadow: {
         'shrub': '0px 4px 250px rgba(138, 204, 164, 0.25)',
         'shrub-thin': '0px 1px 2px rgba(16, 24, 40, 0.05), 0px 0px 0px 4px #CCFBEF'

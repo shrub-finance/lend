@@ -106,7 +106,7 @@ export const BorrowView: FC = ({}) => {
                 </div>
 
                 <div className="divider text-base-100 h-0.5 w-full bg-gray-300"></div>
-                <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green normal-case text-lg">Continue</button>
+                <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green normal-case text-xl">Continue</button>
               </div>
             </div>
           </div>
