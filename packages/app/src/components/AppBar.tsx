@@ -137,6 +137,11 @@ export const AppBar: React.FC = () => {
         </div>
         <div className="navbar-start">
           <div className="hidden md:inline-flex align-items-center justify-items gap-4 ">
+            <NavElement
+              label="Dashboard"
+              href="/"
+              navigationStarts={() => setIsNavOpen(false)}
+            />
         <NavElement
           label="Lend"
           href="/lend"
