@@ -5,6 +5,7 @@
   ],
   "npmClient": "yarn",
   "useWorkspaces": true,
+  "private": true,
   "scripts": {
     "app": "yarn workspace @shrub-lend/app dev",
     "program": "yarn workspace @shrub-lend/program dev",
