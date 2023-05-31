@@ -190,7 +190,7 @@ export const AppBar: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <ul tabIndex={0} className="p-2 shadow menu dropdown-content bg-base-100 rounded-box sm:w-52">
+          <ul tabIndex={0} className="p-2 shadow menu dropdown-content bg-shrub-blue rounded-box sm:w-52">
             <li>
               <div className="form-control bg-opacity-100">
                 <label className="cursor-pointer label">

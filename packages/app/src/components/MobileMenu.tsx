@@ -1,12 +1,10 @@
-import { FC } from 'react';
-import Link from "next/link";
-import Text from './Text';
+
 import NavElement from './nav-element';
 interface Props {
   children: React.ReactNode;
 }
 
-export const ContentContainer: React.FC<Props> = ({ children }) => {
+export const MobileMenu: React.FC<Props> = ({ children }) => {
 
   return (
     <div className="flex-1 drawer h-52">
@@ -18,7 +16,7 @@ export const ContentContainer: React.FC<Props> = ({ children }) => {
       <div className="drawer-side">
         <label htmlFor="my-drawer" className="drawer-overlay gap-6"></label>
 
-        <ul className="p-4 overflow-y-auto menu w-80 bg-base-100 gap-10 sm:flex items-center">
+        <ul className="p-4 overflow-y-auto w-80 bg-shrub-blue gap-10 sm:flex flex-col items-center">
           <li>
           <NavElement
             label="Home"
@@ -26,10 +24,18 @@ export const ContentContainer: React.FC<Props> = ({ children }) => {
           />
           </li>
           <li>
+            <NavElement
+              label="Dashboard"
+              href="/"
+            />
+          </li>
+          <li>
           <NavElement
             label="Lend"
             href="/lend"
           />
+          </li>
+          <li>
             <NavElement
               label="Borrow"
               href="/borrow"
