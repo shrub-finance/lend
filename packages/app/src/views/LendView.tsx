@@ -36,7 +36,7 @@ export const LendView: FC = ({}) => {
                 {/*amount control*/}
                 <div className="form-control w-full  ">
                   <label className="label relative">
-                    <span className="label-text text-base-100">Amount</span>
+                    <span className="label-text text-base-100 text-md">Amount</span>
                     <span className="label-text-alt text-base-100 text-xl font-semibold absolute right-2 top-12">
                       <svg  className="inline-block mr-1 mb-1" width="20" height="20" viewBox="0 0 26 26" fill="none">
 <rect width="26" height="26" fill="url(#pattern0)"/>
@@ -74,7 +74,7 @@ export const LendView: FC = ({}) => {
                         <input type="radio" id="smallest-loan" name="loan" value="smallest-loan" className="hidden peer"
                                required/>
                         <label htmlFor="smallest-loan"
-                               className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">1 Month</div>
                           </div>
@@ -83,7 +83,7 @@ export const LendView: FC = ({}) => {
                       <li className="mr-4">
                         <input type="radio" id="small-loan" name="loan" value="small-loan" className="hidden peer"/>
                         <label htmlFor="small-loan"
-                               className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">3 Months</div>
                           </div>
@@ -93,7 +93,7 @@ export const LendView: FC = ({}) => {
                         <input type="radio" id="big-loan" name="loan" value="big-loan" className="hidden peer"
                                required/>
                         <label htmlFor="big-loan"
-                               className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green peer-checked:border-shrub-green-50 peer-checked:text-shrub-green peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">6 Months</div>
                           </div>
@@ -103,20 +103,29 @@ export const LendView: FC = ({}) => {
                         <input type="radio" id="biggest-loan" name="loan" value="biggest-loan" className="hidden peer"
                                required/>
                         <label htmlFor="biggest-loan"
-                               className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green peer-checked:border-shrub-green-50 peer-checked:text-shrub-green peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">12 Months</div>
                           </div>
                         </label>
                       </li>
                     </ul>
-
                   </div>
-
                 </div>
 
                 <div className="divider h-0.5 w-full bg-gray-300"></div>
-                <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green text-lg normal-case">Supply USDC</button>
+                <div className="hero-content flex-col lg:flex-row-reverse">
+                  <p className="self-start text-lg">Estimated APY</p>
+                  <div className="card flex-shrink-0 w-full bg-teal-50 py-6">
+                    <div className="text-center">
+                      <span className="text-6xl text-shrub-green-500 font-bold">5%</span>
+                      <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
+                      <p className="font-thin pt-3 text-lg">3 month lending term includes 5% bonus</p>
+                    </div>
+
+                  </div>
+                </div>
+                <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-lg normal-case">Supply USDC</button>
               </div>
             </div>
           </div>

@@ -5,7 +5,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'shrub-green': '#16B364',
+        'shrub-green-500': '#17725C',
+         'shrub-green': '#16B364',
         'shrub-green-100': '#8ACCA4',
         'shrub-green-50':'#73E2A3',
         'shrub-blue': '#101828',
