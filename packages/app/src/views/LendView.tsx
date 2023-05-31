@@ -114,7 +114,7 @@ export const LendView: FC = ({}) => {
                 </div>
 
                 <div className="divider h-0.5 w-full bg-gray-300"></div>
-                <div className="hero-content flex-col lg:flex-row-reverse">
+                <div className="hero-content flex-col">
                   <p className="self-start text-lg">Estimated APY</p>
                   <div className="card flex-shrink-0 w-full bg-teal-50 py-6">
                     <div className="text-center">
