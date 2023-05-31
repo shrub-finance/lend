@@ -31,7 +31,7 @@ export const DashboardView: FC = ({ }) => {
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col">
         <div className='mt-6'>
-          <h1 className="text-center text-5xl md:pl-12 font-bold text-transparent bg-clip-text bg-gradient-to-br from-indigo-500 to-fuchsia-500 mb-4">
+          <h1 className="text-center text-5xl md:pl-12 font-bold text-transparent bg-clip-text bg-gradient-to-br from-shrub-green to-shrub-green-50 mb-4">
             Shrub Lend
           </h1>
         </div>
@@ -40,12 +40,14 @@ export const DashboardView: FC = ({ }) => {
           <p className='text-slate-500 text-2x1 leading-relaxed'>I believe in you</p>
         </h4>
         <div className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-indigo-500 rounded-lg blur opacity-40 animate-tilt"></div>
-          <div className="max-w-md mx-auto mockup-code bg-primary border-2 border-[#5252529f] p-6 px-10 my-2">
-            <pre data-prefix=">">
-              <code className="truncate">{`npx create-solana-dapp <dapp-name>`} </code>
-            </pre>
-          </div>
+            <div className="hero-content flex-col lg:flex-row-reverse">
+              <div className="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
+                <div className="card-body">
+                  E pluribus unum
+                </div>
+              </div>
+            </div>
+
         </div>
         <div className="flex flex-col mt-2">
           <RequestAirdrop />

@@ -33,7 +33,7 @@ module.exports = {
             body: ['Inter, sans-serif'],
           },
           'primary': '#000000',           /* Primary color */
-          'primary-focus': '#9945FF',     /* Primary color - focused */
+          'primary-focus': '#16B364',     /* Primary color - focused */
           'primary-content': '#ffffff',   /* Foreground content color to use on primary color */
 
           'secondary': '#808080',         /* Secondary color */
@@ -54,7 +54,7 @@ module.exports = {
           'base-content': '#f9fafb',      /* Foreground content color to use on base color */
 
           'info': '#2094f3',              /* Info */
-          'success': '#009485',           /* Success */
+          'success': '#16B364',           /* Success */
           'warning': '#ff9900',           /* Warning */
           'error': '#ff5724',             /* Error */
         },
