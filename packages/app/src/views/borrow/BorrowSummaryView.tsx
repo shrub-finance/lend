@@ -1,8 +1,8 @@
 import {FC, useEffect} from "react";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import useUserSOLBalanceStore from "../stores/useUserSOLBalanceStore";
+import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
-export const SummaryView: FC = ({}) => {
+export const BorrowSummaryView: FC = ({}) => {
   const wallet = useWallet();
   const {connection} = useConnection();
 
@@ -22,7 +22,7 @@ export const SummaryView: FC = ({}) => {
       <div className="md:hero-content flex flex-col">
         <div className='mt-6 self-start'>
 
-          <h1 className=" text-4xl font-bold text-base-100">
+          <h1 className=" text-4xl font-medium text-base-100">
             <button
               className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600">
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"

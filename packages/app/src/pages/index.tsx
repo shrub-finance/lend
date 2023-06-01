@@ -1,7 +1,6 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { HomeView } from "../views";
-import {LendView} from "../views/LendView";
+import {BorrowView} from "../views/borrow/BorrowView";
 
 const Home: NextPage = (props) => {
   return (
@@ -13,7 +12,7 @@ const Home: NextPage = (props) => {
           content="Shrub Lend"
         />
       </Head>
-      <LendView />
+      <BorrowView />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import {LendView} from "../views/LendView";
+import {LendView} from "../views/lend/LendView";
+import {LendSummaryView} from "../views/lend/LendSummaryView";
 
 const Lend: NextPage = (props) => {
   return (
@@ -12,7 +13,8 @@ const Lend: NextPage = (props) => {
           content="Lend"
         />
       </Head>
-      <LendView />
+      {/*<LendView />*/}
+      <LendSummaryView/>
     </div>
   );
 };

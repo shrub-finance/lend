@@ -1,6 +1,6 @@
 import {FC, useEffect} from "react";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import useUserSOLBalanceStore from "../stores/useUserSOLBalanceStore";
+import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
 export const LendView: FC = ({}) => {
   const wallet = useWallet();
