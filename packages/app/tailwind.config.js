@@ -13,8 +13,11 @@ module.exports = {
 
         'shrub-grey-50': '#D0D5DD',
         'shrub-grey-100': '#98A2B3',
+        'shrub-grey-200':'#667085',
         'shrub-grey': '#475467',
-        'shrub-grey-700': '#344504'
+        'shrub-grey-700': '#344054'
+
+
 
 },
       boxShadow: {
