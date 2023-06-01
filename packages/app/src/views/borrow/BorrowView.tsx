@@ -1,6 +1,6 @@
 import {FC, useEffect} from "react";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import useUserSOLBalanceStore from "../stores/useUserSOLBalanceStore";
+import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
 export const BorrowView: FC = ({}) => {
   const wallet = useWallet();
@@ -64,7 +64,7 @@ export const BorrowView: FC = ({}) => {
                         <input type="radio" id="smallest-loan" name="loan" value="smallest-loan" className="hidden peer"
                                required/>
                         <label htmlFor="smallest-loan"
-                               className="inline-flex items-center justify-center w-full px-8 py-3 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">0%</div>
                           </div>
@@ -73,7 +73,7 @@ export const BorrowView: FC = ({}) => {
                       <li className="mr-4">
                         <input type="radio" id="small-loan" name="loan" value="small-loan" className="hidden peer"/>
                         <label htmlFor="small-loan"
-                               className="inline-flex items-center justify-center w-full px-8 py-3  text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">1%</div>
                           </div>
@@ -83,7 +83,7 @@ export const BorrowView: FC = ({}) => {
                         <input type="radio" id="big-loan" name="loan" value="big-loan" className="hidden peer"
                                required/>
                         <label htmlFor="big-loan"
-                               className="inline-flex items-center justify-center w-full px-8 py-3  text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">5%</div>
                           </div>
@@ -93,7 +93,7 @@ export const BorrowView: FC = ({}) => {
                         <input type="radio" id="biggest-loan" name="loan" value="biggest-loan" className="hidden peer"
                                required/>
                         <label htmlFor="biggest-loan"
-                               className="inline-flex items-center justify-center w-full px-8 py-3  text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">8%</div>
                           </div>
@@ -111,7 +111,7 @@ export const BorrowView: FC = ({}) => {
                 {/*<div className="hero-content flex-col mb-3">*/}
                 {/*  <div role="status">*/}
                 {/*    <svg aria-hidden="true"*/}
-                {/*         className="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-shrub-green-500"*/}
+                {/*         className="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-shrub-grey fill-shrub-green-500"*/}
                 {/*         viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">*/}
                 {/*      <path*/}
                 {/*        d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"*/}

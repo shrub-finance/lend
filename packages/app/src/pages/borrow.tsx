@@ -1,6 +1,8 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import {BorrowView} from "../views/BorrowView";
+import {BorrowView} from "../views/borrow/BorrowView";
+import {BorrowDurationView} from "../views/borrow/BorrowDuration";
+
 
 const Borrow: NextPage = (props) => {
   return (
@@ -12,7 +14,8 @@ const Borrow: NextPage = (props) => {
           content="Borrow"
         />
       </Head>
-      <BorrowView />
+      {/*<BorrowView />*/}
+      <BorrowDurationView/>
     </div>
   );
 };
