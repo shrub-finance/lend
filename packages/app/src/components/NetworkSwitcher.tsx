@@ -6,6 +6,7 @@ const NetworkSwitcher: FC = () => {
   const { networkConfiguration, setNetworkConfiguration } = useNetworkConfiguration();
 
   console.log(networkConfiguration);
+  setNetworkConfiguration('testnet')
 
   return (
     <label className="cursor-pointer label">
@@ -13,7 +14,7 @@ const NetworkSwitcher: FC = () => {
       <select             
         value={networkConfiguration}
         onChange={(e) => setNetworkConfiguration(e.target.value)} 
-        className="select max-w-xs"
+        className="select"
       >
         <option value="mainnet-beta">main</option>
         <option value="devnet">dev</option>

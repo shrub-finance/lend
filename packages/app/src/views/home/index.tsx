@@ -9,8 +9,12 @@ import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { RequestAirdrop } from '../../components/RequestAirdrop';
 import pkg from '../../../package.json';
 
+
 // Store
 import useUserSOLBalanceStore from '../../stores/useUserSOLBalanceStore';
+
+import * as splToken from "@solana/spl-token";
+import * as web3 from "@solana/web3.js";
 
 export const HomeView: FC = ({ }) => {
   const wallet = useWallet();
@@ -19,12 +23,25 @@ export const HomeView: FC = ({ }) => {
   const balance = useUserSOLBalanceStore((s) => s.balance)
   const { getUserSOLBalance } = useUserSOLBalanceStore()
 
+  const [tokenBalance, setTokenBalance] = useState(null);
+
   useEffect(() => {
     if (wallet.publicKey) {
       console.log(wallet.publicKey.toBase58())
       getUserSOLBalance(wallet.publicKey, connection)
+      async function shrubBalanceHandler() {
+        const tokenAccount = await splToken.getAssociatedTokenAddress(new web3.PublicKey('7TCPsCbHcRpMdikrrqWbP6kifQJ9K3aE2drgPvpyjHns'),wallet.publicKey)
+        const tokenBalance = connection.getTokenAccountBalance(tokenAccount)
+        const balance = await connection.getTokenAccountBalance(tokenAccount);
+        setTokenBalance(balance);
+      }
+
+
+      shrubBalanceHandler().catch(console.error);
+
     }
   }, [wallet.publicKey, connection, getUserSOLBalance])
+
 
   return (
 
@@ -60,6 +77,26 @@ export const HomeView: FC = ({ }) => {
               </div>
           </div>
           }
+            {wallet &&
+              <>
+                <div className="flex flex-row justify-center">
+                  <div>
+                    {(tokenBalance || 0).toLocaleString()}
+                  </div>
+                  <div className='text-slate-600 ml-2'>
+                    SOL
+                  </div>
+                </div>
+                <div className='text-slate-600 ml-2'>
+                  {tokenBalance !== null ? (
+                    <p className='text-base-100 ml-2'>Token Balance: {tokenBalance}</p>
+                  ) : (
+                    <p className='text-base-100 ml-2'>Loading token balance...</p>
+                  )}
+                </div>
+              </>
+
+        }
           </h4>
         </div>
       </div>

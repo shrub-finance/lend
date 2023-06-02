@@ -1,13 +1,25 @@
-import {FC, useEffect} from "react";
+import {FC, useEffect, useState} from "react";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
+import useTokenBalance from "../../hooks/useTokenBalance";
+import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 
 export const BorrowView: FC = ({}) => {
   const wallet = useWallet();
   const { connection } = useConnection();
 
+  const [localError, setLocalError] = useState("");
+  const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
+
+
   const balance = useUserSOLBalanceStore((s) => s.balance)
   const { getUserSOLBalance } = useUserSOLBalanceStore()
+
+  const tokenBalance = useTokenBalance();
+  const format = (val: string) => val;
+  const parse = (val: string) => val.replace(/^\$/, "");
+
+  const [amountValue, setAmountValue] = useState("0");
 
   useEffect(() => {
     if (wallet.publicKey) {
@@ -16,11 +28,32 @@ export const BorrowView: FC = ({}) => {
     }
   }, [wallet.publicKey, connection, getUserSOLBalance])
 
+  async function fillMax() {
+    if (wallet.publicKey) {
+      setAmountValue(String(tokenBalance));}
+    else{
+      handleErrorMessages({ customMessage: "Wallet not connected. Please check." });
+      console.log('wallet not connected');
+    }
+  }
+
 
   return (
     <div className="md:hero mx-auto p-4">
+      {/*alert*/}
+      <div className='mt-6 '>
+
+        {localError && (
+           <div className="alert alert-warning justify-start">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 ml-4p" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <span>{localError}</span>
+          </div>
+        )}
+
+
+
       <div className="md:hero-content flex flex-col">
-        <div className='mt-6 self-start'>
+          {/*heading*/}
           <h1 className=" text-5xl font-bold text-base-100">
             Borrow
           </h1>
@@ -39,7 +72,12 @@ export const BorrowView: FC = ({}) => {
                     <span className="label-text text-shrub-blue text-md">Amount</span>
                   </label>
                   <input type="text" placeholder="Enter amount"
-                         className="input input-bordered w-full  bg-white border-solid border border-gray-200 text-lg focus:shadow-shrub-thin focus:border-shrub-green-50"/>
+                         className="input input-bordered w-full  bg-white border-solid border border-gray-200 text-lg focus:shadow-shrub-thin focus:border-shrub-green-50"
+                         onChange={(event) =>
+                           setAmountValue(parse(event.target.value))
+                         }
+
+                         value={format(amountValue)}/>
                   <label className="label">
                     <span className="label-text-alt text-gray-500 text-sm font-light">Wallet Balance:  {wallet &&
 
@@ -48,7 +86,7 @@ export const BorrowView: FC = ({}) => {
                         </span>
 
                     }</span>
-                    <span className="label-text-alt btn-sm text-shrub-green bg-green-50 p-2 rounded-md cursor-pointer text-xs">ENTER MAX</span>
+                    <button className="label-text-alt btn-sm text-shrub-green bg-green-50 p-2 rounded-md cursor-pointer text-xs"  onClick={fillMax}>ENTER MAX</button>
                   </label>
                 </div>
 

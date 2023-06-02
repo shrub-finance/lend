@@ -10,7 +10,7 @@ type NavElementProps = {
     href: string;
     as?: string;
     scroll?: boolean;
-    chipLabel?: string;
+    chiplabel?: string;
     disabled?: boolean;
     navigationStarts?: () => void;
 };
@@ -21,7 +21,7 @@ const NavElement = ({
     as,
     scroll,
     disabled,
-  chipLabel,
+  chiplabel,
     navigationStarts = () => {},
 }: NavElementProps) => {
     const router = useRouter();
@@ -30,7 +30,7 @@ const NavElement = ({
 
     useEffect(() => {
         if (divRef.current) {
-            if (chipLabel!=="isLogo") {
+            if (chiplabel!=="isLogo") {
                 divRef.current.className = cn(
                   'transition-all duration-300 ease-out ',
                   isActive
@@ -40,7 +40,7 @@ const NavElement = ({
             }
 
         }
-    }, [isActive, chipLabel]);
+    }, [isActive, chiplabel]);
 
     return (
         <Link
@@ -48,7 +48,7 @@ const NavElement = ({
             as={as}
             scroll={scroll}
             // @ts-ignore
-            chipLabel={chipLabel}
+            chiplabel={chiplabel}
             passHref
             className={cn(
                 'group flex h-full flex-col items-center justify-between bg-gra',
@@ -58,7 +58,7 @@ const NavElement = ({
             onClick={() => navigationStarts()}
         >
             <div className="flex flex-row items-center gap-3" ref={divRef} >
-                {chipLabel!=="isLogo"? <Text className="text-base font-medium btn-sm px-5 py-1"> {label} </Text>: <div className="mr-12 pl-14"> {label} </div>}
+                {chiplabel!=="isLogo"? <Text className="text-base font-medium btn-sm px-5 py-1"> {label} </Text>: <div className="mr-12 pl-14"> {label} </div>}
             </div>
         </Link>
     );

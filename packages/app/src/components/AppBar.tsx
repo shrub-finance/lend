@@ -20,7 +20,7 @@ export const AppBar: React.FC = () => {
       <div className="navbar flex h-20 flex-row md:mb-2  bg-shrub-blue text-neutral-content drop-shadow-md">
         <div className="">
           <div className="hidden sm:inline w-22 h-22 md:p-2 ml-4">
-            <NavElement chipLabel="isLogo"
+            <NavElement chiplabel="isLogo"
                         // @ts-ignore
                         label={
               <svg width="100%" height="60" viewBox="0 0 334 229" fill="none" xmlns="http://www.w3.org/2000/svg">
