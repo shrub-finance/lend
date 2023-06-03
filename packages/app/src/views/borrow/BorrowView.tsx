@@ -10,7 +10,11 @@ export const BorrowView: FC = ({}) => {
 
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
+  const [selectedInterestRate, setSelectedInterestRate] = useState("");
 
+  const [isContinuePressed, setIsContinuePressed] = useState(false);
+
+  const [requiredCollateral, setRequiredCollateral] = useState("0");
 
   const balance = useUserSOLBalanceStore((s) => s.balance)
   const { getUserSOLBalance } = useUserSOLBalanceStore()
@@ -20,6 +24,9 @@ export const BorrowView: FC = ({}) => {
   const parse = (val: string) => val.replace(/^\$/, "");
 
   const [amountValue, setAmountValue] = useState("0");
+
+  const [showSection, setShowSection] = useState(false);
+
 
   useEffect(() => {
     if (wallet.publicKey) {
@@ -36,6 +43,55 @@ export const BorrowView: FC = ({}) => {
       console.log('wallet not connected');
     }
   }
+
+  const handleAmountChange = (event) => {
+    const inputValue = event.target.value;
+    setAmountValue(parse(inputValue));
+    const parsedValue = parseFloat(inputValue);
+
+    if (parsedValue !== 0 && !isNaN(parsedValue)) {
+      setShowSection(true);
+    } else {
+      setShowSection(false);
+    }
+
+  };
+
+  useEffect(() => {
+    if (selectedInterestRate !== "") {
+      handleContinue();
+    }
+  }, [amountValue, selectedInterestRate]);
+
+  function handleContinue() {
+    setIsContinuePressed(true);
+
+    // Calculate required collateral
+    const amount = Number(amountValue);
+    const interestRate = Number(selectedInterestRate.replace("%", "")) / 100;
+
+    let requiredCollateralAmount;
+
+    if (interestRate === 0) {
+      requiredCollateralAmount = amount * 1.5;
+    } else if (interestRate === .01) {
+      requiredCollateralAmount = amount * 1.2;
+    } else if (interestRate === .05) {
+      console.log('g');
+      requiredCollateralAmount = amount * 1;
+    } else if (interestRate === .08) {
+      requiredCollateralAmount = amount * 0.8;
+    } else {
+      requiredCollateralAmount = 0;
+    }
+
+    if (requiredCollateralAmount) {
+      setRequiredCollateral(requiredCollateralAmount.toFixed(4));
+    } else {
+      setRequiredCollateral('N/A')
+    }
+  }
+
 
 
   return (
@@ -66,18 +122,19 @@ export const BorrowView: FC = ({}) => {
           <div className="flex flex-col mt-2 ">
             <div className="card w-full text-left">
               <div className="card-body text-base-100">
+
                 {/*amount control*/}
                 <div className="form-control w-full  ">
-                  <label className="label">
+                  <label className="label relative">
                     <span className="label-text text-shrub-blue text-md">Amount</span>
+                    <span className="label-text-alt text-base-100 text-xl font-semibold absolute right-2 top-12">
+                      <img src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub"/>USDC</span>
                   </label>
-                  <input type="text" placeholder="Enter amount"
+                  <input type="text" placeholder="Enter amount" name="amount" id="amount"
                          className="input input-bordered w-full  bg-white border-solid border border-gray-200 text-lg focus:shadow-shrub-thin focus:border-shrub-green-50"
-                         onChange={(event) =>
-                           setAmountValue(parse(event.target.value))
-                         }
-
+                         onChange={handleAmountChange}
                          value={format(amountValue)}/>
+
                   <label className="label">
                     <span className="label-text-alt text-gray-500 text-sm font-light">Wallet Balance:  {wallet &&
 
@@ -91,15 +148,15 @@ export const BorrowView: FC = ({}) => {
                 </div>
 
                 {/*interest rate control*/}
-                <div className="form-control w-full  ">
+                <div className="form-control w-full">
                   <label className="label">
                     <span className="label-text text-shrub-blue">Interest Rate</span>
                   </label>
                   <div>
 
-                    <ul className="flex flex-row">
+                    <ul className="flex flex-row ">
                       <li className="mr-4">
-                        <input type="radio" id="smallest-borrow" name="loan" value="smallest-borrow" className="hidden peer"
+                        <input type="radio" id="smallest-borrow" name="loan" value="smallest-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("0%")}
                                required/>
                         <label htmlFor="smallest-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
@@ -109,7 +166,7 @@ export const BorrowView: FC = ({}) => {
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="small-borrow" name="loan" value="small-borrow" className="hidden peer"/>
+                        <input type="radio" id="small-borrow" name="loan" value="small-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("1%")}/>
                         <label htmlFor="small-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -118,7 +175,7 @@ export const BorrowView: FC = ({}) => {
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="big-borrow" name="loan" value="big-borrow" className="hidden peer"
+                        <input type="radio" id="big-borrow" name="loan" value="big-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("5%")}
                                required/>
                         <label htmlFor="big-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
@@ -128,7 +185,7 @@ export const BorrowView: FC = ({}) => {
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="biggest-borrow" name="loan" value="biggest-borrow" className="hidden peer"
+                        <input type="radio" id="biggest-borrow" name="loan" value="biggest-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("8%")}
                                required/>
                         <label htmlFor="biggest-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
@@ -144,6 +201,7 @@ export const BorrowView: FC = ({}) => {
                 </div>
 
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+
                 {/*spinner */}
 
                 {/*<div className="hero-content flex-col mb-3">*/}
@@ -164,18 +222,26 @@ export const BorrowView: FC = ({}) => {
                 {/*</div>*/}
 
                 {/*display estimate apy*/}
-                <div className="hero-content mb-2 flex-col gap-2">
-                  <div className="flex flex-row text-lg ">
-                  <span className="w-[360px]">Required collateral</span>
-                    <span><img src="/sol-logo.svg" className="w-4 inline align-baseline"/> SOL</span>
+                {isContinuePressed && showSection && (
+                  <div className="hero-content mb-2 flex-col gap-2 justify-between">
+                    <div className="card w-full flex flex-row text-lg justify-between">
+                      <span className="w-[360px]">Required collateral</span>
+                      <span>
+                    <img src="/sol-logo.svg" className="w-4 inline align-baseline" /> SOL
+                  </span>
+                    </div>
+                    <div className="card w-full bg-teal-50 p-10">
+                      <span className="text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} SOL</span>
+                    </div>
                   </div>
-                  <div className="card w-full bg-teal-50 py-10">
-                      <span className="text-5xl text-shrub-green-500 font-bold text-center">0.0123 SOL</span>
-                  </div>
-                </div>
+                )}
 
                 {/*cta*/}
-                <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl">Continue</button>
+                <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl disabled:bg-shrub-grey-50
+                  disabled:border-shrub-grey-100
+                  disabled:text-gray-50
+                  disabled:border" disabled={Number(amountValue) <= 0|| selectedInterestRate === ""}
+                  onClick={handleContinue}>Continue</button>
               </div>
             </div>
           </div>

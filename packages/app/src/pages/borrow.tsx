@@ -15,8 +15,8 @@ const Borrow: NextPage = (props) => {
           content="Borrow"
         />
       </Head>
-      {/*<BorrowView />*/}
-      {/*<BorrowDurationView/>*/}
+      <BorrowView />
+      <BorrowDurationView/>
       <BorrowSummaryView/>
     </div>
   );
