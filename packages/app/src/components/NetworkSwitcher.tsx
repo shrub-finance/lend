@@ -1,12 +1,17 @@
-import { FC } from 'react';
+import {FC, useEffect} from 'react';
 import dynamic from 'next/dynamic';
 import { useNetworkConfiguration } from '../contexts/NetworkConfigurationProvider';
 
 const NetworkSwitcher: FC = () => {
   const { networkConfiguration, setNetworkConfiguration } = useNetworkConfiguration();
 
-  console.log(networkConfiguration);
-  setNetworkConfiguration('testnet')
+  useEffect(() => {
+    setNetworkConfiguration('testnet');
+  }, []);
+
+  // const handleNetworkChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //   setNetworkConfiguration(e.target.value);
+  // };
 
   return (
     <label className="cursor-pointer label">
