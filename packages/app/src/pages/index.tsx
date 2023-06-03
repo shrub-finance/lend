@@ -3,8 +3,17 @@ import Head from "next/head";
 import {BorrowView} from "../views/borrow/BorrowView";
 import {BorrowDurationView} from "../views/borrow/BorrowDuration";
 import {BorrowSummaryView} from "../views/borrow/BorrowSummaryView";
+import {useState} from "react";
 
 const Home: NextPage = (props) => {
+
+  const [requiredCollateral, setRequiredCollateral] = useState<string | undefined>(undefined);
+
+
+  const handleRequiredCollateralChange = (collateral: string) => {
+    setRequiredCollateral(collateral);
+  };
+
   return (
     <div>
       <Head>
@@ -14,8 +23,10 @@ const Home: NextPage = (props) => {
           content="Shrub Lend"
         />
       </Head>
-      <BorrowView />
-      {/*<BorrowDurationView/>*/}
+      <div>
+        {!requiredCollateral &&<BorrowView onRequiredCollateralChange={handleRequiredCollateralChange} />}
+        {requiredCollateral && <BorrowDurationView requiredCollateral={requiredCollateral} />}
+      </div>
       {/*<BorrowSummaryView/>*/}
     </div>
   );

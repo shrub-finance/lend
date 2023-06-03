@@ -2,7 +2,11 @@ import {FC, useEffect} from "react";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
-export const BorrowDurationView: FC = ({}) => {
+interface BorrowDurationViewProps {
+  requiredCollateral: string;
+}
+
+export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ requiredCollateral }) => {
   const wallet = useWallet();
   const {connection} = useConnection();
 
@@ -47,11 +51,11 @@ export const BorrowDurationView: FC = ({}) => {
                     <span><img src="/sol-logo.svg" className="w-4 inline align-baseline"/> SOL</span>
                   </div>
                   <div className="card w-full py-4">
-                    <span className="text-5xl text-shrub-green-500 font-bold text-left">0.01234 SOL</span>
+                    <span className="text-5xl text-shrub-green-500 font-bold text-left">{requiredCollateral} SOL</span>
                   </div>
                 </div>
 
-                <div className="form-control w-full">
+                <div className="form-control w-full mt-6">
                   <label className="label">
                     <span className="label-text text-shrub-blue">Loan Duration</span>
                   </label>

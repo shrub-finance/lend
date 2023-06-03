@@ -3,9 +3,18 @@ import Head from "next/head";
 import {BorrowView} from "../views/borrow/BorrowView";
 import {BorrowDurationView} from "../views/borrow/BorrowDuration";
 import {BorrowSummaryView} from "../views/borrow/BorrowSummaryView";
+import {useState} from "react";
 
 
 const Borrow: NextPage = (props) => {
+
+  const [requiredCollateral, setRequiredCollateral] = useState<string | undefined>(undefined);
+
+
+  const handleRequiredCollateralChange = (collateral: string) => {
+    setRequiredCollateral(collateral);
+  };
+
   return (
     <div>
       <Head>
@@ -15,9 +24,11 @@ const Borrow: NextPage = (props) => {
           content="Borrow"
         />
       </Head>
-      <BorrowView />
-      <BorrowDurationView/>
-      <BorrowSummaryView/>
+      <div>
+        {!requiredCollateral &&<BorrowView onRequiredCollateralChange={handleRequiredCollateralChange} />}
+        {requiredCollateral && <BorrowDurationView requiredCollateral={requiredCollateral} />}
+      </div>
+      {/*<BorrowSummaryView/>*/}
     </div>
   );
 };

@@ -4,7 +4,11 @@ import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 import useTokenBalance from "../../hooks/useTokenBalance";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 
-export const BorrowView: FC = ({}) => {
+interface BorrowViewProps {
+  onRequiredCollateralChange: (collateral: string) => void;
+}
+
+export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChange }) => {
   const wallet = useWallet();
   const { connection } = useConnection();
 
@@ -59,11 +63,11 @@ export const BorrowView: FC = ({}) => {
 
   useEffect(() => {
     if (selectedInterestRate !== "") {
-      handleContinue();
+      handleCollateralCalc();
     }
   }, [amountValue, selectedInterestRate]);
 
-  function handleContinue() {
+  function handleCollateralCalc() {
     setIsContinuePressed(true);
 
     // Calculate required collateral
@@ -92,6 +96,10 @@ export const BorrowView: FC = ({}) => {
     }
   }
 
+  const handleContinue = () => {
+
+    onRequiredCollateralChange(requiredCollateral);
+  };
 
 
   return (
