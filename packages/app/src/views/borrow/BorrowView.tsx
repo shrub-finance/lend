@@ -14,11 +14,12 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
 
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
-  const [selectedInterestRate, setSelectedInterestRate] = useState("");
-
   const [isContinuePressed, setIsContinuePressed] = useState(false);
+  const [showSection, setShowSection] = useState(false);
 
   const [requiredCollateral, setRequiredCollateral] = useState("0");
+    const [borrowAmount, setBorrowAmount] = useState("0");
+    const [selectedInterestRate, setSelectedInterestRate] = useState("0");
 
   const balance = useUserSOLBalanceStore((s) => s.balance)
   const { getUserSOLBalance } = useUserSOLBalanceStore()
@@ -27,9 +28,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
 
-  const [amountValue, setAmountValue] = useState("0");
-
-  const [showSection, setShowSection] = useState(false);
+  const SOLANA_RATE = 20;  // USD-SOLANA test exchange rate
 
 
   useEffect(() => {
@@ -41,7 +40,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
 
   async function fillMax() {
     if (wallet.publicKey) {
-      setAmountValue(String(tokenBalance));}
+      setBorrowAmount(String(tokenBalance));}
     else{
       handleErrorMessages({ customMessage: "Wallet not connected. Please check." });
       console.log('wallet not connected');
@@ -50,7 +49,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
 
   const handleAmountChange = (event) => {
     const inputValue = event.target.value;
-    setAmountValue(parse(inputValue));
+    setBorrowAmount(parse(inputValue));
     const parsedValue = parseFloat(inputValue);
 
     if (parsedValue !== 0 && !isNaN(parsedValue)) {
@@ -65,26 +64,25 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
     if (selectedInterestRate !== "") {
       handleCollateralCalc();
     }
-  }, [amountValue, selectedInterestRate]);
+  }, [borrowAmount, selectedInterestRate]);
 
   function handleCollateralCalc() {
     setIsContinuePressed(true);
 
     // Calculate required collateral
-    const amount = Number(amountValue);
+    const amount = Number(borrowAmount);
     const interestRate = Number(selectedInterestRate.replace("%", "")) / 100;
 
     let requiredCollateralAmount;
 
     if (interestRate === 0) {
-      requiredCollateralAmount = amount * 1.5;
+      requiredCollateralAmount = amount * 5/SOLANA_RATE;
     } else if (interestRate === .01) {
-      requiredCollateralAmount = amount * 1.2;
+      requiredCollateralAmount = amount * 4/SOLANA_RATE;
     } else if (interestRate === .05) {
-      console.log('g');
-      requiredCollateralAmount = amount * 1;
+      requiredCollateralAmount = amount * 3/SOLANA_RATE;
     } else if (interestRate === .08) {
-      requiredCollateralAmount = amount * 0.8;
+      requiredCollateralAmount = amount * 2/SOLANA_RATE;
     } else {
       requiredCollateralAmount = 0;
     }
@@ -97,7 +95,6 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
   }
 
   const handleContinue = () => {
-
     onRequiredCollateralChange(requiredCollateral);
   };
 
@@ -141,7 +138,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
                   <input type="text" placeholder="Enter amount" name="amount" id="amount"
                          className="input input-bordered w-full  bg-white border-solid border border-gray-200 text-lg focus:shadow-shrub-thin focus:border-shrub-green-50"
                          onChange={handleAmountChange}
-                         value={format(amountValue)}/>
+                         value={format(borrowAmount)}/>
 
                   <label className="label">
                     <span className="label-text-alt text-gray-500 text-sm font-light">Wallet Balance:  {wallet &&
@@ -164,8 +161,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
 
                     <ul className="flex flex-row ">
                       <li className="mr-4">
-                        <input type="radio" id="smallest-borrow" name="loan" value="smallest-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("0%")}
-                               required/>
+                        <input type="radio" id="smallest-borrow" name="loan" value="smallest-borrow" className="hidden peer" onChange={() => setSelectedInterestRate("0%")} required/>
                         <label htmlFor="smallest-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -183,8 +179,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="big-borrow" name="loan" value="big-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("5%")}
-                               required/>
+                        <input type="radio" id="big-borrow" name="loan" value="big-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("5%")} required/>
                         <label htmlFor="big-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -193,8 +188,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="biggest-borrow" name="loan" value="biggest-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("8%")}
-                               required/>
+                        <input type="radio" id="biggest-borrow" name="loan" value="biggest-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("8%")} required/>
                         <label htmlFor="biggest-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -248,7 +242,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
                 <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
                   disabled:text-gray-50
-                  disabled:border" disabled={Number(amountValue) <= 0|| selectedInterestRate === ""}
+                  disabled:border" disabled={Number(borrowAmount) <= 0|| selectedInterestRate === ""}
                   onClick={handleContinue}>Continue</button>
               </div>
             </div>
