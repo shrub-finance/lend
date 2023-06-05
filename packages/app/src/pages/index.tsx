@@ -8,10 +8,16 @@ import {useState} from "react";
 const Home: NextPage = (props) => {
 
   const [requiredCollateral, setRequiredCollateral] = useState<string | undefined>(undefined);
+  const [duration, setDuration] = useState<string | undefined>(undefined);
+
 
 
   const handleRequiredCollateralChange = (collateral: string) => {
     setRequiredCollateral(collateral);
+  };
+
+  const handleDurationChange = (duration: string) => {
+    setDuration(duration);
   };
 
   return (
@@ -25,10 +31,11 @@ const Home: NextPage = (props) => {
       </Head>
       <div>
         {!requiredCollateral &&<BorrowView onRequiredCollateralChange={handleRequiredCollateralChange} />}
-        {requiredCollateral && <BorrowDurationView requiredCollateral={requiredCollateral} />}
+        {requiredCollateral && !duration &&<BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleDurationChange}/>}
+        {duration && <BorrowSummaryView duration={duration}/>}
       </div>
       {/*<BorrowSummaryView/>*/}
-    </div>
+    </  div>
   );
 };
 

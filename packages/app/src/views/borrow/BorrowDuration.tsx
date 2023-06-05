@@ -4,9 +4,10 @@ import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
 interface BorrowDurationViewProps {
   requiredCollateral: string;
+  onDurationChange: (duration: string) => void;
 }
 
-export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ requiredCollateral }) => {
+export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ requiredCollateral, onDurationChange }) => {
 
   const [selectedDuration, setSelectedDuration] = useState("");
 
@@ -22,6 +23,10 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ required
       getUserSOLBalance(wallet.publicKey, connection)
     }
   }, [wallet.publicKey, connection, getUserSOLBalance])
+
+  const handleDurationContinue = () => {
+    onDurationChange(selectedDuration);
+  };
 
 
   return (
@@ -114,7 +119,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ required
 
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
                 {/*cta*/}
-                <button
+                <button onClick={handleDurationContinue}
                   className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green normal-case text-xl hover:bg-shrub-green-500">Continue
                 </button>
               </div>

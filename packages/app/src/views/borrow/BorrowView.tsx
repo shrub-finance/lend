@@ -94,7 +94,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
     }
   }
 
-  const handleContinue = () => {
+  const handleBorrowContinue = () => {
     onRequiredCollateralChange(requiredCollateral);
   };
 
@@ -243,7 +243,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
                   disabled:border-shrub-grey-100
                   disabled:text-gray-50
                   disabled:border" disabled={Number(borrowAmount) <= 0|| selectedInterestRate === ""}
-                  onClick={handleContinue}>Continue</button>
+                  onClick={handleBorrowContinue}>Continue</button>
               </div>
             </div>
           </div>

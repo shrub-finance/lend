@@ -2,7 +2,11 @@ import {FC, useEffect} from "react";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
-export const BorrowSummaryView: FC = ({}) => {
+interface BorrowSummaryViewProps {
+  duration: string;
+}
+
+export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({duration}) => {
   const wallet = useWallet();
   const {connection} = useConnection();
 
@@ -16,6 +20,14 @@ export const BorrowSummaryView: FC = ({}) => {
     }
   }, [wallet.publicKey, connection, getUserSOLBalance])
 
+  const numberOfMonths = duration;
+console.log(numberOfMonths);
+  // Calculate the end date by adding the number of months to the current date
+  const currentDate = new Date();
+  const endDate = new Date(currentDate.setMonth(currentDate.getMonth() + Number(numberOfMonths)));
+
+
+
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -23,6 +35,7 @@ export const BorrowSummaryView: FC = ({}) => {
         <div className='mt-6 self-start'>
 
           <h1 className=" text-4xl font-medium text-base-100">
+
             <button
               className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600">
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
@@ -65,11 +78,11 @@ export const BorrowSummaryView: FC = ({}) => {
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Start Date</span>
-                    <span>June 1, 2023</span>
+                    <span>{currentDate.toDateString()}</span>
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Due Date</span>
-                    <span>September 1, 2023<img src="/edit.svg" className="w-5 inline align-baseline ml-2"/></span>
+                    <span>{endDate.toDateString()}<img src="/edit.svg" className="w-5 inline align-baseline ml-2"/></span>
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Interest Rate ✨</span>
