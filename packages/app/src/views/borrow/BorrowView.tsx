@@ -19,7 +19,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
 
   const [requiredCollateral, setRequiredCollateral] = useState("0");
     const [borrowAmount, setBorrowAmount] = useState("0");
-    const [selectedInterestRate, setSelectedInterestRate] = useState("0");
+    const [selectedInterestRate, setSelectedInterestRate] = useState("");
 
   const balance = useUserSOLBalanceStore((s) => s.balance)
   const { getUserSOLBalance } = useUserSOLBalanceStore()
