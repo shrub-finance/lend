@@ -21,10 +21,11 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({duration}) => {
   }, [wallet.publicKey, connection, getUserSOLBalance])
 
   const numberOfMonths = duration;
-console.log(numberOfMonths);
+
   // Calculate the end date by adding the number of months to the current date
   const currentDate = new Date();
-  const endDate = new Date(currentDate.setMonth(currentDate.getMonth() + Number(numberOfMonths)));
+  const dateShadow = new Date();
+  const endDate = new Date(dateShadow.setMonth(dateShadow.getMonth() + Number(numberOfMonths)));
 
 
 
