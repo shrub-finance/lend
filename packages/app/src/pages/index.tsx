@@ -9,11 +9,16 @@ const Home: NextPage = (props) => {
 
   const [requiredCollateral, setRequiredCollateral] = useState<string | undefined>(undefined);
   const [duration, setDuration] = useState<string | undefined>(undefined);
+  const [interestRate, setInterestRate] = useState<string | undefined>(undefined);
+  const [amount, setAmount] = useState<string | undefined>(undefined);
 
 
 
-  const handleRequiredCollateralChange = (collateral: string) => {
+  const handleBorrowViewChange = (collateral: string, interestRate, amount) => {
     setRequiredCollateral(collateral);
+    setInterestRate(interestRate);
+    setAmount(amount);
+
   };
 
   const handleDurationChange = (duration: string) => {
@@ -30,11 +35,10 @@ const Home: NextPage = (props) => {
         />
       </Head>
       <div>
-        {!requiredCollateral &&<BorrowView onRequiredCollateralChange={handleRequiredCollateralChange} />}
+        {!requiredCollateral &&<BorrowView onBorrowViewChange={handleBorrowViewChange} />}
         {requiredCollateral && !duration &&<BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleDurationChange}/>}
-        {duration && <BorrowSummaryView duration={duration}/>}
+        {duration && <BorrowSummaryView duration={duration} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount}/>}
       </div>
-      {/*<BorrowSummaryView/>*/}
     </  div>
   );
 };

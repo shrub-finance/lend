@@ -4,9 +4,12 @@ import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
 interface BorrowSummaryViewProps {
   duration: string;
+  requiredCollateral: string;
+  interestRate: string;
+  amount: string;
 }
 
-export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({duration}) => {
+export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollateral, duration, interestRate, amount}) => {
   const wallet = useWallet();
   const {connection} = useConnection();
 
@@ -62,11 +65,10 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({duration}) => {
                   Borrow
                 </p>
                 <div className="w-full text-xl font-semibold flex flex-row">
-                  <span className="text-4xl  font-medium text-left w-[500px]">1,000.00 USDC</span>
+                  <span className="text-4xl  font-medium text-left w-[500px]">{amount} USDC</span>
                   <img src="/usdc-logo.svg" className="w-10 inline align-baseline"/>
                 </div>
-                <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">You are borrowing
-                  1000 USDC and giving 0.01234 SOL as collateral. There is no interest, and you have one month to repay
+                <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">You are borrowing <strong>{amount} USDC</strong> and giving <strong>{requiredCollateral} SOL</strong> as collateral. There is no interest, and you have one month to repay
                   the loan. The collateral will be locked until the loan is fully paid, and then it will be returned to
                   you.</p>
 
@@ -75,7 +77,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({duration}) => {
                 <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                   <div className="flex flex-row  justify-between">
                     <span className="">Required collateral</span>
-                    <span>0.1234 SOL</span>
+                    <span>{requiredCollateral} SOL</span>
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Start Date</span>
@@ -87,7 +89,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({duration}) => {
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Interest Rate ✨</span>
-                    <span className="font-semibold text-shrub-green-500"> 0%</span>
+                    <span className="font-semibold text-shrub-green-500"> {interestRate}</span>
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Wallet</span>
@@ -97,11 +99,11 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({duration}) => {
                     <span className="">Contract Address</span>
                     <span>0x78s44e8...32sd0<img src="/copy.svg" className="w-6 inline align-baseline ml-2"/> </span>
                   </div>
-                  <div className="flex flex-row  justify-between">
-                    <span className="">Late Penalty<img src="/info-circle.svg"
-                                                                 className="w-6 ml-2 inline"/></span>
-                    <span>1%</span>
-                  </div>
+                  {/*<div className="flex flex-row  justify-between">*/}
+                  {/*  <span className="">Late Penalty<img src="/info-circle.svg"*/}
+                  {/*                                               className="w-6 ml-2 inline"/></span>*/}
+                  {/*  <span>1%</span>*/}
+                  {/*</div>*/}
                 </div>
 
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
@@ -110,7 +112,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({duration}) => {
                 <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                   <div className="flex flex-row justify-between ">
                     <span className="">Due today</span>
-                    <span>0.1234 SOL</span>
+                    <span>{requiredCollateral} SOL</span>
                   </div>
                   <div className="flex flex-row justify-between">
                     <span className="">Gas Cost</span>

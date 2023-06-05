@@ -5,10 +5,10 @@ import useTokenBalance from "../../hooks/useTokenBalance";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 
 interface BorrowViewProps {
-  onRequiredCollateralChange: (collateral: string) => void;
+  onBorrowViewChange: (collateral: string, interestRate, amount) => void;
 }
 
-export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChange }) => {
+export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) => {
   const wallet = useWallet();
   const { connection } = useConnection();
 
@@ -95,7 +95,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onRequiredCollateralChan
   }
 
   const handleBorrowContinue = () => {
-    onRequiredCollateralChange(requiredCollateral);
+    onBorrowViewChange(requiredCollateral, selectedInterestRate, borrowAmount);
   };
 
 
