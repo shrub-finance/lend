@@ -91,11 +91,11 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollatera
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Wallet</span>
-                    <span>0x5464e8...36200<img src="/copy.svg" className="w-6 inline align-baseline ml-2"/> </span>
+                    <span>0x5464e8...36200<img src="/copy.svg" className="w-6 hidden md:inline align-baseline ml-2"/> </span>
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Contract Address</span>
-                    <span>0x78s44e8...32sd0<img src="/copy.svg" className="w-6 inline align-baseline ml-2"/> </span>
+                    <span>0x78s44e8...32sd0<img src="/copy.svg" className="w-6 hidden md:inline align-baseline ml-2"/> </span>
                   </div>
                   {/*<div className="flex flex-row  justify-between">*/}
                   {/*  <span className="">Late Penalty<img src="/info-circle.svg"*/}

@@ -208,7 +208,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                     <p className="self-start text-lg">Estimated APY</p>
                     <div className="card flex-shrink-0 w-full bg-teal-50 py-6">
                       <div className="text-center p-2">
-                        <span className="text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
+                        <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
                         <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
                         <p className="font-thin pt-3 text-lg">3 month lending term includes 5% bonus</p>
                       </div>

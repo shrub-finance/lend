@@ -228,12 +228,10 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                   <div className="hero-content mb-2 flex-col gap-2 justify-between">
                     <div className="card w-full flex flex-row text-lg justify-between">
                       <span className="w-[360px]">Required collateral</span>
-                      <span>
-                    <img src="/sol-logo.svg" className="hidden md:w-4 inline align-baseline" /> SOL
-                  </span>
+                      <span className="hidden md:inline"><img src="/sol-logo.svg" className="w-4 inline align-baseline"/> SOL</span>
                     </div>
                     <div className="card w-full bg-teal-50 p-10">
-                      <span className="text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} SOL</span>
+                      <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} SOL</span>
                     </div>
                   </div>
                 )}
