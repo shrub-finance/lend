@@ -223,7 +223,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                 {/*<p className="text-shrub-grey pt-3 text-sm">Calculating required collateral</p>*/}
                 {/*</div>*/}
 
-                {/*display estimate apy*/}
+                {/*display required collateral*/}
                 {isContinuePressed && showSection && (
                   <div className="hero-content mb-2 flex-col gap-2 justify-between">
                     <div className="card w-full flex flex-row text-lg justify-between">

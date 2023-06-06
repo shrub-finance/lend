@@ -3,8 +3,8 @@ import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
 interface BorrowSummaryViewProps {
-  duration: string;
   requiredCollateral: string;
+  duration: string;
   interestRate: string;
   amount: string;
 }
@@ -29,8 +29,6 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollatera
   const currentDate = new Date();
   const dateShadow = new Date();
   const endDate = new Date(dateShadow.setMonth(dateShadow.getMonth() + Number(numberOfMonths)));
-
-
 
 
   return (

@@ -1,14 +1,29 @@
-import {FC, useEffect} from "react";
+import {FC, useEffect, useState} from "react";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
+import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 
-export const LendView: FC = ({}) => {
+interface LendViewProps {
+  onLendViewChange: (estimatedAPY: string, lockupPeriod: string, lendAmount: string) => void;
+}
+
+export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const wallet = useWallet();
   const {connection} = useConnection();
 
+  const format = (val: string) => val;
+  const parse = (val: string) => val.replace(/^\$/, "");
 
   const balance = useUserSOLBalanceStore((s) => s.balance)
   const {getUserSOLBalance} = useUserSOLBalanceStore()
+  const [lendAmount, setLendAmount] = useState("0");
+  const [localError, setLocalError] = useState("");
+  const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
+  const [lockupPeriod, setLockupPeriod] = useState("");
+  const [showAPYSection, setShowAPYSection] = useState(false);
+  const [supplyButtonPressed, setSupplyButtonPressed] = useState(false);
+  const [estimatedAPY, setEstimatedAPY] = useState("0");
+
 
   useEffect(() => {
     if (wallet.publicKey) {
@@ -17,11 +32,64 @@ export const LendView: FC = ({}) => {
     }
   }, [wallet.publicKey, connection, getUserSOLBalance])
 
+  async function fillMax() {
+    if (wallet.publicKey) {
+      setLendAmount(String(balance));
+    } else {
+      handleErrorMessages({customMessage: "Wallet not connected. Please check."});
+      console.log('wallet not connected');
+    }
+  }
+
+  const handleLendAmountChange = (event) => {
+    const inputValue = event.target.value;
+    setLendAmount(parse(inputValue));
+    const parsedValue = parseFloat(inputValue);
+
+    if (parsedValue !== 0 && !isNaN(parsedValue)) {
+      setShowAPYSection(true);
+    } else {
+      setShowAPYSection(false);
+    }
+
+  };
+
+  useEffect(() => {
+    if (lockupPeriod !== "") {
+      handleAPYCalc();
+    }
+  }, [lendAmount, lockupPeriod]);
+
+  function handleAPYCalc() {
+    setSupplyButtonPressed(true);
+
+    // Calculate required collateral
+    const apyGenerated = Math.random() * 5 + 7;
+    setEstimatedAPY(apyGenerated.toFixed(2).toString())
+
+  }
+
+  const handleLendContinue = () => {
+    onLendViewChange(estimatedAPY, lockupPeriod, lendAmount);
+  };
+
 
   return (
+
     <div className="md:hero mx-auto p-4">
+
       <div className="md:hero-content flex flex-col">
         <div className='mt-6 self-start'>
+          {localError && (
+            <div className="alert alert-warning justify-start mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 ml-4p" fill="none"
+                   viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <span>{localError}</span>
+            </div>
+          )}
           <h1 className=" text-5xl font-bold text-base-100">
             Lend
           </h1>
@@ -44,7 +112,8 @@ export const LendView: FC = ({}) => {
                   </label>
                   <input type="text" placeholder="Enter amount"
                          className="input input-bordered w-full  bg-white border-solid border border-gray-200 text-lg
-                         focus:shadow-shrub-thin focus:border-shrub-green-50"/>
+                         focus:shadow-shrub-thin focus:border-shrub-green-50" onChange={handleLendAmountChange}
+                         value={format(lendAmount)}/>
                   <label className="label">
                     <span className="label-text-alt text-gray-500 text-sm font-light">Wallet balance: {wallet &&
 
@@ -53,8 +122,10 @@ export const LendView: FC = ({}) => {
                         </span>
 
                     }</span>
-                    <span
-                      className="label-text-alt btn-sm text-shrub-green bg-green-50 p-2 rounded-md cursor-pointer text-xs">ENTER MAX</span>
+                    <button onClick={fillMax}
+                            className="label-text-alt btn-sm text-shrub-green bg-green-50 p-2 rounded-md cursor-pointer text-xs">ENTER
+                      MAX
+                    </button>
                   </label>
                 </div>
 
@@ -68,7 +139,7 @@ export const LendView: FC = ({}) => {
                     <ul className="flex flex-row">
                       <li className="mr-4">
                         <input type="radio" id="smallest-loan" name="loan" value="smallest-loan" className="hidden peer"
-                               required/>
+                               required onChange={() => setLockupPeriod("1")}/>
                         <label htmlFor="smallest-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -77,7 +148,8 @@ export const LendView: FC = ({}) => {
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="small-loan" name="loan" value="small-loan" className="hidden peer"/>
+                        <input type="radio" id="small-loan" name="loan" value="small-loan" className="hidden peer"
+                               onChange={() => setLockupPeriod("3")}/>
                         <label htmlFor="small-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -87,7 +159,7 @@ export const LendView: FC = ({}) => {
                       </li>
                       <li className="mr-4">
                         <input type="radio" id="big-loan" name="loan" value="big-loan" className="hidden peer"
-                               required/>
+                               required onChange={() => setLockupPeriod("6")}/>
                         <label htmlFor="big-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -97,7 +169,7 @@ export const LendView: FC = ({}) => {
                       </li>
                       <li className="mr-4">
                         <input type="radio" id="biggest-loan" name="loan" value="biggest-loan" className="hidden peer"
-                               required/>
+                               required onChange={() => setLockupPeriod("12")}/>
                         <label htmlFor="biggest-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -132,17 +204,18 @@ export const LendView: FC = ({}) => {
 
 
                 {/*display estimate apy*/}
-                {/*<div className="hero-content flex-col mb-4">*/}
-                {/*  <p className="self-start text-lg">Estimated APY</p>*/}
-                {/*  <div className="card flex-shrink-0 w-full bg-teal-50 py-6">*/}
-                {/*    <div className="text-center">*/}
-                {/*      <span className="text-6xl text-shrub-green-500 font-bold">5%</span>*/}
-                {/*      <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>*/}
-                {/*      <p className="font-thin pt-3 text-lg">3 month lending term includes 5% bonus</p>*/}
-                {/*    </div>*/}
+                {supplyButtonPressed && showAPYSection && (<div className="hero-content flex-col mb-4">
+                    <p className="self-start text-lg">Estimated APY</p>
+                    <div className="card flex-shrink-0 w-full bg-teal-50 py-6">
+                      <div className="text-center">
+                        <span className="text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
+                        <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
+                        <p className="font-thin pt-3 text-lg">3 month lending term includes 5% bonus</p>
+                      </div>
 
-                {/*  </div>*/}
-                {/*</div>*/}
+                    </div>
+                  </div>
+                )}
 
                 {/*cta*/}
                 <button
@@ -150,9 +223,9 @@ export const LendView: FC = ({}) => {
                   disabled:border-shrub-grey-100
                   disabled:text-gray-50
                   disabled:border"
-                  >
-                  Supply USDC
-                </button>
+                  onClick={handleLendContinue}
+                  disabled={Number(lendAmount) <= 0|| lockupPeriod === ""}
+                >Supply USDC</button>
               </div>
             </div>
           </div>

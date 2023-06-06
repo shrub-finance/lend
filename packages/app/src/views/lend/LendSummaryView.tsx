@@ -2,12 +2,25 @@ import {FC, useEffect} from "react";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
-export const LendSummaryView: FC = ({}) => {
+interface LendSummaryViewProps {
+  lockupPeriod: string;
+  estimatedAPY: string;
+  lendAmount: string;
+}
+
+export const LendSummaryView: FC<LendSummaryViewProps> = ({lockupPeriod, estimatedAPY, lendAmount}) => {
   const wallet = useWallet();
   const {connection} = useConnection();
 
   const balance = useUserSOLBalanceStore((s) => s.balance)
   const {getUserSOLBalance} = useUserSOLBalanceStore()
+
+  const months = lockupPeriod;
+
+  // Calculate the end date by adding the number of months to the current date
+  const currentDate = new Date();
+  const dateShadow = new Date();
+  const endDate = new Date(dateShadow.setMonth(dateShadow.getMonth() + Number(months)));
 
   useEffect(() => {
     if (wallet.publicKey) {
@@ -48,7 +61,7 @@ export const LendSummaryView: FC = ({}) => {
                   Lend amount
                 </p>
                 <div className="w-full text-xl font-semibold flex flex-row">
-                  <span className="text-4xl  font-medium text-left w-[500px]">100.00 USDC</span>
+                  <span className="text-4xl  font-medium text-left w-[500px]">{lendAmount} USDC</span>
                   <img src="/usdc-logo.svg" className="w-10 inline align-baseline"/>
                 </div>
 
@@ -58,19 +71,19 @@ export const LendSummaryView: FC = ({}) => {
                 <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                   <div className="flex flex-row  justify-between">
                     <span className="">Lockup starts</span>
-                    <span>June 1, 2023</span>
+                    <span>{currentDate.toDateString()}</span>
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Lockup ends</span>
-                    <span>September 1, 2023</span>
+                    <span>{endDate.toDateString()}</span>
                   </div>
-                  <div className="flex flex-row  justify-between">
-                    <span className="">Bonus APR ✨</span>
-                    <span className="font-semibold text-shrub-green-500"> 5%</span>
-                  </div>
+                  {/*<div className="flex flex-row  justify-between">*/}
+                  {/*  <span className="">Bonus APR ✨</span>*/}
+                  {/*  <span className="font-semibold text-shrub-green-500"> 5%</span>*/}
+                  {/*</div>*/}
                   <div className="flex flex-row  justify-between">
                     <span className="">Estimated Yield</span>
-                    <span className="font-semibold text-shrub-green-500"> 6%</span>
+                    <span className="font-semibold text-shrub-green-500"> {estimatedAPY}%</span>
                   </div>
 
                   <div className="flex flex-row  justify-between">
@@ -89,7 +102,7 @@ export const LendSummaryView: FC = ({}) => {
                 <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                   <div className="flex flex-row justify-between ">
                     <span className="">Current USDC balance</span>
-                    <span>10,124.12 USDC</span>
+                    <span>{balance} USDC</span>
                   </div>
                   <div className="flex flex-row justify-between">
                     <span className="">Gas Cost</span>
