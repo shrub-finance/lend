@@ -93,24 +93,22 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ required
                                required onChange={() => setSelectedDuration("6")}/>
                         <label htmlFor="big-duration"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                          <div className="block">
                             <div className="w-full font-semibold flex flex-row text-xl">
                               <span className="w-[360px]">6 Months</span>
                               <span className="text-base">+0.5% Interest</span>
                             </div>
-                          </div>
                         </label>
                       </li>
                       <li className="mr-4">
                         <input type="radio" id="biggest-duration" name="loan" value="biggest-duration" className="hidden peer" required onChange={() => setSelectedDuration("12")}/>
                         <label htmlFor="biggest-duration"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                          <div className="block">
+
                             <div className="w-full text-xl font-semibold flex flex-row">
                               <span className="w-[380px]">12 Months</span>
                               <span className="text-base">+1% Interest</span>
                             </div>
-                          </div>
+
                         </label>
                       </li>
                     </ul>
