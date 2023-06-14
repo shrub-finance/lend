@@ -46,10 +46,10 @@ export const DashboardView: FC = ({ }) => {
             Shrub Lend
           </h1>
         </div>
-        <h4 className="md:w-full text-2x1 md:text-4xl text-center text-slate-300 my-2">
-          <p>You can do it</p>
-          <p className='text-slate-500 text-2x1 leading-relaxed'>I believe in you</p>
-        </h4>
+        {/*<h4 className="md:w-full text-2x1 md:text-4xl text-center text-slate-300 my-2">*/}
+        {/*  <p>You can do it</p>*/}
+        {/*  <p className='text-slate-500 text-2x1 leading-relaxed'>I believe in you</p>*/}
+        {/*</h4>*/}
 
         <div className="flex flex-col mt-2">
           <RequestAirdrop />
