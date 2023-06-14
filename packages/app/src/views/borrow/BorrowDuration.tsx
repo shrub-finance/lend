@@ -56,10 +56,10 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ required
                 <div className="flex-col gap-2">
                   <div className="flex flex-row text-lg ">
                     <span className="w-[500px]">Required collateral</span>
-                    <span className="hidden md:inline"><img src="/sol-logo.svg" className="w-4 inline align-baseline"/> SOL</span>
+                    <span className="hidden md:inline"><img src="/eth-logo.svg" className="w-4 inline align-middle"/> ETH</span>
                   </div>
                   <div className="card w-full py-4">
-                    <span className="text-5xl text-shrub-green-500 font-bold text-left">{requiredCollateral} SOL</span>
+                    <span className="text-5xl text-shrub-green-500 font-bold text-left">{requiredCollateral} ETH</span>
                   </div>
                 </div>
 

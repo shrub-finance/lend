@@ -66,7 +66,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollatera
                   <span className="text-4xl  font-medium text-left w-[500px]">{amount} USDC</span>
                   <img src="/usdc-logo.svg" className="w-10 inline align-baseline"/>
                 </div>
-                <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">You are borrowing <strong>{amount} USDC</strong> and giving <strong>{requiredCollateral} SOL</strong> as collateral. There is no interest, and you have one month to repay
+                <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">You are borrowing <strong>{amount} USDC</strong> and giving <strong>{requiredCollateral} ETH</strong> as collateral. There is no interest, and you have one month to repay
                   the loan. The collateral will be locked until the loan is fully paid, and then it will be returned to
                   you.</p>
 
@@ -75,7 +75,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollatera
                 <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                   <div className="flex flex-row  justify-between">
                     <span className="">Required collateral</span>
-                    <span>{requiredCollateral} SOL</span>
+                    <span>{requiredCollateral} ETH</span>
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Start Date</span>
@@ -110,11 +110,11 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollatera
                 <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                   <div className="flex flex-row justify-between ">
                     <span className="">Due today</span>
-                    <span>{requiredCollateral} SOL</span>
+                    <span>{requiredCollateral} ETH</span>
                   </div>
                   <div className="flex flex-row justify-between">
                     <span className="">Gas Cost</span>
-                    <span>0.0012 SOL</span>
+                    <span>0.0012 ETH</span>
                   </div>
                 </div>
                 {/*cta*/}

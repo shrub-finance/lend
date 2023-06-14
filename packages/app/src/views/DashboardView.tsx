@@ -62,7 +62,7 @@ export const DashboardView: FC = ({ }) => {
                     {(balance || 0).toLocaleString()}
                   </div>
                   <div className='text-slate-600 ml-2'>
-                    SOL
+                    ETH
                   </div>
                 </div>
                 <div className='text-slate-600 ml-2'>

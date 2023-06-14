@@ -118,7 +118,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                     <span className="label-text-alt text-gray-500 text-sm font-light">Wallet balance: {wallet &&
 
                       <span>
-                          {(balance || 0).toLocaleString()} SOL
+                          {(balance || 0).toLocaleString()} ETH
                         </span>
 
                     }</span>

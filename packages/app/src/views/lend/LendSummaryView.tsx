@@ -106,7 +106,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({lockupPeriod, estimat
                   </div>
                   <div className="flex flex-row justify-between">
                     <span className="">Gas Cost</span>
-                    <span>0.0012 SOL</span>
+                    <span>0.0012 ETH</span>
                   </div>
                 </div>
                 {/*cta*/}

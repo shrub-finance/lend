@@ -19,7 +19,7 @@ export const AppBar: React.FC = () => {
       {/* NavBar / Header */}
       <div className="navbar flex h-20 flex-row md:mb-2  bg-shrub-blue text-neutral-content drop-shadow-md">
         <div className="">
-          <div className="hidden sm:inline w-22 h-22 md:p-2 ml-4">
+          <div className="hidden sm:inline w-22 h-22 md:p-2 ml-4 max-w-22">
             <NavElement chiplabel="isLogo"
                         // @ts-ignore
                         label={
