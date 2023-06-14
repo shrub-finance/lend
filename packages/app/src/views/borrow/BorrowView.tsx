@@ -28,12 +28,12 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
 
-  const SOLANA_RATE = 20;  // USD-SOLANA test exchange rate
+  const SOLANA_RATE = 2000;
 
 
   useEffect(() => {
     if (wallet.publicKey) {
-      console.log(wallet.publicKey.toBase58())
+      console.log(wallet.publicKey.toBase58())s
       getUserSOLBalance(wallet.publicKey, connection)
     }
   }, [wallet.publicKey, connection, getUserSOLBalance])
