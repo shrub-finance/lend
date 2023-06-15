@@ -3,6 +3,7 @@ import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 import useTokenBalance from "../../hooks/useTokenBalance";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
+import { useSDK, useSwitchChain } from "@thirdweb-dev/react";
 
 interface BorrowViewProps {
   onBorrowViewChange: (collateral: string, interestRate, amount) => void;
@@ -17,6 +18,9 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   const [isContinuePressed, setIsContinuePressed] = useState(false);
   const [showSection, setShowSection] = useState(false);
 
+  const sdk = useSDK();
+  const switchChain = useSwitchChain();
+
   const [requiredCollateral, setRequiredCollateral] = useState("0");
     const [borrowAmount, setBorrowAmount] = useState("0");
     const [selectedInterestRate, setSelectedInterestRate] = useState("");
@@ -25,6 +29,8 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   const { getUserSOLBalance } = useUserSOLBalanceStore()
 
   const tokenBalance = useTokenBalance();
+
+  const [ethBalance , setEthBalance] = useState('')
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
 
@@ -36,7 +42,16 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
       console.log(wallet.publicKey.toBase58())
       getUserSOLBalance(wallet.publicKey, connection)
     }
-  }, [wallet.publicKey, connection, getUserSOLBalance])
+
+    async function getWalletBalance() {
+      const walletBalance = await sdk.wallet.balance();
+      setEthBalance(walletBalance.displayValue);
+    }
+
+    getWalletBalance().catch(console.error);
+
+  }, [wallet.publicKey, connection, getUserSOLBalance, sdk, switchChain])
+
 
   async function fillMax() {
     if (wallet.publicKey) {
@@ -99,6 +114,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   };
 
 
+
   return (
     <div className="md:hero mx-auto p-4">
       {/*alert*/}
@@ -144,7 +160,8 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                     <span className="label-text-alt text-gray-500 text-sm font-light">Wallet Balance:  {wallet &&
 
                         <span>
-                          {(balance || 0).toLocaleString()} ETH
+                          {( ethBalance || 0)} ETH
+                          {/*{(balance || 0).toLocaleString()} ETH*/}
                         </span>
 
                     }</span>
