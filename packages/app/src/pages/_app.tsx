@@ -9,7 +9,7 @@ import { ThirdwebProvider } from '@thirdweb-dev/react';
 require('@solana/wallet-adapter-react-ui/styles.css');
 require('../styles/globals.css');
 
-const activeChain = "goerli";
+const activeChain = "localhost";
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
     return (
@@ -17,7 +17,12 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
           <Head>
             <title>Shrub Lend</title>
           </Head>
-          <ThirdwebProvider activeChain={activeChain}>
+          <ThirdwebProvider activeChain={activeChain} dAppMeta={{
+            name: "Shrub Lend",
+            description: "DeFi Lending Simplified",
+            logoUrl: "https://shrub.finance/static/media/logo-default.3961bf67.svg",
+            url: "https://shrub.finance"
+          }}>
           <ContextProvider>
             <div className="flex flex-col h-screen">
               <Notifications />

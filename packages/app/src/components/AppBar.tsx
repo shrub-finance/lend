@@ -163,7 +163,7 @@ export const AppBar: React.FC = () => {
         <div className="navbar-end">
 
           <div className="hidden md:inline-flex align-items-center justify-items gap-6">
-            <ConnectWallet theme="dark" className="bg-shrub-green btn-sm rounded-btn font-medium text-md mr-6 p-5"/>
+            <ConnectWallet  btnTitle="Connect" className="bg-shrub-green btn-sm rounded-btn font-medium text-md mr-6 p-5"/>
           {/*<WalletMultiButtonDynamic className="bg-shrub-green btn-sm rounded-btn font-medium text-md mr-6 p-5" />*/}
         </div>
         {/*  <label*/}
