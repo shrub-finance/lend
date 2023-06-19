@@ -1,7 +1,8 @@
 {
   "name": "shrub-lend",
   "workspaces": [
-    "packages/app"
+    "packages/app",
+    "packages/hardhat"
   ],
   "npmClient": "yarn",
   "useWorkspaces": true,
@@ -10,6 +11,10 @@
     "app": "yarn workspace @shrub-lend/app dev",
     "program": "yarn workspace @shrub-lend/program dev",
     "build:app": "yarn workspace @shrub-lend/app build",
-    "build:program": "yarn workspace @shrub-lend/program build"
-  }
+    "build:program": "yarn workspace @shrub-lend/program build",
+    "test": "yarn workspace @shrub-lend/hardhat test",
+    "compile": "yarn workspace @shrub-lend/hardhat compile",
+    "contracts" : "yarn workspace @shrub-lend/hardhat deploy"
+  },
+  "packageManager": "yarn@3.6.0"
 }
