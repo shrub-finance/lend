@@ -12,9 +12,10 @@
     "program": "yarn workspace @shrub-lend/program dev",
     "build:app": "yarn workspace @shrub-lend/app build",
     "build:program": "yarn workspace @shrub-lend/program build",
+    "hardhat": "yarn workspace @shrub-lend/hardhat hardhat",
     "test": "yarn workspace @shrub-lend/hardhat test",
     "compile": "yarn workspace @shrub-lend/hardhat compile",
-    "contracts" : "yarn workspace @shrub-lend/hardhat deploy"
+    "contracts": "yarn workspace @shrub-lend/hardhat deploy"
   },
   "packageManager": "yarn@3.6.0"
 }

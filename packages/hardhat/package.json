@@ -5,6 +5,7 @@
   "scripts": {
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
+    "hardhat": "npx hardhat",
     "deploy": "npx hardhat node --hostname 0.0.0.0"
   },
   "devDependencies": {

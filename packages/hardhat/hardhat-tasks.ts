@@ -27,10 +27,10 @@ task("distributeUsdc", "distribute USDC from the deployer account")
     const usdCoinDeployment = await deployments.get('USDCoin');
     const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
 
-    const toFormatted = ethers.utils.getAddress(to);
+    const toFormatted = ethers.getAddress(to);
     const amountInUnits = amount * 10 ** 6;
 
-    assert.ok(ethers.utils.isAddress(toFormatted), "invalid to address");
+    assert.ok(ethers.isAddress(toFormatted), "invalid to address");
     assert.notEqual(toFormatted, deployer, "Address must not be deployer address")
     assert.ok(amount > 0, "Amount must be greater than 0");
     assert.equal(amountInUnits, Math.floor(amountInUnits), "Amount must have no more than 6 decimals")
@@ -41,7 +41,12 @@ task("distributeUsdc", "distribute USDC from the deployer account")
     const tx = await usdcDeployer.transfer(toFormatted, amountInUnits)
     // console.log(`${amount} USDC sent to ${toFormatted}`);
     const txReceipt = await tx.wait();
-    console.log(`${amount} USDC sent to ${toFormatted} in block number ${txReceipt.blockNumber} txid ${txReceipt.transactionHash}`);
+    if (!txReceipt) {
+        console.log('timeout');
+        return;
+    }
+    const transaction = await tx.getTransaction();
+    console.log(`${amount} USDC sent to ${toFormatted} in block number ${txReceipt.blockNumber} txid ${txReceipt.hash}`);
   })
 
 task("testLendingPlatform", "Setup an environment for development")
@@ -59,19 +64,13 @@ task("erc20Details", "get the details of an ERC20")
     const address: Address = taskArgs.address;
 
     const {ethers, deployments, getNamedAccounts} = env;
-    const { deployer } = await getNamedAccounts();
-    // const usdCoinDeployment = await deployments.get('USDCoin');
-    // const usdCoinFactory = await ethers.getContractFactory('USDCoin');
-    const erc20Factory = await ethers.getContractFactory('ERC20');
 
-    const addressFormatted = ethers.utils.getAddress(address);
+    const addressFormatted = ethers.getAddress(address);
 
-    assert.ok(ethers.utils.isAddress(addressFormatted), "invalid to address");
+    assert.ok(ethers.isAddress(addressFormatted), "invalid to address");
 
+    const erc20 = await ethers.getContractAt("ERC20", addressFormatted);
 
-    const erc20 = erc20Factory.attach(addressFormatted);
-
-    // console.log(`${amount} USDC sent to ${toFormatted}`);
     const symbol = await erc20.symbol();
     const name = await erc20.name();
     const totalSupply = await erc20.totalSupply();
