@@ -12,6 +12,7 @@ const config: HardhatUserConfig = {
     account2: 2,
     account3: 3,
   },
+
 };
 
 export default config;
