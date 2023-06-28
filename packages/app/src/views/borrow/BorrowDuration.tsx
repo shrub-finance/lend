@@ -5,9 +5,10 @@ import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 interface BorrowDurationViewProps {
   requiredCollateral: string;
   onDurationChange: (duration: string) => void;
+  onBackDuration: () => void;
 }
 
-export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ requiredCollateral, onDurationChange }) => {
+export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDuration, requiredCollateral, onDurationChange }) => {
 
   const [selectedDuration, setSelectedDuration] = useState("");
 
@@ -35,7 +36,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ required
         <div className='mt-6 self-start'>
 
           <h1 className=" text-4xl font-bold text-base-100">
-            <button
+            <button onClick={onBackDuration}
               className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600">
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" className="w-6 grow-0 order-0 flex-none ml-[16px] mt-[4px]">
                 <path d="M20 12H4M4 12L10 18M4 12L10 6" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

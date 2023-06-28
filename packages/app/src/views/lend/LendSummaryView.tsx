@@ -6,9 +6,10 @@ interface LendSummaryViewProps {
   lockupPeriod: string;
   estimatedAPY: string;
   lendAmount: string;
+  onBackLend: () => void;
 }
 
-export const LendSummaryView: FC<LendSummaryViewProps> = ({lockupPeriod, estimatedAPY, lendAmount}) => {
+export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, lockupPeriod, estimatedAPY, lendAmount}) => {
   const wallet = useWallet();
   const {connection} = useConnection();
 
@@ -36,7 +37,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({lockupPeriod, estimat
         <div className='mt-6 self-start'>
 
           <h1 className=" text-4xl font-medium text-base-100">
-            <button
+            <button onClick={onBackLend}
               className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600">
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
                    className="w-6 grow-0 order-0 flex-none ml-[16px] mt-[4px]">
