@@ -114,7 +114,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, lockupPer
                 <button
                   className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4  ">Deposit
                 </button>
-                <button
+                <button onClick={onBackLend}
                   className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel
                 </button>
               </div>

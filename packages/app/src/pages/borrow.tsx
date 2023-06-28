@@ -37,6 +37,11 @@ const Home: NextPage = (props) => {
     }
   };
 
+  const handleCancel = () => {
+    setView("borrow");
+    
+  };
+
   return (
     <div>
       <Head>
@@ -49,7 +54,7 @@ const Home: NextPage = (props) => {
       <div>
         {view === "borrow" &&<BorrowView onBorrowViewChange={handleBorrowViewChange} />}
         {view === "duration" &&<BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleDurationChange} onBackDuration={handleBack}/>}
-        {view === "summary" && <BorrowSummaryView duration={duration} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount} onBack={handleBack}/>}
+        {view === "summary" && <BorrowSummaryView duration={duration} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount} onBack={handleBack} onCancel={handleCancel}/>}
       </div>
     </  div>
   );

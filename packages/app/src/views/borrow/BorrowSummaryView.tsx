@@ -8,9 +8,10 @@ interface BorrowSummaryViewProps {
   interestRate: string;
   amount: string;
   onBack: () => void;
+  onCancel: () => void;
 }
 
-export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, requiredCollateral, duration, interestRate, amount}) => {
+export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel, requiredCollateral, duration, interestRate, amount}) => {
   const wallet = useWallet();
   const {connection} = useConnection();
 
@@ -121,7 +122,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, requiredC
                 <button
                   className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4  ">Deposit
                 </button>
-                <button
+                <button onClick={onCancel}
                   className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel
                 </button>
               </div>
