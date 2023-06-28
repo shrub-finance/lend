@@ -1,21 +1,23 @@
 import {FC, useEffect, useState} from "react";
-import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
+import {useAddress, useBalance, useConnectedWallet, useContract, useContractRead} from "@thirdweb-dev/react";
+
+import {lendingPlatformAddress, lendingPlatformAbi, usdcAddress} from "../../utils/contracts";
+import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 
 interface LendViewProps {
   onLendViewChange: (estimatedAPY: string, lockupPeriod: string, lendAmount: string) => void;
 }
 
 export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
-  const wallet = useWallet();
-  const {connection} = useConnection();
+  const w = useConnectedWallet();
+  const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
+  const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
+  const walletAddress = useAddress();
 
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
 
-  const balance = useUserSOLBalanceStore((s) => s.balance)
-  const {getUserSOLBalance} = useUserSOLBalanceStore()
   const [lendAmount, setLendAmount] = useState("0");
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
@@ -24,17 +26,21 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const [supplyButtonPressed, setSupplyButtonPressed] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
 
+  const {
+    contract: lendingPlatform,
+    isLoading: lendingPlatformIsLoading,
+    error: lendingPlatformError
+  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
+  // const {
+  //   data: totalAvailableLiquidityOneYearFromNow,
+  //   isLoading: totalAvailableLiquidityOneYearFromNowIsLoading,
+  //   error: totalAvailableLiquidityOneYearFromNowError
+  // } = useContracteContractRead(lendingPlatform, 'getTotalAvailableLiquidity', [toEthDate(oneYearFromNow)])
 
-  useEffect(() => {
-    if (wallet.publicKey) {
-      console.log(wallet.publicKey.toBase58())
-      getUserSOLBalance(wallet.publicKey, connection)
-    }
-  }, [wallet.publicKey, connection, getUserSOLBalance])
 
   async function fillMax() {
-    if (wallet.publicKey) {
-      setLendAmount(String(balance));
+    if (!usdcBalanceIsLoading) {
+      setLendAmount(usdcBalance.displayValue);
     } else {
       handleErrorMessages({customMessage: "Wallet not connected. Please check."});
       console.log('wallet not connected');
@@ -115,10 +121,10 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                          focus:shadow-shrub-thin focus:border-shrub-green-50" onChange={handleLendAmountChange}
                          value={format(lendAmount)}/>
                   <label className="label">
-                    <span className="label-text-alt text-gray-500 text-sm font-light">Wallet balance: {wallet &&
+                    <span className="label-text-alt text-gray-500 text-sm font-light">Wallet balance: {!usdcBalanceIsLoading &&
 
                       <span>
-                          {(balance || 0).toLocaleString()} ETH
+                          {usdcBalance.displayValue} USDC
                         </span>
 
                     }</span>

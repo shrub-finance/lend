@@ -75,6 +75,21 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     // ETH price with 8 decimal places
     uint public ethPrice = 2000 * 10 ** 8;
 
+    function getEthPrice() public view returns (uint256) {
+//        return 2000 * 10 ** 8;
+        // 8 decimals ($1852.11030001)
+        return 185211030001;
+    }
+
+    function maxLoan(uint ltv, uint ethCollateral) public view returns (uint256) {
+        // ethCollateral - 18 decimals
+        // getEthPrice - 8 decimals
+        require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
+        uint valueOfEth = ethCollateral * getEthPrice(); // value of eth in usd with 26 decimals
+        uint maxLoan = valueOfEth * ltv / 10 ** 22; // remove 20 decimals to get back to 6 decimals of USDC
+        return maxLoan;
+    }
+
     // Get the latest USD price of aETH
     // TODO: Hook this up with chainlink
     // There are 8 decimal places
@@ -284,7 +299,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // _collateral 18 decimals
         // _amount 6 decimals
         uint ltvCalc = (_amount * 10 ** (18 + 8 - 6 + 2)) /
-            (ethPrice * _collateral);
+            (getEthPrice() * _collateral);
         require(
             ltvCalc <= _ltv,
             "Insufficient collateral provided for specified ltv"

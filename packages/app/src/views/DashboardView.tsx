@@ -5,23 +5,18 @@ import {FC, useEffect, useState} from 'react';
 import {RequestAirdrop} from "../components/RequestAirdrop";
 import {useConnectedWallet, useBalance, useAddress, useContract, useContractRead} from "@thirdweb-dev/react";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
-import * as contracts from "../../../hardhat/deployments/deployed-contracts.json"
-import {ethers} from "ethers";
 
 // Custom
 import {toEthDate, fromEthDate} from "../utils/ethMethods";
+import { usdcAddress, lendingPlatformAddress, lendingPlatformAbi } from "../utils/contracts";
 
-// Your smart contract address
-const tokenAddress = contracts.contracts.USDCoin.address;
-const lendingPlatformAddress = contracts.contracts.LendingPlatform.address;
-const lendingPlatformAbi = contracts.contracts.LendingPlatform.abi;
 const now = new Date();
 const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
 
 export const DashboardView: FC = ({}) => {
     const w = useConnectedWallet();
 
-    const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(tokenAddress);
+    const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
     const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
     const walletAddress = useAddress();
     const {
@@ -66,30 +61,6 @@ export const DashboardView: FC = ({}) => {
         }
     })
 
-    // useEffect(() => {
-    //   console.log('running useEffect');
-    //   if (w && w.isConnected()) {
-    //     async function shrubBalanceHandler() {
-    //       // console.log('calculating balance');
-    //       // const fetchedAddress = await w.getAddress();
-    //       // const balance = await w.balance();
-    //       // console.log(balance);
-    //       // console.log(usdcBalance, usdcBalanceIsLoading);
-    //       // if (fetchedAddress !== address) {
-    //       //   setAddress(fetchedAddress);
-    //       // }
-    //       // if (ethBalance !== balance.displayValue) {
-    //       //   setEthBalance(balance.displayValue);
-    //       // }
-    //     }
-    //
-    //
-    //     shrubBalanceHandler().catch(console.error);
-    //
-    //   }
-    // }, [w])
-
-
     return (
 
         <div className="md:hero mx-auto p-4">
@@ -99,10 +70,6 @@ export const DashboardView: FC = ({}) => {
                         Shrub Lend
                     </h1>
                 </div>
-                {/*<h4 className="md:w-full text-2x1 md:text-4xl text-center text-slate-300 my-2">*/}
-                {/*  <p>You can do it</p>*/}
-                {/*  <p className='text-slate-500 text-2x1 leading-relaxed'>I believe in you</p>*/}
-                {/*</h4>*/}
 
                 <div className="flex flex-col mt-2">
                     <RequestAirdrop/>

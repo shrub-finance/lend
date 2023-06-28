@@ -1,61 +1,73 @@
 import {FC, useEffect, useState} from "react";
-import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
-import useTokenBalance from "../../hooks/useTokenBalance";
+// import {useConnection, useWallet} from "@solana/wallet-adapter-react";
+// import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
+// import useTokenBalance from "../../hooks/useTokenBalance";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
-import { useSDK, useSwitchChain } from "@thirdweb-dev/react";
+import {useBalance, useSDK, useSwitchChain} from "@thirdweb-dev/react";
+import {usdcAddress} from "../../utils/contracts";
+import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 
 interface BorrowViewProps {
   onBorrowViewChange: (collateral: string, interestRate, amount) => void;
 }
 
 export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) => {
-  const wallet = useWallet();
-  const { connection } = useConnection();
+  // const wallet = useWallet();
+  // const { connection } = useConnection();
 
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [isContinuePressed, setIsContinuePressed] = useState(false);
   const [showSection, setShowSection] = useState(false);
 
-  const sdk = useSDK();
-  const switchChain = useSwitchChain();
+
+  const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
+  const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
+
+  // const sdk = useSDK();
+  // const switchChain = useSwitchChain();
 
   const [requiredCollateral, setRequiredCollateral] = useState("0");
     const [borrowAmount, setBorrowAmount] = useState("0");
     const [selectedInterestRate, setSelectedInterestRate] = useState("");
 
-  const balance = useUserSOLBalanceStore((s) => s.balance)
-  const { getUserSOLBalance } = useUserSOLBalanceStore()
+  // const balance = useUserSOLBalanceStore((s) => s.balance)
+  // const { getUserSOLBalance } = useUserSOLBalanceStore()
 
-  const tokenBalance = useTokenBalance();
+  // const tokenBalance = useTokenBalance();
 
-  const [ethBalance , setEthBalance] = useState('')
+  // const [ethBalance , setEthBalance] = useState('')
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
 
   const SOLANA_RATE = 2000;
 
 
-  useEffect(() => {
-    if (wallet.publicKey) {
-      console.log(wallet.publicKey.toBase58())
-      getUserSOLBalance(wallet.publicKey, connection)
-    }
-
-    async function getWalletBalance() {
-      const walletBalance = await sdk.wallet.balance();
-      setEthBalance(walletBalance.displayValue);
-    }
-
-    getWalletBalance().catch(console.error);
-
-  }, [wallet.publicKey, connection, getUserSOLBalance, sdk, switchChain])
+  // useEffect(() => {
+  //   // if (wallet.publicKey) {
+  //   //   console.log(wallet.publicKey.toBase58())
+  //   //   getUserSOLBalance(wallet.publicKey, connection)
+  //   // }
+  //
+  //   async function getWalletBalance() {
+  //     const walletBalance = await sdk.wallet.balance();
+  //     setEthBalance(walletBalance.displayValue);
+  //   }
+  //
+  //   getWalletBalance().catch(console.error);
+  //
+  // }, [wallet.publicKey, connection, getUserSOLBalance, sdk, switchChain])
 
 
   async function fillMax() {
-    if (wallet.publicKey) {
-      setBorrowAmount(String(tokenBalance));}
+    // if (wallet.publicKey) {
+    //   setBorrowAmount(String(tokenBalance));}
+    // else{
+    //   handleErrorMessages({ customMessage: "Wallet not connected. Please check." });
+    //   console.log('wallet not connected');
+    // }
+    if (!ethBalanceIsLoading) {
+      setBorrowAmount(ethBalance.displayValue);}
     else{
       handleErrorMessages({ customMessage: "Wallet not connected. Please check." });
       console.log('wallet not connected');
@@ -157,10 +169,10 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                          value={format(borrowAmount)}/>
 
                   <label className="label">
-                    <span className="label-text-alt text-gray-500 text-sm font-light">Wallet Balance:  {wallet &&
+                    <span className="label-text-alt text-gray-500 text-sm font-light">Wallet Balance:  {!ethBalanceIsLoading &&
 
                         <span>
-                          {( ethBalance || 0)} ETH
+                          {( ethBalance.displayValue || 0)} ETH
                           {/*{(balance || 0).toLocaleString()} ETH*/}
                         </span>
 

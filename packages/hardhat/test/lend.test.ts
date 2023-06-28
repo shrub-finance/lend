@@ -158,7 +158,6 @@ describe('LendingPlatform', () => {
 
   });
 
-
   describe('deposit', async () => {
     let lender1LendingPlatform: LendingPlatform;
     let usdcLender1: USDCoin;
@@ -352,10 +351,7 @@ describe('LendingPlatform', () => {
     });
   });
 
-
-
-
-  describe.only('takeLoan', () => {
+  describe('takeLoan', () => {
     const timestamps = [1767225600, 1769904000, 1772323200];
     let lender1Usdc: USDCoin;
     let lender2Usdc: USDCoin;
@@ -636,6 +632,17 @@ describe('LendingPlatform', () => {
       it('should create the loan for march', async() => {});
       it('should create the loan for jan even if some of the jan liquidity is consumed for a feb loan', async() => {});
       it('should reject if all of the possible jan liquidity is used up for jan loans', async () => {});
+    })
+  })
+
+  describe('maxLoan', () => {
+    it('should reject invalid ltv', async () => {
+      await expect(lendingPlatform.maxLoan(5, parseEther('1'))).to.be.revertedWith("Invalid LTV");
+    })
+
+    it('should calculate the correct value for 50% LTV loan', async () => {
+      const maxLoan = await lendingPlatform.maxLoan(50, parseEther('1'));
+      expect(maxLoan).to.equal(parseUnits('926.05515', 6));
     })
   })
 });
