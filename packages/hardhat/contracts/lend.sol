@@ -90,6 +90,18 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         return maxLoan;
     }
 
+    function requiredCollateral(uint ltv, uint usdcLoanValue) public view returns (uint256) {
+        // returns collateral required in wei
+        // usdcLoanValue 6 decimals
+        // suppliment by adding 22 (6 + 22 - 2 - 8 = 18)
+        // ltv 2 decimal
+        // getEthPrice 8 decimal
+        // return 18 decimals
+        require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
+        uint valueOfEthRequied = usdcLoanValue * 10 ** 22 / ltv; // time 10 ** 2 to convert to percentage and 10 ** 12 to convert to 8 decimals
+        return valueOfEthRequied / getEthPrice();
+    }
+
     // Get the latest USD price of aETH
     // TODO: Hook this up with chainlink
     // There are 8 decimal places

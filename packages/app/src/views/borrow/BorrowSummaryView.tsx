@@ -87,7 +87,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollatera
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Interest Rate ✨</span>
-                    <span className="font-semibold text-shrub-green-500"> {interestRate}</span>
+                    <span className="font-semibold text-shrub-green-500"> {interestRate}%</span>
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span className="">Wallet</span>
