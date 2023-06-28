@@ -4130,6 +4130,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@thirdweb-dev/chains@npm:0.1.24":
+  version: 0.1.24
+  resolution: "@thirdweb-dev/chains@npm:0.1.24"
+  checksum: de941969bbcae7ae803f4db96f825e5645cdea1066184f6b1de5fe54ca7db91aaf1b392ebd731de9157aefd0efac15d592447a17f599313f3a361e35d3da2633
+  languageName: node
+  linkType: hard
+
 "@thirdweb-dev/contracts-js@npm:1.3.5":
   version: 1.3.5
   resolution: "@thirdweb-dev/contracts-js@npm:1.3.5"
@@ -4141,10 +4148,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@thirdweb-dev/contracts-js@npm:1.3.7":
+  version: 1.3.7
+  resolution: "@thirdweb-dev/contracts-js@npm:1.3.7"
+  dependencies:
+    "@thirdweb-dev/contracts": 3.5.9
+  peerDependencies:
+    ethers: ^5
+  checksum: 1f56566caffc579ea7dbaa1b5f97bfbff29ec2d84f45a188446a000d53ad141e79a7a216bd9ef36631e270590d948799d8c7d118b4104316c6a59f2557d50819
+  languageName: node
+  linkType: hard
+
 "@thirdweb-dev/contracts@npm:3.5.5":
   version: 3.5.5
   resolution: "@thirdweb-dev/contracts@npm:3.5.5"
   checksum: 9827254f0b5e40881e4ec3c7fd02d1e9e120135585e45ff041dc616005ce992b1582a81f2454fb762e27c9b0e9219bc4218e0f772309b28dcdd9318c9f9aad3a
+  languageName: node
+  linkType: hard
+
+"@thirdweb-dev/contracts@npm:3.5.9":
+  version: 3.5.9
+  resolution: "@thirdweb-dev/contracts@npm:3.5.9"
+  checksum: 6e6f3169404ca866e5d0a0699ebf5fcfd2210041f0797ad6d7e1ad7b1be0cef86cef4b508fde9de246f7949227a226a57e1e57401b44c2b18de212836ac12bf9
   languageName: node
   linkType: hard
 
@@ -4231,7 +4256,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@thirdweb-dev/sdk@npm:3.10.22, @thirdweb-dev/sdk@npm:^3.10.21":
+"@thirdweb-dev/sdk@npm:3.10.22":
   version: 3.10.22
   resolution: "@thirdweb-dev/sdk@npm:3.10.22"
   dependencies:
@@ -4283,6 +4308,58 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@thirdweb-dev/sdk@npm:^3.10.21":
+  version: 3.10.25
+  resolution: "@thirdweb-dev/sdk@npm:3.10.25"
+  dependencies:
+    "@thirdweb-dev/chains": 0.1.24
+    "@thirdweb-dev/contracts-js": 1.3.7
+    "@thirdweb-dev/generated-abis": 0.0.1
+    "@thirdweb-dev/storage": 1.1.5
+    abitype: ^0.2.5
+    bn.js: ^5.2.1
+    bs58: ^5.0.0
+    buffer: ^6.0.3
+    cross-fetch: ^3.1.5
+    eventemitter3: ^5.0.0
+    fast-deep-equal: ^3.1.3
+    merkletreejs: ^0.2.24
+    tiny-invariant: ^1.2.0
+    tweetnacl: ^1.0.3
+    uuid: ^9.0.0
+    yaml: ^2.1.1
+    zod: ^3.20.2
+  peerDependencies:
+    "@aws-sdk/client-secrets-manager": ^3.215.0
+    "@metaplex-foundation/js": ^0.17.6
+    "@metaplex-foundation/mpl-token-metadata": ^2.3.3
+    "@project-serum/anchor": ^0.25.0
+    "@solana/spl-token": ^0.3.5
+    "@solana/web3.js": ^1.62.0
+    ethers: ^5
+    ethers-aws-kms-signer: ^1.3.2
+    zksync-web3: ^0.14.3
+  peerDependenciesMeta:
+    "@aws-sdk/client-secrets-manager":
+      optional: true
+    "@metaplex-foundation/js":
+      optional: true
+    "@metaplex-foundation/mpl-token-metadata":
+      optional: true
+    "@project-serum/anchor":
+      optional: true
+    "@solana/spl-token":
+      optional: true
+    "@solana/web3.js":
+      optional: true
+    ethers-aws-kms-signer:
+      optional: true
+    zksync-web3:
+      optional: true
+  checksum: 0e71322528b0f6df4d6d5eb4fcbb65015589e1f93557128b92eeea91826f46525ebcb052c09db0eaae24e4f5f85c1e76a298f40488e50e055958b2da442ec4f2
+  languageName: node
+  linkType: hard
+
 "@thirdweb-dev/storage@npm:1.1.4":
   version: 1.1.4
   resolution: "@thirdweb-dev/storage@npm:1.1.4"
@@ -4292,6 +4369,18 @@ __metadata:
     ipfs-unixfs-importer: ^7.0.1
     uuid: ^9.0.0
   checksum: 3b4f9f6e8edcf97ad5e8386387d02c881d636bfc58ff6f1e6abf885528d112b969ec4ed1406a30c339f206f483f2c1d9565fea50a778c6213d18d85dc3a4c46c
+  languageName: node
+  linkType: hard
+
+"@thirdweb-dev/storage@npm:1.1.5":
+  version: 1.1.5
+  resolution: "@thirdweb-dev/storage@npm:1.1.5"
+  dependencies:
+    cross-fetch: ^3.1.5
+    form-data: ^4.0.0
+    ipfs-unixfs-importer: ^7.0.1
+    uuid: ^9.0.0
+  checksum: ae02cb0888cc9aa2b3292f0db51366d64eddb456fd76773a0dbe81c0b98ce0a4faf38fbcea06b0d397b93df9efb95e4cb5a87f84cfa6f3bbf8762a18bc202006
   languageName: node
   linkType: hard
 

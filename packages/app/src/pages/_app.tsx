@@ -9,7 +9,7 @@ import { ThirdwebProvider } from '@thirdweb-dev/react';
 require('@solana/wallet-adapter-react-ui/styles.css');
 require('../styles/globals.css');
 
-const activeChain = "mumbai";
+const activeChain = "localhost";
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
     return (
