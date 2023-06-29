@@ -2,18 +2,18 @@ import {FC, useEffect} from "react";
 import {useAddress, useBalance, useContract} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
-import {truncateEthAddress} from "../../utils/ethMethods";
+import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods";
 // import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 // import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
 interface LendSummaryViewProps {
-  lockupPeriod: string;
+  timestamp: number;
   estimatedAPY: string;
   lendAmount: string;
   onBackLend: () => void;
 }
 
-export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, lockupPeriod, estimatedAPY, lendAmount}) => {
+export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp, estimatedAPY, lendAmount}) => {
   // const wallet = useWallet();
   // const {connection} = useConnection();
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
@@ -28,12 +28,13 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, lockupPer
   // const balance = useUserSOLBalanceStore((s) => s.balance)
   // const {getUserSOLBalance} = useUserSOLBalanceStore()
 
-  const months = lockupPeriod;
+  // const months = lockupPeriod;
 
   // Calculate the end date by adding the number of months to the current date
   const currentDate = new Date();
   const dateShadow = new Date();
-  const endDate = new Date(dateShadow.setMonth(dateShadow.getMonth() + Number(months)));
+  // const endDate = new Date(dateShadow.setMonth(dateShadow.getMonth() + Number(months)));
+  const endDate = fromEthDate(timestamp);
 
   // useEffect(() => {
   //   if (wallet.publicKey) {
