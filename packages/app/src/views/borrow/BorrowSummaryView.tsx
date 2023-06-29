@@ -11,9 +11,11 @@ interface BorrowSummaryViewProps {
     duration: string;
     interestRate: string;
     amount: string;
+  onBack: () => void;
+  onCancel: () => void;
 }
 
-export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollateral, duration, interestRate, amount}) => {
+export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel, requiredCollateral, duration, interestRate, amount}) => {
     // const wallet = useWallet();
     // const {connection} = useConnection();
 
@@ -60,7 +62,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollatera
                     <h1 className=" text-4xl font-medium text-base-100">
 
                         <button
-                            className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600">
+                            className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600"onClick={onBack}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
                                  className="w-6 grow-0 order-0 flex-none ml-[16px] mt-[4px]">
                                 <path d="M20 12H4M4 12L10 18M4 12L10 6" stroke="black" strokeWidth="2"
@@ -168,7 +170,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollatera
                                 >
                                     Borrow
                                 </Web3Button>
-                                <button
+                                <button onClick={onCancel}
                                     className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel
                                 </button>
                             </div>
