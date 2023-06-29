@@ -26,7 +26,7 @@ const Home: NextPage = (props) => {
   };
 
   return (
-    <div>
+    <>
       <Head>
         <title>Shrub Lend</title>
         <meta
@@ -34,12 +34,24 @@ const Home: NextPage = (props) => {
           content="Shrub Lend"
         />
       </Head>
-      <div>
-        {!requiredCollateral &&<BorrowView onBorrowViewChange={handleBorrowViewChange} />}
-        {requiredCollateral && !duration &&<BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleDurationChange}/>}
-        {duration && <BorrowSummaryView duration={duration} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount}/>}
+      <div className="p-40 text-center ">
+
+            {/*heading*/}
+            <p className=" text-5xl font-bold text-base-100 w-100 leading-relaxed font-semibold">
+              Borrow or lend USDC
+            </p>
+        <p className=" text-5xl font-bold text-base-100 w-100 font-semibold ">
+          with <span className="text-shrub-green font-medium">fixed</span> rates
+        </p>
+
+        <p className=" text-5xl font-bold text-base-100 w-100 leading-relaxed font-light mb-10">
+          (0 -8% APR)
+        </p>
+
+        <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl">Get Started</button>
+
       </div>
-    </  div>
+    </>
   );
 };
 
