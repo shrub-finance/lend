@@ -34,7 +34,7 @@ const Lend: NextPage = (props) => {
           content="Lend"
         />
       </Head>
-      {!apy || view === "lend" && <LendView onLendViewChange={handleLendViewChange}/>}
+      {!apy && view === "lend" && <LendView onLendViewChange={handleLendViewChange}/>}
       {apy && view === "summary" && <LendSummaryView lendAmount={supply} estimatedAPY={apy} lockupPeriod={lockPeriod} onBackLend={handleBackLend}/>}
     </div>
   );
