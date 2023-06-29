@@ -155,7 +155,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                                 {/*    className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"*/}
                                 {/*    onClick={handleTakeLoan}>Deposit*/}
                                 {/*</button>*/}
-                                <Web3Button contractAddress={lendingPlatformAddress}
+                                <Web3Button contractAddress={lendingPlatformAddress} className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
 
                                     // uint256 _amount, // Amount of USDC with 6 decimal places
                                     // uint256 _collateral, // Amount of ETH collateral with 18 decimal places

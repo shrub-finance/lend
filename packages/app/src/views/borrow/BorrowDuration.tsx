@@ -121,7 +121,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
                 {/*cta*/}
                 <button onClick={handleDurationContinue}
-                  className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green normal-case text-xl hover:bg-shrub-green-500">Continue
+                  className="btn btn-block bg-shrub-green border-0 normal-case text-xl hover:bg-shrub-green-500">Continue
                 </button>
               </div>
             </div>
