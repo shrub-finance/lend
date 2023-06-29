@@ -5,6 +5,7 @@ import {useAddress, useContract, useContractWrite, Web3Button} from "@thirdweb-d
 import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
 import {fromEthDate, interestToLTV, toEthDate, truncateEthAddress} from "../../utils/ethMethods";
 import {ethers} from "ethers";
+import {useRouter} from "next/router";
 
 interface BorrowSummaryViewProps {
     requiredCollateral: string;
@@ -21,6 +22,13 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
 
     // const balance = useUserSOLBalanceStore((s) => s.balance)
     // const {getUserSOLBalance} = useUserSOLBalanceStore()
+
+    const router = useRouter();
+
+    const handleViewDash = () => {
+        router.push('/dashboard');
+    };
+
 
     const walletAddress = useAddress();
     const {
@@ -261,7 +269,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                                 >
                                     Borrow
                                 </Web3Button>
-                                <button onClick={onCancel}
+                                <button onClick={handleViewDash}
                                         className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View in Dashboard
                                 </button>
                             </div>
