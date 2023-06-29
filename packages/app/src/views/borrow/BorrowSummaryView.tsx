@@ -158,7 +158,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollatera
                                     // uint256 _ltv,
                                     // uint256 _timestamp
                                             action={() => mutateAsyncTakeLoan({ args: [
-                                                    amount,
+                                                    ethers.utils.parseUnits(amount, 6),
                                                     ethers.utils.parseEther(requiredCollateral),
                                                     interestToLTV[interestRate],
                                                     toEthDate(new Date("2023-08-01"))

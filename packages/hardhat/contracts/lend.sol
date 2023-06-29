@@ -116,22 +116,40 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     // Get the available liquidity for loans across all pools
-    function getTotalAvailableLiquidity(
+//    function getTotalAvailableLiquidity(
+//        uint _timestamp
+//    ) public view returns (uint256 totalLiquidity) {
+//        console.log("Running getTotalAvailableLiquidity");
+//        for (uint i = 0; i < activePools.length; i++) {
+//            if (activePools[i] < _timestamp) {
+//                continue; // Don't count liquidity that is in a pool that has a timestamp before what it requested
+//            }
+//            console.log(pools[activePools[i]].totalLiquidity);
+//            console.log(totalLoans[activePools[i]]);
+//            totalLiquidity += (pools[activePools[i]].totalLiquidity -
+//                totalLoans[activePools[i]]);
+//        }
+//        return totalLiquidity;
+//    }
+
+    function getTotalLiquidityConsumed(
         uint _timestamp
-    ) public view returns (uint256 totalLiquidity) {
+    ) public view returns (uint256 totalLiquidityConsumed) {
+        console.log("Running getTotalLiquidityConsumed");
         for (uint i = 0; i < activePools.length; i++) {
             if (activePools[i] < _timestamp) {
                 continue; // Don't count liquidity that is in a pool that has a timestamp before what it requested
             }
-            totalLiquidity += (pools[activePools[i]].totalLiquidity -
-                totalLoans[activePools[i]]);
+            console.log(totalLoans[activePools[i]]);
+            totalLiquidityConsumed += totalLoans[activePools[i]];
         }
-        return totalLiquidity;
+        return totalLiquidityConsumed;
     }
 
     function getTotalLiquidity(
         uint _timestamp
     ) public view returns (uint256 totalLiquidity) {
+        console.log("Running getTotalLiquidity");
         for (uint i = 0; i < activePools.length; i++) {
             if (activePools[i] < _timestamp) {
                 continue; // Don't count liquidity that is in a pool that has a timestamp before what it requested
@@ -306,6 +324,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Ensure that it is a valid pool
         require(validPool(_timestamp), "Not a valid pool");
 
+        uint a = _amount * 10 ** (18 + 8 - 6 + 2);
+        uint b = getEthPrice() * _collateral;
+
+        console.log(a);
+        console.log(b);
+
         // Ensure that the calculated ltv of the loan is less than or equal to the specified ltv
         // ethPrice 8 decimals
         // _collateral 18 decimals
@@ -318,9 +342,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         );
 
         // Check if the loan amount is less than or equal to the liquidity across pools
-        uint256 totalAvailableLiquidity = getTotalAvailableLiquidity(
-            _timestamp
-        );
+        uint256 totalAvailableLiquidity = getTotalLiquidity(_timestamp) - getTotalLiquidityConsumed(_timestamp);
+
+        console.log("---");
+        console.log(_amount);
+        console.log(totalAvailableLiquidity);
+
+
         require(
             _amount <= totalAvailableLiquidity,
             "Insufficient liquidity across pools"
@@ -344,6 +372,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         loan.APY = getAPYBasedOnLTV(_ltv);
 
         uint totalLiquidity = getTotalLiquidity(_timestamp);
+
+        console.log(totalLiquidity);
 
         // Loop through the active pools and determine the contribution of each
         for (uint i = 0; i < activePools.length; i++) {
