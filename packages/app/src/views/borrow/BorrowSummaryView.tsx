@@ -1,27 +1,28 @@
 import {FC, useEffect} from "react";
 // import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
-import {useContract, useContractWrite, Web3Button} from "@thirdweb-dev/react";
+import {useAddress, useContract, useContractWrite, Web3Button} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
-import {interestToLTV, toEthDate} from "../../utils/ethMethods";
+import {fromEthDate, interestToLTV, toEthDate, truncateEthAddress} from "../../utils/ethMethods";
 import {ethers} from "ethers";
 
 interface BorrowSummaryViewProps {
     requiredCollateral: string;
-    duration: string;
+    timestamp: number;
     interestRate: string;
     amount: string;
   onBack: () => void;
   onCancel: () => void;
 }
 
-export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel, requiredCollateral, duration, interestRate, amount}) => {
+export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel, requiredCollateral, timestamp, interestRate, amount}) => {
     // const wallet = useWallet();
     // const {connection} = useConnection();
 
     // const balance = useUserSOLBalanceStore((s) => s.balance)
     // const {getUserSOLBalance} = useUserSOLBalanceStore()
 
+    const walletAddress = useAddress();
     const {
         contract: lendingPlatform,
         isLoading: lendingPlatformIsLoading,
@@ -43,12 +44,13 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
     //   }
     // }, [wallet.publicKey, connection, getUserSOLBalance])
 
-    const numberOfMonths = duration;
+    // const numberOfMonths = duration;
 
     // Calculate the end date by adding the number of months to the current date
     const currentDate = new Date();
     const dateShadow = new Date();
-    const endDate = new Date(dateShadow.setMonth(dateShadow.getMonth() + Number(numberOfMonths)));
+    const endDate = fromEthDate(timestamp);
+    // const endDate = new Date(dateShadow.setMonth(dateShadow.getMonth() + Number(numberOfMonths)));
 
     async function handleTakeLoan() {
 
@@ -120,12 +122,12 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                                     </div>
                                     <div className="flex flex-row  justify-between">
                                         <span className="">Wallet</span>
-                                        <span>0x5464e8...36200<img src="/copy.svg"
+                                        <span>{truncateEthAddress(walletAddress)}<img src="/copy.svg"
                                                                    className="w-6 hidden md:inline align-baseline ml-2"/> </span>
                                     </div>
                                     <div className="flex flex-row  justify-between">
                                         <span className="">Contract Address</span>
-                                        <span>0x78s44e8...32sd0<img src="/copy.svg"
+                                        <span>{truncateEthAddress(lendingPlatformAddress)}<img src="/copy.svg"
                                                                     className="w-6 hidden md:inline align-baseline ml-2"/> </span>
                                     </div>
                                     {/*<div className="flex flex-row  justify-between">*/}
@@ -163,7 +165,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                                                     ethers.utils.parseUnits(amount, 6),
                                                     ethers.utils.parseEther(requiredCollateral),
                                                     interestToLTV[interestRate],
-                                                    toEthDate(new Date("2023-08-01"))
+                                                    timestamp
                                                 ], overrides: {
                                                     value: ethers.utils.parseEther(requiredCollateral)
                                                 } })}

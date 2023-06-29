@@ -1,6 +1,10 @@
 import {FC, useEffect} from "react";
-import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
+import {useAddress, useBalance, useContract} from "@thirdweb-dev/react";
+import {lendingPlatformAbi, lendingPlatformAddress, usdcAddress} from "../../utils/contracts";
+import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
+import {truncateEthAddress} from "../../utils/ethMethods";
+// import {useConnection, useWallet} from "@solana/wallet-adapter-react";
+// import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
 interface LendSummaryViewProps {
   lockupPeriod: string;
@@ -10,11 +14,19 @@ interface LendSummaryViewProps {
 }
 
 export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, lockupPeriod, estimatedAPY, lendAmount}) => {
-  const wallet = useWallet();
-  const {connection} = useConnection();
+  // const wallet = useWallet();
+  // const {connection} = useConnection();
+  const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
+  const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
+  const walletAddress = useAddress();
+  const {
+    contract: lendingPlatform,
+    isLoading: lendingPlatformIsLoading,
+    error: lendingPlatformError
+  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
-  const balance = useUserSOLBalanceStore((s) => s.balance)
-  const {getUserSOLBalance} = useUserSOLBalanceStore()
+  // const balance = useUserSOLBalanceStore((s) => s.balance)
+  // const {getUserSOLBalance} = useUserSOLBalanceStore()
 
   const months = lockupPeriod;
 
@@ -23,12 +35,12 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, lockupPer
   const dateShadow = new Date();
   const endDate = new Date(dateShadow.setMonth(dateShadow.getMonth() + Number(months)));
 
-  useEffect(() => {
-    if (wallet.publicKey) {
-      console.log(wallet.publicKey.toBase58())
-      getUserSOLBalance(wallet.publicKey, connection)
-    }
-  }, [wallet.publicKey, connection, getUserSOLBalance])
+  // useEffect(() => {
+  //   if (wallet.publicKey) {
+  //     console.log(wallet.publicKey.toBase58())
+  //     getUserSOLBalance(wallet.publicKey, connection)
+  //   }
+  // }, [wallet.publicKey, connection, getUserSOLBalance])
 
 
   return (
@@ -89,11 +101,11 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, lockupPer
 
                   <div className="flex flex-row  justify-between">
                     <span>Wallet</span>
-                    <span>0x5464e8...36200<img src="/copy.svg" className="hidden w-6 md:inline align-baseline ml-2"/> </span>
+                    <span>{truncateEthAddress(walletAddress)}<img src="/copy.svg" className="hidden w-6 md:inline align-baseline ml-2"/> </span>
                   </div>
                   <div className="flex flex-row  justify-between">
                     <span >Contract Address</span>
-                    <span>0x78s44e8...32sd0<img src="/copy.svg" className="hidden md:inline w-6 align-baseline ml-2"/> </span>
+                    <span>{truncateEthAddress(lendingPlatformAddress)}<img src="/copy.svg" className="hidden md:inline w-6 align-baseline ml-2"/> </span>
                   </div>
                 </div>
 
@@ -103,7 +115,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, lockupPer
                 <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                   <div className="flex flex-row justify-between ">
                     <span className="">Current USDC balance</span>
-                    <span>{balance} USDC</span>
+                    <span>{usdcBalance.displayValue} USDC</span>
                   </div>
                   <div className="flex flex-row justify-between">
                     <span className="">Gas Cost</span>

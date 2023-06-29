@@ -8,13 +8,11 @@ import {useState} from "react";
 const Home: NextPage = (props) => {
 
   const [requiredCollateral, setRequiredCollateral] = useState<string | undefined>(undefined);
-  const [duration, setDuration] = useState<string | undefined>(undefined);
+  // const [duration, setDuration] = useState<string | undefined>(undefined);
+  const [timestamp, setTimestamp] = useState(0);
   const [interestRate, setInterestRate] = useState<string | undefined>(undefined);
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [view, setView] = useState<"borrow" | "duration" | "summary">("borrow");
-
-
-
 
   const handleBorrowViewChange = (collateral: string, interestRate, amount) => {
     setRequiredCollateral(collateral);
@@ -24,8 +22,8 @@ const Home: NextPage = (props) => {
 
   };
 
-  const handleDurationChange = (duration: string) => {
-    setDuration(duration);
+  const handleTimestampChange = (timestamp: number) => {
+    setTimestamp(timestamp);
     setView("summary");
   };
 
@@ -53,8 +51,8 @@ const Home: NextPage = (props) => {
       </Head>
       <div>
         {view === "borrow" &&<BorrowView onBorrowViewChange={handleBorrowViewChange} />}
-        {view === "duration" &&<BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleDurationChange} onBackDuration={handleBack}/>}
-        {view === "summary" && <BorrowSummaryView duration={duration} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount} onBack={handleBack} onCancel={handleCancel}/>}
+        {view === "duration" &&<BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleTimestampChange} onBackDuration={handleBack}/>}
+        {view === "summary" && <BorrowSummaryView timestamp={timestamp} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount} onBack={handleBack} onCancel={handleCancel}/>}
       </div>
     </  div>
   );
