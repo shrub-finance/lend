@@ -1,8 +1,9 @@
 import {FC, useEffect} from "react";
-import {useAddress, useBalance, useContract} from "@thirdweb-dev/react";
+import {useAddress, useBalance, useContract, useContractWrite, Web3Button} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
-import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods";
+import {fromEthDate, interestToLTV, truncateEthAddress} from "../../utils/ethMethods";
+import {ethers} from "ethers";
 // import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 // import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
@@ -24,6 +25,15 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
     isLoading: lendingPlatformIsLoading,
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
+
+  const {
+    mutateAsync: mutateAsyncTakeLoan,
+    isLoading: isLoadingTakeLoan,
+    error: errorTakeLoan
+  } = useContractWrite(
+      lendingPlatform,
+      "takeLoan",
+  );
 
   // const balance = useUserSOLBalanceStore((s) => s.balance)
   // const {getUserSOLBalance} = useUserSOLBalanceStore()
@@ -127,6 +137,23 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 <button
                   className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4  ">Deposit
                 </button>
+                <Web3Button contractAddress={lendingPlatformAddress} className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"
+
+                    // uint256 _amount, // Amount of USDC with 6 decimal places
+                    // uint256 _collateral, // Amount of ETH collateral with 18 decimal places
+                    // uint256 _ltv,
+                    // uint256 _timestamp
+                            action={() => mutateAsyncTakeLoan({ args: [
+                                ethers.utils.parseUnits(amount, 6),
+                                ethers.utils.parseEther(requiredCollateral),
+                                interestToLTV[interestRate],
+                                timestamp
+                              ], overrides: {
+                                value: ethers.utils.parseEther(requiredCollateral)
+                              } })}
+                >
+                  Borrow
+                </Web3Button>
                 <button onClick={onBackLend}
                   className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel
                 </button>
