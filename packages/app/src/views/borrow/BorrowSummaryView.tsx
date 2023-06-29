@@ -161,7 +161,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({requiredCollatera
                                                     amount,
                                                     ethers.utils.parseEther(requiredCollateral),
                                                     interestToLTV[interestRate],
-                                                    toEthDate(endDate)
+                                                    toEthDate(new Date("2023-08-01"))
                                                 ], overrides: {
                                                     value: ethers.utils.parseEther(requiredCollateral)
                                                 } })}

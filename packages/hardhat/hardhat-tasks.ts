@@ -4,10 +4,19 @@ import "@nomicfoundation/hardhat-toolbox";
 import { USDCoin } from './typechain-types';
 import { Address } from 'hardhat-deploy/types';
 import assert from 'node:assert/strict';
+import {ContractMethod, TransactionResponse} from "ethers";
 
 // Helper Functions
 function toEthDate(date: Date) {
     return Math.round(Number(date) / 1000);
+}
+
+const x = async () => {}
+async function sendTransaction(sentTx: Promise<TransactionResponse>, description: string) {
+    const tx = await sentTx;
+    console.log(`${description} transaction broadcast with txid: ${tx.hash}`);
+    const txReceipt = await tx.wait();
+    console.log(`${description} transaction confirmed in block: ${txReceipt?.blockNumber}`);
 }
 
 // Tasks
@@ -73,6 +82,49 @@ task("createPool", "Create a lending pool")
         console.log(`Pool created with timestamp ${timestamp}. Confirmed in block: ${txReceipt?.blockNumber}`);
     })
 
+task("provideLiquidity", "add USDC to a lending pool")
+    .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
+    .addParam("usdcAmount", "Amount of USDC - in USD", undefined, types.float, false)
+    .addParam("account", "Address of account to provide liquidity with - default deployer account", undefined, types.string, true)
+    .setAction(async (taskArgs, env) => {
+        const timestamp: Address = taskArgs.timestamp;
+        const usdcAmount: number = taskArgs.usdcAmount;
+        const account = taskArgs.account;
+
+        const {ethers, deployments, getNamedAccounts} = env;
+        const { deployer } = await getNamedAccounts();
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+        const usdCoinDeployment = await deployments.get('USDCoin');
+        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+
+        const liquidityAccount = await ethers.getSigner(account || deployer);
+        const lendingPlatformAccount = lendingPlatform.connect(liquidityAccount);
+        const usdcAccount = usdc.connect(liquidityAccount);
+
+        const parsedUsdc = ethers.parseUnits(usdcAmount.toString(), 6);
+
+        // Check balance of account to ensure that it is sufficient
+        const usdcBalance = await usdcAccount.balanceOf(liquidityAccount);
+        const liquidityAccountAddress = await liquidityAccount.getAddress();
+        console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${liquidityAccountAddress}`);
+        if (usdcBalance < parsedUsdc) {
+            console.log('insufficient USDC balance in account - aborting');
+            return;
+        }
+        // Check approval of account to ensure that it is sufficient
+        const approved = await usdcAccount.allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
+        console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
+        // If approval is not sufficient then create an approval tx
+        if (approved < parsedUsdc) {
+            const needToApprove = parsedUsdc - approved;
+            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
+            await sendTransaction(usdcAccount.approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
+        }
+        // Send the deposit tx
+        await sendTransaction(lendingPlatformAccount.deposit(timestamp, parsedUsdc), `Deposit USDC`);
+    })
+
 task("testLendingPlatform", "Setup an environment for development")
   .setAction(async (taskArgs, env) => {
     const {ethers, deployments, getNamedAccounts} = env;
@@ -84,6 +136,7 @@ task("testLendingPlatform", "Setup an environment for development")
     await env.run('createPool', { timestamp: toEthDate(new Date("2023-10-01"))});  // 3 month
     await env.run('createPool', { timestamp: toEthDate(new Date("2024-01-01"))});  // 6 month
     await env.run('createPool', { timestamp: toEthDate(new Date("2024-07-01"))});  // 12 month
+    await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(new Date("2024-01-01"))});  // 6 month
   })
 
 task("erc20Details", "get the details of an ERC20")
