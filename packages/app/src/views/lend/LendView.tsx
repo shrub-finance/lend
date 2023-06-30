@@ -103,7 +103,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
           </h1>
           <p className="text-base-100 text-lg font-light pt-2">Supply your USDC on Shrub and earn up to <span
             className="font-semibold">7-12% APY</span></p>
-
         </div>
 
         <div className="relative group mt-10 w-full">

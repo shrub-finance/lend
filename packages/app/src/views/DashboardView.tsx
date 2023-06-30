@@ -14,7 +14,7 @@ const now = new Date();
 const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
 
 export const DashboardView: FC = ({}) => {
-    const w = useConnectedWallet();
+    const wallet = useConnectedWallet();
 
     const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
     const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
@@ -65,48 +65,111 @@ export const DashboardView: FC = ({}) => {
 
         <div className="md:hero mx-auto p-4">
             <div className="md:hero-content flex flex-col">
-                <div className='mt-6'>
-                    <h1 className="text-center text-5xl md:pl-12 font-bold text-transparent bg-clip-text bg-gradient-to-br from-indigo-500 to-fuchsia-500 mb-4">
-                        Shrub Lend
-                    </h1>
+
+                <h1 className=" text-5xl font-bold text-base-100 self-start">
+                    Dashboard
+                </h1>
+                <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+                    {/*<table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">*/}
+                    {/*    <caption*/}
+                    {/*      className="p-5 text-lg font-semibold text-left text-gray-900 bg-white dark:text-white dark:bg-gray-800">*/}
+                    {/*        Earning*/}
+                    {/*        <p className="mt-1 text-sm font-normal text-gray-500 dark:text-gray-400"></p>*/}
+                    {/*    </caption>*/}
+                    {/*    <thead*/}
+                    {/*      className="text-xs text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400">*/}
+                    {/*    <tr>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            Amount Deposited*/}
+                    {/*        </th>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            Term duration (months)*/}
+                    {/*        </th>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            APR*/}
+                    {/*        </th>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            Earned*/}
+                    {/*        </th>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            Unlock date*/}
+                    {/*        </th>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            <span className="sr-only">Edit</span>*/}
+                    {/*        </th>*/}
+                    {/*    </tr>*/}
+                    {/*    </thead>*/}
+                    {/*    <tbody>*/}
+                    {/*    <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">*/}
+                    {/*        <th scope="row"*/}
+                    {/*            className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">*/}
+                    {/*            Microsoft Surface Pro*/}
+                    {/*        </th>*/}
+                    {/*        <td className="px-6 py-4">*/}
+                    {/*            White*/}
+                    {/*        </td>*/}
+                    {/*        <td className="px-6 py-4">*/}
+                    {/*            Laptop PC*/}
+                    {/*        </td>*/}
+                    {/*        <td className="px-6 py-4">*/}
+                    {/*            $1999*/}
+                    {/*        </td>*/}
+                    {/*        <td className="px-6 py-4">*/}
+                    {/*            $1999*/}
+                    {/*        </td>*/}
+                    {/*        <td className="px-6 py-4 text-right">*/}
+                    {/*            <a href="#"*/}
+                    {/*               className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-lg font-normal border-shrub-grey-50">*/}
+                    {/*                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="none">*/}
+                    {/*                    <path d="M0.833496 0.833252L9.16683 9.16659M9.16683 9.16659V0.833252M9.16683 9.16659H0.833496" stroke="#344054" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>*/}
+                    {/*                </svg>&nbsp;*/}
+                    {/*                Withdraw</a>*/}
+                    {/*        </td>*/}
+                    {/*    </tr>*/}
+                    {/*    </tbody>*/}
+                    {/*</table>*/}
+                    <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <caption
+                          className="p-5 text-lg text-left text-gray-500 bg-white dark:text-white dark:bg-gray-800">
+                            Welcome back, Ryan.eth!
+                            <p className="mt-1 text-sm font-normal text-gray-500 dark:text-gray-400"></p>
+                        </caption>
+                        <thead
+                          className="text-xs text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" className="px-6 py-3">
+                                ETH Balance
+                            </th>
+                            <th scope="col" className="px-6 py-3">
+                                USDC Balance
+                            </th>
+                            <th scope="col" className="px-6 py-3">
+                                Wallet Address
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                            <td className="px-6 py-4">{wallet && !ethBalanceIsLoading ? (
+                              <p>{(ethBalance.displayValue || 0).toLocaleString()}</p>
+                            ) : (
+                              <p>Loading ETH balance...</p>
+                            )}</td>
+                            <td className="px-6 py-4">
+                                {wallet && !usdcBalanceIsLoading ? (
+                                  <p>{(usdcBalance.displayValue || 0).toLocaleString()}</p>
+                                ) : (
+                                  <p>Loading USDC balance...</p>
+                                )}
+                            </td>
+                            <td className="px-6 py-4">
+                                {walletAddress}
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <div className="flex flex-col mt-2">
-                    <RequestAirdrop/>
-                    <h4 className="md:w-full text-2xl text-slate-300 my-2">
-
-                        {w &&
-                            <>
-                                <div className="flex flex-row justify-center">
-                                    <div className='text-slate-600 ml-2'>
-                                        {!ethBalanceIsLoading ? (
-                                            <p className='text-base-100 ml-2'>ETH
-                                                Balance: {(ethBalance.displayValue || 0).toLocaleString()}</p>
-                                        ) : (
-                                            <p className='text-base-100 ml-2'>Loading ETH balance...</p>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex flex-row justify-center">
-                                    <div className='text-slate-600 ml-2'>
-                                        {!usdcBalanceIsLoading ? (
-                                            <p className='text-base-100 ml-2'>USDC
-                                                Balance: {(usdcBalance.displayValue || 0).toLocaleString()}</p>
-                                        ) : (
-                                            <p className='text-base-100 ml-2'>Loading USDC balance...</p>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex flex-row justify-center">
-                                    <div className='text-slate-600 ml-2'>
-                                        <p className='text-base-100 ml-2'>Wallet Address: {walletAddress}</p>
-                                    </div>
-                                </div>
-                            </>
-
-                        }
-                    </h4>
-                </div>
             </div>
         </div>
     );

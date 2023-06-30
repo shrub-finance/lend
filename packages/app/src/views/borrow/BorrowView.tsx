@@ -176,24 +176,22 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
 
   return (
     <div className="md:hero mx-auto p-4">
-      {/*alert*/}
-      <div className='mt-6 '>
-
-        {localError && (
-           <div className="alert alert-warning justify-start">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 ml-4p" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-          <span>{localError}</span>
-          </div>
-        )}
-
-
 
       <div className="md:hero-content flex flex-col">
-          {/*heading*/}
-          <h1 className=" text-5xl font-bold text-base-100">
-            Borrow
-          </h1>
-          <p className="text-base-100 text-lg font-light pt-2">Borrow USDC on Shrub with fixed-rates as low as<span className="font-semibold"> 0%</span></p>
+        {/*alert*/}
+        <div className='mt-6 self-start'>
+
+          {localError && (
+            <div className="alert alert-warning justify-start">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 ml-4p" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <span>{localError}</span>
+            </div>
+          )}
+              {/*heading*/}
+              <h1 className=" text-5xl font-bold text-base-100">
+                Borrow
+              </h1>
+              <p className="text-base-100 text-lg font-light pt-2">Borrow USDC on Shrub with fixed-rates as low as<span className="font-semibold"> 0%</span></p>
 
         </div>
 
