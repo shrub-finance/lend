@@ -1,9 +1,10 @@
-import {FC, useEffect} from "react";
+import {FC, useEffect, useState} from "react";
 import {useAddress, useBalance, useContract, useContractWrite, Web3Button} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 import {fromEthDate, interestToLTV, truncateEthAddress} from "../../utils/ethMethods";
 import {ethers} from "ethers";
+import {router} from "next/client";
 // import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 // import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 
@@ -14,9 +15,14 @@ interface LendSummaryViewProps {
   onBackLend: () => void;
 }
 
+const handleViewDash = () => {
+  router.push('/dashboard');
+};
+
 export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp, estimatedAPY, lendAmount}) => {
   // const wallet = useWallet();
   // const {connection} = useConnection();
+  const [lendSuccess, setLendSuccess] = useState(false);
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
   const walletAddress = useAddress();
@@ -96,97 +102,95 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
           <div className="flex flex-col ">
             <div className="card w-full text-left">
               <div className="card-body text-base-100">
-
-
-                <p className="text-lg font-bold pb-2">
-                  Lend amount
-                </p>
-                <div className="w-full text-xl font-semibold flex flex-row">
-                  <span className="text-4xl  font-medium text-left w-[500px]">{lendAmount} USDC</span>
-                  <img src="/usdc-logo.svg" className="w-10 inline align-baseline"/>
+                {!lendSuccess && <div>
+                  <p className="text-lg font-bold pb-2">
+                    Lend amount
+                  </p>
+                  <div className="w-full text-xl font-semibold flex flex-row">
+                    <span className="text-4xl  font-medium text-left w-[500px]">{lendAmount} USDC</span>
+                    <img src="/usdc-logo.svg" className="w-10 inline align-baseline"/>
+                  </div>
                 </div>
+                }
 
+                {lendSuccess &&
+                    <>
+                      <p className="text-lg font-bold pb-2 text-left">
+                        Deposit successful
+                      </p>
+                      <svg className="w-[400px] h-[400px] text-shrub-green dark:text-white" aria-hidden="true"
+                           xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+                              strokeWidth="1" d="m7 10 2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                      </svg>
+                    </>}
 
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
                 {/*receipt start*/}
-                <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
-                  <div className="flex flex-row  justify-between">
-                    <span className="">Lockup starts</span>
-                    <span>{currentDate.toDateString()}</span>
-                  </div>
-                  <div className="flex flex-row  justify-between">
-                    <span className="">Lockup ends</span>
-                    <span>{endDate.toDateString()}</span>
-                  </div>
-                  {/*<div className="flex flex-row  justify-between">*/}
-                  {/*  <span className="">Bonus APR ✨</span>*/}
-                  {/*  <span className="font-semibold text-shrub-green-500"> 5%</span>*/}
-                  {/*</div>*/}
-                  <div className="flex flex-row  justify-between">
-                    <span className="">Estimated Yield</span>
-                    <span className="font-semibold text-shrub-green-500"> {estimatedAPY}%</span>
-                  </div>
+                {!lendSuccess && <div>
+                  <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
+                    <div className="flex flex-row  justify-between">
+                      <span className="">Lockup starts</span>
+                      <span>{currentDate.toDateString()}</span>
+                    </div>
+                    <div className="flex flex-row  justify-between">
+                      <span className="">Lockup ends</span>
+                      <span>{endDate.toDateString()}</span>
+                    </div>
+                    {/*<div className="flex flex-row  justify-between">*/}
+                    {/*  <span className="">Bonus APR ✨</span>*/}
+                    {/*  <span className="font-semibold text-shrub-green-500"> 5%</span>*/}
+                    {/*</div>*/}
+                    <div className="flex flex-row  justify-between">
+                      <span className="">Estimated Yield</span>
+                      <span className="font-semibold text-shrub-green-500"> {estimatedAPY}%</span>
+                    </div>
 
-                  <div className="flex flex-row  justify-between">
-                    <span>Wallet</span>
-                    <span>{truncateEthAddress(walletAddress)}<img src="/copy.svg" className="hidden w-6 md:inline align-baseline ml-2"/> </span>
+                    <div className="flex flex-row  justify-between">
+                      <span>Wallet</span>
+                      <span>{truncateEthAddress(walletAddress)}<img src="/copy.svg" className="hidden w-6 md:inline align-baseline ml-2"/> </span>
+                    </div>
+                    <div className="flex flex-row  justify-between">
+                      <span >Contract Address</span>
+                      <span>{truncateEthAddress(lendingPlatformAddress)}<img src="/copy.svg" className="hidden md:inline w-6 align-baseline ml-2"/> </span>
+                    </div>
                   </div>
-                  <div className="flex flex-row  justify-between">
-                    <span >Contract Address</span>
-                    <span>{truncateEthAddress(lendingPlatformAddress)}<img src="/copy.svg" className="hidden md:inline w-6 align-baseline ml-2"/> </span>
-                  </div>
-                </div>
+                  <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+                </div>}
 
-                <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
 
                 {/*total*/}
-                <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
-                  <div className="flex flex-row justify-between ">
-                    <span className="">Current USDC balance</span>
-                    <span>{usdcBalance.displayValue} USDC</span>
+                {!lendSuccess && <div>
+                  <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
+                    <div className="flex flex-row justify-between ">
+                      <span className="">Current USDC balance</span>
+                      <span>{usdcBalance.displayValue} USDC</span>
+                    </div>
+                    <div className="flex flex-row justify-between">
+                      <span className="">Gas Cost</span>
+                      <span>0.0012 ETH</span>
+                    </div>
                   </div>
-                  <div className="flex flex-row justify-between">
-                    <span className="">Gas Cost</span>
-                    <span>0.0012 ETH</span>
-                  </div>
-                </div>
-                {/*cta*/}
-                {/*<button*/}
-                {/*  className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4" onClick={async () => {*/}
-                {/*    await usdc.call("approve",[lendingPlatformAddress, ethers.constants.MaxUint256]);*/}
-                {/*}}>Approve*/}
-                {/*</button>*/}
 
-                {/*<Web3Button contractAddress={usdcAddress} className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"*/}
-                {/*            action={() => mutateAsyncApprove({ args: [*/}
-                {/*                lendingPlatformAddress,*/}
-                {/*                ethers.constants.MaxUint256*/}
-                {/*              ]*/}
-                {/*            })}*/}
-                {/*>*/}
-                {/*  Approve*/}
-                {/*</Web3Button>*/}
-                <Web3Button contractAddress={lendingPlatformAddress} className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"
+                <Web3Button contractAddress={lendingPlatformAddress} className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
                             action={() => mutateAsyncDeposit({ args: [
                                 timestamp,
                                 ethers.utils.parseUnits(lendAmount, 6)
                               ]
                             })}
+                            onSuccess={(result) => setLendSuccess(true)}
                 >
                   Deposit
                 </Web3Button>
-                {/*<Web3Button contractAddress={"0x5fbdb2315678afecb367f032d93f642f64180aa3"} className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"*/}
-                {/*            action={() => mutateAsyncDeposit({ args: [*/}
-                {/*                timestamp,*/}
-                {/*                ethers.utils.parseUnits(lendAmount, 6)*/}
-                {/*              ]*/}
-                {/*            })}*/}
-                {/*>*/}
-                {/*  Approve*/}
-                {/*</Web3Button>*/}
-                <button onClick={onBackLend}
-                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel
-                </button>
+
+                </div>}
+                {lendSuccess && <button onClick={handleViewDash}
+                                          className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View in Dashboard
+                </button>}
+
+                {!lendSuccess && <button onClick={onBackLend}
+                                           className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel
+                </button>}
               </div>
             </div>
           </div>
