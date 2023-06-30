@@ -1,6 +1,6 @@
 import {FC, useEffect} from "react";
 import {useAddress, useBalance, useContract, useContractWrite, Web3Button} from "@thirdweb-dev/react";
-import {lendingPlatformAbi, lendingPlatformAddress, usdcAddress} from "../../utils/contracts";
+import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 import {fromEthDate, interestToLTV, truncateEthAddress} from "../../utils/ethMethods";
 import {ethers} from "ethers";
@@ -21,18 +21,32 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
   const walletAddress = useAddress();
   const {
+    contract: usdc,
+    isLoading: usdcIsLoading,
+    error: usdcError
+  } = useContract(usdcAddress, usdcAbi);
+  const {
     contract: lendingPlatform,
     isLoading: lendingPlatformIsLoading,
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
   const {
-    mutateAsync: mutateAsyncTakeLoan,
-    isLoading: isLoadingTakeLoan,
-    error: errorTakeLoan
+    mutateAsync: mutateAsyncDeposit,
+    isLoading: isLoadingTakeDeposit,
+    error: errorDeposit
   } = useContractWrite(
       lendingPlatform,
-      "takeLoan",
+      "deposit",
+  );
+
+  const {
+    mutateAsync: mutateAsyncApprove,
+    isLoading: isLoadingApprove,
+    error: errorApprove
+  } = useContractWrite(
+      usdc,
+      "approve",
   );
 
   // const balance = useUserSOLBalanceStore((s) => s.balance)
@@ -53,6 +67,9 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
   //   }
   // }, [wallet.publicKey, connection, getUserSOLBalance])
 
+  console.log("usdcBalance", usdcBalance)
+  console.log("lendingPlatform", lendingPlatform, lendingPlatformIsLoading, lendingPlatformError)
+  console.log("usdc", usdc, usdcIsLoading, usdcError);
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -134,26 +151,39 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                   </div>
                 </div>
                 {/*cta*/}
-                <button
-                  className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4  ">Deposit
-                </button>
-                <Web3Button contractAddress={lendingPlatformAddress} className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"
+                {/*<button*/}
+                {/*  className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4" onClick={async () => {*/}
+                {/*    await usdc.call("approve",[lendingPlatformAddress, ethers.constants.MaxUint256]);*/}
+                {/*}}>Approve*/}
+                {/*</button>*/}
 
-                    // uint256 _amount, // Amount of USDC with 6 decimal places
-                    // uint256 _collateral, // Amount of ETH collateral with 18 decimal places
-                    // uint256 _ltv,
-                    // uint256 _timestamp
-                            action={() => mutateAsyncTakeLoan({ args: [
-                                ethers.utils.parseUnits(amount, 6),
-                                ethers.utils.parseEther(requiredCollateral),
-                                interestToLTV[interestRate],
-                                timestamp
-                              ], overrides: {
-                                value: ethers.utils.parseEther(requiredCollateral)
-                              } })}
+                {/*<Web3Button contractAddress={usdcAddress} className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"*/}
+                {/*            action={() => mutateAsyncApprove({ args: [*/}
+                {/*                lendingPlatformAddress,*/}
+                {/*                ethers.constants.MaxUint256*/}
+                {/*              ]*/}
+                {/*            })}*/}
+                {/*>*/}
+                {/*  Approve*/}
+                {/*</Web3Button>*/}
+                <Web3Button contractAddress={lendingPlatformAddress} className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"
+                            action={() => mutateAsyncDeposit({ args: [
+                                timestamp,
+                                ethers.utils.parseUnits(lendAmount, 6)
+                              ]
+                            })}
                 >
-                  Borrow
+                  Deposit
                 </Web3Button>
+                {/*<Web3Button contractAddress={"0x5fbdb2315678afecb367f032d93f642f64180aa3"} className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"*/}
+                {/*            action={() => mutateAsyncDeposit({ args: [*/}
+                {/*                timestamp,*/}
+                {/*                ethers.utils.parseUnits(lendAmount, 6)*/}
+                {/*              ]*/}
+                {/*            })}*/}
+                {/*>*/}
+                {/*  Approve*/}
+                {/*</Web3Button>*/}
                 <button onClick={onBackLend}
                   className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel
                 </button>

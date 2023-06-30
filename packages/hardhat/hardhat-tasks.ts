@@ -5,6 +5,7 @@ import { USDCoin } from './typechain-types';
 import { Address } from 'hardhat-deploy/types';
 import assert from 'node:assert/strict';
 import {ContractMethod, TransactionResponse} from "ethers";
+import {sign} from "crypto";
 
 // Helper Functions
 function toEthDate(date: Date) {
@@ -125,6 +126,22 @@ task("provideLiquidity", "add USDC to a lending pool")
         await sendTransaction(lendingPlatformAccount.deposit(timestamp, parsedUsdc), `Deposit USDC`);
     })
 
+task("approveUsdc", "Approve USDC to the lending platform")
+    .addParam("account", "account to approve USDC for", undefined, types.string)
+    .setAction(async (taskArgs, env) => {
+        const account: Address = taskArgs.account;
+        const {ethers, deployments, getNamedAccounts} = env;
+
+        const signer = await ethers.getSigner(account);
+
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const usdCoinDeployment = await deployments.get('USDCoin');
+        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+        const usdcAccount = usdc.connect(signer);
+
+        await sendTransaction(usdcAccount.approve(lendingPlatformDeployment.address, ethers.MaxUint256), "Approve USDC");
+    })
+
 task("testLendingPlatform", "Setup an environment for development")
   .setAction(async (taskArgs, env) => {
     const {ethers, deployments, getNamedAccounts} = env;
@@ -137,6 +154,7 @@ task("testLendingPlatform", "Setup an environment for development")
     await env.run('createPool', { timestamp: toEthDate(new Date("2024-01-01"))});  // 6 month
     await env.run('createPool', { timestamp: toEthDate(new Date("2024-07-01"))});  // 12 month
     await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(new Date("2024-01-01"))});  // 6 month
+    await env.run('approveUsdc', { account: account1 });
   })
 
 task("erc20Details", "get the details of an ERC20")
