@@ -9,6 +9,7 @@ import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 // Custom
 import {toEthDate, fromEthDate} from "../utils/ethMethods";
 import { usdcAddress, lendingPlatformAddress, lendingPlatformAbi } from "../utils/contracts";
+import {ethers} from "ethers";
 
 const now = new Date();
 const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
@@ -131,7 +132,7 @@ export const DashboardView: FC = ({}) => {
                     <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                         <caption
                           className="p-5 text-lg text-left text-gray-500 bg-white dark:text-white dark:bg-gray-800">
-                            Welcome back, Ryan.eth!
+                            Welcome back, ryan.eth!
                             <p className="mt-1 text-sm font-normal text-gray-500 dark:text-gray-400"></p>
                         </caption>
                         <thead
@@ -151,7 +152,11 @@ export const DashboardView: FC = ({}) => {
                         <tbody>
                         <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                             <td className="px-6 py-4">{wallet && !ethBalanceIsLoading ? (
-                              <p>{(ethBalance.displayValue || 0).toLocaleString()}</p>
+                              <p>{ethers.utils.formatEther(
+                                  ethBalance.value
+                                      .div(ethers.utils.parseUnits('1',15))
+                                      .mul(ethers.utils.parseUnits('1',15))
+                              )}</p>
                             ) : (
                               <p>Loading ETH balance...</p>
                             )}</td>

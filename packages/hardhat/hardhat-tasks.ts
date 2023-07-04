@@ -146,7 +146,7 @@ task("testLendingPlatform", "Setup an environment for development")
   .setAction(async (taskArgs, env) => {
     const {ethers, deployments, getNamedAccounts} = env;
     const { deployer, account1, account2, account3 } = await getNamedAccounts();
-    await env.run('distributeUsdc', { to: account1, amount: 1000 });
+    // await env.run('distributeUsdc', { to: account1, amount: 1000 });
     await env.run('distributeUsdc', { to: account2, amount: 2000 });
     await env.run('distributeUsdc', { to: account3, amount: 3000 });
     await env.run('createPool', { timestamp: toEthDate(new Date("2023-08-01"))});  // 1 month
