@@ -259,28 +259,38 @@ describe('LendingPlatform', () => {
     });
 
     it('should return the correct total available liquidity before 2026-01-01', async () => {
-      const totalLiquidity = await lendingPlatform.getTotalAvailableLiquidity(1767225599);
-      expect(totalLiquidity).to.equal(6500 * 10 ** 6);
+      const totalLiquidity = await lendingPlatform.getTotalLiquidity(1767225599);
+      const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(1767225599);
+      const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
+      expect(totalAvailableLiquidity).to.equal(6500 * 10 ** 6);
     });
 
     it('should return the correct total available liquidity on 2026-01-01', async () => {
-      const totalLiquidity = await lendingPlatform.getTotalAvailableLiquidity(1767225600);
-      expect(totalLiquidity).to.equal(6500 * 10 ** 6);
+      const totalLiquidity = await lendingPlatform.getTotalLiquidity(1767225600);
+      const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(1767225600);
+      const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
+      expect(totalAvailableLiquidity).to.equal(6500 * 10 ** 6);
     });
 
     it('should return the correct total available liquidity on 2026-02-01', async () => {
-      const totalLiquidity = await lendingPlatform.getTotalAvailableLiquidity(1769904000);
-      expect(totalLiquidity).to.equal(5500 * 10 ** 6);
+      const totalLiquidity = await lendingPlatform.getTotalLiquidity(1769904000);
+      const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(1769904000);
+      const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
+      expect(totalAvailableLiquidity).to.equal(5500 * 10 ** 6);
     });
 
     it('should return the correct total available liquidity on 2026-03-01', async () => {
-      const totalLiquidity = await lendingPlatform.getTotalAvailableLiquidity(1772323200);
-      expect(totalLiquidity).to.equal(4000 * 10 ** 6);
+      const totalLiquidity = await lendingPlatform.getTotalLiquidity(1772323200);
+      const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(1772323200);
+      const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
+      expect(totalAvailableLiquidity).to.equal(4000 * 10 ** 6);
     });
 
     it('should return the correct total available liquidity after 2026-03-01', async () => {
-      const totalLiquidity = await lendingPlatform.getTotalAvailableLiquidity(1772323201);
-      expect(totalLiquidity).to.equal(0);
+      const totalLiquidity = await lendingPlatform.getTotalLiquidity(1772323201);
+      const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(1772323201);
+      const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
+      expect(totalAvailableLiquidity).to.equal(0);
     });
   });
 
@@ -504,7 +514,9 @@ describe('LendingPlatform', () => {
         expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps[0]);
         expect(loan.contributingPools[0].liquidityContribution).to.equal(parseUnits('1', 8));
 
-        const totalAvailableLiquidity = await lendingPlatform.getTotalAvailableLiquidity(timestamps[0]);
+        const totalLiquidity = await lendingPlatform.getTotalLiquidity(timestamps[0]);
+        const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(timestamps[0]);
+        const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
         expect(totalAvailableLiquidity).to.equal(parseUnits('100', 6));
       });
       it('should reject a second loan from the same borrower and same timestamp', async() => {
@@ -601,7 +613,9 @@ describe('LendingPlatform', () => {
         expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps[0]);
         expect(loan.contributingPools[0].liquidityContribution).to.equal(parseUnits('1', 8));
 
-        const totalAvailableLiquidity = await lendingPlatform.getTotalAvailableLiquidity(timestamps[0]);
+        const totalLiquidity = await lendingPlatform.getTotalLiquidity(timestamps[0]);
+        const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(timestamps[0]);
+        const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
         expect(totalAvailableLiquidity).to.equal(parseUnits('0', 6));
       })
     })

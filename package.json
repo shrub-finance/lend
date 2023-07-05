@@ -17,5 +17,5 @@
     "compile": "yarn workspace @shrub-lend/hardhat compile",
     "contracts": "yarn workspace @shrub-lend/hardhat deploy"
   },
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@1.22.19"
 }
