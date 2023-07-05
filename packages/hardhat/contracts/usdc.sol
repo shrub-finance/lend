@@ -3,11 +3,12 @@
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import "hardhat/console.sol";
 
 
-contract USDCoin is ERC20 {
+contract USDCoin is ERC20, ERC165 {
     constructor(uint256 initialSupply) ERC20("USD Coin", "USDC") {
         _mint(msg.sender, initialSupply * 10 ** decimals());
     }
@@ -16,11 +17,19 @@ contract USDCoin is ERC20 {
         return 6;
     }
 
-    function name() public view virtual override returns (string memory) {
-        console.log(bytesToString(msg.data));
-
-        return "USD Coin";
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        console.logBytes4(interfaceId);
+        console.logBytes4(type(IERC20).interfaceId);
+        console.log(super.supportsInterface(interfaceId));
+        console.log(interfaceId == type(IERC20).interfaceId || super.supportsInterface(interfaceId));
+        return interfaceId == type(IERC20).interfaceId || super.supportsInterface(interfaceId);
     }
+
+//    function name() public view virtual override returns (string memory) {
+//        return "USD Coin";
+//    }
+
+
 
 
 

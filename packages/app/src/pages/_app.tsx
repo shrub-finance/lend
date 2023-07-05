@@ -9,7 +9,7 @@ import { ThirdwebProvider } from '@thirdweb-dev/react';
 require('@solana/wallet-adapter-react-ui/styles.css');
 require('../styles/globals.css');
 
-const activeChain = "mumbai";
+const activeChain = "localhost";
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
     return (
@@ -17,7 +17,23 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
           <Head>
             <title>Shrub Lend</title>
           </Head>
-          <ThirdwebProvider activeChain={activeChain} dAppMeta={{
+          <ThirdwebProvider
+              activeChain={"localhost"}
+              // activeChain={{
+              //     chainId: 31337,
+              //     rpc: ['http://localhost:8545'],
+              //     nativeCurrency: {
+              //         decimals: 18,
+              //         name: "Hardhat ETH",
+              //         symbol: "ETH"
+              //     },
+              //     shortName: "hardhat",
+              //     slug: "localhost",
+              //     testnet: true,
+              //     chain: "hardhat",
+              //     name: "Hardhat EVM"
+              // }}
+              dAppMeta={{
             name: "Shrub Lend",
             description: "DeFi Lending Simplified",
             logoUrl: "https://shrub.finance/static/media/logo-default.3961bf67.svg",

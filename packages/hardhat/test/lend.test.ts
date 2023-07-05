@@ -1,23 +1,23 @@
 import { ethers } from 'hardhat';
 import chai from 'chai';
-import { solidity } from 'ethereum-waffle';
 import { LendingPlatform, PoolShareToken__factory, USDCoin } from '../typechain-types';
-import { Event, Signer } from 'ethers';
-import { parseEther, parseUnits } from 'ethers/lib/utils';
+import { parseEther, parseUnits } from 'ethers';
+import {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/signers";
+import {ContractTransactionResponse} from "ethers";
+import assert from "node:assert/strict";
 
-chai.use(solidity);
 const { expect } = chai;
 
 describe('LendingPlatform', () => {
   let lendingPlatform: LendingPlatform;
   let usdc: USDCoin;
-  let deployer: Signer;
-  let lender1: Signer;
-  let lender2: Signer;
-  let lender3: Signer;
-  let borrower1: Signer;
-  let borrower2: Signer;
-  let borrower3: Signer;
+  let deployer: HardhatEthersSigner;
+  let lender1: HardhatEthersSigner;
+  let lender2: HardhatEthersSigner;
+  let lender3: HardhatEthersSigner;
+  let borrower1: HardhatEthersSigner;
+  let borrower2: HardhatEthersSigner;
+  let borrower3: HardhatEthersSigner;
   let poolShareTokenFactory: PoolShareToken__factory;
 
   before(async () => {
@@ -30,10 +30,11 @@ describe('LendingPlatform', () => {
     poolShareTokenFactory = await ethers.getContractFactory('PoolShareToken');
 
     usdc = (await usdCoinFactory.deploy(1e6)) as USDCoin;
-    await usdc.deployed();
+    await usdc.waitForDeployment();
 
-    lendingPlatform = (await LendingPlatformFactory.deploy(usdc.address)) as LendingPlatform;
-    await lendingPlatform.deployed();
+
+    lendingPlatform = (await LendingPlatformFactory.deploy(usdc.getAddress())) as LendingPlatform;
+    await lendingPlatform.waitForDeployment();
 
   });
 
@@ -41,7 +42,7 @@ describe('LendingPlatform', () => {
     it('returns the address', async () => {
       const address = await lendingPlatform.getUsdcAddress();
       console.log(address);
-      console.log(usdc.address);
+      console.log(usdc.getAddress());
     })
   })
 
@@ -114,7 +115,7 @@ describe('LendingPlatform', () => {
       await lendingPlatform.createPool(timestamp);
 
       const pool = await lendingPlatform.pools(timestamp);
-      expect(pool.poolShareToken).to.not.equal(ethers.constants.AddressZero);
+      expect(pool.poolShareToken).to.not.equal(ethers.ZeroAddress);
     });
 
     it('should revert if a pool with the same timestamp already exists', async () => {
@@ -145,15 +146,17 @@ describe('LendingPlatform', () => {
 
       const pool = await lendingPlatform.pools(timestamp);
 
-      const createPoolEvent = createPoolReciept.events?.find(event => event.event === "poolCreated");
-      expect(createPoolEvent).to.exist;
-      expect(createPoolEvent?.args).to.exist;
-      expect(createPoolEvent?.args?.timestamp).to.equal(timestamp);
-      expect(createPoolEvent?.args?.poolShareTokenAddress).to.equal(pool.poolShareToken);
+      // const createPoolEvent = createPoolReciept.events?.find(event => event.event === "poolCreated");
+      expect(createPoolTx).to.emit(lendingPlatform, "poolCreated")
+        .withArgs(timestamp, pool.poolShareToken);
+      //
+      // expect(createPoolEvent).to.exist;
+      // expect(createPoolEvent?.args).to.exist;
+      // expect(createPoolEvent?.args?.timestamp).to.equal(timestamp);
+      // expect(createPoolEvent?.args?.poolShareTokenAddress).to.equal(pool.poolShareToken);
     });
 
   });
-
 
   describe('deposit', async () => {
     let lender1LendingPlatform: LendingPlatform;
@@ -186,12 +189,12 @@ describe('LendingPlatform', () => {
     });
 
     it('should revert if insufficient allowance', async () => {
-      await usdcLender1.approve(lendingPlatform.address, 900 * 10 ** 6)
+      await usdcLender1.approve(lendingPlatform.getAddress(), 900 * 10 ** 6)
       await expect(lender1LendingPlatform.deposit(timestamp, 1000 * 10 ** 6)).to.be.revertedWith("ERC20: insufficient allowance");
     });
 
     it('should revert when user does not have enough USDC tokens', async () => {
-      await usdcLender1.approve(lendingPlatform.address, 1100 * 10 ** 6)
+      await usdcLender1.approve(lendingPlatform.getAddress(), 1100 * 10 ** 6)
       await expect(lender1LendingPlatform.deposit(timestamp, 1001 * 10 ** 6)).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     });
 
@@ -202,19 +205,19 @@ describe('LendingPlatform', () => {
 
     it('should revert if the pool is not yet created', async () => {
       const badTimestamp = 12345;
-      await usdcLender1.approve(lendingPlatform.address, 1100 * 10 ** 6)
+      await usdcLender1.approve(lendingPlatform.getAddress(), 1100 * 10 ** 6)
       await expect(lender1LendingPlatform.deposit(badTimestamp, 1000 * 10 ** 6)).to.be.revertedWith("Pool does not exist");
     })
 
     it('should all deposit into active pool', async () => {
       const poolBefore = await lendingPlatform.getPool(timestamp);
       const usdcLender1Before = await usdc.balanceOf(lender1.getAddress());
-      const usdcPoolBefore = await usdc.balanceOf(lendingPlatform.address);
-      await usdcLender1.approve(lendingPlatform.address, 1100 * 10 ** 6)
+      const usdcPoolBefore = await usdc.balanceOf(lendingPlatform.getAddress());
+      await usdcLender1.approve(lendingPlatform.getAddress(), 1100 * 10 ** 6)
       await lender1LendingPlatform.deposit(timestamp, 800 * 10 ** 6);
       const poolAfter = await lendingPlatform.getPool(timestamp);
       const usdcLender1After = await usdc.balanceOf(lender1.getAddress());
-      const usdcPoolAfter = await usdc.balanceOf(lendingPlatform.address);
+      const usdcPoolAfter = await usdc.balanceOf(lendingPlatform.getAddress());
       // Total liquidity should be added to the pool
       expect(poolBefore.totalLiquidity).to.equal(0);
       expect(poolBefore.totalLoans).to.equal(0);
@@ -226,7 +229,7 @@ describe('LendingPlatform', () => {
       expect(usdcPoolAfter).to.equal(800 * 10 ** 6);
       // lender1 should receive the poolShareToken
 
-      const poolShareToken = poolShareTokenFactory.attach(poolAfter.poolShareTokenAddress);
+      const poolShareToken = await ethers.getContractAt("PoolShareToken", poolAfter.poolShareTokenAddress);
       const lender1PoolTokenBalance = await poolShareToken.balanceOf(lender1.getAddress());
       expect(lender1PoolTokenBalance).to.equal(800 * 10 ** 6);
     });
@@ -240,44 +243,54 @@ describe('LendingPlatform', () => {
     const depositAmounts = [1000 * 10 ** 6, 1500 * 10 ** 6, 4000 * 10 ** 6];
     let lender1LendingPlatform: LendingPlatform;
     let usdcLender1: USDCoin;
-    
+
     beforeEach(async () => {
       lender1LendingPlatform = lendingPlatform.connect(lender1);
       usdcLender1 = usdc.connect(lender1);
-  
+
       // Deposit amounts
       await usdc.transfer(lender1.getAddress(), 6500 * 10 ** 6);
-      await usdcLender1.approve(lendingPlatform.address, 6500 * 10 ** 6)
-  
+      await usdcLender1.approve(lendingPlatform.getAddress(), 6500 * 10 ** 6)
+
       for (let i = 0; i < 3; i++) {
         await lendingPlatform.createPool(poolTimestamps[i]);
         await lender1LendingPlatform.deposit(poolTimestamps[i], depositAmounts[i]);
       }
     });
-  
+
     it('should return the correct total available liquidity before 2026-01-01', async () => {
-      const totalLiquidity = await lendingPlatform.getTotalAvailableLiquidity(1767225599);
-      expect(totalLiquidity).to.equal(6500 * 10 ** 6);
+      const totalLiquidity = await lendingPlatform.getTotalLiquidity(1767225599);
+      const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(1767225599);
+      const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
+      expect(totalAvailableLiquidity).to.equal(6500 * 10 ** 6);
     });
-  
+
     it('should return the correct total available liquidity on 2026-01-01', async () => {
-      const totalLiquidity = await lendingPlatform.getTotalAvailableLiquidity(1767225600);
-      expect(totalLiquidity).to.equal(6500 * 10 ** 6);
+      const totalLiquidity = await lendingPlatform.getTotalLiquidity(1767225600);
+      const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(1767225600);
+      const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
+      expect(totalAvailableLiquidity).to.equal(6500 * 10 ** 6);
     });
-  
+
     it('should return the correct total available liquidity on 2026-02-01', async () => {
-      const totalLiquidity = await lendingPlatform.getTotalAvailableLiquidity(1769904000);
-      expect(totalLiquidity).to.equal(5500 * 10 ** 6);
+      const totalLiquidity = await lendingPlatform.getTotalLiquidity(1769904000);
+      const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(1769904000);
+      const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
+      expect(totalAvailableLiquidity).to.equal(5500 * 10 ** 6);
     });
-  
+
     it('should return the correct total available liquidity on 2026-03-01', async () => {
-      const totalLiquidity = await lendingPlatform.getTotalAvailableLiquidity(1772323200);
-      expect(totalLiquidity).to.equal(4000 * 10 ** 6);
+      const totalLiquidity = await lendingPlatform.getTotalLiquidity(1772323200);
+      const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(1772323200);
+      const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
+      expect(totalAvailableLiquidity).to.equal(4000 * 10 ** 6);
     });
-  
+
     it('should return the correct total available liquidity after 2026-03-01', async () => {
-      const totalLiquidity = await lendingPlatform.getTotalAvailableLiquidity(1772323201);
-      expect(totalLiquidity).to.equal(0);
+      const totalLiquidity = await lendingPlatform.getTotalLiquidity(1772323201);
+      const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(1772323201);
+      const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
+      expect(totalAvailableLiquidity).to.equal(0);
     });
   });
 
@@ -288,23 +301,24 @@ describe('LendingPlatform', () => {
     const depositAmounts = [1000 * 10 ** 6, 1500 * 10 ** 6];
     let lender1LendingPlatform: LendingPlatform;
     let usdcLender1: USDCoin;
-    let createPoolEvents: (Event | undefined)[] = []
+    let createPoolTxs: (ContractTransactionResponse)[] = []
 
     beforeEach(async () => {
       lender1LendingPlatform = lendingPlatform.connect(lender1);
       usdcLender1 = usdc.connect(lender1);
-      createPoolEvents = [];
+      createPoolTxs = [];
 
       // Deposit amounts
       await usdc.transfer(lender1.getAddress(), 2500 * 10 ** 6);
-      await usdcLender1.approve(lendingPlatform.address, 2500 * 10 ** 6)
+      await usdcLender1.approve(lendingPlatform.getAddress(), 2500 * 10 ** 6)
 
       for (let i = 0; i < 2; i++) {
         const tx = await lendingPlatform.createPool(poolTimestamps[i]);
-        const txReceipt = await tx.wait();
+        createPoolTxs.push(tx);
+        // const txReceipt = await tx.wait();
 
-        const createPoolEvent = txReceipt.events?.find(event => event.event === "poolCreated");
-        createPoolEvents.push(createPoolEvent);
+        // const createPoolEvent = txReceipt.events?.find(event => event.event === "poolCreated");
+        // createPoolEvents.push(createPoolEvent);
 
         await lender1LendingPlatform.deposit(poolTimestamps[i], depositAmounts[i]);
       }
@@ -315,7 +329,7 @@ describe('LendingPlatform', () => {
       expect(pool.totalLiquidity).to.equal(0);
       expect(pool.totalLoans).to.equal(0);
       expect(pool.aaveInterestSnapshot).to.equal(0);
-      expect(pool.poolShareTokenAddress).to.equal(ethers.constants.AddressZero);
+      expect(pool.poolShareTokenAddress).to.equal(ethers.ZeroAddress);
     });
 
     it('should return the correct pool details for the first pool', async () => {
@@ -323,7 +337,9 @@ describe('LendingPlatform', () => {
       expect(pool.totalLiquidity).to.equal(1000 * 10 ** 6);
       expect(pool.totalLoans).to.equal(0);
       expect(pool.aaveInterestSnapshot).to.equal(0);
-      expect(pool.poolShareTokenAddress).to.equal(createPoolEvents[0]?.args?.poolShareTokenAddress);
+      // expect(pool.poolShareTokenAddress).to.equal(createPoolTxs[0])
+      expect(createPoolTxs[0]).to.emit(lendingPlatform, "poolCreated").withArgs(pool.poolShareTokenAddress);
+      // expect(pool.poolShareTokenAddress).to.equal(createPoolEvents[0]?.args?.poolShareTokenAddress);
     });
 
     it('should return the correct pool details for the second pool', async () => {
@@ -331,7 +347,9 @@ describe('LendingPlatform', () => {
       expect(pool.totalLiquidity).to.equal(1500 * 10 ** 6);
       expect(pool.totalLoans).to.equal(0);
       expect(pool.aaveInterestSnapshot).to.equal(0);
-      expect(pool.poolShareTokenAddress).to.equal(createPoolEvents[1]?.args?.poolShareTokenAddress);
+      // expect(pool.poolShareTokenAddress).to.equal(createPoolEvents[1]?.args?.poolShareTokenAddress);
+      expect(createPoolTxs[1]).to.emit(lendingPlatform, "poolCreated").withArgs(pool.poolShareTokenAddress);
+
     });
 
     it('should return zeros if the pool does not exist with a larger timestamp', async () => {
@@ -339,14 +357,11 @@ describe('LendingPlatform', () => {
       expect(pool.totalLiquidity).to.equal(0);
       expect(pool.totalLoans).to.equal(0);
       expect(pool.aaveInterestSnapshot).to.equal(0);
-      expect(pool.poolShareTokenAddress).to.equal(ethers.constants.AddressZero);
+      expect(pool.poolShareTokenAddress).to.equal(ethers.ZeroAddress);
     });
   });
 
-  
-
-
-  describe.only('takeLoan', () => {
+  describe('takeLoan', () => {
     const timestamps = [1767225600, 1769904000, 1772323200];
     let lender1Usdc: USDCoin;
     let lender2Usdc: USDCoin;
@@ -360,12 +375,13 @@ describe('LendingPlatform', () => {
 
       lender1Usdc = usdc.connect(lender1);
       lender2Usdc = usdc.connect(lender2);
+      const lender1Address = await lender1.getAddress();
 
       await usdc.transfer(lender1.getAddress(), parseUnits('10000', 6));
       await usdc.transfer(lender2.getAddress(), parseUnits('10000', 6));
 
-      await lender1Usdc.approve(lendingPlatform.address, parseUnits('10000', 6));
-      await lender2Usdc.approve(lendingPlatform.address, parseUnits('10000', 6));
+      await lender1Usdc.approve(lendingPlatform.getAddress(), parseUnits('10000', 6));
+      await lender2Usdc.approve(lendingPlatform.getAddress(), parseUnits('10000', 6));
 
       await lendingPlatform.createPool(timestamps[0]);
       await lendingPlatform.createPool(timestamps[1]);
@@ -384,7 +400,7 @@ describe('LendingPlatform', () => {
         const amount = parseUnits('1000', 6);
         const collateral = parseEther('1');
         const ltv = 0;
-        
+
         await expect(borrower1LendingPlatform.takeLoan(amount, collateral, ltv, timestamps[0], {value: parseEther('0.1')})).to.be.revertedWith("Wrong amount of Ether provided.");
 
       });
@@ -392,21 +408,21 @@ describe('LendingPlatform', () => {
         const amount = parseUnits('1000', 6);
         const collateral = parseEther('1');
         const ltv = 0;
-        
+
         await expect(borrower1LendingPlatform.takeLoan(amount, collateral, ltv, timestamps[0], {value: parseEther('2')})).to.be.revertedWith("Wrong amount of Ether provided.");
       });
       it('should reject if an invalid pool is specified', async() => {
         const amount = parseUnits('1000', 6);
         const collateral = parseEther('1');
         const ltv = 0;
-        
+
         await expect(borrower1LendingPlatform.takeLoan(amount, collateral, ltv, 1767225601, {value: parseEther('1')})).to.be.revertedWith("Not a valid pool");
       });
       it('should reject if specified ltv is less than the calculated ltv', async() => {
         const amount = parseUnits('1000', 6);
         const collateral = parseEther('1');
         const ltv = 25;
-        
+
         await expect(borrower1LendingPlatform.takeLoan(amount, collateral, ltv, timestamps[0], {value: parseEther('1')})).to.be.revertedWith("Insufficient collateral provided for specified ltv");
       });
     });
@@ -426,21 +442,21 @@ describe('LendingPlatform', () => {
         const amount = parseUnits('1001', 6);
         const collateral = parseEther('2');
         const ltv = 33;
-        
+
         await expect(borrower1LendingPlatform.takeLoan(amount, collateral, ltv, timestamps[0], {value: collateral})).to.be.revertedWith("Insufficient liquidity across pools");
       });
       it('should reject if pool with no liquidity is selected', async() => {
         const amount = parseUnits('1', 6);
         const collateral = parseEther('2');
         const ltv = 20;
-        
+
         await expect(borrower1LendingPlatform.takeLoan(amount, collateral, ltv, timestamps[1], {value: collateral})).to.be.revertedWith("Insufficient liquidity across pools");
       });
       it('should reject if invalid ltv is specified', async() => {
         const amount = parseUnits('1000', 6);
         const collateral = parseEther('2');
         const ltv = 35;
-        
+
         await expect(borrower1LendingPlatform.takeLoan(amount, collateral, ltv, timestamps[0], {value: collateral})).to.be.revertedWith("Invalid LTV");
       });
       it('should create the loan', async() => {
@@ -451,15 +467,15 @@ describe('LendingPlatform', () => {
         // LTV
         // APY
         // contributing pools
-        //  
+        //
         // totalLoans should be as expected
         // USDC balance of contract and borrower should be as expected
         // ETH balance of contract and borrower should be as expected
 
         const borrower1UsdcBalanceBefore = await usdc.balanceOf(borrower1.getAddress());
-        const borrower1EthBalanceBefore = await borrower1.getBalance();
-        const lendingPlatformUsdcBalanceBefore = await usdc.balanceOf(lendingPlatform.address);
-        const lendingPlatformEthBalanceBefore = await ethers.provider.getBalance(lendingPlatform.address);
+        const borrower1EthBalanceBefore = await ethers.provider.getBalance(borrower1.getAddress());
+        const lendingPlatformUsdcBalanceBefore = await usdc.balanceOf(lendingPlatform.getAddress());
+        const lendingPlatformEthBalanceBefore = await ethers.provider.getBalance(lendingPlatform.getAddress());
 
         expect(borrower1UsdcBalanceBefore).to.equal(0);
         expect(borrower1EthBalanceBefore).to.be.greaterThan(parseEther('9999'));
@@ -470,18 +486,19 @@ describe('LendingPlatform', () => {
         const amount = parseUnits('900', 6);
         const collateral = parseEther('2');
         const ltv = 25;
-        
+
         const borrowTx = await borrower1LendingPlatform.takeLoan(amount, collateral, ltv, timestamps[0], {value: collateral});
         const borrowReceipt = await borrowTx.wait();
-        const txFee = borrowReceipt.gasUsed.mul(borrowTx.gasPrice || 0)
+        assert(borrowReceipt);
+        const txFee = borrowReceipt.gasUsed * borrowTx.gasPrice
 
         const borrower1UsdcBalanceAfter = await usdc.balanceOf(borrower1.getAddress());
-        const borrower1EthBalanceAfter = await borrower1.getBalance();
-        const lendingPlatformUsdcBalanceAfter = await usdc.balanceOf(lendingPlatform.address);
-        const lendingPlatformEthBalanceAfter = await ethers.provider.getBalance(lendingPlatform.address);
+        const borrower1EthBalanceAfter = await ethers.provider.getBalance(borrower1.getAddress());
+        const lendingPlatformUsdcBalanceAfter = await usdc.balanceOf(lendingPlatform.getAddress());
+        const lendingPlatformEthBalanceAfter = await ethers.provider.getBalance(lendingPlatform.getAddress());
 
         expect(borrower1UsdcBalanceAfter).to.equal(parseUnits('900', 6));
-        expect(borrower1EthBalanceAfter).to.equal(borrower1EthBalanceBefore.sub(txFee).sub(parseEther('2')));
+        expect(borrower1EthBalanceAfter).to.equal(borrower1EthBalanceBefore - txFee - parseEther('2'));
         expect(lendingPlatformUsdcBalanceAfter).to.equal(parseUnits('100', 6));
         expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('2'));
 
@@ -497,17 +514,20 @@ describe('LendingPlatform', () => {
         expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps[0]);
         expect(loan.contributingPools[0].liquidityContribution).to.equal(parseUnits('1', 8));
 
-        const totalAvailableLiquidity = await lendingPlatform.getTotalAvailableLiquidity(timestamps[0]);
+        const totalLiquidity = await lendingPlatform.getTotalLiquidity(timestamps[0]);
+        const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(timestamps[0]);
+        const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
         expect(totalAvailableLiquidity).to.equal(parseUnits('100', 6));
       });
       it('should reject a second loan from the same borrower and same timestamp', async() => {
         const amount = parseUnits('900', 6);
         const collateral = parseEther('2');
         const ltv = 25;
-        
+
         const borrowTx = await borrower1LendingPlatform.takeLoan(amount, collateral, ltv, timestamps[0], {value: collateral});
         const borrowReceipt = await borrowTx.wait();
-        const txFee = borrowReceipt.gasUsed.mul(borrowTx.gasPrice || 0)
+        assert(borrowReceipt);
+        const txFee = borrowReceipt.gasUsed * borrowTx.gasPrice;
 
         const amount2 = parseUnits('9', 6);
         const collateral2 = parseEther('2');
@@ -522,10 +542,11 @@ describe('LendingPlatform', () => {
         const amount = parseUnits('900', 6);
         const collateral = parseEther('2');
         const ltv = 25;
-        
+
         const borrowTx = await borrower1LendingPlatform.takeLoan(amount, collateral, ltv, timestamps[0], {value: collateral});
         const borrowReceipt = await borrowTx.wait();
-        const txFee = borrowReceipt.gasUsed.mul(borrowTx.gasPrice || 0)
+        assert(borrowReceipt);
+        const txFee = borrowReceipt.gasUsed * borrowTx.gasPrice;
 
         const amount2 = parseUnits('101', 6);
         const collateral2 = parseEther('1');
@@ -537,11 +558,11 @@ describe('LendingPlatform', () => {
         const borrower2LendingPlatform = lendingPlatform.connect(borrower2);
 
         const borrower1UsdcBalanceBefore = await usdc.balanceOf(borrower1.getAddress());
-        const borrower1EthBalanceBefore = await borrower1.getBalance();
+        const borrower1EthBalanceBefore = await ethers.provider.getBalance(borrower1.getAddress());
         const borrower2UsdcBalanceBefore = await usdc.balanceOf(borrower2.getAddress());
-        const borrower2EthBalanceBefore = await borrower2.getBalance();
-        const lendingPlatformUsdcBalanceBefore = await usdc.balanceOf(lendingPlatform.address);
-        const lendingPlatformEthBalanceBefore = await ethers.provider.getBalance(lendingPlatform.address);
+        const borrower2EthBalanceBefore = await ethers.provider.getBalance(borrower2.getAddress());
+        const lendingPlatformUsdcBalanceBefore = await usdc.balanceOf(lendingPlatform.getAddress());
+        const lendingPlatformEthBalanceBefore = await ethers.provider.getBalance(lendingPlatform.getAddress());
 
         expect(borrower1UsdcBalanceBefore).to.equal(0);
         expect(borrower2UsdcBalanceBefore).to.equal(0);
@@ -551,10 +572,11 @@ describe('LendingPlatform', () => {
         const amount = parseUnits('900', 6);
         const collateral = parseEther('2');
         const ltv = 25;
-        
+
         const borrowTx = await borrower1LendingPlatform.takeLoan(amount, collateral, ltv, timestamps[0], {value: collateral});
         const borrowReceipt = await borrowTx.wait();
-        const txFee = borrowReceipt.gasUsed.mul(borrowTx.gasPrice || 0)
+        assert(borrowReceipt);
+        const txFee = borrowReceipt.gasUsed * borrowTx.gasPrice;
 
         const amount2 = parseUnits('100', 6);
         const collateral2 = parseEther('1');
@@ -562,19 +584,20 @@ describe('LendingPlatform', () => {
 
         const borrowTx2 = await borrower2LendingPlatform.takeLoan(amount2, collateral2, ltv2, timestamps[0], {value: collateral2});
         const borrowReceipt2 = await borrowTx2.wait();
-        const txFee2 = borrowReceipt2.gasUsed.mul(borrowTx2.gasPrice || 0)
+        assert(borrowReceipt2);
+        const txFee2 = borrowReceipt2.gasUsed * borrowTx2.gasPrice;
 
         const borrower1UsdcBalanceAfter = await usdc.balanceOf(borrower1.getAddress());
-        const borrower1EthBalanceAfter = await borrower1.getBalance();
+        const borrower1EthBalanceAfter = await ethers.provider.getBalance(borrower1.getAddress());
         const borrower2UsdcBalanceAfter = await usdc.balanceOf(borrower2.getAddress());
-        const borrower2EthBalanceAfter = await borrower2.getBalance();
-        const lendingPlatformUsdcBalanceAfter = await usdc.balanceOf(lendingPlatform.address);
-        const lendingPlatformEthBalanceAfter = await ethers.provider.getBalance(lendingPlatform.address);
+        const borrower2EthBalanceAfter = await ethers.provider.getBalance(borrower2.getAddress());
+        const lendingPlatformUsdcBalanceAfter = await usdc.balanceOf(lendingPlatform.getAddress());
+        const lendingPlatformEthBalanceAfter = await ethers.provider.getBalance(lendingPlatform.getAddress());
 
         expect(borrower1UsdcBalanceAfter).to.equal(parseUnits('900', 6));
-        expect(borrower1EthBalanceAfter).to.equal(borrower1EthBalanceBefore.sub(txFee).sub(parseEther('2')));
+        expect(borrower1EthBalanceAfter).to.equal(borrower1EthBalanceBefore - txFee - parseEther('2'));
         expect(borrower2UsdcBalanceAfter).to.equal(parseUnits('100', 6));
-        expect(borrower2EthBalanceAfter).to.equal(borrower2EthBalanceBefore.sub(txFee2).sub(parseEther('1')));
+        expect(borrower2EthBalanceAfter).to.equal(borrower2EthBalanceBefore - txFee2 - parseEther('1'));
         expect(lendingPlatformUsdcBalanceAfter).to.equal(0);
         expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('3'));
 
@@ -590,7 +613,9 @@ describe('LendingPlatform', () => {
         expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps[0]);
         expect(loan.contributingPools[0].liquidityContribution).to.equal(parseUnits('1', 8));
 
-        const totalAvailableLiquidity = await lendingPlatform.getTotalAvailableLiquidity(timestamps[0]);
+        const totalLiquidity = await lendingPlatform.getTotalLiquidity(timestamps[0]);
+        const totalLiquidityConsumed = await lendingPlatform.getTotalLiquidityConsumed(timestamps[0]);
+        const totalAvailableLiquidity = totalLiquidity - totalLiquidityConsumed;
         expect(totalAvailableLiquidity).to.equal(parseUnits('0', 6));
       })
     })
@@ -621,6 +646,17 @@ describe('LendingPlatform', () => {
       it('should create the loan for march', async() => {});
       it('should create the loan for jan even if some of the jan liquidity is consumed for a feb loan', async() => {});
       it('should reject if all of the possible jan liquidity is used up for jan loans', async () => {});
+    })
+  })
+
+  describe('maxLoan', () => {
+    it('should reject invalid ltv', async () => {
+      await expect(lendingPlatform.maxLoan(5, parseEther('1'))).to.be.revertedWith("Invalid LTV");
+    })
+
+    it('should calculate the correct value for 50% LTV loan', async () => {
+      const maxLoan = await lendingPlatform.maxLoan(50, parseEther('1'));
+      expect(maxLoan).to.equal(parseUnits('926.05515', 6));
     })
   })
 });

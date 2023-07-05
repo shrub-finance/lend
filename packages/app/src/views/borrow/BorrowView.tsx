@@ -1,64 +1,85 @@
 import {FC, useEffect, useState} from "react";
-import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
-import useTokenBalance from "../../hooks/useTokenBalance";
+// import {useConnection, useWallet} from "@solana/wallet-adapter-react";
+// import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
+// import useTokenBalance from "../../hooks/useTokenBalance";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
-import { useSDK, useSwitchChain } from "@thirdweb-dev/react";
+import {useBalance, useContract, useSDK, useSwitchChain} from "@thirdweb-dev/react";
+import {lendingPlatformAbi, lendingPlatformAddress, usdcAddress} from "../../utils/contracts";
+import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
+import {interestToLTV} from "../../utils/ethMethods";
+import {BigNumber, ethers} from "ethers";
 
 interface BorrowViewProps {
   onBorrowViewChange: (collateral: string, interestRate, amount) => void;
 }
 
 export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) => {
-  const wallet = useWallet();
-  const { connection } = useConnection();
+  // const wallet = useWallet();
+  // const { connection } = useConnection();
 
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [isContinuePressed, setIsContinuePressed] = useState(false);
   const [showSection, setShowSection] = useState(false);
 
-  const sdk = useSDK();
-  const switchChain = useSwitchChain();
 
+  const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
+  const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
+
+  // const sdk = useSDK();
+  // const switchChain = useSwitchChain();
+
+  const [maxLoan, setMaxLoan] = useState(ethers.utils.parseEther('0'));
   const [requiredCollateral, setRequiredCollateral] = useState("0");
-    const [borrowAmount, setBorrowAmount] = useState("0");
-    const [selectedInterestRate, setSelectedInterestRate] = useState("");
+  const [borrowAmount, setBorrowAmount] = useState("0");
+  const [selectedInterestRate, setSelectedInterestRate] = useState("");
+  const {
+    contract: lendingPlatform,
+    isLoading: lendingPlatformIsLoading,
+    error: lendingPlatformError
+  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
-  const balance = useUserSOLBalanceStore((s) => s.balance)
-  const { getUserSOLBalance } = useUserSOLBalanceStore()
+  // const balance = useUserSOLBalanceStore((s) => s.balance)
+  // const { getUserSOLBalance } = useUserSOLBalanceStore()
 
-  const tokenBalance = useTokenBalance();
+  // const tokenBalance = useTokenBalance();
 
-  const [ethBalance , setEthBalance] = useState('')
+  // const [ethBalance , setEthBalance] = useState('')
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
 
   const SOLANA_RATE = 2000;
 
 
-  useEffect(() => {
-    if (wallet.publicKey) {
-      console.log(wallet.publicKey.toBase58())
-      getUserSOLBalance(wallet.publicKey, connection)
-    }
-
-    async function getWalletBalance() {
-      const walletBalance = await sdk.wallet.balance();
-      setEthBalance(walletBalance.displayValue);
-    }
-
-    getWalletBalance().catch(console.error);
-
-  }, [wallet.publicKey, connection, getUserSOLBalance, sdk, switchChain])
+  // useEffect(() => {
+  //   // if (wallet.publicKey) {
+  //   //   console.log(wallet.publicKey.toBase58())
+  //   //   getUserSOLBalance(wallet.publicKey, connection)
+  //   // }
+  //
+  //   async function getWalletBalance() {
+  //     const walletBalance = await sdk.wallet.balance();
+  //     setEthBalance(walletBalance.displayValue);
+  //   }
+  //
+  //   getWalletBalance().catch(console.error);
+  //
+  // }, [wallet.publicKey, connection, getUserSOLBalance, sdk, switchChain])
 
 
   async function fillMax() {
-    if (wallet.publicKey) {
-      setBorrowAmount(String(tokenBalance));}
-    else{
-      handleErrorMessages({ customMessage: "Wallet not connected. Please check." });
+    // if (wallet.publicKey) {
+    //   setBorrowAmount(String(tokenBalance));}
+    // else{
+    //   handleErrorMessages({ customMessage: "Wallet not connected. Please check." });
+    //   console.log('wallet not connected');
+    // }
+    if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading) {
+      handleErrorMessages({customMessage: "Wallet not connected. Please check."});
       console.log('wallet not connected');
+    } else {
+      console.log(ethers.utils.formatUnits(maxLoan, 6))
+      setBorrowAmount(ethers.utils.formatUnits(maxLoan, 6));
     }
   }
 
@@ -76,17 +97,55 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   };
 
   useEffect(() => {
-    if (selectedInterestRate !== "") {
-      handleCollateralCalc();
+    if (selectedInterestRate !== "" && borrowAmount !== "0") {
+      // handleCollateralCalc();
+      determineRequiredCollateral()
+          .then(c => {
+            console.log(c);
+            console.log(ethers.utils.formatEther(c));
+            setRequiredCollateral(ethers.utils.formatEther
+                (c
+                    .div(ethers.utils.parseUnits('1', 12))
+                    .mul(ethers.utils.parseUnits('1', 12))
+                )
+            );
+          })
+          .catch(e => console.error(e));
     }
   }, [borrowAmount, selectedInterestRate]);
+
+  useEffect(() => {
+    getMaxLoan()
+        .then(m => {
+          setMaxLoan(m);
+        })
+        .catch(e => console.error(e))
+  }, [selectedInterestRate]);
+
+  async function getMaxLoan() {
+    if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading) {
+      return ethers.utils.parseEther('0');
+    }
+    console.log(lendingPlatform);
+    console.log(selectedInterestRate);
+    console.log([interestToLTV[selectedInterestRate], ethBalance.value])
+    const maxLoan: BigNumber = await lendingPlatform.call('maxLoan', [interestToLTV[selectedInterestRate], ethBalance.value])
+    return maxLoan;
+  }
+
+  async function determineRequiredCollateral() {
+    const ltv = interestToLTV[selectedInterestRate];
+    const usdcUnits = ethers.utils.parseUnits(borrowAmount, 6)
+    const coll: BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
+    return coll;
+  }
 
   function handleCollateralCalc() {
     setIsContinuePressed(true);
 
     // Calculate required collateral
     const amount = Number(borrowAmount);
-    const interestRate = Number(selectedInterestRate.replace("%", "")) / 100;
+    const interestRate = Number(selectedInterestRate) / 100;
 
     let requiredCollateralAmount;
 
@@ -117,24 +176,22 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
 
   return (
     <div className="md:hero mx-auto p-4">
-      {/*alert*/}
-      <div className='mt-6 '>
-
-        {localError && (
-           <div className="alert alert-warning justify-start">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 ml-4p" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-          <span>{localError}</span>
-          </div>
-        )}
-
-
 
       <div className="md:hero-content flex flex-col">
-          {/*heading*/}
-          <h1 className=" text-5xl font-bold text-base-100">
-            Borrow
-          </h1>
-          <p className="text-base-100 text-lg font-light pt-2">Borrow USDC on Shrub with fixed-rates as low as<span className="font-semibold"> 0%</span></p>
+        {/*alert*/}
+        <div className='mt-6 self-start'>
+
+          {localError && (
+            <div className="alert alert-warning justify-start">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 ml-4p" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <span>{localError}</span>
+            </div>
+          )}
+              {/*heading*/}
+              <h1 className=" text-5xl font-bold text-base-100">
+                Borrow
+              </h1>
+              <p className="text-base-100 text-lg font-light pt-2">Borrow USDC on Shrub with fixed-rates as low as<span className="font-semibold"> 0%</span></p>
 
         </div>
 
@@ -157,10 +214,10 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                          value={format(borrowAmount)}/>
 
                   <label className="label">
-                    <span className="label-text-alt text-gray-500 text-sm font-light">Wallet Balance:  {wallet &&
+                    <span className="label-text-alt text-gray-500 text-sm font-light">Wallet Balance:  {!ethBalanceIsLoading &&
 
                         <span>
-                          {( ethBalance || 0)} ETH
+                          {( ethBalance.displayValue || 0)} ETH
                           {/*{(balance || 0).toLocaleString()} ETH*/}
                         </span>
 
@@ -178,7 +235,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
 
                     <ul className="flex flex-row ">
                       <li className="mr-4">
-                        <input type="radio" id="smallest-borrow" name="loan" value="smallest-borrow" className="hidden peer" onChange={() => setSelectedInterestRate("0%")} required/>
+                        <input type="radio" id="smallest-borrow" name="loan" value="smallest-borrow" className="hidden peer" onChange={() => setSelectedInterestRate("0")} required/>
                         <label htmlFor="smallest-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -187,7 +244,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="small-borrow" name="loan" value="small-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("1%")}/>
+                        <input type="radio" id="small-borrow" name="loan" value="small-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("1")}/>
                         <label htmlFor="small-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -196,7 +253,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="big-borrow" name="loan" value="big-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("5%")} required/>
+                        <input type="radio" id="big-borrow" name="loan" value="big-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("5")} required/>
                         <label htmlFor="big-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -205,7 +262,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="biggest-borrow" name="loan" value="biggest-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("8%")} required/>
+                        <input type="radio" id="biggest-borrow" name="loan" value="biggest-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("8")} required/>
                         <label htmlFor="biggest-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -241,7 +298,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                 {/*</div>*/}
 
                 {/*display required collateral*/}
-                {isContinuePressed && showSection && (
+                {showSection && (
                   <div className="hero-content mb-2 flex-col gap-2 justify-between">
                     <div className="card w-full flex flex-row text-lg justify-between">
                       <span className="w-[360px]">Required collateral</span>

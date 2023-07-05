@@ -1,40 +1,48 @@
 import {FC, useEffect, useState} from "react";
-import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
+import {useAddress, useBalance, useConnectedWallet, useContract, useContractRead} from "@thirdweb-dev/react";
+
+import {lendingPlatformAddress, lendingPlatformAbi, usdcAddress} from "../../utils/contracts";
+import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
+import {timestamps} from "../../utils/ethMethods";
 
 interface LendViewProps {
-  onLendViewChange: (estimatedAPY: string, lockupPeriod: string, lendAmount: string) => void;
+  onLendViewChange: (estimatedAPY: string, timestamp: number, lendAmount: string) => void;
 }
 
 export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
-  const wallet = useWallet();
-  const {connection} = useConnection();
+  const w = useConnectedWallet();
+  const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
+  const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
+  const walletAddress = useAddress();
 
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
 
-  const balance = useUserSOLBalanceStore((s) => s.balance)
-  const {getUserSOLBalance} = useUserSOLBalanceStore()
   const [lendAmount, setLendAmount] = useState("0");
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
-  const [lockupPeriod, setLockupPeriod] = useState("");
+  // const [lockupPeriod, setLockupPeriod] = useState("");
+  const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
   const [supplyButtonPressed, setSupplyButtonPressed] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
 
+  const {
+    contract: lendingPlatform,
+    isLoading: lendingPlatformIsLoading,
+    error: lendingPlatformError
+  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
+  // const {
+  //   data: totalAvailableLiquidityOneYearFromNow,
+  //   isLoading: totalAvailableLiquidityOneYearFromNowIsLoading,
+  //   error: totalAvailableLiquidityOneYearFromNowError
+  // } = useContracteContractRead(lendingPlatform, 'getTotalAvailableLiquidity', [toEthDate(oneYearFromNow)])
 
-  useEffect(() => {
-    if (wallet.publicKey) {
-      console.log(wallet.publicKey.toBase58())
-      getUserSOLBalance(wallet.publicKey, connection)
-    }
-  }, [wallet.publicKey, connection, getUserSOLBalance])
 
   async function fillMax() {
-    if (wallet.publicKey) {
-      setLendAmount(String(balance));
+    if (!usdcBalanceIsLoading) {
+      setLendAmount(usdcBalance.displayValue);
     } else {
       handleErrorMessages({customMessage: "Wallet not connected. Please check."});
       console.log('wallet not connected');
@@ -55,10 +63,10 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   };
 
   useEffect(() => {
-    if (lockupPeriod !== "") {
+    if (timestamp) {
       handleAPYCalc();
     }
-  }, [lendAmount, lockupPeriod]);
+  }, [lendAmount, timestamp]);
 
   function handleAPYCalc() {
     setSupplyButtonPressed(true);
@@ -70,7 +78,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   }
 
   const handleLendContinue = () => {
-    onLendViewChange(estimatedAPY, lockupPeriod, lendAmount);
+    onLendViewChange(estimatedAPY, timestamp, lendAmount);
   };
 
 
@@ -95,7 +103,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
           </h1>
           <p className="text-base-100 text-lg font-light pt-2">Supply your USDC on Shrub and earn up to <span
             className="font-semibold">7-12% APY</span></p>
-
         </div>
 
         <div className="relative group mt-10 w-full">
@@ -115,10 +122,10 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                          focus:shadow-shrub-thin focus:border-shrub-green-50" onChange={handleLendAmountChange}
                          value={format(lendAmount)}/>
                   <label className="label">
-                    <span className="label-text-alt text-gray-500 text-sm font-light">Wallet balance: {wallet &&
+                    <span className="label-text-alt text-gray-500 text-sm font-light">Wallet balance: {!usdcBalanceIsLoading &&
 
                       <span>
-                          {(balance || 0).toLocaleString()} ETH
+                          {usdcBalance.displayValue} USDC
                         </span>
 
                     }</span>
@@ -139,7 +146,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                     <ul className="flex flex-row">
                       <li className="mr-4">
                         <input type="radio" id="smallest-loan" name="loan" value="smallest-loan" className="hidden peer"
-                               required onChange={() => setLockupPeriod("1")}/>
+                               required onChange={() => setTimestamp(timestamps[1])}/>
                         <label htmlFor="smallest-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -149,7 +156,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                       </li>
                       <li className="mr-4">
                         <input type="radio" id="small-loan" name="loan" value="small-loan" className="hidden peer"
-                               onChange={() => setLockupPeriod("3")}/>
+                               onChange={() => setTimestamp(timestamps[3])}/>
                         <label htmlFor="small-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -159,7 +166,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                       </li>
                       <li className="mr-4">
                         <input type="radio" id="big-loan" name="loan" value="big-loan" className="hidden peer"
-                               required onChange={() => setLockupPeriod("6")}/>
+                               required onChange={() => setTimestamp(timestamps[6])}/>
                         <label htmlFor="big-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -169,7 +176,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                       </li>
                       <li className="mr-4">
                         <input type="radio" id="biggest-loan" name="loan" value="biggest-loan" className="hidden peer"
-                               required onChange={() => setLockupPeriod("12")}/>
+                               required onChange={() => setTimestamp(timestamps[12])}/>
                         <label htmlFor="biggest-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
@@ -210,6 +217,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                       <div className="text-center p-2">
                         <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
                         <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
+                        {/*TODO: Make this bonus text dynamic for different periods*/}
                         <p className="font-thin pt-3 text-lg">3 month lending term includes 5% bonus</p>
                       </div>
 
@@ -224,7 +232,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   disabled:text-gray-50
                   disabled:border"
                   onClick={handleLendContinue}
-                  disabled={Number(lendAmount) <= 0|| lockupPeriod === ""}
+                  disabled={Number(lendAmount) <= 0 || !timestamp}
                 >Supply USDC</button>
               </div>
             </div>

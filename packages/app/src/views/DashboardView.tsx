@@ -1,83 +1,181 @@
 // Next, React
-import { FC, useEffect, useState } from 'react';
+import {FC, useEffect, useState} from 'react';
 
 // Wallet
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-
-import * as splToken from "@solana/spl-token";
-import * as web3 from "@solana/web3.js";
-import useUserSOLBalanceStore from "../stores/useUserSOLBalanceStore";
 import {RequestAirdrop} from "../components/RequestAirdrop";
+import {useConnectedWallet, useBalance, useAddress, useContract, useContractRead} from "@thirdweb-dev/react";
+import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 
-export const DashboardView: FC = ({ }) => {
-  const wallet = useWallet();
-  const { connection } = useConnection();
+// Custom
+import {toEthDate, fromEthDate} from "../utils/ethMethods";
+import { usdcAddress, lendingPlatformAddress, lendingPlatformAbi } from "../utils/contracts";
+import {ethers} from "ethers";
 
-  const balance = useUserSOLBalanceStore((s) => s.balance)
-  const { getUserSOLBalance } = useUserSOLBalanceStore()
+const now = new Date();
+const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
 
-  const [tokenBalance, setTokenBalance] = useState(null);
+export const DashboardView: FC = ({}) => {
+    const wallet = useConnectedWallet();
 
-  useEffect(() => {
-    if (wallet.publicKey) {
-      console.log(wallet.publicKey.toBase58())
-      getUserSOLBalance(wallet.publicKey, connection)
-      async function shrubBalanceHandler() {
-        const tokenAccount = await splToken.getAssociatedTokenAddress(new web3.PublicKey('7TCPsCbHcRpMdikrrqWbP6kifQJ9K3aE2drgPvpyjHns'),wallet.publicKey)
-        const tokenBalance = await connection.getTokenAccountBalance(tokenAccount)
-        const balance = await connection.getTokenAccountBalance(tokenAccount)
-        setTokenBalance(tokenBalance.value.uiAmountString);
-      }
+    const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
+    const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
+    const walletAddress = useAddress();
+    const {
+        contract: lendingPlatform,
+        isLoading: lendingPlatformIsLoading,
+        error: lendingPlatformError
+    } = useContract(lendingPlatformAddress, lendingPlatformAbi);
+    const {
+        data: totalAvailableLiquidityOneYearFromNow,
+        isLoading: totalAvailableLiquidityOneYearFromNowIsLoading,
+        error: totalAvailableLiquidityOneYearFromNowError
+    } = useContractRead(lendingPlatform, 'getTotalAvailableLiquidity', [toEthDate(oneYearFromNow)])
 
+    useEffect(() => {
+        console.log('running contract useEffect');
+        console.log(lendingPlatform, lendingPlatformIsLoading, lendingPlatformError);
+        async function callContract() {
+            const APYvalue = await lendingPlatform.call("getAPYBasedOnLTV",[33]);
+            console.log(APYvalue);
+        }
+        if (!lendingPlatformIsLoading && !lendingPlatformError) {
+            callContract()
+                .then()
+                .catch(console.log);
+        }
+    }, [lendingPlatformIsLoading, lendingPlatformError])
 
-      shrubBalanceHandler().catch(console.error);
+    useEffect(() => {
+        console.log('running usdc useEffect');
+        console.log(usdcBalance);
+    }, [usdcBalanceIsLoading])
 
-    }
-  }, [wallet.publicKey, connection, getUserSOLBalance])
+    useEffect(() => {
+        console.log('running eth useEffect');
+        console.log(ethBalance);
+    }, [ethBalanceIsLoading])
 
+    useEffect(() => {
+        console.log('running totalLiquidityOneYearFromNow useEffect');
+        if (!totalAvailableLiquidityOneYearFromNowIsLoading && !totalAvailableLiquidityOneYearFromNowError) {
+            console.log(totalAvailableLiquidityOneYearFromNow);
+        }
+    })
 
+    return (
 
-  return (
+        <div className="md:hero mx-auto p-4">
+            <div className="md:hero-content flex flex-col">
 
-    <div className="md:hero mx-auto p-4">
-      <div className="md:hero-content flex flex-col">
-        <div className='mt-6'>
-          <h1 className="text-center text-5xl md:pl-12 font-bold text-transparent bg-clip-text bg-gradient-to-br from-indigo-500 to-fuchsia-500 mb-4">
-            Shrub Lend
-          </h1>
-        </div>
-        {/*<h4 className="md:w-full text-2x1 md:text-4xl text-center text-slate-300 my-2">*/}
-        {/*  <p>You can do it</p>*/}
-        {/*  <p className='text-slate-500 text-2x1 leading-relaxed'>I believe in you</p>*/}
-        {/*</h4>*/}
-
-        <div className="flex flex-col mt-2">
-          <RequestAirdrop />
-          <h4 className="md:w-full text-2xl text-slate-300 my-2">
-
-            {wallet &&
-              <>
-                <div className="flex flex-row justify-center">
-                  <div>
-                    {(balance || 0).toLocaleString()}
-                  </div>
-                  <div className='text-slate-600 ml-2'>
-                    ETH
-                  </div>
+                <h1 className=" text-5xl font-bold text-base-100 self-start">
+                    Dashboard
+                </h1>
+                <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+                    {/*<table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">*/}
+                    {/*    <caption*/}
+                    {/*      className="p-5 text-lg font-semibold text-left text-gray-900 bg-white dark:text-white dark:bg-gray-800">*/}
+                    {/*        Earning*/}
+                    {/*        <p className="mt-1 text-sm font-normal text-gray-500 dark:text-gray-400"></p>*/}
+                    {/*    </caption>*/}
+                    {/*    <thead*/}
+                    {/*      className="text-xs text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400">*/}
+                    {/*    <tr>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            Amount Deposited*/}
+                    {/*        </th>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            Term duration (months)*/}
+                    {/*        </th>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            APR*/}
+                    {/*        </th>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            Earned*/}
+                    {/*        </th>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            Unlock date*/}
+                    {/*        </th>*/}
+                    {/*        <th scope="col" className="px-6 py-3">*/}
+                    {/*            <span className="sr-only">Edit</span>*/}
+                    {/*        </th>*/}
+                    {/*    </tr>*/}
+                    {/*    </thead>*/}
+                    {/*    <tbody>*/}
+                    {/*    <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">*/}
+                    {/*        <th scope="row"*/}
+                    {/*            className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">*/}
+                    {/*            Microsoft Surface Pro*/}
+                    {/*        </th>*/}
+                    {/*        <td className="px-6 py-4">*/}
+                    {/*            White*/}
+                    {/*        </td>*/}
+                    {/*        <td className="px-6 py-4">*/}
+                    {/*            Laptop PC*/}
+                    {/*        </td>*/}
+                    {/*        <td className="px-6 py-4">*/}
+                    {/*            $1999*/}
+                    {/*        </td>*/}
+                    {/*        <td className="px-6 py-4">*/}
+                    {/*            $1999*/}
+                    {/*        </td>*/}
+                    {/*        <td className="px-6 py-4 text-right">*/}
+                    {/*            <a href="#"*/}
+                    {/*               className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-lg font-normal border-shrub-grey-50">*/}
+                    {/*                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="none">*/}
+                    {/*                    <path d="M0.833496 0.833252L9.16683 9.16659M9.16683 9.16659V0.833252M9.16683 9.16659H0.833496" stroke="#344054" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>*/}
+                    {/*                </svg>&nbsp;*/}
+                    {/*                Withdraw</a>*/}
+                    {/*        </td>*/}
+                    {/*    </tr>*/}
+                    {/*    </tbody>*/}
+                    {/*</table>*/}
+                    <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <caption
+                          className="p-5 text-lg text-left text-gray-500 bg-white dark:text-white dark:bg-gray-800">
+                            Welcome back, ryan.eth!
+                            <p className="mt-1 text-sm font-normal text-gray-500 dark:text-gray-400"></p>
+                        </caption>
+                        <thead
+                          className="text-xs text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" className="px-6 py-3">
+                                ETH Balance
+                            </th>
+                            <th scope="col" className="px-6 py-3">
+                                USDC Balance
+                            </th>
+                            <th scope="col" className="px-6 py-3">
+                                Wallet Address
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                            <td className="px-6 py-4">{wallet && !ethBalanceIsLoading ? (
+                              <p>{ethers.utils.formatEther(
+                                  ethBalance.value
+                                      .div(ethers.utils.parseUnits('1',15))
+                                      .mul(ethers.utils.parseUnits('1',15))
+                              )}</p>
+                            ) : (
+                              <p>Loading ETH balance...</p>
+                            )}</td>
+                            <td className="px-6 py-4">
+                                {wallet && !usdcBalanceIsLoading ? (
+                                  <p>{(usdcBalance.displayValue || 0).toLocaleString()}</p>
+                                ) : (
+                                  <p>Loading USDC balance...</p>
+                                )}
+                            </td>
+                            <td className="px-6 py-4">
+                                {walletAddress}
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div className='text-slate-600 ml-2'>
-                  {tokenBalance !== null ? (
-                    <p className='text-base-100 ml-2'>Token Balance: {(tokenBalance || 0).toLocaleString()}</p>
-                  ) : (
-                    <p className='text-base-100 ml-2'>Loading token balance...</p>
-                  )}
-                </div>
-              </>
 
-            }
-          </h4>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };

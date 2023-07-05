@@ -1,7 +1,7 @@
 {
   "name": "@shrub-lend/app",
   "version": "0.2.0",
-  "author": "Solana Maintainers <maintainers@solana.foundation>",
+  "author": "John Guthrie and Rachita Guthrie",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",

@@ -75,6 +75,33 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     // ETH price with 8 decimal places
     uint public ethPrice = 2000 * 10 ** 8;
 
+    function getEthPrice() public view returns (uint256) {
+//        return 2000 * 10 ** 8;
+        // 8 decimals ($1852.11030001)
+        return 185211030001;
+    }
+
+    function maxLoan(uint ltv, uint ethCollateral) public view returns (uint256) {
+        // ethCollateral - 18 decimals
+        // getEthPrice - 8 decimals
+        require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
+        uint valueOfEth = ethCollateral * getEthPrice(); // value of eth in usd with 26 decimals
+        uint maxLoan = valueOfEth * ltv / 10 ** 22; // remove 20 decimals to get back to 6 decimals of USDC
+        return maxLoan;
+    }
+
+    function requiredCollateral(uint ltv, uint usdcLoanValue) public view returns (uint256) {
+        // returns collateral required in wei
+        // usdcLoanValue 6 decimals
+        // suppliment by adding 22 (6 + 22 - 2 - 8 = 18)
+        // ltv 2 decimal
+        // getEthPrice 8 decimal
+        // return 18 decimals
+        require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
+        uint valueOfEthRequied = usdcLoanValue * 10 ** 22 / ltv; // time 10 ** 2 to convert to percentage and 10 ** 12 to convert to 8 decimals
+        return valueOfEthRequied / getEthPrice();
+    }
+
     // Get the latest USD price of aETH
     // TODO: Hook this up with chainlink
     // There are 8 decimal places
@@ -89,22 +116,40 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     // Get the available liquidity for loans across all pools
-    function getTotalAvailableLiquidity(
+//    function getTotalAvailableLiquidity(
+//        uint _timestamp
+//    ) public view returns (uint256 totalLiquidity) {
+//        console.log("Running getTotalAvailableLiquidity");
+//        for (uint i = 0; i < activePools.length; i++) {
+//            if (activePools[i] < _timestamp) {
+//                continue; // Don't count liquidity that is in a pool that has a timestamp before what it requested
+//            }
+//            console.log(pools[activePools[i]].totalLiquidity);
+//            console.log(totalLoans[activePools[i]]);
+//            totalLiquidity += (pools[activePools[i]].totalLiquidity -
+//                totalLoans[activePools[i]]);
+//        }
+//        return totalLiquidity;
+//    }
+
+    function getTotalLiquidityConsumed(
         uint _timestamp
-    ) public view returns (uint256 totalLiquidity) {
+    ) public view returns (uint256 totalLiquidityConsumed) {
+        console.log("Running getTotalLiquidityConsumed");
         for (uint i = 0; i < activePools.length; i++) {
             if (activePools[i] < _timestamp) {
                 continue; // Don't count liquidity that is in a pool that has a timestamp before what it requested
             }
-            totalLiquidity += (pools[activePools[i]].totalLiquidity -
-                totalLoans[activePools[i]]);
+            console.log(totalLoans[activePools[i]]);
+            totalLiquidityConsumed += totalLoans[activePools[i]];
         }
-        return totalLiquidity;
+        return totalLiquidityConsumed;
     }
 
     function getTotalLiquidity(
         uint _timestamp
     ) public view returns (uint256 totalLiquidity) {
+        console.log("Running getTotalLiquidity");
         for (uint i = 0; i < activePools.length; i++) {
             if (activePools[i] < _timestamp) {
                 continue; // Don't count liquidity that is in a pool that has a timestamp before what it requested
@@ -279,21 +324,31 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Ensure that it is a valid pool
         require(validPool(_timestamp), "Not a valid pool");
 
+        uint a = _amount * 10 ** (18 + 8 - 6 + 2);
+        uint b = getEthPrice() * _collateral;
+
+        console.log(a);
+        console.log(b);
+
         // Ensure that the calculated ltv of the loan is less than or equal to the specified ltv
         // ethPrice 8 decimals
         // _collateral 18 decimals
         // _amount 6 decimals
         uint ltvCalc = (_amount * 10 ** (18 + 8 - 6 + 2)) /
-            (ethPrice * _collateral);
+            (getEthPrice() * _collateral);
         require(
             ltvCalc <= _ltv,
             "Insufficient collateral provided for specified ltv"
         );
 
         // Check if the loan amount is less than or equal to the liquidity across pools
-        uint256 totalAvailableLiquidity = getTotalAvailableLiquidity(
-            _timestamp
-        );
+        uint256 totalAvailableLiquidity = getTotalLiquidity(_timestamp) - getTotalLiquidityConsumed(_timestamp);
+
+        console.log("---");
+        console.log(_amount);
+        console.log(totalAvailableLiquidity);
+
+
         require(
             _amount <= totalAvailableLiquidity,
             "Insufficient liquidity across pools"
@@ -317,6 +372,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         loan.APY = getAPYBasedOnLTV(_ltv);
 
         uint totalLiquidity = getTotalLiquidity(_timestamp);
+
+        console.log(totalLiquidity);
 
         // Loop through the active pools and determine the contribution of each
         for (uint i = 0; i < activePools.length; i++) {
@@ -343,5 +400,23 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
         // Transfer the loan amount in USDC to the borrower
         usdc.transfer(msg.sender, _amount);
+    }
+
+    function bytesToString(bytes memory data) public pure returns(string memory) {
+        bytes memory alphabet = "0123456789abcdef";
+
+        bytes memory str = new bytes(2 + data.length * 2);
+        str[0] = "0";
+        str[1] = "x";
+        for (uint i = 0; i < data.length; i++) {
+            str[2+i*2] = alphabet[uint(uint8(data[i] >> 4))];
+            str[3+i*2] = alphabet[uint(uint8(data[i] & 0x0f))];
+        }
+        return string(str);
+    }
+
+    fallback() external {
+        // This will log the call data in your local Hardhat Network console
+        console.log(bytesToString(msg.data));
     }
 }
