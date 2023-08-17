@@ -2,7 +2,8 @@
   "name": "shrub-lend",
   "workspaces": [
     "packages/app",
-    "packages/hardhat"
+    "packages/hardhat",
+    "packages/common"
   ],
   "npmClient": "yarn",
   "useWorkspaces": true,
