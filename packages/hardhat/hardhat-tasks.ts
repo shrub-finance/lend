@@ -1,16 +1,10 @@
 import { task, types } from 'hardhat/config'
 import "@nomicfoundation/hardhat-toolbox";
 
-import { USDCoin } from './typechain-types';
 import { Address } from 'hardhat-deploy/types';
 import assert from 'node:assert/strict';
 import {ContractMethod, TransactionResponse} from "ethers";
-import {sign} from "crypto";
-
-// Helper Functions
-function toEthDate(date: Date) {
-    return Math.round(Number(date) / 1000);
-}
+import {getPlatformDates, toEthDate} from "@shrub-lend/common"
 
 const x = async () => {}
 async function sendTransaction(sentTx: Promise<TransactionResponse>, description: string) {
@@ -146,14 +140,15 @@ task("testLendingPlatform", "Setup an environment for development")
   .setAction(async (taskArgs, env) => {
     const {ethers, deployments, getNamedAccounts} = env;
     const { deployer, account1, account2, account3 } = await getNamedAccounts();
+    const { oneMonth, threeMonth, sixMonth, twelveMonth } = getPlatformDates();
     // await env.run('distributeUsdc', { to: account1, amount: 1000 });
     await env.run('distributeUsdc', { to: account2, amount: 2000 });
     await env.run('distributeUsdc', { to: account3, amount: 3000 });
-    await env.run('createPool', { timestamp: toEthDate(new Date("2023-08-01"))});  // 1 month
-    await env.run('createPool', { timestamp: toEthDate(new Date("2023-10-01"))});  // 3 month
-    await env.run('createPool', { timestamp: toEthDate(new Date("2024-01-01"))});  // 6 month
-    await env.run('createPool', { timestamp: toEthDate(new Date("2024-07-01"))});  // 12 month
-    await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(new Date("2024-01-01"))});  // 6 month
+    await env.run('createPool', { timestamp: toEthDate(oneMonth)});  // 1 month
+    await env.run('createPool', { timestamp: toEthDate(threeMonth)});  // 3 month
+    await env.run('createPool', { timestamp: toEthDate(sixMonth)});  // 6 month
+    await env.run('createPool', { timestamp: toEthDate(twelveMonth)});  // 12 month
+    await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(sixMonth)});  // 6 month
     await env.run('approveUsdc', { account: account1 });
   })
 
