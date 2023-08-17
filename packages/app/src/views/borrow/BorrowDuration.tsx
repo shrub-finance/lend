@@ -1,7 +1,6 @@
-import {FC, useEffect, useState} from "react";
-import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
-import {timestamps} from "../../utils/ethMethods";
+import {useEffect, useState} from "react";
+import {toEthDate} from "../../utils/ethMethods";
+import {formatDate, getPlatformDates} from "@shrub-lend/common"
 
 interface BorrowDurationViewProps {
   requiredCollateral: string;
@@ -11,32 +10,17 @@ interface BorrowDurationViewProps {
 
 export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDuration, requiredCollateral, onDurationChange }) => {
 
-  const [selectedDuration, setSelectedDuration] = useState("");
   const [timestamp, setTimestamp] = useState(0);
-
-  const wallet = useWallet();
-  const {connection} = useConnection();
-
-  const balance = useUserSOLBalanceStore((s) => s.balance)
-  const {getUserSOLBalance} = useUserSOLBalanceStore()
-
-  useEffect(() => {
-    if (wallet.publicKey) {
-      console.log(wallet.publicKey.toBase58())
-      getUserSOLBalance(wallet.publicKey, connection)
-    }
-  }, [wallet.publicKey, connection, getUserSOLBalance])
+  const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
 
   const handleDurationContinue = () => {
     onDurationChange(timestamp);
   };
 
-
   return (
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col">
         <div className='mt-6 self-start'>
-
           <h1 className=" text-4xl font-bold text-base-100">
             <button onClick={onBackDuration}
               className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600">
@@ -74,41 +58,41 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
 
                     <ul className="flex flex-col gap-4">
                       <li className="mr-4">
-                        <input type="radio" id="smallest-duration" name="loan" value="smallest-duration" className="hidden peer" required onChange={() => setTimestamp(timestamps[1])}/>
+                        <input type="radio" id="smallest-duration" name="loan" value="smallest-duration" className="hidden peer" required onChange={() => setTimestamp(toEthDate(oneMonth))}/>
                         <label htmlFor="smallest-duration"
                                className="inline-flex items-center justify-center w-full px-8 py-3 text-gray-600 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
-                            <div className="w-full text-xl font-semibold">1 Month</div>
+                            <div className="w-full text-xl font-semibold">{formatDate.long(oneMonth)}</div>
                           </div>
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="small-duration" name="loan" value="small-duration" className="hidden peer" onChange={() => setTimestamp(timestamps[3])}/>
+                        <input type="radio" id="small-duration" name="loan" value="small-duration" className="hidden peer" onChange={() => setTimestamp(toEthDate(threeMonth))}/>
                         <label htmlFor="small-duration"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
-                            <div className="w-full text-xl font-semibold">3 Months</div>
+                            <div className="w-full text-xl font-semibold">{formatDate.long(threeMonth)}</div>
                           </div>
                         </label>
                       </li>
                       <li className="mr-4">
                         <input type="radio" id="big-duration" name="loan" value="big-duration" className="hidden peer"
-                               required onChange={() => setTimestamp(timestamps[6])}/>
+                               required onChange={() => setTimestamp(toEthDate(sixMonth))}/>
                         <label htmlFor="big-duration"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                             <div className="w-full font-semibold flex flex-row text-xl">
-                              <span className="w-[360px]">6 Months</span>
+                              <span className="w-[360px]">{formatDate.long(sixMonth)}</span>
                               <span className="text-base">+0.5% Interest</span>
                             </div>
                         </label>
                       </li>
                       <li className="mr-4">
-                        <input type="radio" id="biggest-duration" name="loan" value="biggest-duration" className="hidden peer" required onChange={() => setTimestamp(timestamps[12])}/>
+                        <input type="radio" id="biggest-duration" name="loan" value="biggest-duration" className="hidden peer" required onChange={() => setTimestamp(toEthDate(twelveMonth))}/>
                         <label htmlFor="biggest-duration"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
 
                             <div className="w-full text-xl font-semibold flex flex-row">
-                              <span className="w-[380px]">12 Months</span>
+                              <span className="w-[380px]">{formatDate.long(twelveMonth)}</span>
                               <span className="text-base">+1% Interest</span>
                             </div>
 

@@ -1,10 +1,14 @@
-export function toEthDate(date: Date) {
-    return Math.round(Number(date) / 1000);
-}
+import {toEthDate, fromEthDate, getPlatformDates} from "@shrub-lend/common"
 
-export function fromEthDate(ethDate: number) {
-    return new Date(ethDate * 1000);
-}
+// export function toEthDate(date: Date) {
+//     return Math.round(Number(date) / 1000);
+// }
+//
+// export function fromEthDate(ethDate: number) {
+//     return new Date(ethDate * 1000);
+// }
+
+export {toEthDate, fromEthDate};
 
 export function truncateEthAddress (address) {
     if(address) {
@@ -27,8 +31,12 @@ export const interestToLTV = {
 }
 
 export const timestamps = {
-    1: toEthDate(new Date("2023-08-01")),
-    3: toEthDate(new Date("2023-10-01")),
-    6: toEthDate(new Date("2024-01-01")),
-    12: toEthDate(new Date("2024-07-01")),
+    // 1: toEthDate(new Date("2023-08-01")),
+    // 3: toEthDate(new Date("2023-10-01")),
+    // 6: toEthDate(new Date("2024-01-01")),
+    // 12: toEthDate(new Date("2024-07-01")),
+    1: toEthDate(getPlatformDates().oneMonth),
+    3: toEthDate(getPlatformDates().threeMonth),
+    6: toEthDate(getPlatformDates().sixMonth),
+    12: toEthDate(getPlatformDates().twelveMonth)
 }
