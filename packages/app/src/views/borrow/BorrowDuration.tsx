@@ -62,7 +62,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                         <label htmlFor="smallest-duration"
                                className="inline-flex items-center justify-center w-full px-8 py-3 text-gray-600 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
-                            <div className="w-full text-xl font-semibold">1 Month - {formatDate.long(oneMonth)}</div>
+                            <div className="w-full text-xl font-semibold">{formatDate.long(oneMonth)}</div>
                           </div>
                         </label>
                       </li>
@@ -71,7 +71,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                         <label htmlFor="small-duration"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
-                            <div className="w-full text-xl font-semibold">3 Months - {formatDate.long(threeMonth)}</div>
+                            <div className="w-full text-xl font-semibold">{formatDate.long(threeMonth)}</div>
                           </div>
                         </label>
                       </li>
@@ -81,7 +81,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                         <label htmlFor="big-duration"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                             <div className="w-full font-semibold flex flex-row text-xl">
-                              <span className="w-[360px]">6 Months - {formatDate.long(sixMonth)}</span>
+                              <span className="w-[360px]">{formatDate.long(sixMonth)}</span>
                               <span className="text-base">+0.5% Interest</span>
                             </div>
                         </label>
@@ -92,7 +92,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
 
                             <div className="w-full text-xl font-semibold flex flex-row">
-                              <span className="w-[380px]">12 Months - {formatDate.long(twelveMonth)}</span>
+                              <span className="w-[380px]">{formatDate.long(twelveMonth)}</span>
                               <span className="text-base">+1% Interest</span>
                             </div>
 
