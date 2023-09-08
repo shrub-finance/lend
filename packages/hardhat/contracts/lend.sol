@@ -62,7 +62,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     mapping(uint256 => Pool) public pools; // where the uint256 key is a timestamp
-    mapping(uint256 => uint256) public totalLoans; // mapping of totalLoans for each duration based on the timestamp
+    mapping(uint256 => uint256) public totalLoans; // mapping of totalLoans for each duration based on the timestamp - it only counts if a loan is specifically for that timestamp
+    mapping(uint256 => uint256) public activePoolIndex; // mapping of timestamp => index of activePools
 
     uint256[] public activePools; // List of active pools
 
@@ -74,6 +75,43 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     // ETH price with 8 decimal places
     uint public ethPrice = 2000 * 10 ** 8;
+
+    function insertIntoSortedArr(uint[] storage arr, uint newValue) internal {
+        if (arr.length == 0) {
+            arr.push(newValue);
+            return;
+        }
+        // First handle the last element of the array
+        if (arr[arr.length - 1] < newValue) {
+            arr.push(newValue);
+            indexActivePools(arr);
+            return;
+        } else {
+            arr.push(arr[arr.length - 1]);
+            if (arr.length == 2) {
+                arr[0] = newValue;
+                indexActivePools(arr);
+                return;
+            }
+        }
+        for(uint i = arr.length - 2; i > 0; i++) {
+            if (arr[i - 1] < newValue) {
+                arr[i] = newValue;
+                indexActivePools(arr);
+                return;
+            }
+            arr[i] = arr[i - 1];
+        }
+        arr[0] = newValue;
+        indexActivePools(arr);
+    }
+
+    function indexActivePools(uint[] memory arr) internal {
+        console.log("running indexActivePools");
+        for (uint i = 0; i < arr.length; i++) {
+            activePoolIndex[activePools[i]] = i;
+        }
+    }
 
     function getEthPrice() public view returns (uint256) {
 //        return 2000 * 10 ** 8;
@@ -132,19 +170,38 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //        return totalLiquidity;
 //    }
 
-    function getTotalLiquidityConsumed(
+    function getDeficitForPeriod(
         uint _timestamp
-    ) public view returns (uint256 totalLiquidityConsumed) {
-        console.log("Running getTotalLiquidityConsumed");
-        for (uint i = 0; i < activePools.length; i++) {
-            if (activePools[i] < _timestamp) {
-                continue; // Don't count liquidity that is in a pool that has a timestamp before what it requested
+    ) public validTimestamp(_timestamp) view returns (uint256 deficit) {
+        console.log("Running getDeficitForPeriod");
+        // NOTE: it is critical that activePools is sorted
+        deficit = 0;
+        // We only want to evaluate the buckets before per the formula:
+        // D(i) = max(0, D(i-1) + BP(i-1) - LP(i-1)
+        for (uint i = 0; i < activePoolIndex[_timestamp]; i++) {
+            if (pools[activePools[i]].totalLiquidity >= (deficit + totalLoans[activePools[i]])) {
+                deficit = 0;
+            } else {
+                // Important to do the addition first to prevent an underflow
+                deficit = (deficit + totalLoans[activePools[i]] - pools[activePools[i]].totalLiquidity);
             }
-            console.log(totalLoans[activePools[i]]);
-            totalLiquidityConsumed += totalLoans[activePools[i]];
+            console.log(string(abi.encodePacked("deficit - ", deficit.toString())));
         }
-        return totalLiquidityConsumed;
     }
+
+    function getAvailableForPeriod(uint _timestamp) public validTimestamp(_timestamp) view returns (uint avail) {
+        console.log("Running getAvailableForPeriod");
+        uint currentAndFutureLiquidity = 0;
+        uint currentAndFutureLoans = 0;
+        for (uint i = activePoolIndex[_timestamp]; i < activePools.length; i++) {
+            currentAndFutureLiquidity += pools[activePools[i]].totalLiquidity;
+            currentAndFutureLoans += totalLoans[activePools[i]];
+            console.log(string(abi.encodePacked("currentAndFutureLiquidity - ", currentAndFutureLiquidity.toString())));
+            console.log(string(abi.encodePacked("currentAndFutureLoans - ", currentAndFutureLoans.toString())));
+        }
+        avail = currentAndFutureLiquidity - currentAndFutureLoans - getDeficitForPeriod(_timestamp);
+    }
+
 
     function getTotalLiquidity(
         uint _timestamp
@@ -230,7 +287,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             string(abi.encodePacked("PoolShareToken_", _timestamp.toString())),
             string(abi.encodePacked("PST_", _timestamp.toString()))
         );
-        activePools.push(_timestamp);
+        // Make sure to keep the pool sorted
+        insertIntoSortedArr(activePools, _timestamp);
         emit poolCreated(_timestamp, address(pools[_timestamp].poolShareToken));
     }
 
@@ -342,7 +400,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         );
 
         // Check if the loan amount is less than or equal to the liquidity across pools
-        uint256 totalAvailableLiquidity = getTotalLiquidity(_timestamp) - getTotalLiquidityConsumed(_timestamp);
+        uint totalAvailableLiquidity = getAvailableForPeriod(_timestamp);
 
         console.log("---");
         console.log(_amount);
@@ -413,6 +471,23 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             str[3+i*2] = alphabet[uint(uint8(data[i] & 0x0f))];
         }
         return string(str);
+    }
+
+    modifier validTimestamp(uint _timestamp) { // Modifier
+        console.log("running validTimestamp modifier");
+        console.log(_timestamp);
+        console.log(activePoolIndex[_timestamp]);
+        console.log("activePools");
+        console.log("---");
+        for(uint i = 0; i < activePools.length; i++) {
+            console.log(activePools[i]);
+        }
+        console.log("---");
+        require(
+            activePoolIndex[_timestamp] != 0 || activePools[0] == _timestamp,
+            "Invalid timestamp"
+        );
+        _;
     }
 
     fallback() external {
