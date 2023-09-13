@@ -81,7 +81,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                         Summary
                     </h1>
                 </div>
-                <div className="relative group mt-4 w-full">
+                <div className="relative group mt-4 w-full min-w-[500px]">
                     <div className="absolute -inset-1 shadow-shrub border rounded-3xl "></div>
                     <div className="flex flex-col ">
                         <div className="card w-full">
@@ -96,9 +96,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                                 </div>
                                 <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">You
                                     are borrowing <strong>{amount} USDC</strong> and
-                                    giving <strong>{requiredCollateral} ETH</strong> as collateral. There is no
-                                    interest, and you have one month to repay
-                                    the loan. The collateral will be locked until the loan is fully paid, and then it
+                                    giving <strong>{requiredCollateral} ETH</strong> as collateral. The collateral will be locked until the loan is fully paid, and then it
                                     will be returned to
                                     you.</p>
                                 </div>}
@@ -107,7 +105,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                                   <p className="text-lg font-bold pb-2 text-left">
                                       Borrow successful
                                   </p>
-                                  <svg className="w-[400px] h-[400px] text-shrub-green dark:text-white" aria-hidden="true"
+                                  <svg className="w-[250px] h-[250px] text-shrub-green dark:text-white m-[108px]" aria-hidden="true"
                                      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                                     <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
                                           strokeWidth="1" d="m7 10 2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>

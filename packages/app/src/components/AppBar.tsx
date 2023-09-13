@@ -134,7 +134,7 @@ export const AppBar: React.FC = () => {
                         navigationStarts={() =>setIsNavOpen(false)}/>
 
           </div>
-          <WalletMultiButtonDynamic className="btn-md relative flex md:hidden text-lg " />
+          {/*<WalletMultiButtonDynamic className="btn-md relative flex md:hidden text-lg " />*/}
         </div>
         <div className="navbar-start">
           <div className="hidden md:inline-flex align-items-center justify-items gap-4 ">

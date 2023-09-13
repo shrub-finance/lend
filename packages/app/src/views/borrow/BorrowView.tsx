@@ -196,8 +196,8 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
         </div>
 
         <div className="relative group mt-10 w-full">
-          <div className="absolute -inset-1 shadow-shrub border rounded-3xl "></div>
-          <div className="flex flex-col mt-2 ">
+          <div className="absolute -inset-1 shadow-shrub border rounded-3xl"></div>
+          <div className="flex flex-col mt-2">
             <div className="card w-full text-left">
               <div className="card-body text-base-100">
 

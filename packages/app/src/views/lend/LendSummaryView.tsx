@@ -118,11 +118,13 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                       <p className="text-lg font-bold pb-2 text-left">
                         Deposit successful
                       </p>
-                      <svg className="w-[400px] h-[400px] text-shrub-green dark:text-white" aria-hidden="true"
+                      <div className="p-20">
+                      <svg className="w-[250px] h-[250px] text-shrub-green dark:text-white m-[20px]" aria-hidden="true"
                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                         <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
                               strokeWidth="1" d="m7 10 2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
                       </svg>
+                      </div>
                     </>}
 
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>

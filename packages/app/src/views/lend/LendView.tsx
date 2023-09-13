@@ -112,12 +112,12 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
         </div>
 
         <div className="relative group mt-10 w-full">
-          <div className="absolute -inset-1 shadow-shrub border rounded-3xl "></div>
-          <div className="flex flex-col mt-2 ">
+          <div className="absolute -inset-1 shadow-shrub border rounded-3xl"></div>
+          <div className="flex flex-col mt-2">
             <div className="card w-full text-left">
               <div className="card-body text-base-100">
                 {/*amount control*/}
-                <div className="form-control w-full  ">
+                <div className="form-control w-full">
                   <label className="label relative">
                     <span className="label-text text-shrub-blue text-md">Amount</span>
                     <span className="label-text-alt text-base-100 text-xl font-semibold absolute right-2 top-12">
