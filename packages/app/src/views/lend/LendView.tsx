@@ -68,13 +68,17 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
     if (timestamp) {
       handleAPYCalc();
     }
-  }, [lendAmount, timestamp]);
+  }, [timestamp]);
 
   function handleAPYCalc() {
     setSupplyButtonPressed(true);
 
     // Calculate required collateral
-    const apyGenerated = Math.random() * 5 + 7;
+    const apyGenerated = timestamp === oneMonth.getTime() / 1000 ? 7.56 :
+        timestamp === threeMonth.getTime() / 1000 ? 8.14 :
+        timestamp === sixMonth.getTime() / 1000 ? 9.04 :
+        timestamp === twelveMonth.getTime() / 1000 ? 10.37 : Math.random() * 5 + 7;
+      // const apyGenerated = Math.random() * 5 + 7;
     setEstimatedAPY(apyGenerated.toFixed(2).toString())
 
   }
@@ -220,7 +224,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                         <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
                         <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
                         {/*TODO: Make this bonus text dynamic for different periods*/}
-                        <p className="font-thin pt-3 text-lg">3 month lending term includes 5% bonus</p>
+                        {/*<p className="font-thin pt-3 text-lg">3 month lending term includes 5% bonus</p>*/}
                       </div>
 
                     </div>

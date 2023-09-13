@@ -148,7 +148,7 @@ task("testLendingPlatform", "Setup an environment for development")
     await env.run('createPool', { timestamp: toEthDate(threeMonth)});  // 3 month
     await env.run('createPool', { timestamp: toEthDate(sixMonth)});  // 6 month
     await env.run('createPool', { timestamp: toEthDate(twelveMonth)});  // 12 month
-    await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(sixMonth)});  // 6 month
+    await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(twelveMonth)});  // 12 month
     await env.run('approveUsdc', { account: account1 });
   })
 
