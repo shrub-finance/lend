@@ -6,7 +6,9 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "hardhat": "npx hardhat",
-    "deploy": "npx hardhat node --hostname 0.0.0.0 --export deployments/deployed-contracts.json"
+    "deploy": "npx hardhat node --hostname 0.0.0.0 --export deployments/deployed-contracts.json",
+    "start-graph-node": "rm -r graph-node/data; docker-compose --project-directory graph-node up",
+    "restart-graph-node": "docker-compose restart graph-node"
   },
   "dependencies": {
     "@shrub-lend/common": "1.0.0"
@@ -26,6 +28,7 @@
     "chai": "^4.3.7",
     "ethers": "6",
     "hardhat": "^2.15.0",
+    "hardhat-abi-exporter": "^2.10.1",
     "hardhat-deploy": "^0.11.31",
     "hardhat-gas-reporter": "^1.0.9",
     "solidity-coverage": "^0.8.2",

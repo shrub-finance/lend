@@ -11,3 +11,7 @@ deployments/localhost
 cache
 artifacts
 
+yarn-error.log
+
+# Graph-node data
+graph-node/data

@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
+import "hardhat-abi-exporter";
 import "./hardhat-tasks";
 
 
@@ -19,6 +20,13 @@ const config: HardhatUserConfig = {
     account2: 2,
     account3: 3,
   },
+    abiExporter: {
+        path: "../subgraph/abis",
+        runOnCompile: true,
+        clear: true,
+        flat: true,
+        only: ["LendingPlatform", "USDCoin", "PoolShareToken"]
+    }
 };
 
 export default config;

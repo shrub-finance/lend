@@ -3,7 +3,9 @@
   "workspaces": [
     "packages/app",
     "packages/hardhat",
-    "packages/common"
+    "packages/common",
+    "packages/subgraph",
+    "packages/graph-node"
   ],
   "npmClient": "yarn",
   "useWorkspaces": true,
@@ -16,7 +18,10 @@
     "hardhat": "yarn workspace @shrub-lend/hardhat hardhat",
     "test": "yarn workspace @shrub-lend/hardhat test",
     "compile": "yarn workspace @shrub-lend/hardhat compile",
-    "contracts": "yarn workspace @shrub-lend/hardhat deploy"
+    "contracts": "yarn workspace @shrub-lend/hardhat deploy",
+    "graph-node": "yarn workspace @shrub-lend/graph-node start",
+    "graph-node-restart": "yarn workspace @shrub-lend/graph-node restart",
+    "subgraph": "yarn workspace @shrub-lend/subgraph deploy-again-local"
   },
   "packageManager": "yarn@1.22.19"
 }

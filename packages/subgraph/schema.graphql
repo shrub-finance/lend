@@ -1,0 +1,7 @@
+type Pool @entity(immutable: true) {
+    "poolShareTokenAddress"
+    id: ID!
+    txid: Bytes!
+    created: Int!
+    createdBlock: Int!
+}

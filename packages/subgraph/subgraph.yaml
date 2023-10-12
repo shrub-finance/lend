@@ -1,0 +1,24 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Contract
+    network: mainnet
+    source:
+      address: "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512"
+      abi: LendingPlatform
+      startBlock: 1
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Pool
+      abis:
+        - name: LendingPlatform
+          file: ./abis/LendingPlatform.json
+      eventHandlers:
+        - event: poolCreated(uint256,address)
+          handler: handlePoolCreated
+      file: ./src/lending-platform.ts
