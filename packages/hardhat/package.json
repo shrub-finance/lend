@@ -2,13 +2,15 @@
   "name": "@shrub-lend/hardhat",
   "license": "MIT",
   "version": "0.2.0",
+
   "scripts": {
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "hardhat": "npx hardhat",
     "deploy": "npx hardhat node --hostname 0.0.0.0 --export deployments/deployed-contracts.json",
     "start-graph-node": "rm -r graph-node/data; docker-compose --project-directory graph-node up",
-    "restart-graph-node": "docker-compose restart graph-node"
+    "restart-graph-node": "docker-compose restart graph-node",
+    "local-initialize": "npx hardhat testLendingPlatform --network localhost"
   },
   "dependencies": {
     "@shrub-lend/common": "1.0.0"

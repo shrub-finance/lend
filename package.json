@@ -19,9 +19,10 @@
     "test": "yarn workspace @shrub-lend/hardhat test",
     "compile": "yarn workspace @shrub-lend/hardhat compile",
     "contracts": "yarn workspace @shrub-lend/hardhat deploy",
-    "graph-node": "yarn workspace @shrub-lend/graph-node start",
-    "graph-node-restart": "yarn workspace @shrub-lend/graph-node restart",
-    "subgraph": "yarn workspace @shrub-lend/subgraph deploy-again-local"
+    "graph-node": "yarn workspace @shrub-lend/hardhat start-graph-node",
+    "graph-node-restart": "yarn workspace @shrub-lend/hardhat restart-graph-node",
+    "subgraph": "yarn workspace @shrub-lend/subgraph deploy-again-local",
+    "local-initialize": "yarn workspace @shrub-lend/hardhat local-initialize"
   },
   "packageManager": "yarn@1.22.19"
 }
