@@ -67,7 +67,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     uint256[] public activePools; // List of active pools
 
-    event poolCreated(uint256 timestamp, address poolShareTokenAddress);
+    event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
+    event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
+    event NewLoan(uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
@@ -153,23 +155,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         return 0;
     }
 
-    // Get the available liquidity for loans across all pools
-//    function getTotalAvailableLiquidity(
-//        uint _timestamp
-//    ) public view returns (uint256 totalLiquidity) {
-//        console.log("Running getTotalAvailableLiquidity");
-//        for (uint i = 0; i < activePools.length; i++) {
-//            if (activePools[i] < _timestamp) {
-//                continue; // Don't count liquidity that is in a pool that has a timestamp before what it requested
-//            }
-//            console.log(pools[activePools[i]].totalLiquidity);
-//            console.log(totalLoans[activePools[i]]);
-//            totalLiquidity += (pools[activePools[i]].totalLiquidity -
-//                totalLoans[activePools[i]]);
-//        }
-//        return totalLiquidity;
-//    }
-
     function getDeficitForPeriod(
         uint _timestamp
     ) public validTimestamp(_timestamp) view returns (uint256 deficit) {
@@ -201,7 +186,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         }
         avail = currentAndFutureLiquidity - currentAndFutureLoans - getDeficitForPeriod(_timestamp);
     }
-
 
     function getTotalLiquidity(
         uint _timestamp
@@ -289,7 +273,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         );
         // Make sure to keep the pool sorted
         insertIntoSortedArr(activePools, _timestamp);
-        emit poolCreated(_timestamp, address(pools[_timestamp].poolShareToken));
+        emit PoolCreated(_timestamp, address(pools[_timestamp].poolShareToken));
     }
 
     function getUsdcAddress() public view returns (address) {
@@ -326,6 +310,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         pools[_timestamp].totalLiquidity += _amount;
         pools[_timestamp].deposits[msg.sender] += _amount;
         pools[_timestamp].poolShareToken.mint(msg.sender, poolShareTokenAmount);
+        emit NewDeposit(
+            _timestamp,
+            _msgSender(),
+            _amount
+        );
     }
 
     function withdraw(
@@ -458,6 +447,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
         // Transfer the loan amount in USDC to the borrower
         usdc.transfer(msg.sender, _amount);
+        emit NewLoan(_timestamp, msg.sender, _collateral, _amount, loan.APY);
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {

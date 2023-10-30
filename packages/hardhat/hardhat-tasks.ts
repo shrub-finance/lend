@@ -3,7 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 
 import { Address } from 'hardhat-deploy/types';
 import assert from 'node:assert/strict';
-import {ContractMethod, TransactionResponse} from "ethers";
+import {ContractMethod, parseEther, parseUnits, TransactionResponse} from "ethers";
 import {getPlatformDates, toEthDate} from "@shrub-lend/common"
 
 const x = async () => {}
@@ -148,10 +148,42 @@ task("testLendingPlatform", "Setup an environment for development")
     await env.run('createPool', { timestamp: toEthDate(threeMonth)});  // 3 month
     await env.run('createPool', { timestamp: toEthDate(sixMonth)});  // 6 month
     await env.run('createPool', { timestamp: toEthDate(twelveMonth)});  // 12 month
-    await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(twelveMonth)});  // 12 month
+    await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(twelveMonth), account: deployer});  // 12 month
     await env.run('approveUsdc', { account: account1 });
+    await env.run('takeLoan', { account: account2, timestamp: toEthDate(twelveMonth), loanAmount: 100, collateralAmount: 1, ltv: 20})
   })
 
+task('takeLoan', 'take a loan')
+    .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
+    .addParam("loanAmount", "Amount of USDC to loan - in USD", undefined, types.float, false)
+    .addParam("collateralAmount", "Amount of collateral to provide - in ETH", undefined, types.float, false)
+    .addParam("ltv", "Specified LTV of the loan", undefined, types.int, false)
+    .addParam("account", "Address of account to take loan with (or named account)", undefined, types.string, false)
+    .setAction(async (taskArgs, env) => {
+        const timestamp: number = taskArgs.timestamp;
+        const loanAmount: number = taskArgs.loanAmount;
+        const collateralAmount = taskArgs.collateralAmount;
+        const ltv = taskArgs.ltv;
+        const account = taskArgs.account;
+        const {ethers, deployments, getNamedAccounts} = env;
+        const namedAccounts = await getNamedAccounts();
+        const loanAccount = namedAccounts[account] ?
+            await ethers.getSigner(namedAccounts[account]) :
+            await ethers.getSigner(account);
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+        const lendingPlatformAccount = lendingPlatform.connect(loanAccount);
+        const loanAmountBigInt = parseUnits(loanAmount.toString(), 6);
+        const collateralAmountBigInt = parseEther(collateralAmount.toString());
+
+        await sendTransaction(lendingPlatformAccount.takeLoan(
+            loanAmountBigInt,
+            collateralAmountBigInt,
+            ltv,
+            timestamp,
+            {value: collateralAmountBigInt}
+        ), `Loan USDC`);
+    });
 task("erc20Details", "get the details of an ERC20")
   .addParam('address', "contract address of the ERC-20", "", types.string)
   .setAction(async (taskArgs, env) => {

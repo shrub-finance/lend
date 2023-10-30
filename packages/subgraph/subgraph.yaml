@@ -14,11 +14,19 @@ dataSources:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - Pool
+        - User
+        - LendingPool
+        - BorrowingPool
+        - Loan
+        - LendPosition
       abis:
         - name: LendingPlatform
           file: ./abis/LendingPlatform.json
       eventHandlers:
-        - event: poolCreated(uint256,address)
+        - event: PoolCreated(uint256,address)
           handler: handlePoolCreated
+        - event: NewDeposit(uint256,address,uint256)
+          handler: handleNewDeposit
+        - event: NewLoan(uint256,address,uint256,uint256)
+          handler: handleNewLoan
       file: ./src/lending-platform.ts

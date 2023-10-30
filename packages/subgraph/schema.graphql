@@ -1,7 +1,46 @@
-type Pool @entity(immutable: true) {
-    "poolShareTokenAddress"
+type User @entity(immutable: true) {
+    "address"
     id: ID!
+}
+
+type LendingPool @entity {
+    "timestamp"
+    id: ID!
+    poolShareTokenAddress: Bytes!
     txid: Bytes!
     created: Int!
     createdBlock: Int!
+    totalUsdc: BigInt!
+    usdcAvailable: BigInt!
+    totalEthYield: BigInt!
+    totalUsdcInterest: BigInt!
+    tokenSupply: BigInt!
+}
+
+type BorrowingPool @entity {
+    "timestamp"
+    id: ID!
+    created: Int!
+    createdBlock: Int!
+    totalCollateralEth: BigInt!
+    totalBorrowedUsdc: BigInt!
+}
+
+type Loan @entity(immutable: true) {
+    id: ID!
+    created: Int!
+    createdBlock: Int!
+    amount: BigInt!
+    collateral: BigInt!
+    ltv: Int!
+    apy: Int!
+    owner: User
+}
+
+type LendPosition @entity {
+    "user-address"
+    id: ID!
+    lendingPool: LendingPool
+    user: User
+    amount: BigInt!
 }
