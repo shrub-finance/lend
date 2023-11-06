@@ -29,7 +29,7 @@
     "@types/node": "^20.3.1",
     "chai": "^4.3.7",
     "ethers": "6",
-    "hardhat": "^2.15.0",
+    "hardhat": "^2.18.3",
     "hardhat-abi-exporter": "^2.10.1",
     "hardhat-deploy": "^0.11.31",
     "hardhat-gas-reporter": "^1.0.9",

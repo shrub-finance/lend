@@ -1,5 +1,5 @@
 import {Address, BigInt, ethereum} from "@graphprotocol/graph-ts";
-import {BorrowingPool} from "../../generated/schema";
+import {BorrowingPool, Loan} from "../../generated/schema";
 import {Zero} from "../constants";
 
 export function getBorrowingPool(
@@ -12,6 +12,13 @@ export function getBorrowingPool(
         return borrowingPool;
     }
     return createBorrowingPool(timestamp, block);
+}
+
+export function addLoanToPool(borrowingPool: BorrowingPool, loan: Loan): BorrowingPool {
+    borrowingPool.totalBorrowedUsdc = borrowingPool.totalBorrowedUsdc.plus(loan.amount);
+    borrowingPool.totalCollateralEth = borrowingPool.totalCollateralEth.plus(loan.collateral);
+    borrowingPool.save();
+    return borrowingPool;
 }
 
 // Private Methods
@@ -32,6 +39,7 @@ function createBorrowingPool(
     borrowingPool.save();
     return borrowingPool;
 }
+
 
 
 

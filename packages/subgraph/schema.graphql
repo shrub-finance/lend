@@ -27,6 +27,7 @@ type BorrowingPool @entity {
 }
 
 type Loan @entity(immutable: true) {
+    "ERC-721 tokenId"
     id: ID!
     created: Int!
     createdBlock: Int!

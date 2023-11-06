@@ -24,6 +24,25 @@ task("accounts", "Prints the list of accounts", async (taskArgs, env) => {
   }
 });
 
+task("getBalances", "Prints the ETH and USDC balance in all named accounts", async(taskArgs, env) => {
+    const { ethers, getNamedAccounts, deployments } = env;
+    const accounts = await getNamedAccounts();
+    const usdCoinDeployment = await deployments.get('USDCoin');
+    const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+    const usdcDecimals = await usdc.decimals();
+    for (const [accountName, address] of Object.entries(accounts)) {
+        // console.log(`${accountName} - ${address}`);
+        const ethBalance = await ethers.provider.getBalance(address);
+        const usdcBalance = await usdc.balanceOf(address);
+        console.log(`
+${accountName} - ${address}
+==============
+ETH: ${ethers.formatEther(ethBalance)}
+USDC: ${ethers.formatUnits(usdcBalance, usdcDecimals)}
+`);
+    }
+})
+
 task("distributeUsdc", "distribute USDC from the deployer account")
   .addParam("to", "address to send funds to", null, types.string)
   .addParam("amount", "address in USDC to send", 0, types.float)

@@ -1,29 +1,50 @@
-import {Address} from "@graphprotocol/graph-ts";
-import {User} from "../../generated/schema";
+import {Address, BigInt, ethereum, log} from "@graphprotocol/graph-ts";
+import {Loan, User} from "../../generated/schema";
+import {getUser} from "./user";
 
-
-export function getUser(
-    address: Address
-): User {
-    let id = address.toHexString();
-    let user = User.load(id);
-    if (user !== null) {
-        return user;
+export function getLoan(
+    tokenId: BigInt,
+    owner: Address,
+    apy: BigInt,
+    amount: BigInt,
+    collateral: BigInt,
+    block: ethereum.Block
+): Loan {
+    let id = tokenId.toString();
+    // let id = address.toHexString();
+    // let user = User.load(owner);
+    let loan = Loan.load(id);
+    if (loan !== null) {
+        return loan;
     }
-    return createUser(id);
+    return createLoan(id, owner, apy, amount, collateral, block);
 }
 
 // Private Methods
-function createUser(
+function createLoan(
     id: string,
-): User {
-    let user = User.load(id);
-    if (user !== null) {
-        throw new Error(`user with id ${id} already exists`);
+    owner: Address,
+    apy: BigInt,
+    amount: BigInt,
+    collateral: BigInt,
+    block: ethereum.Block
+): Loan {
+    let loan = Loan.load(id);
+    if (loan !== null) {
+        throw new Error(`loan with id ${id} already exists`);
     }
-    user = new User(id);
-    user.save();
-    return user;
+    let ownerUser = getUser(owner);
+    loan = new Loan(id);
+    loan.created = block.timestamp.toI32();
+    loan.createdBlock = block.number.toI32();
+    loan.owner = ownerUser.id;
+    // loan.owner = owner.toHexString();
+    loan.apy = apy.toI32();
+    loan.ltv = 0;  // This is complicated and would need to be calculated after price changes at some interval - leaving as 0 for now
+    loan.amount = amount;
+    loan.collateral = collateral;
+    loan.save();
+    return loan;
 }
 
 

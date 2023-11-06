@@ -7,6 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "./PoolShareToken.sol";
+import "./BorrowPositionToken.sol";
+
 import "hardhat/console.sol";
 
 // Assume an interface for aETH
@@ -14,19 +17,6 @@ interface IAave is IERC20 {
     function balanceOf(address account) external view returns (uint256);
 }
 
-contract PoolShareToken is ERC20, Ownable {
-    using SafeERC20 for IERC20;
-
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
-
-    function mint(address account, uint256 _amount) public onlyOwner {
-        _mint(account, _amount);
-    }
-
-    function burn(address account, uint256 _amount) public onlyOwner {
-        _burn(account, _amount);
-    }
-}
 
 contract LendingPlatform is Ownable, ReentrancyGuard {
     // using SafeERC20 for IERC20;
@@ -51,8 +41,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint amount; // The loan amount
         uint collateral; // The collateral for the loan, presumably in ETH
         uint aaveCollateral; // The equivalent amount of aETH (Aave's interest-bearing token for ETH)
-        uint LTV; // The Loan-to-Value ratio
-        uint APY; // The Annual Percentage Yield
+        uint32 LTV; // The Loan-to-Value ratio
+        uint32 APY; // The Annual Percentage Yield
         PoolContribution[] contributingPools; // Array of PoolContributions representing each contributing pool and its liquidity contribution.
     }
 
@@ -69,10 +59,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
     event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
-    event NewLoan(uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
+    event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
+    IBorrowPositionToken public bpt;
     IAave public aeth;
 
     // ETH price with 8 decimal places
@@ -126,8 +117,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // getEthPrice - 8 decimals
         require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
         uint valueOfEth = ethCollateral * getEthPrice(); // value of eth in usd with 26 decimals
-        uint maxLoan = valueOfEth * ltv / 10 ** 22; // remove 20 decimals to get back to 6 decimals of USDC
-        return maxLoan;
+        uint maxLoanV = valueOfEth * ltv / 10 ** 22; // remove 20 decimals to get back to 6 decimals of USDC
+        return maxLoanV;
     }
 
     function requiredCollateral(uint ltv, uint usdcLoanValue) public view returns (uint256) {
@@ -219,7 +210,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         return poolDetails;
     }
 
-    function getAPYBasedOnLTV(uint _ltv) public pure returns (uint) {
+    function getAPYBasedOnLTV(uint32 _ltv) public pure returns (uint32) {
         if (_ltv == 20) {
             return 0;
         } else if (_ltv == 25) {
@@ -233,8 +224,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         }
     }
 
-    constructor(address usdcAddress) {
+    constructor(address usdcAddress, address bptAddress) {
         usdc = IERC20(usdcAddress);
+        bpt = IBorrowPositionToken(bptAddress);
     }
 
     function validPool(uint256 _timestamp) internal returns (bool) {
@@ -361,8 +353,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     function takeLoan(
         uint256 _amount, // Amount of USDC with 6 decimal places
         uint256 _collateral, // Amount of ETH collateral with 18 decimal places
-        uint256 _ltv,
-        uint256 _timestamp
+        uint32 _ltv,
+        uint40 _timestamp
     ) public payable nonReentrant {
         console.log("running takeLoan");
         // Check that the sender has enough balance to send the amount
@@ -371,11 +363,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Ensure that it is a valid pool
         require(validPool(_timestamp), "Not a valid pool");
 
-        uint a = _amount * 10 ** (18 + 8 - 6 + 2);
-        uint b = getEthPrice() * _collateral;
-
-        console.log(a);
-        console.log(b);
+//        uint a = _amount * 10 ** (18 + 8 - 6 + 2);
+//        uint b = getEthPrice() * _collateral;
+//
+//        console.log(a);
+//        console.log(b);
 
         // Ensure that the calculated ltv of the loan is less than or equal to the specified ltv
         // ethPrice 8 decimals
@@ -447,7 +439,24 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
         // Transfer the loan amount in USDC to the borrower
         usdc.transfer(msg.sender, _amount);
-        emit NewLoan(_timestamp, msg.sender, _collateral, _amount, loan.APY);
+
+        BorrowData memory bd;
+        bd.endDate = _timestamp;
+        bd.debt = _amount;
+        bd.collateral = _collateral;
+        bd.apy = loan.APY;
+        uint tokenId = bpt.mint(msg.sender, bd);
+
+        console.log("-------");
+        console.log(tokenId);
+        console.log(_timestamp);
+        console.log(msg.sender);
+        console.log(_collateral);
+        console.log(_amount);
+        console.log(loan.APY);
+        console.log("-------");
+        emit NewLoan(tokenId, _timestamp, msg.sender, _collateral, _amount, loan.APY);
+
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {

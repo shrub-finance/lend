@@ -5,7 +5,8 @@ import {
 import { log } from '@graphprotocol/graph-ts'
 import {createLendingPool, lendingPoolDeposit} from "./entities/lending-pool";
 import {getUser} from "./entities/user";
-import {getBorrowingPool} from "./entities/borrowing-pool";
+import {addLoanToPool, getBorrowingPool} from "./entities/borrowing-pool";
+import {getLoan} from "./entities/loan";
 
 
 export function handlePoolCreated(event: PoolCreated): void {
@@ -37,7 +38,8 @@ export function handleNewDeposit(event: NewDeposit): void {
 
 export function handleNewLoan(event: NewLoan): void {
     // event NewLoan(uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
-    log.info("NewLoan: timestamp: {}, borrower: {}, collateral: {}, apy: {}", [
+    log.info("NewLoan: tokenid: {}, timestamp: {}, borrower: {}, collateral: {}, amount: {}, apy: {}", [
+        event.params.tokenId.toString(),
         event.params.timestamp.toString(),
         event.params.borrower.toHexString(),
         event.params.collateral.toString(),
@@ -49,7 +51,16 @@ export function handleNewLoan(event: NewLoan): void {
     // get/create the borrowing pool
     let borrowingPool = getBorrowingPool(event.params.timestamp, event.block);
     // create a new loan
+    let loan = getLoan(
+        event.params.tokenId,
+        event.params.borrower,
+        event.params.apy,
+        event.params.amount,
+        event.params.collateral,
+        event.block
+    )
     // create a new loanposition
+    // TODO: What was the point of loan-position again?
     // update the borrowing pool with the loan
-
+    addLoanToPool(borrowingPool, loan);
 }
