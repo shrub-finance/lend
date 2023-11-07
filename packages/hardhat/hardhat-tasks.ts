@@ -30,15 +30,25 @@ task("getBalances", "Prints the ETH and USDC balance in all named accounts", asy
     const usdCoinDeployment = await deployments.get('USDCoin');
     const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
     const usdcDecimals = await usdc.decimals();
+    const aETHDeployment = await deployments.get('AETH');
+    const aeth = await ethers.getContractAt('AETH', aETHDeployment.address);
+    const aethDecimals = await aeth.decimals();
+    const mockAaveV3Deployment = await deployments.get('MockAaveV3');
+    const lendDeployment = await deployments.get('LendingPlatform')
+    accounts.lendingPlatform = lendDeployment.address;
+    accounts.aETH = aETHDeployment.address;
+    accounts.mockAaveV3 = mockAaveV3Deployment.address;
     for (const [accountName, address] of Object.entries(accounts)) {
         // console.log(`${accountName} - ${address}`);
         const ethBalance = await ethers.provider.getBalance(address);
         const usdcBalance = await usdc.balanceOf(address);
+        const aethBalance = await aeth.balanceOf(address);
         console.log(`
 ${accountName} - ${address}
 ==============
 ETH: ${ethers.formatEther(ethBalance)}
 USDC: ${ethers.formatUnits(usdcBalance, usdcDecimals)}
+AETH: ${ethers.formatUnits(aethBalance, aethDecimals)}
 `);
     }
 })
@@ -161,15 +171,16 @@ task("testLendingPlatform", "Setup an environment for development")
     const { deployer, account1, account2, account3 } = await getNamedAccounts();
     const { oneMonth, threeMonth, sixMonth, twelveMonth } = getPlatformDates();
     // await env.run('distributeUsdc', { to: account1, amount: 1000 });
-    await env.run('distributeUsdc', { to: account2, amount: 2000 });
-    await env.run('distributeUsdc', { to: account3, amount: 3000 });
+    await env.run('distributeUsdc', { to: account1, amount: 10000 });
+    // await env.run('distributeUsdc', { to: account3, amount: 3000 });
     await env.run('createPool', { timestamp: toEthDate(oneMonth)});  // 1 month
     await env.run('createPool', { timestamp: toEthDate(threeMonth)});  // 3 month
     await env.run('createPool', { timestamp: toEthDate(sixMonth)});  // 6 month
     await env.run('createPool', { timestamp: toEthDate(twelveMonth)});  // 12 month
-    await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(twelveMonth), account: deployer});  // 12 month
     await env.run('approveUsdc', { account: account1 });
+    await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(twelveMonth), account: account1});  // 12 month
     await env.run('takeLoan', { account: account2, timestamp: toEthDate(twelveMonth), loanAmount: 100, collateralAmount: 1, ltv: 20})
+    await env.run('takeLoan', { account: account3, timestamp: toEthDate(threeMonth), loanAmount: 22, collateralAmount: 0.1, ltv: 33})
   })
 
 task('takeLoan', 'take a loan')
