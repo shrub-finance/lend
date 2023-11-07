@@ -9,14 +9,10 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./PoolShareToken.sol";
 import "./BorrowPositionToken.sol";
+import "./MockAaveV3.sol";
+import "./AETH.sol";
 
 import "hardhat/console.sol";
-
-// Assume an interface for aETH
-interface IAave is IERC20 {
-    function balanceOf(address account) external view returns (uint256);
-}
-
 
 contract LendingPlatform is Ownable, ReentrancyGuard {
     // using SafeERC20 for IERC20;
@@ -64,10 +60,23 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     // Interfaces for USDC and aETH
     IERC20 public usdc;
     IBorrowPositionToken public bpt;
-    IAave public aeth;
+    IAETH public aeth;
+    IMockAaveV3 public wrappedTokenGateway;
 
     // ETH price with 8 decimal places
     uint public ethPrice = 2000 * 10 ** 8;
+
+    constructor(
+        address usdcAddress,
+        address bptAddress,
+        address wrappedTokenGatewayAddress,
+        address aETHAddress
+    ) {
+        usdc = IERC20(usdcAddress);
+        bpt = IBorrowPositionToken(bptAddress);
+        wrappedTokenGateway = IMockAaveV3(wrappedTokenGatewayAddress);
+        aeth = IAETH(aETHAddress);
+    }
 
     function insertIntoSortedArr(uint[] storage arr, uint newValue) internal {
         if (arr.length == 0) {
@@ -191,11 +200,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         return totalLiquidity;
     }
 
-    // TODO: hook up with AAve API to deposit ETH and receive aETH
-    function convertEthToAeth(uint256 _amount) internal returns (uint256) {
-        return 1;
-    }
-
     function getPool(
         uint256 _timestamp
     ) public view returns (PoolDetails memory) {
@@ -224,10 +228,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         }
     }
 
-    constructor(address usdcAddress, address bptAddress) {
-        usdc = IERC20(usdcAddress);
-        bpt = IBorrowPositionToken(bptAddress);
-    }
 
     function validPool(uint256 _timestamp) internal returns (bool) {
         // require that the timestamp be in the future
@@ -399,14 +399,18 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             "Loan already exists in this slot"
         );
 
-        // Convert collateral to aETH
-        uint256 aETHAmount = convertEthToAeth(_collateral);
+        wrappedTokenGateway.depositETH{value: _collateral}(
+            0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2,  // This is the address of the Aave-v3 pool - it is not used
+            address(this),
+            0
+        );
+
 
         // Create loan
         Loan storage loan = pools[_timestamp].loans[msg.sender];
         loan.amount = _amount;
         loan.collateral = _collateral;
-        loan.aaveCollateral = aETHAmount;
+        loan.aaveCollateral = 0;
         loan.LTV = _ltv;
         loan.APY = getAPYBasedOnLTV(_ltv);
 
