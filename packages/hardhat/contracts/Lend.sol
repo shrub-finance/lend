@@ -42,13 +42,23 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         PoolContribution[] contributingPools; // Array of PoolContributions representing each contributing pool and its liquidity contribution.
     }
 
+    struct BorrowingPool {
+        uint loans; // Total amount of USDC that has been borrowed in this buckets' loans
+        uint collateral; // The total amount of ETH collateral deposited for loans in this bucket
+        uint poolShareAmount; // Relative claim of the total platform aETH for this bucket. Used to calculate yield for lending pools
+    }
+
     struct PoolContribution {
         uint poolTimestamp; // The pools timestamp.
         uint liquidityContribution; // The liquidity contribution from the pool at the time of the loan. Integer value as a proportion of 10 ** 8
     }
 
     mapping(uint256 => Pool) public pools; // where the uint256 key is a timestamp
-    mapping(uint256 => uint256) public totalLoans; // mapping of totalLoans for each duration based on the timestamp - it only counts if a loan is specifically for that timestamp
+
+    // TODO: This mapping should be superceded with borrowingPools
+//    mapping(uint256 => uint256) public totalLoans; // mapping of totalLoans for each duration based on the timestamp - it only counts if a loan is specifically for that timestamp
+    mapping(uint256 => BorrowingPool) public borrowingPools; // mapping of timestamp of loan endDate => BorrowingPool
+
     mapping(uint256 => uint256) public activePoolIndex; // mapping of timestamp => index of activePools
 
     uint256[] public activePools; // List of active pools
@@ -56,6 +66,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
     event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
     event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
+    event PartialRepayLoan(uint tokenId, uint repaymentAmount);
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
@@ -164,11 +175,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // We only want to evaluate the buckets before per the formula:
         // D(i) = max(0, D(i-1) + BP(i-1) - LP(i-1)
         for (uint i = 0; i < activePoolIndex[_timestamp]; i++) {
-            if (pools[activePools[i]].totalLiquidity >= (deficit + totalLoans[activePools[i]])) {
+//            if (pools[activePools[i]].totalLiquidity >= (deficit + totalLoans[activePools[i]])) {
+            if (pools[activePools[i]].totalLiquidity >= (deficit + borrowingPools[activePools[i]].loans)) {
                 deficit = 0;
             } else {
                 // Important to do the addition first to prevent an underflow
-                deficit = (deficit + totalLoans[activePools[i]] - pools[activePools[i]].totalLiquidity);
+//                deficit = (deficit + totalLoans[activePools[i]] - pools[activePools[i]].totalLiquidity);
+                deficit = (deficit + borrowingPools[activePools[i]].loans - pools[activePools[i]].totalLiquidity);
             }
             console.log(string(abi.encodePacked("deficit - ", deficit.toString())));
         }
@@ -180,7 +193,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint currentAndFutureLoans = 0;
         for (uint i = activePoolIndex[_timestamp]; i < activePools.length; i++) {
             currentAndFutureLiquidity += pools[activePools[i]].totalLiquidity;
-            currentAndFutureLoans += totalLoans[activePools[i]];
+//            currentAndFutureLoans += totalLoans[activePools[i]];
+            currentAndFutureLoans += borrowingPools[activePools[i]].loans;
             console.log(string(abi.encodePacked("currentAndFutureLiquidity - ", currentAndFutureLiquidity.toString())));
             console.log(string(abi.encodePacked("currentAndFutureLoans - ", currentAndFutureLoans.toString())));
         }
@@ -209,7 +223,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         poolDetails.totalLiquidity = pool.totalLiquidity;
         poolDetails.aaveInterestSnapshot = pool.aaveInterestSnapshot;
         poolDetails.poolShareTokenAddress = address(pool.poolShareToken);
-        poolDetails.totalLoans = totalLoans[_timestamp];
+//        poolDetails.totalLoans = totalLoans[_timestamp];
+        poolDetails.totalLoans = borrowingPools[_timestamp].loans;
 
         return poolDetails;
     }
@@ -218,18 +233,18 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         if (_ltv == 20) {
             return 0;
         } else if (_ltv == 25) {
-            return 1;
+            return 1 * 10 ** 6;
         } else if (_ltv == 33) {
-            return 5;
+            return 5 * 10 ** 6;
         } else if (_ltv == 50) {
-            return 8;
+            return 8 * 10 ** 6;
         } else {
             revert("Invalid LTV");
         }
     }
 
 
-    function validPool(uint256 _timestamp) internal returns (bool) {
+    function validPool(uint256 _timestamp) internal view returns (bool) {
         // require that the timestamp be in the future
         // require that the pool has been created
         if (pools[_timestamp].poolShareToken == PoolShareToken(address(0))) {
@@ -438,17 +453,22 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             loan.contributingPools.push(contribution);
         }
 
+        // Update borrowingPools
+        borrowingPools[_timestamp].loans += _amount;
+
         // Update totalLoans mapping
-        totalLoans[_timestamp] += _amount;
+        // Replaced with borrowingPools
+//        totalLoans[_timestamp] += _amount;
 
         // Transfer the loan amount in USDC to the borrower
         usdc.transfer(msg.sender, _amount);
 
         BorrowData memory bd;
         bd.endDate = _timestamp;
-        bd.debt = _amount;
+        bd.initialPrincipal = _amount;
+        bd.snapshotDebt = _amount;
         bd.collateral = _collateral;
-        bd.apy = loan.APY;
+        bd.apy = getAPYBasedOnLTV(_ltv);
         uint tokenId = bpt.mint(msg.sender, bd);
 
         console.log("-------");
@@ -461,6 +481,48 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         console.log("-------");
         emit NewLoan(tokenId, _timestamp, msg.sender, _collateral, _amount, loan.APY);
 
+    }
+
+    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount) external {
+        // Check that msg.sender owns the DPT
+        require(bpt.ownerOf(tokenId) == msg.sender, "msg.sender does not own specified BPT");
+        // Check that the user has sufficient funds
+        require(usdc.balanceOf(msg.sender) >= repaymentAmount, "insufficient balance");
+        // Check that the funds are less than the owed balance
+        uint debt = bpt.debt(tokenId);
+        require(repaymentAmount < debt, "repayment amount must be less than total debt");
+        // Check that funds are approved
+        // NOTE: We are letting the ERC-20 contract handle this
+        // Transfer USDC funds to Shrub
+        usdc.transferFrom(
+            msg.sender,
+            address(this),
+            repaymentAmount
+        );
+        // Update BP Collateral and loans
+        bpt.updateSnapshot(tokenId, debt - repaymentAmount);
+        // Update BP pool share amount (aETH)
+        borrowingPools[bpt.getEndDate(tokenId)].loans -= repaymentAmount;
+        // Emit event for tracking/analytics/subgraph
+        emit PartialRepayLoan(tokenId, repaymentAmount);
+    }
+
+    // No need to specify amount - the full amount will be transferred needed to repay the loan
+    function repayLoan(
+        uint tokenId, // tokenId of the ERC-721 DPT
+        address beneficiary  // Address of the recipient of the collateral
+    ) external {
+        // Check that msg.sender owns the DPT
+        require(bpt.ownerOf(tokenId) == msg.sender, "msg.sender does not own specified BPT");
+        // Check that the user has sufficient funds
+//        require(usdc.balanceOf(msg.sender) >= )
+        // Check that funds are approved
+        // Transfer USDC funds to Shrub
+        // Burn the BPT ERC-721
+        // Update BP Collateral and loans
+        // Update BP pool share amount (aETH)
+        // Redeem aETH on Aave for ETH on behalf of onBehalfOf (redeemer)
+        // Emit event for tracking/analytics/subgraph
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {
