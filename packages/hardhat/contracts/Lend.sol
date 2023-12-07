@@ -67,12 +67,15 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
     event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
     event PartialRepayLoan(uint tokenId, uint repaymentAmount);
+    event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
     IBorrowPositionToken public bpt;
     IAETH public aeth;
     IMockAaveV3 public wrappedTokenGateway;
+
+    uint private bpTotalPoolShares;
 
     // ETH price with 8 decimal places
     uint public ethPrice = 2000 * 10 ** 8;
@@ -499,10 +502,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             address(this),
             repaymentAmount
         );
-        // Update BP Collateral and loans
+        // Update BPT Collateral and loans
         bpt.updateSnapshot(tokenId, debt - repaymentAmount);
-        // Update BP pool share amount (aETH)
+        // Update BP Collateral and loans
         borrowingPools[bpt.getEndDate(tokenId)].loans -= repaymentAmount;
+        // Update BP pool share amount (aETH)
         // Emit event for tracking/analytics/subgraph
         emit PartialRepayLoan(tokenId, repaymentAmount);
     }
@@ -515,14 +519,29 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Check that msg.sender owns the DPT
         require(bpt.ownerOf(tokenId) == msg.sender, "msg.sender does not own specified BPT");
         // Check that the user has sufficient funds
-//        require(usdc.balanceOf(msg.sender) >= )
+        uint debt = bpt.debt(tokenId);
+        require(usdc.balanceOf(msg.sender) >= debt, "insufficient balance");
         // Check that funds are approved
+        // NOTE: let the ERC-20 contract handle this
         // Transfer USDC funds to Shrub
-        // Burn the BPT ERC-721
+        usdc.transferFrom(
+            msg.sender,
+            address(this),
+            debt
+        );
+        uint collateral = bpt.getCollateral(tokenId);
         // Update BP Collateral and loans
+        BorrowingPool memory borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
+        borrowingPool.loans -= debt;
+        borrowingPool.collateral -= collateral;
+//        borrowingPool.poolShareAmount
         // Update BP pool share amount (aETH)
+        // Burn the BPT ERC-721
+        bpt.burn(tokenId);
         // Redeem aETH on Aave for ETH on behalf of onBehalfOf (redeemer)
+        wrappedTokenGateway.withdrawETH(address(0), collateral, beneficiary);
         // Emit event for tracking/analytics/subgraph
+        emit RepayLoan(tokenId, debt, collateral, beneficiary);
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {

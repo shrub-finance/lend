@@ -24,6 +24,8 @@ interface IBorrowPositionToken is IERC721 {
     function interestSinceSnapshot(uint256 tokenId) external returns (uint256);
     function updateSnapshot(uint256 tokenId, uint newDebt) external;
     function getEndDate(uint tokenId) external returns (uint40);
+    function getCollateral(uint tokenId) external returns (uint256);
+    function burn(uint256 tokenId) external;
 }
 
 uint256 constant SECONDS_IN_YEAR = 365 * 24 * 60 * 60;
@@ -44,6 +46,11 @@ contract BorrowPositionToken is ERC721, Ownable {
 
     mapping(uint256 => BorrowData) borrowDatas;
 
+    modifier checkExists(uint tokenId) {
+        require(_exists(tokenId), "token does not exist");
+        _;
+    }
+
     function mint(address account, BorrowData calldata borrowData) external onlyOwner returns (uint){
         currentIndex++;
 //        borrowData.startDate = something from the transaction
@@ -58,33 +65,38 @@ contract BorrowPositionToken is ERC721, Ownable {
         return _exists(tokenId);
     }
 
-    function getEndDate(uint tokenId) external returns (uint40) {
-        // Check that this token exists
-        require(_exists(tokenId), "token does not exist");
+    function getEndDate(uint tokenId) external checkExists(tokenId) returns (uint40) {
         return borrowDatas[tokenId].endDate;
     }
 
+    function getCollateral(uint tokenId) external checkExists(tokenId) returns (uint256) {
+        return borrowDatas[tokenId].collateral;
+    }
+
     // Returns the total owed on a loan
-    function debt(uint256 tokenId) public returns (uint256) {
-        // Check that this token exists
-        require(_exists(tokenId), "token does not exist");
+    function debt(uint256 tokenId) public checkExists(tokenId) returns (uint256) {
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         BorrowData memory bd = borrowDatas[tokenId];
         return bd.snapshotDebt + interestSinceSnapshot(tokenId);
     }
 
-    function updateSnapshot(uint256 tokenId, uint newDebt) external onlyOwner {
-        // TODO: Maybe can skip this check?
-        require(_exists(tokenId), "token does not exist");
+    function updateSnapshot(uint256 tokenId, uint newDebt) checkExists(tokenId) external onlyOwner {
         BorrowData storage bd = borrowDatas[tokenId];
         bd.snapshotDate = uint40(block.timestamp);
         bd.snapshotDebt = newDebt;
     }
 
+    function burn(uint256 tokenId) external checkExists(tokenId) onlyOwner {
+        _burn(tokenId);
+        // Cleanup the borrowData associated with this token
+        BorrowData storage bd = borrowDatas[tokenId];
+        bd.collateral = 0;
+        bd.snapshotDebt = 0;
+        bd.snapshotDate = uint40(block.timestamp);
+    }
+
     // Returns the usdc interest earned since the last adjustment (payment) to a BPT
-    function interestSinceSnapshot(uint256 tokenId) public returns (uint256) {
-        // Check that this token exists
-        require(_exists(tokenId), "token does not exist");
+    function interestSinceSnapshot(uint256 tokenId) public checkExists(tokenId) returns (uint256) {
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         BorrowData memory bd = borrowDatas[tokenId];
         return bd.apy * bd.snapshotDebt * (block.timestamp - bd.snapshotDate) / (APY_DECIMALS * SECONDS_IN_YEAR);
@@ -107,4 +119,5 @@ contract BorrowPositionToken is ERC721, Ownable {
     function getCurrentIndex() public view returns(uint) {
         return currentIndex;
     }
+
 }
