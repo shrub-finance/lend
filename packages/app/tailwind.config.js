@@ -6,9 +6,9 @@ module.exports = {
     extend: {
       colors: {
         'shrub-green-500': '#17725C',
-         'shrub-green': '#16B364',
+         'shrub-green': '#2dcaa4',
         'shrub-green-100': '#8ACCA4',
-        'shrub-green-50':'#73E2A3',
+        'shrub-green-50':'#f0fdf9',
         'shrub-blue': '#101828',
 
         'shrub-grey-50': '#D0D5DD',
@@ -38,8 +38,8 @@ module.exports = {
       {
         'solana': { 
           fontFamily: {
-            display: ['Inter, sans-serif'],
-            body: ['Inter, sans-serif'],
+            display: ['Rubik, sans-serif'],
+            body: ['Rubik, sans-serif'],
           },
           'primary': '#000000',           /* Primary color */
           'primary-focus': '#16B364',     /* Primary color - focused */

@@ -58,7 +58,7 @@ const NavElement = ({
             onClick={() => navigationStarts()}
         >
             <div className="flex flex-row items-center gap-3" ref={divRef} >
-                {chiplabel!=="isLogo"? <Text className="text-base font-medium btn-sm px-5 py-1"> {label} </Text>: <div className="mr-12 pl-14"> {label} </div>}
+                {chiplabel!=="isLogo"? <Text className="text-lg font-medium btn-sm px-5 py-1"> {label} </Text>: <div className="mr-12 pl-14"> {label} </div>}
             </div>
         </Link>
     );
