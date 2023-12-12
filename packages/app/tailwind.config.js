@@ -6,7 +6,7 @@ module.exports = {
     extend: {
       colors: {
         'shrub-green-500': '#17725C',
-         'shrub-green': '#2dcaa4',
+         'shrub-green': '#38f6c9',
         'shrub-green-100': '#8ACCA4',
         'shrub-green-50':'#f0fdf9',
         'shrub-blue': '#101828',
@@ -18,7 +18,7 @@ module.exports = {
         'shrub-grey-700': '#344054'
 
 
-
+// #2dcaa4
 },
       boxShadow: {
         'shrub': '0px 4px 250px rgba(138, 204, 164, 0.25)',

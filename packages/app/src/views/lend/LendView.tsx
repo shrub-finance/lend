@@ -120,11 +120,11 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                 <div className="form-control w-full">
                   <label className="label relative">
                     <span className="label-text text-shrub-blue text-md">Amount</span>
-                    <span className="label-text-alt text-base-100 text-xl font-semibold absolute right-2 top-12">
+                    <span className="label-text-alt text-base-100 text-xl font-semibold absolute right-4 top-[57px]">
                       <img src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub"/>USDC</span>
                   </label>
                   <input type="text" placeholder="Enter amount"
-                         className="input input-bordered w-full  bg-white border-solid border border-gray-200 text-lg
+                         className="input input-bordered w-full  h-[70px] bg-white border-solid border border-gray-200 text-lg
                          focus:shadow-shrub-thin focus:border-shrub-green-50" onChange={handleLendAmountChange}
                          value={format(lendAmount)}/>
                   <label className="label">
@@ -219,7 +219,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                 {/*display estimate apy*/}
                 {supplyButtonPressed && showAPYSection && (<div className="hero-content flex-col mb-4">
                     <p className="self-start text-lg">Estimated APY</p>
-                    <div className="card flex-shrink-0 w-full bg-teal-50 py-6">
+                    <div className="card flex-shrink-0 w-full bg-teal-50 py-6 border-shrub-green border">
                       <div className="text-center p-2">
                         <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
                         <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
