@@ -22,8 +22,8 @@ contract AETH is ERC20, Ownable {
         _mint(onBehalfOf, msg.value);
     }
 
-    function withdraw(uint256 amountToWithdraw, address sender, address onBehalfOf) external {
-        _burn(sender, amountToWithdraw);
+    function withdraw(uint256 amountToWithdraw, address onBehalfOf) external {
+        _burn(msg.sender, amountToWithdraw);
         _safeTransferETH(onBehalfOf, amountToWithdraw);
     }
 
