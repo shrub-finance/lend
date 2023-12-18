@@ -96,8 +96,8 @@ describe.skip('LendingPlatform', () => {
 
   describe('getAPYBasedOnLTV', () => {
     it('should return the correct APY for a given LTV', async () => {
-      expect(await lendingPlatform.getAPYBasedOnLTV(20)).to.equal(0);
-      expect(await lendingPlatform.getAPYBasedOnLTV(25)).to.equal(1);
+      expect(await lendingPlatform.getAPYBasedOnLTV(20)).to.equal(parseUnits('0',6));
+      expect(await lendingPlatform.getAPYBasedOnLTV(25)).to.equal(parseUnits('1',6));
       expect(await lendingPlatform.getAPYBasedOnLTV(33)).to.equal(5);
       expect(await lendingPlatform.getAPYBasedOnLTV(50)).to.equal(8);
     });

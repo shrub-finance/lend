@@ -27,9 +27,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const lendingPlatformDeployment = await deployments.get('LendingPlatform');
     const transferOwnershipResult = await borrowPositionToken.connect(deployerAccount).transferOwnership(lendingPlatformDeployment.address);
     const transferOwnershipTx = await transferOwnershipResult.getTransaction();
-    console.log(`transferring ownership of "BorrowPositionToken" to "LendingPlatform" (tx: ${transferOwnershipTx?.hash})`);
+    console.log(`Transferring ownership of "BorrowPositionToken" to "LendingPlatform" (tx: ${transferOwnershipTx?.hash})`);
     const transferOwnershipReceipt = await transferOwnershipResult.wait();
-    console.log(`trasnferring ownership complete with ${transferOwnershipReceipt?.gasUsed} gas`);
+    console.log(`Trasnferring ownership complete with a cost of ${transferOwnershipReceipt?.gasUsed} gas`);
 };
 export default func;
 func.id = "deploy_lending_platform"; // id to prevent re-execution

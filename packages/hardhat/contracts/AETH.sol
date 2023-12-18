@@ -9,7 +9,7 @@ import "hardhat/console.sol";
 
 interface IAETH is IERC20 {
     function deposit(address onBehalfOf) external payable;
-    function withdraw(uint256 amountToWithdraw, address sender, address onBehalfOf) external;
+    function withdraw(address from, uint256 amountToWithdraw, address onBehalfOf) external;
     function emergencyEtherTransfer(address to, uint256 amount) external;
 }
 
@@ -22,8 +22,8 @@ contract AETH is ERC20, Ownable {
         _mint(onBehalfOf, msg.value);
     }
 
-    function withdraw(uint256 amountToWithdraw, address onBehalfOf) external {
-        _burn(msg.sender, amountToWithdraw);
+    function withdraw(address from, uint256 amountToWithdraw, address onBehalfOf) external onlyOwner {
+        _burn(from, amountToWithdraw);
         _safeTransferETH(onBehalfOf, amountToWithdraw);
     }
 

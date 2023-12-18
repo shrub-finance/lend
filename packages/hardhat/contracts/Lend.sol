@@ -232,6 +232,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         return poolDetails;
     }
 
+    // APY is returned with 6 decimals
     function getAPYBasedOnLTV(uint32 _ltv) public pure returns (uint32) {
         if (_ltv == 20) {
             return 0;
