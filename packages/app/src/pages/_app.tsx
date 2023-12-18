@@ -1,12 +1,9 @@
 import { AppProps } from 'next/app';
 import Head from 'next/head';
 import { FC } from 'react';
-import { ContextProvider } from '../contexts/ContextProvider';
 import { AppBar } from '../components/AppBar';
 import { MobileMenu } from '../components/MobileMenu';
-import Notifications from '../components/Notification'
-import { ThirdwebProvider } from '@thirdweb-dev/react';
-require('@solana/wallet-adapter-react-ui/styles.css');
+import {ThirdwebProvider} from '@thirdweb-dev/react';
 require('../styles/globals.css');
 
 const activeChain = "localhost";
@@ -18,13 +15,13 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
             <title>Shrub Lend</title>
           </Head>
           <ThirdwebProvider
+            clientId={"ea246b96599b72dedbc6ebcf0ea09c1e"}
               activeChain={"localhost"}
               // activeChain={{
               //     chainId: 31337,
               //     rpc: ['http://localhost:8545'],
               //     nativeCurrency: {
               //         decimals: 18,
-              //         name: "Hardhat ETH",
               //         symbol: "ETH"
               //     },
               //     shortName: "hardhat",
@@ -39,15 +36,15 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
             logoUrl: "https://shrub.finance/static/media/logo-default.3961bf67.svg",
             url: "https://shrub.finance"
           }}>
-          <ContextProvider>
+
             <div className="flex flex-col h-screen">
-              <Notifications />
+
               <AppBar/>
               <MobileMenu>
                 <Component {...pageProps} />
               </MobileMenu>
             </div>
-          </ContextProvider>
+
           </ThirdwebProvider>
         </>
     );
