@@ -12,7 +12,7 @@ export const AppBar: React.FC = () => {
   return (
     <div>
       {/* NavBar / Header */}
-      <div className="navbar flex h-20 flex-row md:mb-2  bg-shrub-blue text-neutral-content drop-shadow-md">
+      <div className="navbar flex h-20 flex-row md:mb-2  bg-black text-neutral-content drop-shadow-md">
         <div className="">
           <div className="sm:inline w-22 h-22 md:max-w-22">
             <NavElement chiplabel="isLogo"
