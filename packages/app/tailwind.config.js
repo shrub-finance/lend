@@ -6,6 +6,7 @@ module.exports = {
     extend: {
       colors: {
         'shrub-green-500': '#17725C',
+        'shrub-green-900': '#0A4736',
          'shrub-green': '#38f6c9',
         'shrub-green-100': '#8ACCA4',
         'shrub-green-50':'#f0fdf9',
