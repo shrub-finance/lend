@@ -28,7 +28,7 @@ const Lend: NextPage = (props) => {
 
 
   return (
-    <div>
+    <>
       <Head>
         <title>Shrub Lend - Lend</title>
         <meta
@@ -38,7 +38,7 @@ const Lend: NextPage = (props) => {
       </Head>
       {!apy && view === "lend" && <LendView onLendViewChange={handleLendViewChange}/>}
       {apy && view === "summary" && <LendSummaryView lendAmount={supply} estimatedAPY={apy} timestamp={timestamp} onBackLend={handleBackLend}/>}
-    </div>
+    </>
   );
 };
 

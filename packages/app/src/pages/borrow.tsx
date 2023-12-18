@@ -5,7 +5,7 @@ import {BorrowDurationView} from "../views/borrow/BorrowDuration";
 import {BorrowSummaryView} from "../views/borrow/BorrowSummaryView";
 import {useState} from "react";
 
-const Home: NextPage = (props) => {
+const Borrow: NextPage = (props) => {
 
   const [requiredCollateral, setRequiredCollateral] = useState<string | undefined>(undefined);
   // const [duration, setDuration] = useState<string | undefined>(undefined);
@@ -41,7 +41,7 @@ const Home: NextPage = (props) => {
   };
 
   return (
-    <div>
+    <>
       <Head>
         <title>Shrub Lend</title>
         <meta
@@ -54,8 +54,8 @@ const Home: NextPage = (props) => {
         {view === "duration" &&<BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleTimestampChange} onBackDuration={handleBack}/>}
         {view === "summary" && <BorrowSummaryView timestamp={timestamp} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount} onBack={handleBack} onCancel={handleCancel}/>}
       </div>
-    </  div>
+    </>
   );
 };
 
-export default Home;
+export default Borrow;

@@ -36,13 +36,12 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
             logoUrl: "https://shrub.finance/static/media/logo-default.3961bf67.svg",
             url: "https://shrub.finance"
           }}>
-
             <div className="flex flex-col h-screen">
-
               <AppBar/>
-              <MobileMenu>
-                <Component {...pageProps} />
-              </MobileMenu>
+              <Component {...pageProps} />
+              {/*<MobileMenu>*/}
+              {/*  <Component {...pageProps} />*/}
+              {/*</MobileMenu>*/}
             </div>
 
           </ThirdwebProvider>

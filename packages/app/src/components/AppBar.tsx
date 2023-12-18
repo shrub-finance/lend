@@ -2,7 +2,6 @@ import { FC } from 'react';
 import Link from "next/link";
 import dynamic from 'next/dynamic';
 import React, { useState } from "react";
-import NetworkSwitcher from './NetworkSwitcher';
 import NavElement from './nav-element';
 import { ConnectWallet } from '@thirdweb-dev/react';
 
