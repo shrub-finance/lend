@@ -186,7 +186,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //                deficit = (deficit + totalLoans[activePools[i]] - pools[activePools[i]].totalLiquidity);
                 deficit = (deficit + borrowingPools[activePools[i]].loans - pools[activePools[i]].totalLiquidity);
             }
-            console.log(string(abi.encodePacked("deficit - ", deficit.toString())));
+//            console.log(string(abi.encodePacked("deficit - ", deficit.toString())));
         }
     }
 
@@ -198,8 +198,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             currentAndFutureLiquidity += pools[activePools[i]].totalLiquidity;
 //            currentAndFutureLoans += totalLoans[activePools[i]];
             currentAndFutureLoans += borrowingPools[activePools[i]].loans;
-            console.log(string(abi.encodePacked("currentAndFutureLiquidity - ", currentAndFutureLiquidity.toString())));
-            console.log(string(abi.encodePacked("currentAndFutureLoans - ", currentAndFutureLoans.toString())));
+//            console.log(string(abi.encodePacked("currentAndFutureLiquidity - ", currentAndFutureLiquidity.toString())));
+//            console.log(string(abi.encodePacked("currentAndFutureLoans - ", currentAndFutureLoans.toString())));
         }
         avail = currentAndFutureLiquidity - currentAndFutureLoans - getDeficitForPeriod(_timestamp);
     }
@@ -402,9 +402,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Check if the loan amount is less than or equal to the liquidity across pools
         uint totalAvailableLiquidity = getAvailableForPeriod(_timestamp);
 
-        console.log("---");
-        console.log(_amount);
-        console.log(totalAvailableLiquidity);
+//        console.log("---");
+//        console.log(_amount);
+//        console.log(totalAvailableLiquidity);
 
 
         require(
@@ -435,7 +435,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
         uint totalLiquidity = getTotalLiquidity(_timestamp);
 
-        console.log(totalLiquidity);
+//        console.log(totalLiquidity);
 
         // Loop through the active pools and determine the contribution of each
         for (uint i = 0; i < activePools.length; i++) {
@@ -475,14 +475,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         bd.apy = getAPYBasedOnLTV(_ltv);
         uint tokenId = bpt.mint(msg.sender, bd);
 
-        console.log("-------");
-        console.log(tokenId);
-        console.log(_timestamp);
-        console.log(msg.sender);
-        console.log(_collateral);
-        console.log(_amount);
-        console.log(loan.APY);
-        console.log("-------");
+//        console.log("-------");
+//        console.log(tokenId);
+//        console.log(_timestamp);
+//        console.log(msg.sender);
+//        console.log(_collateral);
+//        console.log(_amount);
+//        console.log(loan.APY);
+//        console.log("-------");
         emit NewLoan(tokenId, _timestamp, msg.sender, _collateral, _amount, loan.APY);
 
     }
@@ -560,14 +560,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     modifier validTimestamp(uint _timestamp) { // Modifier
         console.log("running validTimestamp modifier");
-        console.log(_timestamp);
-        console.log(activePoolIndex[_timestamp]);
-        console.log("activePools");
-        console.log("---");
-        for(uint i = 0; i < activePools.length; i++) {
-            console.log(activePools[i]);
-        }
-        console.log("---");
+//        console.log(_timestamp);
+//        console.log(activePoolIndex[_timestamp]);
+//        console.log("activePools");
+//        console.log("---");
+//        for(uint i = 0; i < activePools.length; i++) {
+//            console.log(activePools[i]);
+//        }
+//        console.log("---");
         require(
             activePoolIndex[_timestamp] != 0 || activePools[0] == _timestamp,
             "Invalid timestamp"
