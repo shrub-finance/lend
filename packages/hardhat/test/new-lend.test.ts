@@ -499,16 +499,18 @@ describe('testSuite', () => {
                 expect(totalSupply).to.equal(parseEther('1.6'));
                 expect(aethEthBalance).to.equal(parseEther('1.6'));
 
-                localSnapshotId = await network.provider.request({
-                    method: 'evm_snapshot',
-                });
-                snapshotId = localSnapshotId;
+                await addSnapshot('AETH-emergencyEtherTransfer');
+                // localSnapshotId = await network.provider.request({
+                //     method: 'evm_snapshot',
+                // });
+                // snapshotId = localSnapshotId;
             })
             after(async () => {
                 log('running emergencyEtherTransfer after');
-                log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                snapshotId = globalSnapshotId;
-                await loadGlobalSnapshot();
+                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
+                // snapshotId = globalSnapshotId;
+                // await loadGlobalSnapshot();
+                await setCurrentSnapshot('contractDeployment');
             })
             it('should revert if sender is not owner', async () => {
                 await expect(aeth.connect(lender1).emergencyEtherTransfer(lender1.address, parseEther('1.1'))).to.be.revertedWith('Ownable: caller is not the owner');
@@ -548,7 +550,7 @@ describe('testSuite', () => {
         });
     });
     describe('BorrowPositionToken', () => {});
-    describe.skip('Lend', () => {
+    describe('Lend', () => {
         // TODO: skipping internal functions (i.e. insertIntoSortedArr, indexActivePools) - may need to do something later
         describe('bytesToString', () => {});
         describe('getEthPrice', () => {});
@@ -589,16 +591,18 @@ describe('testSuite', () => {
                 expect(lender1UsdcBalance).to.equal(parseUnits('0', 6));
                 expect(platformUsdcBalance).to.equal(parseUnits('6500', 6));
 
-                localSnapshotId = await network.provider.request({
-                    method: 'evm_snapshot',
-                });
-                snapshotId = localSnapshotId;
+                await addSnapshot('Lend-getTotalLiquidity');
+                // localSnapshotId = await network.provider.request({
+                //     method: 'evm_snapshot',
+                // });
+                // snapshotId = localSnapshotId;
             })
             after(async () => {
                 log('running getTotalLiquidity after');
-                log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                snapshotId = globalSnapshotId;
-                await loadGlobalSnapshot();
+                await setCurrentSnapshot('contractDeployment');
+                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
+                // snapshotId = globalSnapshotId;
+                // await loadGlobalSnapshot();
             })
 
             it('should return the correct total available liquidity before 2026-01-01', async () => {
@@ -671,16 +675,18 @@ describe('testSuite', () => {
                 expect(lender1UsdcBalance).to.equal(parseUnits('0', 6));
 
                 // Take a local snapshot that will be used within this "describe" block
-                localSnapshotId = await network.provider.request({
-                    method: 'evm_snapshot',
-                });
-                snapshotId = localSnapshotId;
+                // localSnapshotId = await network.provider.request({
+                //     method: 'evm_snapshot',
+                // });
+                // snapshotId = localSnapshotId;
+                await addSnapshot('Lend-getPool');
             })
             after(async () => {
                 log('running getPool after');
-                log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                snapshotId = globalSnapshotId;
-                await loadGlobalSnapshot();
+                await setCurrentSnapshot('contractDeployment')
+                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
+                // snapshotId = globalSnapshotId;
+                // await loadGlobalSnapshot();
             })
 
 
@@ -828,16 +834,18 @@ describe('testSuite', () => {
                 expect(lender1Balance).to.equal(1000 * 10 ** 6);
                 expect(lender2Balance).to.equal(2000 * 10 ** 6);
 
-                localSnapshotId = await network.provider.request({
-                    method: 'evm_snapshot',
-                });
-                snapshotId = localSnapshotId;
+                await addSnapshot('Lend-deposit');
+                // localSnapshotId = await network.provider.request({
+                //     method: 'evm_snapshot',
+                // });
+                // snapshotId = localSnapshotId;
             })
             after(async () => {
                 log('running deposit after');
-                log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                snapshotId = globalSnapshotId;
-                await loadGlobalSnapshot();
+                await setCurrentSnapshot('contractDeployment');
+                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
+                // snapshotId = globalSnapshotId;
+                // await loadGlobalSnapshot();
             })
 
             it('should revert when deposit amount is 0', async () => {
@@ -936,18 +944,20 @@ describe('testSuite', () => {
 
                 log(`after tx block: ${await ethers.provider.getBlockNumber()}`);
 
+                await addSnapshot('Lend-takeLoan');
                 // Take a local snapshot that will be used within this "describe" block
-                localSnapshotId = await network.provider.request({
-                    method: 'evm_snapshot',
-                });
-                snapshotId = localSnapshotId;
+                // localSnapshotId = await network.provider.request({
+                //     method: 'evm_snapshot',
+                // });
+                // snapshotId = localSnapshotId;
             })
             
             after(async () => {
                 log('running takeLoan after');
-                log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                snapshotId = globalSnapshotId;
-                await loadGlobalSnapshot();
+                await setCurrentSnapshot('contractDeployment')
+                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
+                // snapshotId = globalSnapshotId;
+                // await loadGlobalSnapshot();
             })
 
             // const timestamps = [1767225600, 1769904000, 1772323200];
@@ -1029,18 +1039,20 @@ describe('testSuite', () => {
 
                     log(`after tx block: ${await ethers.provider.getBlockNumber()}`);
 
+                    await addSnapshot('Lend-takeLoan-lfspwasl');
                     // Take a local snapshot that will be used within this "describe" block
-                    innerLocalSnapshotId = await network.provider.request({
-                        method: 'evm_snapshot',
-                    });
-                    snapshotId = innerLocalSnapshotId;
+                    // innerLocalSnapshotId = await network.provider.request({
+                    //     method: 'evm_snapshot',
+                    // });
+                    // snapshotId = innerLocalSnapshotId;
                 })
 
                 after(async () => {
                     log('running loan from single pool with a single lender after');
-                    log(`changing snapshotId (${snapshotId}) to localSnapshotId (${localSnapshotId})`);
-                    snapshotId = localSnapshotId;
-                    await loadGlobalSnapshot();
+                    await setCurrentSnapshot('Lend-takeLoan');
+                    // log(`changing snapshotId (${snapshotId}) to localSnapshotId (${localSnapshotId})`);
+                    // snapshotId = localSnapshotId;
+                    // await loadGlobalSnapshot();
                 })
                 // let lender1LendingPlatform: LendingPlatform;
                 // let borrower1LendingPlatform: LendingPlatform;
@@ -1282,17 +1294,19 @@ describe('testSuite', () => {
                     console.log(janPool);
 
                     // Take a local snapshot that will be used within this "describe" block
-                    innerLocalSnapshotId = await network.provider.request({
-                        method: 'evm_snapshot',
-                    });
-                    snapshotId = innerLocalSnapshotId;
+                    await addSnapshot('Lend-takeLoan-lfspwtl');
+                    // innerLocalSnapshotId = await network.provider.request({
+                    //     method: 'evm_snapshot',
+                    // });
+                    // snapshotId = innerLocalSnapshotId;
                 })
 
                 after(async () => {
                     log('running loan from single pool with two lenders after');
-                    log(`changing snapshotId (${snapshotId}) to localSnapshotId (${localSnapshotId})`);
-                    snapshotId = localSnapshotId;
-                    await loadGlobalSnapshot();
+                    await setCurrentSnapshot('Loan-takeLoan');
+                    // log(`changing snapshotId (${snapshotId}) to localSnapshotId (${localSnapshotId})`);
+                    // snapshotId = localSnapshotId;
+                    // await loadGlobalSnapshot();
                 })
                 // beforeEach(async () => {
                 //     // lender1 should have 1000 USDC
@@ -2075,7 +2089,7 @@ describe('testSuite', () => {
                 expect(totalSupply).to.equal(parseEther('1.6'));
                 expect(aethEthBalance).to.equal(parseEther('1.6'));
 
-                addSnapshot('MockAaveV3-emergencyEtherTransfer')
+                await addSnapshot('MockAaveV3-emergencyEtherTransfer')
                 // setCurrentSnapshot('MockAaveV3-emergencyEtherTransfer')
                 // localSnapshotId = await network.provider.request({
                 //     method: 'evm_snapshot',
