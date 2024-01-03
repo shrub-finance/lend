@@ -34,11 +34,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     struct Loan {
-        uint amount; // The loan amount
-        uint collateral; // The collateral for the loan, presumably in ETH
+        uint amount; // The loan amount (6 decimals)
+        uint collateral; // The collateral for the loan, presumably in ETH (18 decimals)
         uint aaveCollateral; // The equivalent amount of aETH (Aave's interest-bearing token for ETH)
-        uint32 LTV; // The Loan-to-Value ratio
-        uint32 APY; // The Annual Percentage Yield
+        uint32 LTV; // The Loan-to-Value ratio - (valid values: 20, 25, 33, 50)
+        uint32 APY; // The Annual Percentage Yield (6 decimals)
         PoolContribution[] contributingPools; // Array of PoolContributions representing each contributing pool and its liquidity contribution.
     }
 
@@ -65,7 +65,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
     event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
-    event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
+    event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 amount, uint32 apy);
     event PartialRepayLoan(uint tokenId, uint repaymentAmount);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
 
