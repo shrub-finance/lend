@@ -561,7 +561,16 @@ describe('testSuite', () => {
         // TODO: skipping internal functions (i.e. insertIntoSortedArr, indexActivePools) - may need to do something later
         describe('bytesToString', () => {});
         describe('getEthPrice', () => {});
-        describe('maxLoan', () => {});
+        describe('maxLoan', () => {
+            it('should reject invalid ltv', async () => {
+                    await expect(lendingPlatform.maxLoan(5, parseEther('1'))).to.be.revertedWith("Invalid LTV");
+                })
+
+            it('should calculate the correct value for 50% LTV loan', async () => {
+                const maxLoan = await lendingPlatform.maxLoan(50, parseEther('1'));
+                expect(maxLoan).to.equal(parseUnits('926.05515', 6));
+            })
+        });
         describe('requiredCollateral', () => {});
         describe('getLatestAethPrice', () => {});
         describe('getAethInterest', () => {});
