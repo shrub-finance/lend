@@ -48,7 +48,6 @@ describe.skip('LendingPlatform', () => {
 
     lendingPlatform = (await LendingPlatformFactory.deploy(usdc.getAddress())) as LendingPlatform;
     await lendingPlatform.waitForDeployment();
-
   });
 
   describe('getUsdcAddress', () => {

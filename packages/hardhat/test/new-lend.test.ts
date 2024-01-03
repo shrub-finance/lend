@@ -6,8 +6,6 @@ import {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/signers";
 import {ContractTransactionResponse} from "ethers";
 import assert from "node:assert/strict";
 import {toEthDate} from "@shrub-lend/common";
-import {getLendingPool} from "@shrub-lend/subgraph/src/entities/lending-pool";
-import {string} from "hardhat/internal/core/params/argumentTypes";
 
 const { expect } = chai;
 
@@ -97,9 +95,6 @@ async function getCurrentBlockHash() {
 
 
 describe('testSuite', () => {
-    let snapshotId: any;
-    let globalSnapshotId: any;
-    let initialSnapshotId: any;
     let aeth: AETH;
     let borrowPositionToken: BorrowPositionToken;
     let lendingPlatform: LendingPlatform;
@@ -113,30 +108,6 @@ describe('testSuite', () => {
     let borrower1: HardhatEthersSigner;
     let borrower2: HardhatEthersSigner;
     let borrower3: HardhatEthersSigner;
-
-
-    // async function loadGlobalSnapshot() {
-    //     log(`reverting to snapshotId: ${snapshotId}`);
-    //     await network.provider.request({
-    //         method: 'evm_revert',
-    //         params: [snapshotId]
-    //     })
-    //     const blockNumber = await ethers.provider.getBlockNumber();
-    //     const blockHash = await getCurrentBlockHash();
-    //     log(`block now at ${blockNumber} - ${blockHash}`);
-    //
-    //     const newGlobal = snapshotId === globalSnapshotId;
-    //
-    //     snapshotId = await network.provider.request({
-    //         method: 'evm_snapshot',
-    //     });
-    //
-    //     if (newGlobal) {
-    //         // If the globalSnapshotId was consumed, then update it
-    //         log(`global snapshot updated to ${snapshotId}`);
-    //         globalSnapshotId = snapshotId;
-    //     }
-    // }
 
     before(async () => {
         log("running global before");
@@ -159,54 +130,38 @@ describe('testSuite', () => {
         borrower2 = await ethers.getSigner(account5);
         borrower3 = await ethers.getSigner(account6);
 
-        // initialSnapshotId = await network.provider.request({
-        //     method: 'evm_snapshot',
-        // })
         await addSnapshot('new');
         await deployments.fixture();
         await addSnapshot('contractDeployment');
-        // setCurrentSnapshot('contractDeployment');
-
-        // globalSnapshotId = await network.provider.request({
-        //     method: 'evm_snapshot',
-        // });
-        // snapshotId = globalSnapshotId;
 
         const aETHDeployment = await deployments.get('AETH');
         const borrowPositionTokenDeployment = await deployments.get('BorrowPositionToken');
         const lendingPlatformDeployment = await deployments.get('LendingPlatform');
         const mockAaveV3Deployment = await deployments.get('MockAaveV3');
-        // const poolShareTokenDeployment = await deployments.get('PoolShareToken');
         const usdCoinDeployment = await deployments.get('USDCoin');
 
         aeth = await ethers.getContractAt("AETH", aETHDeployment.address);
         borrowPositionToken = await ethers.getContractAt("BorrowPositionToken", borrowPositionTokenDeployment.address);
         lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
         mockAaveV3 = await ethers.getContractAt("MockAaveV3", mockAaveV3Deployment.address);
-        // poolShareToken = await ethers.getContractAt("PoolShareToken", poolShareTokenDeployment.address);
         usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
 
         await aeth.waitForDeployment();
         await borrowPositionToken.waitForDeployment();
         await lendingPlatform.waitForDeployment();
         await mockAaveV3.waitForDeployment();
-        // await poolShareToken.waitForDeployment();
         await usdc.waitForDeployment();
     })
 
     beforeEach(async () => {
         log(`running global beforeEach - ${currentSnapshot}`);
-        // await loadGlobalSnapshot();
         log(`loading currentSnapshot - ${currentSnapshot}`);
         await loadSnapshot(currentSnapshot);
-        // log(`Block: ${await ethers.provider.getBlockNumber()}`);
     });
 
     afterEach(async () => {
         log(`running global afterEach - ${currentSnapshot}`);
         await loadSnapshot(currentSnapshot);
-        // await loadGlobalSnapshot();
-        // log(`Block: ${await ethers.provider.getBlockNumber()}`);
     })
 
     after(() => {
@@ -336,10 +291,8 @@ describe('testSuite', () => {
             });
         });
         describe('withdraw', () => {
-            let localSnapshotId: any
             before(async () => {
                 log("running withdraw before");
-                // await loadGlobalSnapshot();
                 const lender1BalanceBefore = await ethers.provider.getBalance(lender1.address);
                 const lender2BalanceBefore = await ethers.provider.getBalance(lender2.address);
                 const tx1 = await aeth.connect(lender1).deposit(lender1.address, {value: parseEther('1.1')});
@@ -366,28 +319,19 @@ describe('testSuite', () => {
                 expect(aethEthBalance).to.equal(parseEther('1.6'));
 
                 await addSnapshot('withdraw');
-                // setCurrentSnapshot('withdraw');
-                // localSnapshotId = await network.provider.request({
-                //     method: 'evm_snapshot',
-                // });
-                // snapshotId = localSnapshotId;
             })
             after(async () => {
                 log('running withdraw after');
                 await setCurrentSnapshot('contractDeployment');
-                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                // snapshotId = globalSnapshotId;
-                // await loadGlobalSnapshot();
             })
             it('should revert if not the owner of contract', async() => {
                 const ethBalanceBefore = await ethers.provider.getBalance(lender1.address);
                 await expect(aeth.connect(lender1).withdraw(lender1.address, parseEther('1.1'), lender1.address)).to.be.revertedWith('Ownable: caller is not the owner');
-                // const lender1AethBalanceAfter = await aeth.balanceOf(lender1.address);
-                // const totalSupply = await aeth.totalSupply();
-                // const ethBalanceAfter = await ethers.provider.getBalance(lender1.address);
-                // expect(totalSupply).to.equal(parseEther('0.5'));
-                // expect(lender1AethBalanceAfter).to.equal(parseEther('0'));
-                // expect(ethBalanceAfter).to.equal(ethBalanceBefore + parseEther('1.1') - txFee);
+                const lender1AethBalanceAfter = await aeth.balanceOf(lender1.address);
+                const totalSupply = await aeth.totalSupply();
+                const ethBalanceAfter = await ethers.provider.getBalance(lender1.address);
+                expect(totalSupply).to.equal(parseEther('1.6'));
+                expect(lender1AethBalanceAfter).to.equal(parseEther('1.1'));
             });
             // it('should revert if sender does not have sufficient tokens - none', async () => {
             //     await expect(aeth.connect(lender3).withdraw(parseEther('1.2'), lender1.address)).to.be.revertedWith("ERC20: burn amount exceeds balance");
@@ -477,10 +421,8 @@ describe('testSuite', () => {
         });
         // Calling emergencyEtherTransfer requires calling it from mockAaveV3 - this is a bit much... therefore skipping for now
         describe.skip('emergencyEtherTransfer', () => {
-            let localSnapshotId: any;
             before(async () => {
                 log("running emergencyEtherTransfer before");
-                // await loadGlobalSnapshot();
                 const lender1BalanceBefore = await ethers.provider.getBalance(lender1.address);
                 const lender2BalanceBefore = await ethers.provider.getBalance(lender2.address);
                 const tx1 = await aeth.connect(lender1).deposit(lender1.address, {value: parseEther('1.1')});
@@ -507,16 +449,9 @@ describe('testSuite', () => {
                 expect(aethEthBalance).to.equal(parseEther('1.6'));
 
                 await addSnapshot('AETH-emergencyEtherTransfer');
-                // localSnapshotId = await network.provider.request({
-                //     method: 'evm_snapshot',
-                // });
-                // snapshotId = localSnapshotId;
             })
             after(async () => {
                 log('running emergencyEtherTransfer after');
-                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                // snapshotId = globalSnapshotId;
-                // await loadGlobalSnapshot();
                 await setCurrentSnapshot('contractDeployment');
             })
             it('should revert if sender is not owner', async () => {
@@ -577,10 +512,8 @@ describe('testSuite', () => {
         describe('getDeficitForPeriod', () => {});
         describe('getAvailableForPeriod', () => {});
         describe('getTotalLiquidity', () => {
-            let localSnapshotId: any
             before(async () => {
                 log("running getTotalLiquidity before");
-                // loadGlobalSnapshot()
 
                 // Blockchain transactions here
                 await usdc.transfer(lender1.getAddress(), parseUnits('6500', 6));
@@ -655,7 +588,6 @@ describe('testSuite', () => {
             });
         });
         describe('getPool', () => {
-            let localSnapshotId: any
             // 2026-01-01 1767225600
             // 2026-02-01 1769904000
             // const poolTimestamps = [1767225600, 1769904000];
@@ -665,8 +597,6 @@ describe('testSuite', () => {
             let createPoolTxs: (ContractTransactionResponse)[];
             before(async () => {
                 log("running getPool before");
-                // await loadGlobalSnapshot();
-                console.log(`Special - Block: ${await ethers.provider.getBlockNumber()}`)
 
                 // Blockchain transactions here
                 // Deposit amounts
@@ -690,19 +620,11 @@ describe('testSuite', () => {
                 expect(platformUsdcBalance).to.equal(parseUnits('2500', 6));
                 expect(lender1UsdcBalance).to.equal(parseUnits('0', 6));
 
-                // Take a local snapshot that will be used within this "describe" block
-                // localSnapshotId = await network.provider.request({
-                //     method: 'evm_snapshot',
-                // });
-                // snapshotId = localSnapshotId;
                 await addSnapshot('Lend-getPool');
             })
             after(async () => {
                 log('running getPool after');
                 await setCurrentSnapshot('contractDeployment')
-                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                // snapshotId = globalSnapshotId;
-                // await loadGlobalSnapshot();
             })
 
 
@@ -837,7 +759,6 @@ describe('testSuite', () => {
         describe('getUsdcAddress', () => {});
         describe('deposit', () => {
             const timestamp = timestamps.aug02_26; // 2nd August, 2026
-            let localSnapshotId: any
             before(async () => {
                 log("running deposit before");
                 // await loadGlobalSnapshot();
@@ -851,17 +772,10 @@ describe('testSuite', () => {
                 expect(lender2Balance).to.equal(2000 * 10 ** 6);
 
                 await addSnapshot('Lend-deposit');
-                // localSnapshotId = await network.provider.request({
-                //     method: 'evm_snapshot',
-                // });
-                // snapshotId = localSnapshotId;
             })
             after(async () => {
                 log('running deposit after');
                 await setCurrentSnapshot('contractDeployment');
-                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                // snapshotId = globalSnapshotId;
-                // await loadGlobalSnapshot();
             })
 
             it('should revert when deposit amount is 0', async () => {
@@ -921,8 +835,7 @@ describe('testSuite', () => {
         });
         describe('withdraw', () => {});
         describe('takeLoan', () => {
-            let localSnapshotId: any
-            
+
             before(async () => {
                 log("running takeLoan before");
                 log(`before tx block: ${await ethers.provider.getBlockNumber()}`);
@@ -961,60 +874,20 @@ describe('testSuite', () => {
                 log(`after tx block: ${await ethers.provider.getBlockNumber()}`);
 
                 await addSnapshot('Lend-takeLoan');
-                // Take a local snapshot that will be used within this "describe" block
-                // localSnapshotId = await network.provider.request({
-                //     method: 'evm_snapshot',
-                // });
-                // snapshotId = localSnapshotId;
             })
             
             after(async () => {
                 log('running takeLoan after');
                 await setCurrentSnapshot('contractDeployment')
-                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                // snapshotId = globalSnapshotId;
-                // await loadGlobalSnapshot();
             })
 
-            // const timestamps = [1767225600, 1769904000, 1772323200];
-            // let lender1Usdc: USDCoin;
-            // let lender2Usdc: USDCoin;
-            // beforeEach(async () => {
-            //     // Send 10000 USDC to both lender1 and lender2
-            //     // Approve 10000 USDC to the lendingPlatform for both lender1 and lender2
-            //     // Initialize 3 pools:
-            //     // 1-Jan-2026 1767225600
-            //     // 1-Feb-2026 1769904000
-            //     // 1-Mar-2026 1772323200
-            //
-            //     lender1Usdc = usdc.connect(lender1);
-            //     lender2Usdc = usdc.connect(lender2);
-            //     const lender1Address = await lender1.getAddress();
-            //
-            //     await usdc.transfer(lender1.getAddress(), parseUnits('10000', 6));
-            //     await usdc.transfer(lender2.getAddress(), parseUnits('10000', 6));
-            //
-            //     await lender1Usdc.approve(lendingPlatform.getAddress(), parseUnits('10000', 6));
-            //     await lender2Usdc.approve(lendingPlatform.getAddress(), parseUnits('10000', 6));
-            //
-            //     await lendingPlatform.createPool(timestampsObj.jan0126);
-            //     await lendingPlatform.createPool(timestampsObj.feb0126);
-            //     await lendingPlatform.createPool(timestampsObj.mar0126);
-            //
-            // })
             describe('general checks', () => {
-                // let borrower1LendingPlatform: LendingPlatform;
-                // beforeEach(() => {
-                //     lendingPlatform.connect(borrower1) = lendingPlatform.connect(borrower1);
-                // })
                 it('should reject if the collateral sent is lower than the amount specified', async() => {
-
                     const amount = parseUnits('1000', 6);
                     const collateral = parseEther('1');
                     const ltv = 0;
 
                     await expect(lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: parseEther('0.1')})).to.be.revertedWith("Wrong amount of Ether provided.");
-
                 });
                 it('should reject if the collateral sent is higher than the amount specified', async() => {
                     const amount = parseUnits('1000', 6);
@@ -1040,13 +913,11 @@ describe('testSuite', () => {
             });
 
             describe('loan from single pool with a single lender', () => {
-                let innerLocalSnapshotId: any
                 before(async () => {
                     log("running loan from single pool with a single lender before");
                     log(`before tx block: ${await ethers.provider.getBlockNumber()}`);
 
                     // Blockchain transactions here
-                    // await lender1LendingPlatform.deposit(timestamps.jan01_26, parseUnits('1000', 6));
                     await lendingPlatform.connect(lender1).deposit(timestamps.jan01_26, parseUnits('1000', 6));
 
                     // Tests for new state here
@@ -1056,29 +927,13 @@ describe('testSuite', () => {
                     log(`after tx block: ${await ethers.provider.getBlockNumber()}`);
 
                     await addSnapshot('Lend-takeLoan-lfspwasl');
-                    // Take a local snapshot that will be used within this "describe" block
-                    // innerLocalSnapshotId = await network.provider.request({
-                    //     method: 'evm_snapshot',
-                    // });
-                    // snapshotId = innerLocalSnapshotId;
                 })
 
                 after(async () => {
                     log('running loan from single pool with a single lender after');
                     await setCurrentSnapshot('Lend-takeLoan');
-                    // log(`changing snapshotId (${snapshotId}) to localSnapshotId (${localSnapshotId})`);
-                    // snapshotId = localSnapshotId;
-                    // await loadGlobalSnapshot();
                 })
-                // let lender1LendingPlatform: LendingPlatform;
-                // let borrower1LendingPlatform: LendingPlatform;
-                // beforeEach(async () => {
-                //     lender1LendingPlatform = lendingPlatform.connect(lender1);
-                //     borrower1LendingPlatform = lendingPlatform.connect(borrower1);
-                //
-                //     // Lender1 deposit 1000 USDC to 1-Jan-2026 pool
-                //     await lender1LendingPlatform.deposit(timestamps.jan01_26, parseUnits('1000', 6));
-                // })
+
                 it('should reject if insufficient liquidity across pools', async() => {
                     const amount = parseUnits('1001', 6);
                     const collateral = parseEther('2');
@@ -1120,8 +975,6 @@ describe('testSuite', () => {
                     const lendingPlatformAEthBalanceBefore = await aeth.balanceOf(lendingPlatform.getAddress());
 
                     expect(borrower1UsdcBalanceBefore).to.equal(0);
-                    // expect(borrower1EthBalanceBefore).to.be.greaterThan(parseEther('9999'));
-                    // expect(borrower1EthBalanceBefore).to.be.lessThan(parseEther('10000'));
                     expect(borrower1EthBalanceBefore).to.equal(parseEther('10000'));
                     expect(lendingPlatformUsdcBalanceBefore).to.equal(parseUnits('1000', 6));
                     expect(lendingPlatformEthBalanceBefore).to.equal(parseEther('0'));
@@ -1269,7 +1122,6 @@ describe('testSuite', () => {
             })
 
             describe('loan from single pool with two lenders', () => {
-                let innerLocalSnapshotId: any
                 before(async () => {
                     log("running loan from single pool with two lenders before");
                     log(`before tx block: ${await ethers.provider.getBlockNumber()}`);
@@ -1282,14 +1134,7 @@ describe('testSuite', () => {
                     const lender1UsdcBalanceBefore = await usdc.balanceOf(lender1.address);
                     expect(lender1UsdcBalanceBefore).to.equal(parseUnits('10000',6));
 
-                    // await usdc.transfer(lender1.address, 1000 * 10 ** 6);
-                    // await usdc.transfer(lender2.address, 2000 * 10 ** 6);
-
-                    // await usdc.connect(lender1).approve(lendingPlatform.getAddress(), 1000 * 10 ** 6);
                     await lendingPlatform.connect(lender1).deposit(timestamps.jan01_26, 1000 * 10 ** 6);
-                    // timestamps.jan01_26
-
-                    // await usdc.connect(lender2).approve(lendingPlatform.getAddress(), 2000 * 10 ** 6);
                     await lendingPlatform.connect(lender2).deposit(timestamps.jan01_26, 2000 * 10 ** 6);
                     log(`before tx block: ${await ethers.provider.getBlockNumber()}`);
 
@@ -1311,32 +1156,13 @@ describe('testSuite', () => {
 
                     // Take a local snapshot that will be used within this "describe" block
                     await addSnapshot('Lend-takeLoan-lfspwtl');
-                    // innerLocalSnapshotId = await network.provider.request({
-                    //     method: 'evm_snapshot',
-                    // });
-                    // snapshotId = innerLocalSnapshotId;
                 })
 
                 after(async () => {
                     log('running loan from single pool with two lenders after');
                     await setCurrentSnapshot('Lend-takeLoan');
-                    // log(`changing snapshotId (${snapshotId}) to localSnapshotId (${localSnapshotId})`);
-                    // snapshotId = localSnapshotId;
-                    // await loadGlobalSnapshot();
                 })
-                // beforeEach(async () => {
-                //     // lender1 should have 1000 USDC
-                //     // lender2 should have 2000 USDC
-                //     await usdc.transfer(lender1.getAddress(), 1000 * 10 ** 6);
-                //     await usdc.transfer(lender2.getAddress(), 2000 * 10 ** 6);
-                //
-                //     await usdc.connect(lender1).approve(lendingPlatform.getAddress(), 1000 * 10 ** 6);
-                //     await lendingPlatform.connect(lender1).deposit(timestamps.jan01_26, 1000 * 10 ** 6);
-                //     // timestamps.jan01_26
-                //
-                //     await usdc.connect(lender2).approve(lendingPlatform.getAddress(), 2000 * 10 ** 6);
-                //     await lendingPlatform.connect(lender2).deposit(timestamps.jan01_26, 2000 * 10 ** 6);
-                // })
+
                 it('should reject if insufficient liquidity across pools', async() => {
                     const amount = parseUnits('3001', 6);
                     const collateral = parseEther('6');
@@ -2024,7 +1850,6 @@ describe('testSuite', () => {
             });
         });
         describe('withdraw', () => {
-            let localSnapshotId: any
             before(async () => {
                 log("running withdraw before");
                 // await loadGlobalSnapshot();
@@ -2054,18 +1879,10 @@ describe('testSuite', () => {
                 expect(aethEthBalance).to.equal(parseEther('1.6'));
 
                 await addSnapshot('MockAaveV3-withdraw')
-                // setCurrentSnapshot('MockAaveV3-withdraw');
-                // localSnapshotId = await network.provider.request({
-                //     method: 'evm_snapshot',
-                // });
-                // snapshotId = localSnapshotId;
             })
             after(async () => {
                 log('running withdraw after');
                 await setCurrentSnapshot('contractDeployment');
-                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                // snapshotId = globalSnapshotId;
-                // await loadGlobalSnapshot();
             })
             it('should revert if sender does not have sufficient tokens - none', async () => {
                 await expect(mockAaveV3.connect(lender3).withdrawETH(unusedAddressArg, parseEther('1.2'), lender1.address)).to.be.revertedWith("ERC20: burn amount exceeds balance");
@@ -2154,7 +1971,6 @@ describe('testSuite', () => {
             });
         });
         describe('emergencyEtherTransfer', () => {
-            let localSnapshotId: any;
             before(async () => {
                 log("running emergencyEtherTransfer before");
                 // await loadGlobalSnapshot();
@@ -2184,18 +2000,10 @@ describe('testSuite', () => {
                 expect(aethEthBalance).to.equal(parseEther('1.6'));
 
                 await addSnapshot('MockAaveV3-emergencyEtherTransfer')
-                // setCurrentSnapshot('MockAaveV3-emergencyEtherTransfer')
-                // localSnapshotId = await network.provider.request({
-                //     method: 'evm_snapshot',
-                // });
-                // snapshotId = localSnapshotId;
             })
             after(async () => {
                 log('running emergencyEtherTransfer after');
                 await setCurrentSnapshot('contractDeployment');
-                // log(`changing snapshotId (${snapshotId}) to globalSnapshotId (${globalSnapshotId})`);
-                // snapshotId = globalSnapshotId;
-                // await loadGlobalSnapshot();
             })
             it('should revert if sender is not owner', async () => {
                 await expect(mockAaveV3.connect(lender1).emergencyEtherTransfer(lender1.address, parseEther('1.1'))).to.be.revertedWith('Ownable: caller is not the owner');
