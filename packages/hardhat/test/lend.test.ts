@@ -1,6 +1,15 @@
 import { ethers, deployments, network, getNamedAccounts } from 'hardhat';
 import chai from 'chai';
-import { LendingPlatform, PoolShareToken__factory, USDCoin, AETH, BorrowPositionToken, MockAaveV3, PoolShareToken } from '../typechain-types';
+import {
+    LendingPlatform,
+    PoolShareToken__factory,
+    USDCoin,
+    AETH,
+    BorrowPositionToken,
+    MockAaveV3,
+    PoolShareToken,
+    MockChainlinkAggregator
+} from '../typechain-types';
 import {formatEther, formatUnits, parseEther, parseUnits} from 'ethers';
 import {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/signers";
 import {ContractTransactionResponse} from "ethers";
@@ -99,6 +108,7 @@ describe('testSuite', () => {
     let borrowPositionToken: BorrowPositionToken;
     let lendingPlatform: LendingPlatform;
     let mockAaveV3: MockAaveV3;
+    let mockChainlinkAggregator: MockChainlinkAggregator;
     let poolShareToken: PoolShareToken;
     let usdc: USDCoin;
     let deployer: HardhatEthersSigner;
@@ -132,25 +142,29 @@ describe('testSuite', () => {
 
         await addSnapshot('new');
         await deployments.fixture();
-        await addSnapshot('contractDeployment');
 
         const aETHDeployment = await deployments.get('AETH');
         const borrowPositionTokenDeployment = await deployments.get('BorrowPositionToken');
         const lendingPlatformDeployment = await deployments.get('LendingPlatform');
         const mockAaveV3Deployment = await deployments.get('MockAaveV3');
         const usdCoinDeployment = await deployments.get('USDCoin');
+        const mockChainlinkAggregatorDeployment = await deployments.get('MockChainlinkAggregator');
 
         aeth = await ethers.getContractAt("AETH", aETHDeployment.address);
         borrowPositionToken = await ethers.getContractAt("BorrowPositionToken", borrowPositionTokenDeployment.address);
         lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
         mockAaveV3 = await ethers.getContractAt("MockAaveV3", mockAaveV3Deployment.address);
         usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+        mockChainlinkAggregator = await ethers.getContractAt("MockChainlinkAggregator", mockChainlinkAggregatorDeployment.address);
 
+        await usdc.waitForDeployment();
         await aeth.waitForDeployment();
         await borrowPositionToken.waitForDeployment();
-        await lendingPlatform.waitForDeployment();
         await mockAaveV3.waitForDeployment();
-        await usdc.waitForDeployment();
+        await mockChainlinkAggregator.waitForDeployment();
+        await lendingPlatform.waitForDeployment();
+
+        await addSnapshot('contractDeployment');
     })
 
     beforeEach(async () => {
@@ -494,8 +508,12 @@ describe('testSuite', () => {
     describe('BorrowPositionToken', () => {});
     describe('Lend', () => {
         // TODO: skipping internal functions (i.e. insertIntoSortedArr, indexActivePools) - may need to do something later
-        describe('bytesToString', () => {});
-        describe('getEthPrice', () => {});
+        describe('bytesToString', () => {
+            // This is used only for internal purposes (debugging) so testing is not required
+        });
+        describe('getEthPrice', () => {
+
+        });
         describe('maxLoan', () => {
             it('should reject invalid ltv', async () => {
                     await expect(lendingPlatform.maxLoan(5, parseEther('1'))).to.be.revertedWith("Invalid LTV");

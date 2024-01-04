@@ -10,15 +10,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const borrowPositionTokenDeployment = await deployments.get('BorrowPositionToken');
   const mockAaveV3Deployment = await deployments.get('MockAaveV3');
   const aETHDeployment = await deployments.get('AETH');
+  const mockChainlinkAggregatorDeployment = await deployments.get('MockChainlinkAggregator');
+
+  const addresses = [
+      usdCoinDeployment.address,
+      borrowPositionTokenDeployment.address,
+      mockAaveV3Deployment.address,
+      aETHDeployment.address,
+      mockChainlinkAggregatorDeployment.address
+  ];
 
   await deploy("LendingPlatform", {
     from: deployer,
     log: true,
     args: [
-        usdCoinDeployment.address,
-        borrowPositionTokenDeployment.address,
-        mockAaveV3Deployment.address,
-        aETHDeployment.address
+        addresses
     ]
   });
 

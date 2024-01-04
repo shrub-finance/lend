@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./PoolShareToken.sol";
 import "./BorrowPositionToken.sol";
 import "./MockAaveV3.sol";
+import "./MockChainlinkAggregator.sol";
 import "./AETH.sol";
 
 import "hardhat/console.sol";
@@ -74,23 +75,32 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     IBorrowPositionToken public bpt;
     IAETH public aeth;
     IMockAaveV3 public wrappedTokenGateway;
+    IMockChainlinkAggregator public chainlinkAggregator;
 
     uint private bpTotalPoolShares;
 
     // ETH price with 8 decimal places
-    uint public ethPrice = 2000 * 10 ** 8;
-
-    constructor(
-        address usdcAddress,
-        address bptAddress,
-        address wrappedTokenGatewayAddress,
-        address aETHAddress
-    ) {
-        usdc = IERC20(usdcAddress);
-        bpt = IBorrowPositionToken(bptAddress);
-        wrappedTokenGateway = IMockAaveV3(wrappedTokenGatewayAddress);
-        aeth = IAETH(aETHAddress);
+//    uint public ethPrice = 2000 * 10 ** 8;
+    constructor(address[5] memory addresses) {
+        usdc = IERC20(addresses[0]);
+        bpt = IBorrowPositionToken(addresses[1]);
+        wrappedTokenGateway = IMockAaveV3(addresses[2]);
+        aeth = IAETH(addresses[3]);
+        chainlinkAggregator = IMockChainlinkAggregator(addresses[4]);
     }
+
+
+//    constructor(
+//        address usdcAddress,
+//        address bptAddress,
+//        address wrappedTokenGatewayAddress,
+//        address aETHAddress
+//    ) {
+//        usdc = IERC20(usdcAddress);
+//        bpt = IBorrowPositionToken(bptAddress);
+//        wrappedTokenGateway = IMockAaveV3(wrappedTokenGatewayAddress);
+//        aeth = IAETH(aETHAddress);
+//    }
 
     function insertIntoSortedArr(uint[] storage arr, uint newValue) internal {
         if (arr.length == 0) {

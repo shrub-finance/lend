@@ -27,7 +27,6 @@ contract AETH is ERC20, Ownable {
         _safeTransferETH(onBehalfOf, amountToWithdraw);
     }
 
-
     /**
    * @dev transfer native Ether from the utility contract, for native Ether recovery in case of stuck Ether
    * due to selfdestructs or ether transfers to the pre-computed contract address before deployment.
