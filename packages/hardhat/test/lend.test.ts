@@ -802,12 +802,12 @@ describe('testSuite', () => {
 
             it('should revert if no allowance', async () => {
                 // Assuming you have setup mock USDC contract and the user doesn't have any USDC tokens
-                await expect(lendingPlatform.connect(lender1).deposit(timestamp, 1000)).to.be.revertedWith("ERC20: insufficient allowance");
+                await expect(lendingPlatform.connect(lender1).deposit(timestamp, 1000)).to.be.revertedWith("ERC20: transfer amount exceeds allowance");
             });
 
             it('should revert if insufficient allowance', async () => {
                 await usdc.connect(lender1).approve(lendingPlatform.getAddress(), 900 * 10 ** 6)
-                await expect(lendingPlatform.connect(lender1).deposit(timestamp, 1000 * 10 ** 6)).to.be.revertedWith("ERC20: insufficient allowance");
+                await expect(lendingPlatform.connect(lender1).deposit(timestamp, 1000 * 10 ** 6)).to.be.revertedWith("ERC20: transfer amount exceeds allowance");
             });
 
             it('should revert when user does not have enough USDC tokens', async () => {

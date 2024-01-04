@@ -6,11 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "./PoolShareToken.sol";
 import "./BorrowPositionToken.sol";
 import "./MockAaveV3.sol";
-import "./MockChainlinkAggregator.sol";
 import "./AETH.sol";
 
 import "hardhat/console.sol";
@@ -49,6 +49,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint poolShareAmount; // Relative claim of the total platform aETH for this bucket. Used to calculate yield for lending pools
     }
 
+    struct ChainlinkResponse {
+        uint80 roundId;
+        int256 answer;
+        uint256 startedAt;
+        uint256 updatedAt;
+        uint80 answeredInRound;
+    }
+
     struct PoolContribution {
         uint poolTimestamp; // The pools timestamp.
         uint liquidityContribution; // The liquidity contribution from the pool at the time of the loan. Integer value as a proportion of 10 ** 8
@@ -75,7 +83,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     IBorrowPositionToken public bpt;
     IAETH public aeth;
     IMockAaveV3 public wrappedTokenGateway;
-    IMockChainlinkAggregator public chainlinkAggregator;
+    AggregatorV3Interface public chainlinkAggregator;  // Chainlink interface
 
     uint private bpTotalPoolShares;
 
@@ -86,7 +94,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         bpt = IBorrowPositionToken(addresses[1]);
         wrappedTokenGateway = IMockAaveV3(addresses[2]);
         aeth = IAETH(addresses[3]);
-        chainlinkAggregator = IMockChainlinkAggregator(addresses[4]);
+        chainlinkAggregator = AggregatorV3Interface(addresses[4]);
     }
 
 
@@ -142,7 +150,16 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     function getEthPrice() public view returns (uint256) {
 //        return 2000 * 10 ** 8;
         // 8 decimals ($1852.11030001)
-        return 185211030001;
+//        return 185211030001;
+        (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) = chainlinkAggregator.latestRoundData();
+        require(answer > 0, "ETH Price out of range");
+        return uint256(answer);
     }
 
     function maxLoan(uint ltv, uint ethCollateral) public view returns (uint256) {

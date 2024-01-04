@@ -7,12 +7,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
+  const decimals = 8;
+  const initialAnswer = 185211030001  // ETH Price - $1852.11 (8 decimals);
+
   const deployResult = await deploy("MockChainlinkAggregator", {
     from: deployer,
     log: true,
-    args: [
-        185211030001   // ETH Price - $1852.11 (8 decimals)
-    ]
+    args: [ initialAnswer ]
   });
 };
 export default func;
