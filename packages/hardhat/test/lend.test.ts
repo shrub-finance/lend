@@ -2062,7 +2062,7 @@ describe('testSuite', () => {
             });
         });
     });
-    describe.only('MockChainlinkAggregator', () => {
+    describe('MockChainlinkAggregator', () => {
         it('should have 8 decimals', async() => {
             const decimals = await mockChainlinkAggregator.decimals()
             expect(decimals).to.equal(8);
