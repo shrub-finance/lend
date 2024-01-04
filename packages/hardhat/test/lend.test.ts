@@ -2062,6 +2062,28 @@ describe('testSuite', () => {
             });
         });
     });
+    describe.only('MockChainlinkAggregator', () => {
+        it('should have 8 decimals', async() => {
+            const decimals = await mockChainlinkAggregator.decimals()
+            expect(decimals).to.equal(8);
+        });
+        it('should match deploy specs', async() => {
+            const {roundId, answer, startedAt, updatedAt, answeredInRound} = await mockChainlinkAggregator.latestRoundData();
+            expect(answer).to.equal(185211030001);
+            expect(roundId).to.equal(1);
+        });
+        it('should update price with updateAnswer', async() => {
+            await mockChainlinkAggregator.updateAnswer(parseUnits('2000.12345678', 8));
+            const {roundId, answer, startedAt, updatedAt, answeredInRound} = await mockChainlinkAggregator.latestRoundData();
+            expect(answer).to.equal(200012345678);
+            expect(answer).to.equal(parseUnits('2000.12345678', 8));
+            expect(roundId).to.equal(2);
+            await mockChainlinkAggregator.updateAnswer(parseUnits('3022.87654321', 8));
+            const { roundId: roundId2, answer: answer2 } = await mockChainlinkAggregator.latestRoundData();
+            expect(answer2).to.equal(parseUnits('3022.87654321', 8));
+            expect(roundId2).to.equal(3);
+        });
+    });
     // describe('PoolShareToken', () => {});
     describe('USDCoin', () => {
         it('should have name implemented', async() => {

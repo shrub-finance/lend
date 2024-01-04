@@ -238,5 +238,16 @@ task("erc20Details", "get the details of an ERC20")
       decimals: ${decimals}
       totalSupply: ${totalSupply}
     `)
+  });
 
-  })
+task("setEthPrice", "udpate the mock Chainlink Aggregator's ETH price")
+    .addParam('ethPrice', 'new ETH price, with up to 8 decimals (i.e. 2123.12345678)')
+    .setAction(async (taskArgs, env) => {
+        const {ethers, deployments, getNamedAccounts} = env;
+        const mockChainlinkAggregatorDeployment = await deployments.get('MockChainlinkAggregator');
+        const mockChainlinkAggregator = await ethers.getContractAt("MockChainlinkAggregator", mockChainlinkAggregatorDeployment.address);
+        const decimals = await mockChainlinkAggregator.decimals();
+        const ethPrice = ethers.parseUnits(taskArgs.ethPrice, decimals);
+        await sendTransaction(mockChainlinkAggregator.updateAnswer(ethPrice), 'updateAnswer');
+        console.log(`Update ETH pricefeed to ${ethers.formatUnits(ethPrice, decimals)}`);
+    });
