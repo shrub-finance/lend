@@ -512,7 +512,21 @@ describe('testSuite', () => {
             // This is used only for internal purposes (debugging) so testing is not required
         });
         describe('getEthPrice', () => {
-
+            it('should revert if ETH price is negative', async() => {
+                await mockChainlinkAggregator.updateAnswer(-1);
+                await expect(lendingPlatform.getEthPrice()).to.be.revertedWith("ETH Price out of range");
+            });
+            it('should properly return the ETH price based on the chainlink price feed', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('3002.12345678', 8));
+                const ethPrice = await lendingPlatform.getEthPrice();
+                await mockChainlinkAggregator.updateAnswer(parseUnits('2514.87654321', 8));
+                const ethPrice2 = await lendingPlatform.getEthPrice();
+                await mockChainlinkAggregator.updateAnswer(parseUnits('200', 8));
+                const ethPrice3 = await lendingPlatform.getEthPrice();
+                expect(ethPrice).to.equal(parseUnits('3002.12345678', 8));
+                expect(ethPrice2).to.equal(parseUnits('2514.87654321', 8));
+                expect(ethPrice3).to.equal(parseUnits('200', 8));
+            });
         });
         describe('maxLoan', () => {
             it('should reject invalid ltv', async () => {
