@@ -43,7 +43,7 @@ const Borrow: NextPage = (props) => {
   return (
     <>
       <Head>
-        <title>Shrub Lend</title>
+        <title>Shrub Lend - Borrow</title>
         <meta
           name="description"
           content="Shrub Lend"

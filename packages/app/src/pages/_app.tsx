@@ -32,16 +32,15 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
               // }}
               dAppMeta={{
             name: "Shrub Lend",
-            description: "DeFi Lending Simplified",
+            description: "Making Lending Accessible",
             logoUrl: "https://shrub.finance/static/media/logo-default.3961bf67.svg",
             url: "https://shrub.finance"
           }}>
             <div className="flex flex-col h-screen">
               <AppBar/>
-              <Component {...pageProps} />
-              {/*<MobileMenu>*/}
-              {/*  <Component {...pageProps} />*/}
-              {/*</MobileMenu>*/}
+              <MobileMenu>
+                <Component {...pageProps} />
+              </MobileMenu>
             </div>
 
           </ThirdwebProvider>

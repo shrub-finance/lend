@@ -17,7 +17,7 @@ const Home: NextPage = (props) => {
   return (
     <>
       <Head>
-        <title>Shrub Lend - Lend</title>
+        <title>Shrub Lend - Home</title>
         <meta
           name="description"
           content="Lend"
