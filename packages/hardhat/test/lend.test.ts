@@ -88,6 +88,28 @@ async function setCurrentSnapshot(newSnapshot: string) {
     await loadSnapshot(newSnapshot);
 }
 
+async function increaseTime(duration: number) {
+    // Increase the network time
+    await ethers.provider.send('evm_increaseTime', [duration]);
+
+    // Mine a new block so that the time increase takes effect
+    await ethers.provider.send('evm_mine');
+}
+
+async function setTime(desiredDate: Date) {
+    const currentBlock = await ethers.provider.getBlock("latest");
+    if (!currentBlock) {
+        throw new Error('latest block not found');
+    }
+    const currentTimestamp = currentBlock.timestamp;
+    const desiredTimestamp = toEthDate(desiredDate); // convert to Unix timestamp
+
+    // Calculate the difference in seconds
+    const timeDiff = desiredTimestamp - currentTimestamp;
+    await increaseTime(timeDiff);
+}
+
+
 function log(msg: any, level = 'verbose') {
     if (currentLogLevel === 'verbose') {
         console.log(msg);
@@ -730,7 +752,9 @@ describe('testSuite', () => {
                 await expect(lendingPlatform.getAPYBasedOnLTV(60)).to.be.revertedWith('Invalid LTV');
             });
         });
-        describe('validPool', () => {});
+        describe('validPool', () => {
+            // See takeLoan - validPool tests - this is a private method
+        });
         describe('getLoan', () => {});
         describe('createPool', () => {
             it('should create a new pool with 0 totalLiquidity and 0 aaveInterestSnapshot', async () => {
@@ -786,7 +810,6 @@ describe('testSuite', () => {
                 expect(createPoolTx).to.emit(lendingPlatform, "poolCreated")
                     .withArgs(timestamp, pool.poolShareToken);
             });
-
         });
         describe('getUsdcAddress', () => {});
         describe('deposit', () => {
@@ -913,6 +936,7 @@ describe('testSuite', () => {
                 await setCurrentSnapshot('contractDeployment')
             })
 
+
             describe('general checks', () => {
                 it('should reject if the collateral sent is lower than the amount specified', async() => {
                     const amount = parseUnits('1000', 6);
@@ -964,6 +988,31 @@ describe('testSuite', () => {
                 after(async () => {
                     log('running loan from single pool with a single lender after');
                     await setCurrentSnapshot('Lend-takeLoan');
+                })
+
+                describe('validPool', () => {
+                    const amount = parseUnits('900', 6);
+                    const collateral = parseEther('2');
+                    const ltv = 25;
+                    it('should reject if pool does not exist', async() => {
+                        await expect(lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.june01_26, {value: collateral})).to.be.revertedWith("Not a valid pool");
+                    });
+                    it('should reject if pool exists but the timestamp is in the past', async() => {
+
+                        await setTime(new Date('2026-01-01T00:00:01Z'));
+                        const currentBlock = await ethers.provider.getBlock('latest');
+                        if (!currentBlock) {
+                            throw new Error('cannot find current block');
+                        }
+                        const currentTimestamp = currentBlock.timestamp;
+                        expect(currentTimestamp).to.equal(toEthDate(new Date('2026-01-01T00:00:01Z')))
+                        await expect(lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: collateral})).to.be.revertedWith("Not a valid pool");
+                    });
+                    it('should succeed if the pool exists and is in the future', async() => {
+                        const tx = await lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: collateral});
+                        const receipt = await tx.wait();
+                        expect(receipt?.status).to.equal(1);
+                    });
                 })
 
                 it('should reject if insufficient liquidity across pools', async() => {
