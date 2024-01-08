@@ -31,3 +31,34 @@ export const formatDate:any = {
         dateStyle: "medium", timeStyle: "short"
     })
 }
+
+export function calculateLockupPeriod(endDate: Date): string {
+    const now = new Date();
+    const oneDay = 1000 * 60 * 60 * 24; // milliseconds in a day
+
+    // Calculate the total difference in days
+    let diffDays = Math.ceil((endDate.getTime() - now.getTime()) / oneDay);
+
+    if (diffDays < 53) {
+        // Up to 55 days, display in days
+        return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+    }
+    else {
+        // For periods longer than 60 days, round to the nearest month
+        let totalMonths = diffDays / 30;
+        let roundedMonths = Math.round(totalMonths);
+
+        return `${roundedMonths} month${roundedMonths !== 1 ? 's' : ''}`;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
