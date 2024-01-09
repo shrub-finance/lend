@@ -113,6 +113,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     function insertIntoSortedArr(uint[] storage arr, uint newValue) internal {
         if (arr.length == 0) {
             arr.push(newValue);
+            // No need to run indexActivePools as the index would be 0 (which it is by default)
             return;
         }
         // First handle the last element of the array
@@ -128,12 +129,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
                 return;
             }
         }
-        for(uint i = arr.length - 2; i > 0; i++) {
+        for(uint i = arr.length - 2; i > 0; i--) {
             if (arr[i - 1] < newValue) {
                 arr[i] = newValue;
                 indexActivePools(arr);
                 return;
             }
+            console.log(i);
             arr[i] = arr[i - 1];
         }
         arr[0] = newValue;
@@ -179,16 +181,17 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // getEthPrice 8 decimal
         // return 18 decimals
         require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
-        uint valueOfEthRequied = usdcLoanValue * 10 ** 22 / ltv; // time 10 ** 2 to convert to percentage and 10 ** 12 to convert to 8 decimals
+        uint valueOfEthRequied = usdcLoanValue * 10 ** 22 / ltv; // time 10 ** 2 to convert to percentage and 10 ** 20 to convert to 26 decimals (needed because divide by 8 decimal value next step)
         return valueOfEthRequied / getEthPrice();
     }
 
     // Get the latest USD price of aETH
     // TODO: Hook this up with chainlink
     // There are 8 decimal places
-    function getLatestAethPrice() internal view returns (uint256) {
-        return 2000 * 10 ** 8;
-    }
+    // NOTE: aETH tracks ETH 1:1 so there is no need to separately look up the price
+//    function getLatestAethPrice() internal view returns (uint256) {
+//        return 2000 * 10 ** 8;
+//    }
 
     // Get earned interest from aETH
     // TODO: Hook this up with Aave v3 API
@@ -218,6 +221,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     function getAvailableForPeriod(uint _timestamp) public validTimestamp(_timestamp) view returns (uint avail) {
+        // currentAndFutureLiquidity - Total amount of USDC provided to this pool and all future pools
+        // currentAndFutureLoans - Total amount of outstanding USDC loans from this pool and all future pools
+        // getDeficitForPeriod - Deficit in terms of loans in previous buckets being greater than the liquidity in those buckets (meaning it is not available for double use)
         console.log("Running getAvailableForPeriod");
         uint currentAndFutureLiquidity = 0;
         uint currentAndFutureLoans = 0;
@@ -332,7 +338,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
         // Calculate total value of the pool in terms of USDC
         uint256 aethInterest = getAethInterest();
-        uint256 aethInterestValueInUsdc = aethInterest * getLatestAethPrice();
+        uint256 aethInterestValueInUsdc = aethInterest * getEthPrice();
         uint256 totalPoolValue = pools[_timestamp].totalLiquidity +
             aethInterestValueInUsdc;
 

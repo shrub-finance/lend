@@ -19,15 +19,13 @@ import {toEthDate} from "@shrub-lend/common";
 const { expect } = chai;
 
 const timestamps = {
-    // jan0126: 1767225600,
-    // feb0126: 1769904000,
-    // mar0126: 1772323200,
     jan01_26: toEthDate(new Date('2026-01-01')),
     feb01_26: toEthDate(new Date('2026-02-01')),
     mar01_26: toEthDate(new Date('2026-03-01')),
     june01_26: toEthDate(new Date('2026-06-01')),
     july02_26: toEthDate(new Date('2026-07-02')),
     aug02_26: toEthDate(new Date('2026-08-02')),
+    sep01_26: toEthDate(new Date('2026-09-01')),
 };
 
 const currentLogLevel = process.env.LOG_LEVEL || 'none';
@@ -560,10 +558,96 @@ describe('testSuite', () => {
                 expect(maxLoan).to.equal(parseUnits('926.05515', 6));
             })
         });
-        describe('requiredCollateral', () => {});
-        describe('getLatestAethPrice', () => {});
+        describe('requiredCollateral', () => {
+            it('should reject if ltv is invalid - 10', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('2300.12345678', 8));
+                const ltv = 10;
+                const loanValue = parseUnits('1000', 6);
+                await expect(lendingPlatform.requiredCollateral(ltv, loanValue)).to.be.revertedWith('Invalid LTV');
+            });
+            it('should reject if ltv is invalid - 0', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('2300.12345678', 8));
+                const ltv = 0;
+                const loanValue = parseUnits('1000', 6);
+                await expect(lendingPlatform.requiredCollateral(ltv, loanValue)).to.be.revertedWith('Invalid LTV');
+            });
+            it('should work with ltv 20', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('2300.12345678', 8));
+                const ltv = 20;
+                const loanValue = parseUnits('1000', 6);
+                const reqiredCollateral = await lendingPlatform.requiredCollateral(ltv, loanValue);
+                expect(reqiredCollateral).to.equal(parseEther('2.173796360913437351'));
+            });
+            it('should work with ltv 25', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('2300.12345678', 8));
+                const ltv = 25;
+                const loanValue = parseUnits('1000', 6);
+                const reqiredCollateral = await lendingPlatform.requiredCollateral(ltv, loanValue);
+                expect(reqiredCollateral).to.equal(parseEther('1.739037088730749881'));
+            });
+            it('should work with ltv 33', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('2300.12345678', 8));
+                const ltv = 33;
+                const loanValue = parseUnits('1000', 6);
+                const reqiredCollateral = await lendingPlatform.requiredCollateral(ltv, loanValue);
+                expect(reqiredCollateral).to.equal(parseEther('1.317452339947537788'));
+            });
+            it('should work with ltv 50', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('2300.12345678', 8));
+                const ltv = 50;
+                const loanValue = parseUnits('1000', 6);
+                const reqiredCollateral = await lendingPlatform.requiredCollateral(ltv, loanValue);
+                expect(reqiredCollateral).to.equal(parseEther('0.86951854436537494'));
+            });
+            it('should work with minimum value USDC - 20 ltv', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('2300', 8));
+                const ltv = 20;
+                const loanValue = parseUnits('0.000001', 6);
+                const reqiredCollateral = await lendingPlatform.requiredCollateral(ltv, loanValue);
+                expect(reqiredCollateral).to.equal(parseEther('0.000000002173913043'));
+            });
+            it('should work with minimum value USDC - cheap ETH', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('1', 8));
+                const ltv = 50;
+                const loanValue = parseUnits('0.000001', 6);
+                const reqiredCollateral = await lendingPlatform.requiredCollateral(ltv, loanValue);
+                expect(reqiredCollateral).to.equal(parseEther('0.000002'));
+            });
+            it('should work with minimum value USDC - expensive ETH', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('1000000000', 8));
+                const ltv = 20;
+                const loanValue = parseUnits('0.000001', 6);
+                const reqiredCollateral = await lendingPlatform.requiredCollateral(ltv, loanValue);
+                expect(reqiredCollateral).to.equal(parseEther('0.000000000000005'));
+            });
+            it('should work with big loan', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('3000', 8));
+                const ltv = 50;
+                const loanValue = parseUnits('10000000', 6);
+                const reqiredCollateral = await lendingPlatform.requiredCollateral(ltv, loanValue);
+                expect(reqiredCollateral).to.equal(parseEther('6666.666666666666666666'));
+            });
+            it('should work with big loan - cheap ETH', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('1', 8));
+                const ltv = 20;
+                const loanValue = parseUnits('10000000', 6);
+                const reqiredCollateral = await lendingPlatform.requiredCollateral(ltv, loanValue);
+                expect(reqiredCollateral).to.equal(parseEther('50000000'));
+            });
+            it('should work with big loan - expensive ETH', async() => {
+                await mockChainlinkAggregator.updateAnswer(parseUnits('1000000000', 8));
+                const ltv = 33;
+                const loanValue = parseUnits('10000000', 6);
+                const reqiredCollateral = await lendingPlatform.requiredCollateral(ltv, loanValue);
+                expect(reqiredCollateral).to.equal(parseEther('0.030303030303030303'));
+            });
+        });
+        // Skipping getLatestAethPrice as this is not a requied Method
+        // describe('getLatestAethPrice', () => {});
         describe('getAethInterest', () => {});
-        describe('getDeficitForPeriod', () => {});
+        describe('getDeficitForPeriod', () => {
+
+        });
         describe('getAvailableForPeriod', () => {});
         describe('getTotalLiquidity', () => {
             before(async () => {
@@ -809,6 +893,251 @@ describe('testSuite', () => {
 
                 expect(createPoolTx).to.emit(lendingPlatform, "poolCreated")
                     .withArgs(timestamp, pool.poolShareToken);
+            });
+
+            describe.only('sorting pools', () => {
+                // const timestamps = {
+                //     jan01_26: toEthDate(new Date('2026-01-01')),
+                //     feb01_26: toEthDate(new Date('2026-02-01')),
+                //     mar01_26: toEthDate(new Date('2026-03-01')),
+                //     june01_26: toEthDate(new Date('2026-06-01')),
+                //     july02_26: toEthDate(new Date('2026-07-02')),
+                //     aug02_26: toEthDate(new Date('2026-08-02')),
+                // };
+                it('should handle sorting an array of 1', async () => {
+                    await lendingPlatform.createPool(timestamps.jan01_26);
+                    const indexJan = await lendingPlatform.activePoolIndex(timestamps.jan01_26);
+                    const activePools0 = await lendingPlatform.activePools(0);
+                    await expect(lendingPlatform.activePools(1)).to.be.revertedWithoutReason();
+                    await expect(indexJan).to.equal(0)
+                    await expect(activePools0).to.equal(timestamps.jan01_26);
+                });
+                it('should handle sorting when a new highest value is added - size 2', async () => {
+                    await lendingPlatform.createPool(timestamps.mar01_26);
+                    await lendingPlatform.createPool(timestamps.june01_26);
+                    const indexes = {
+                        march : await lendingPlatform.activePoolIndex(timestamps.mar01_26),
+                        june : await lendingPlatform.activePoolIndex(timestamps.june01_26),
+                    };
+                    const activePools = [
+                        await lendingPlatform.activePools(0),
+                        await lendingPlatform.activePools(1),
+                    ]
+                    await expect(lendingPlatform.activePools(2)).to.be.revertedWithoutReason();
+                    expect(indexes.march).to.equal(0)
+                    expect(indexes.june).to.equal(1)
+                    expect(activePools).to.deep.equal([
+                        timestamps.mar01_26,
+                        timestamps.june01_26
+                    ]);
+                });
+                it('should handle sorting when a new lowest value is added - size 2', async () => {
+                    await lendingPlatform.createPool(timestamps.mar01_26);
+                    await lendingPlatform.createPool(timestamps.feb01_26);
+                    const indexes = {
+                        feb : await lendingPlatform.activePoolIndex(timestamps.feb01_26),
+                        march : await lendingPlatform.activePoolIndex(timestamps.mar01_26),
+                    };
+                    const activePools = [
+                        await lendingPlatform.activePools(0),
+                        await lendingPlatform.activePools(1),
+                    ]
+                    await expect(lendingPlatform.activePools(2)).to.be.revertedWithoutReason();
+                    expect(indexes.march).to.equal(1)
+                    expect(indexes.feb).to.equal(0)
+                    expect(activePools).to.deep.equal([
+                        timestamps.feb01_26,
+                        timestamps.mar01_26,
+                    ]);
+                });
+                it('should handle sorting when a new lowest value is added - size 3', async () => {
+                    await lendingPlatform.createPool(timestamps.mar01_26);
+                    await lendingPlatform.createPool(timestamps.feb01_26);
+                    await lendingPlatform.createPool(timestamps.jan01_26);
+                    const indexes = {
+                        jan : await lendingPlatform.activePoolIndex(timestamps.jan01_26),
+                        feb : await lendingPlatform.activePoolIndex(timestamps.feb01_26),
+                        march : await lendingPlatform.activePoolIndex(timestamps.mar01_26),
+                    };
+                    const activePools = [
+                        await lendingPlatform.activePools(0),
+                        await lendingPlatform.activePools(1),
+                        await lendingPlatform.activePools(2),
+                    ]
+                    await expect(lendingPlatform.activePools(3)).to.be.revertedWithoutReason();
+                    expect(indexes.jan).to.equal(0)
+                    expect(indexes.feb).to.equal(1)
+                    expect(indexes.march).to.equal(2)
+                    expect(activePools).to.deep.equal([
+                        timestamps.jan01_26,
+                        timestamps.feb01_26,
+                        timestamps.mar01_26,
+                    ]);
+                });
+                it('should handle sorting when a new highest value is added - size 3', async () => {
+                    await lendingPlatform.createPool(timestamps.mar01_26);
+                    await lendingPlatform.createPool(timestamps.feb01_26);
+                    await lendingPlatform.createPool(timestamps.june01_26);
+                    const indexes = {
+                        feb : await lendingPlatform.activePoolIndex(timestamps.feb01_26),
+                        march : await lendingPlatform.activePoolIndex(timestamps.mar01_26),
+                        june : await lendingPlatform.activePoolIndex(timestamps.june01_26),
+                    };
+                    const activePools = [
+                        await lendingPlatform.activePools(0),
+                        await lendingPlatform.activePools(1),
+                        await lendingPlatform.activePools(2),
+                    ]
+                    await expect(lendingPlatform.activePools(3)).to.be.revertedWithoutReason();
+                    expect(indexes.feb).to.equal(0)
+                    expect(indexes.march).to.equal(1)
+                    expect(indexes.june).to.equal(2)
+                    expect(activePools).to.deep.equal([
+                        timestamps.feb01_26,
+                        timestamps.mar01_26,
+                        timestamps.june01_26,
+                    ]);
+                });
+                it('should handle sorting when a mid value is added - size 3', async () => {
+                    await lendingPlatform.createPool(timestamps.feb01_26);
+                    await lendingPlatform.createPool(timestamps.june01_26);
+                    await lendingPlatform.createPool(timestamps.mar01_26);
+                    const indexes = {
+                        feb : await lendingPlatform.activePoolIndex(timestamps.feb01_26),
+                        march : await lendingPlatform.activePoolIndex(timestamps.mar01_26),
+                        june : await lendingPlatform.activePoolIndex(timestamps.june01_26),
+                    };
+                    const activePools = [
+                        await lendingPlatform.activePools(0),
+                        await lendingPlatform.activePools(1),
+                        await lendingPlatform.activePools(2),
+                    ]
+                    await expect(lendingPlatform.activePools(3)).to.be.revertedWithoutReason();
+                    expect(indexes.feb).to.equal(0)
+                    expect(indexes.march).to.equal(1)
+                    expect(indexes.june).to.equal(2)
+                    expect(activePools).to.deep.equal([
+                        timestamps.feb01_26,
+                        timestamps.mar01_26,
+                        timestamps.june01_26,
+                    ]);
+                });
+                it('should handle sorting when a new lowest value is added - size 4', async () => {
+                    await lendingPlatform.createPool(timestamps.aug02_26);
+                    await lendingPlatform.createPool(timestamps.feb01_26);
+                    await lendingPlatform.createPool(timestamps.june01_26);
+                    await lendingPlatform.createPool(timestamps.jan01_26);
+                    const indexes = {
+                        jan : await lendingPlatform.activePoolIndex(timestamps.jan01_26),
+                        feb : await lendingPlatform.activePoolIndex(timestamps.feb01_26),
+                        june : await lendingPlatform.activePoolIndex(timestamps.june01_26),
+                        august : await lendingPlatform.activePoolIndex(timestamps.aug02_26),
+                    };
+                    const activePools = [
+                        await lendingPlatform.activePools(0),
+                        await lendingPlatform.activePools(1),
+                        await lendingPlatform.activePools(2),
+                        await lendingPlatform.activePools(3),
+                    ]
+                    await expect(lendingPlatform.activePools(4)).to.be.revertedWithoutReason();
+                    expect(indexes.jan).to.equal(0)
+                    expect(indexes.feb).to.equal(1)
+                    expect(indexes.june).to.equal(2)
+                    expect(indexes.august).to.equal(3)
+                    expect(activePools).to.deep.equal([
+                        timestamps.jan01_26,
+                        timestamps.feb01_26,
+                        timestamps.june01_26,
+                        timestamps.aug02_26,
+                    ]);
+                });
+                it('should handle sorting when a new highest value is added - size 4', async () => {
+                    await lendingPlatform.createPool(timestamps.aug02_26);
+                    await lendingPlatform.createPool(timestamps.feb01_26);
+                    await lendingPlatform.createPool(timestamps.june01_26);
+                    await lendingPlatform.createPool(timestamps.sep01_26);
+                    const indexes = {
+                        feb : await lendingPlatform.activePoolIndex(timestamps.feb01_26),
+                        june : await lendingPlatform.activePoolIndex(timestamps.june01_26),
+                        august : await lendingPlatform.activePoolIndex(timestamps.aug02_26),
+                        september : await lendingPlatform.activePoolIndex(timestamps.sep01_26),
+                    };
+                    const activePools = [
+                        await lendingPlatform.activePools(0),
+                        await lendingPlatform.activePools(1),
+                        await lendingPlatform.activePools(2),
+                        await lendingPlatform.activePools(3),
+                    ]
+                    await expect(lendingPlatform.activePools(4)).to.be.revertedWithoutReason();
+                    expect(indexes.feb).to.equal(0)
+                    expect(indexes.june).to.equal(1)
+                    expect(indexes.august).to.equal(2)
+                    expect(indexes.september).to.equal(3)
+                    expect(activePools).to.deep.equal([
+                        timestamps.feb01_26,
+                        timestamps.june01_26,
+                        timestamps.aug02_26,
+                        timestamps.sep01_26,
+                    ]);
+                });
+                it('should handle sorting when a mid value is added - size 4', async () => {
+                    await lendingPlatform.createPool(timestamps.aug02_26);
+                    await lendingPlatform.createPool(timestamps.feb01_26);
+                    await lendingPlatform.createPool(timestamps.june01_26);
+                    await lendingPlatform.createPool(timestamps.mar01_26);
+                    const indexes = {
+                        feb : await lendingPlatform.activePoolIndex(timestamps.feb01_26),
+                        march : await lendingPlatform.activePoolIndex(timestamps.mar01_26),
+                        june : await lendingPlatform.activePoolIndex(timestamps.june01_26),
+                        august : await lendingPlatform.activePoolIndex(timestamps.aug02_26),
+                    };
+                    const activePools = [
+                        await lendingPlatform.activePools(0),
+                        await lendingPlatform.activePools(1),
+                        await lendingPlatform.activePools(2),
+                        await lendingPlatform.activePools(3),
+                    ]
+                    await expect(lendingPlatform.activePools(4)).to.be.revertedWithoutReason();
+                    expect(indexes.feb).to.equal(0)
+                    expect(indexes.march).to.equal(1)
+                    expect(indexes.june).to.equal(2)
+                    expect(indexes.august).to.equal(3)
+                    expect(activePools).to.deep.equal([
+                        timestamps.feb01_26,
+                        timestamps.mar01_26,
+                        timestamps.june01_26,
+                        timestamps.aug02_26,
+                    ]);
+                });
+                it('should handle sorting when a mid value is added - test B - size 4', async () => {
+                    await lendingPlatform.createPool(timestamps.aug02_26);
+                    await lendingPlatform.createPool(timestamps.feb01_26);
+                    await lendingPlatform.createPool(timestamps.june01_26);
+                    await lendingPlatform.createPool(timestamps.july02_26);
+                    const indexes = {
+                        feb : await lendingPlatform.activePoolIndex(timestamps.feb01_26),
+                        june : await lendingPlatform.activePoolIndex(timestamps.june01_26),
+                        july : await lendingPlatform.activePoolIndex(timestamps.july02_26),
+                        august : await lendingPlatform.activePoolIndex(timestamps.aug02_26),
+                    };
+                    const activePools = [
+                        await lendingPlatform.activePools(0),
+                        await lendingPlatform.activePools(1),
+                        await lendingPlatform.activePools(2),
+                        await lendingPlatform.activePools(3),
+                    ]
+                    await expect(lendingPlatform.activePools(4)).to.be.revertedWithoutReason();
+                    expect(indexes.feb).to.equal(0)
+                    expect(indexes.june).to.equal(1)
+                    expect(indexes.july).to.equal(2)
+                    expect(indexes.august).to.equal(3)
+                    expect(activePools).to.deep.equal([
+                        timestamps.feb01_26,
+                        timestamps.june01_26,
+                        timestamps.july02_26,
+                        timestamps.aug02_26,
+                    ]);
+                });
             });
         });
         describe('getUsdcAddress', () => {});
