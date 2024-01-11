@@ -12,3 +12,6 @@
 /.idea/
 /program/.yarn/
 /.yarn/
+
+packages/hardhat/deployments/
+

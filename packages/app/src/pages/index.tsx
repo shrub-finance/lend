@@ -1,8 +1,5 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import {BorrowView} from "../views/borrow/BorrowView";
-import {BorrowDurationView} from "../views/borrow/BorrowDuration";
-import {BorrowSummaryView} from "../views/borrow/BorrowSummaryView";
 import {useState} from "react";
 import {useRouter} from "next/router";
 
@@ -12,34 +9,18 @@ const Home: NextPage = (props) => {
   const [duration, setDuration] = useState<string | undefined>(undefined);
   const [interestRate, setInterestRate] = useState<string | undefined>(undefined);
   const [amount, setAmount] = useState<string | undefined>(undefined);
-
-
-
-  const handleBorrowViewChange = (collateral: string, interestRate, amount) => {
-    setRequiredCollateral(collateral);
-    setInterestRate(interestRate);
-    setAmount(amount);
-
-  };
-
   const router = useRouter();
 
   const handleBorrow = () => {
     router.push('/borrow');
   };
-
-
-  const handleDurationChange = (duration: string) => {
-    setDuration(duration);
-  };
-
   return (
     <>
       <Head>
-        <title>Shrub Lend</title>
+        <title>Shrub Lend - Home</title>
         <meta
           name="description"
-          content="Shrub Lend"
+          content="Lend"
         />
       </Head>
 
@@ -47,7 +28,6 @@ const Home: NextPage = (props) => {
         <div className="md:hero-content flex flex-col">
           <div className='self-start'>
             <div className="w-full">
-              <div className="absolute -inset-1 shadow-shrub border rounded-3xl "></div>
               <div className="flex flex-col ">
                 <div className="card w-full text-center">
                   <div className="card-body text-base-100">

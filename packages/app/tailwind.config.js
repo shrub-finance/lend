@@ -6,19 +6,21 @@ module.exports = {
     extend: {
       colors: {
         'shrub-green-500': '#17725C',
-         'shrub-green': '#16B364',
+        'shrub-green-900': '#0A4736',
+         'shrub-green': '#38f6c9',
+        'shrub-green-200':'#3ccb7f',
         'shrub-green-100': '#8ACCA4',
-        'shrub-green-50':'#73E2A3',
+        'shrub-green-50':'#f0fdf9',
         'shrub-blue': '#101828',
-
         'shrub-grey-50': '#D0D5DD',
         'shrub-grey-100': '#98A2B3',
         'shrub-grey-200':'#667085',
         'shrub-grey': '#475467',
-        'shrub-grey-700': '#344054'
+        'shrub-grey-700': '#344054',
+        'shrub-grey-900': '#202939'
 
 
-
+// #2dcaa4
 },
       boxShadow: {
         'shrub': '0px 4px 250px rgba(138, 204, 164, 0.25)',
@@ -38,8 +40,8 @@ module.exports = {
       {
         'solana': { 
           fontFamily: {
-            display: ['Inter, sans-serif'],
-            body: ['Inter, sans-serif'],
+            display: ['Rubik, sans-serif'],
+            body: ['Rubik, sans-serif'],
           },
           'primary': '#000000',           /* Primary color */
           'primary-focus': '#16B364',     /* Primary color - focused */

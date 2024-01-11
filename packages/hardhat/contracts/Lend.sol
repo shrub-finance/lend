@@ -110,6 +110,18 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //        aeth = IAETH(aETHAddress);
 //    }
 
+    constructor(
+        address usdcAddress,
+        address bptAddress,
+        address wrappedTokenGatewayAddress,
+        address aETHAddress
+    ) {
+        usdc = IERC20(usdcAddress);
+        bpt = IBorrowPositionToken(bptAddress);
+        wrappedTokenGateway = IMockAaveV3(wrappedTokenGatewayAddress);
+        aeth = IAETH(aETHAddress);
+    }
+
     function insertIntoSortedArr(uint[] storage arr, uint newValue) internal {
         if (arr.length == 0) {
             arr.push(newValue);

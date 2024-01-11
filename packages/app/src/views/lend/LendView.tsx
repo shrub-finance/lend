@@ -5,7 +5,7 @@ import {useAddress, useBalance, useConnectedWallet, useContract, useContractRead
 import {lendingPlatformAddress, lendingPlatformAbi, usdcAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 import {timestamps, toEthDate} from "../../utils/ethMethods";
-import {formatDate, getPlatformDates} from "@shrub-lend/common";
+import {calculateLockupPeriod, formatDate, getPlatformDates} from "@shrub-lend/common";
 
 interface LendViewProps {
   onLendViewChange: (estimatedAPY: string, timestamp: number, lendAmount: string) => void;
@@ -120,11 +120,11 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                 <div className="form-control w-full">
                   <label className="label relative">
                     <span className="label-text text-shrub-blue text-md">Amount</span>
-                    <span className="label-text-alt text-base-100 text-xl font-semibold absolute right-2 top-12">
+                    <span className="label-text-alt text-base-100 text-xl font-semibold absolute right-4 top-[57px]">
                       <img src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub"/>USDC</span>
                   </label>
                   <input type="text" placeholder="Enter amount"
-                         className="input input-bordered w-full  bg-white border-solid border border-gray-200 text-lg
+                         className="input input-bordered w-full  h-[70px] bg-white border-solid border border-gray-200 text-lg
                          focus:shadow-shrub-thin focus:border-shrub-green-50" onChange={handleLendAmountChange}
                          value={format(lendAmount)}/>
                   <label className="label">
@@ -156,7 +156,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                         <label htmlFor="smallest-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
-                            <div className="w-full text-lg font-semibold">{formatDate.long(oneMonth)}</div>
+                            <div className="w-full text-lg font-semibold">{calculateLockupPeriod(oneMonth)}</div>
                           </div>
                         </label>
                       </li>
@@ -166,7 +166,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                         <label htmlFor="small-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
-                            <div className="w-full text-lg font-semibold">{formatDate.long(threeMonth)}</div>
+                            <div className="w-full text-lg font-semibold">{calculateLockupPeriod(threeMonth)}</div>
                           </div>
                         </label>
                       </li>
@@ -176,7 +176,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                         <label htmlFor="big-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
-                            <div className="w-full text-lg font-semibold">{formatDate.long(sixMonth)}</div>
+                            <div className="w-full text-lg font-semibold">{calculateLockupPeriod(sixMonth)}</div>
                           </div>
                         </label>
                       </li>
@@ -186,7 +186,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                         <label htmlFor="biggest-loan"
                                className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
-                            <div className="w-full text-lg font-semibold">{formatDate.long(twelveMonth)}</div>
+                            <div className="w-full text-lg font-semibold">{calculateLockupPeriod(twelveMonth)}</div>
                           </div>
                         </label>
                       </li>
@@ -219,7 +219,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                 {/*display estimate apy*/}
                 {supplyButtonPressed && showAPYSection && (<div className="hero-content flex-col mb-4">
                     <p className="self-start text-lg">Estimated APY</p>
-                    <div className="card flex-shrink-0 w-full bg-teal-50 py-6">
+                    <div className="card flex-shrink-0 w-full bg-teal-50 py-6 border-shrub-green border">
                       <div className="text-center p-2">
                         <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
                         <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>

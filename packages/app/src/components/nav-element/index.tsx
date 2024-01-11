@@ -34,13 +34,14 @@ const NavElement = ({
                 divRef.current.className = cn(
                   'transition-all duration-300 ease-out ',
                   isActive
-                    ? 'bg-gray-800 text-shrub-green-50 rounded-btn font-semibold'
-                    : 'group-hover:bg-shrub-grey rounded-btn',
+                    ? 'bg-gray-900 text-shrub-green-200 rounded-btn font-semibold px-[12px] py-[8px]'
+                    : 'group-hover:bg-shrub-grey-900 hover:text-shrub-green-200 rounded-btn px-[12px] py-[8px]',
                 );
             }
 
         }
     }, [isActive, chiplabel]);
+
 
     return (
         <Link
@@ -51,14 +52,15 @@ const NavElement = ({
             chiplabel={chiplabel}
             passHref
             className={cn(
-                'group flex h-full flex-col items-center justify-between bg-gra',
+                'group flex h-full flex-col items-center justify-between',
                 disabled &&
                     'pointer-events-none cursor-not-allowed opacity-50'
             )}
             onClick={() => navigationStarts()}
         >
+            {/*logo*/}
             <div className="flex flex-row items-center gap-3" ref={divRef} >
-                {chiplabel!=="isLogo"? <Text className="text-base font-medium btn-sm px-5 py-1"> {label} </Text>: <div className="mr-12 pl-14"> {label} </div>}
+                {chiplabel!=="isLogo"? <Text className="text-lg font-medium btn-sm px-5 py-1"> {label} </Text>: <div className="mr-12 pl-10"> {label} </div>}
             </div>
         </Link>
     );
