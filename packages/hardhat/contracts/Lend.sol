@@ -297,6 +297,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         address borrower,
         uint256 timestamp
     ) public view returns (Loan memory) {
+        // Use LTV == 0 as a proxy for the loan not existing
+        require(pools[timestamp].loans[borrower].LTV != 0, "loan does not exist");
         return pools[timestamp].loans[borrower];
     }
 

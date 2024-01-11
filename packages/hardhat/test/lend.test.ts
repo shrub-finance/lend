@@ -839,7 +839,12 @@ describe('testSuite', () => {
         describe('validPool', () => {
             // See takeLoan - validPool tests - this is a private method
         });
-        describe('getLoan', () => {});
+        describe('getLoan', () => {
+            // Note: getLoan is tested as part of the takeLoan tests
+            it('should revert if loan does not exist', async () => {
+               await expect(lendingPlatform.getLoan(lender1.address, timestamps.jan01_26)).to.be.revertedWith("loan does not exist");
+            });
+        });
         describe('createPool', () => {
             it('should create a new pool with 0 totalLiquidity and 0 aaveInterestSnapshot', async () => {
                 const timestamp = timestamps.june01_26; // 1st June, 2026
@@ -895,7 +900,7 @@ describe('testSuite', () => {
                     .withArgs(timestamp, pool.poolShareToken);
             });
 
-            describe.only('sorting pools', () => {
+            describe('sorting pools', () => {
                 // const timestamps = {
                 //     jan01_26: toEthDate(new Date('2026-01-01')),
                 //     feb01_26: toEthDate(new Date('2026-02-01')),
@@ -1140,7 +1145,13 @@ describe('testSuite', () => {
                 });
             });
         });
-        describe('getUsdcAddress', () => {});
+        describe('getUsdcAddress', () => {
+            it('should get usdc address', async() => {
+                const address = await lendingPlatform.getUsdcAddress();
+                const usdcAddress = await usdc.getAddress();
+                expect(address).to.equal(usdcAddress);
+            })
+        });
         describe('deposit', () => {
             const timestamp = timestamps.aug02_26; // 2nd August, 2026
             before(async () => {
@@ -1217,9 +1228,59 @@ describe('testSuite', () => {
                 expect(lender1PoolTokenBalance).to.equal(800 * 10 ** 6);
             });
         });
-        describe('withdraw', () => {});
-        describe('takeLoan', () => {
+        describe('withdraw', () => {
+            before(async () => {
+                log("running withdraw before");
 
+                // Blockchain transactions here
+
+                // Send 10000 USDC to both lender1 and lender2
+                // Approve 10000 USDC to the lendingPlatform for both lender1 and lender2
+                // Initialize 3 pools:
+                // 1-Jan-2026 1767225600
+                // 1-Feb-2026 1769904000
+                // 1-Mar-2026 1772323200
+                await usdc.transfer(lender1.getAddress(), parseUnits('10000', 6));
+                await usdc.transfer(lender2.getAddress(), parseUnits('10000', 6));
+
+                await usdc.connect(lender1).approve(lendingPlatform.getAddress(), parseUnits('10000', 6));
+                await usdc.connect(lender2).approve(lendingPlatform.getAddress(), parseUnits('10000', 6));
+
+                await lendingPlatform.createPool(timestamps.jan01_26);
+                await lendingPlatform.createPool(timestamps.feb01_26);
+                await lendingPlatform.createPool(timestamps.mar01_26);
+
+                // Tests for new state here
+                const lender1UsdcBalance = await usdc.balanceOf(lender1.address);
+                const lender2UsdcBalance = await usdc.balanceOf(lender2.address);
+                const lendingPool1 = await lendingPlatform.getPool(timestamps.jan01_26);
+                const lendingPool2 = await lendingPlatform.getPool(timestamps.feb01_26);
+                const lendingPool3 = await lendingPlatform.getPool(timestamps.mar01_26);
+
+                expect(lender1UsdcBalance).to.equal(parseUnits('10000', 6));
+                expect(lender2UsdcBalance).to.equal(parseUnits('10000', 6));
+                expect(lendingPool1.poolShareTokenAddress).to.not.equal(ethers.ZeroAddress);
+                expect(lendingPool2.poolShareTokenAddress).to.not.equal(ethers.ZeroAddress);
+                expect(lendingPool3.poolShareTokenAddress).to.not.equal(ethers.ZeroAddress);
+
+                log(`after tx block: ${await ethers.provider.getBlockNumber()}`);
+
+                await addSnapshot('Lend-withdraw');
+            })
+
+            after(async () => {
+                log('running withdraw after');
+                await setCurrentSnapshot('contractDeployment')
+            })
+
+            describe('pool with no loans', () => {
+                it('should reject if amount is 0', async () => {});
+                it('should reject if caller does not have poolShareTokens', async () => {});
+                it('should reject if caller has insufficient poolShareTokens', async () => {});
+
+            })
+        });
+        describe('takeLoan', () => {
             before(async () => {
                 log("running takeLoan before");
                 log(`before tx block: ${await ethers.provider.getBlockNumber()}`);
@@ -1264,7 +1325,6 @@ describe('testSuite', () => {
                 log('running takeLoan after');
                 await setCurrentSnapshot('contractDeployment')
             })
-
 
             describe('general checks', () => {
                 it('should reject if the collateral sent is lower than the amount specified', async() => {
