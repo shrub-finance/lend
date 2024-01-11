@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.18;
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -6,7 +9,7 @@ import "hardhat/console.sol";
 
 interface IAETH is IERC20 {
     function deposit(address onBehalfOf) external payable;
-    function withdraw(uint256 amountToWithdraw, address sender, address onBehalfOf) external;
+    function withdraw(address from, uint256 amountToWithdraw, address onBehalfOf) external;
     function emergencyEtherTransfer(address to, uint256 amount) external;
 }
 
@@ -19,11 +22,10 @@ contract AETH is ERC20, Ownable {
         _mint(onBehalfOf, msg.value);
     }
 
-    function withdraw(uint256 amountToWithdraw, address sender, address onBehalfOf) external {
-        _burn(sender, amountToWithdraw);
+    function withdraw(address from, uint256 amountToWithdraw, address onBehalfOf) external onlyOwner {
+        _burn(from, amountToWithdraw);
         _safeTransferETH(onBehalfOf, amountToWithdraw);
     }
-
 
     /**
    * @dev transfer native Ether from the utility contract, for native Ether recovery in case of stuck Ether

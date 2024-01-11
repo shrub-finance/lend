@@ -2,7 +2,6 @@
   "name": "@shrub-lend/hardhat",
   "license": "MIT",
   "version": "0.2.0",
-
   "scripts": {
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
@@ -13,9 +12,11 @@
     "local-initialize": "npx hardhat testLendingPlatform --network localhost"
   },
   "dependencies": {
+    "@chainlink/contracts": "^0.8.0",
     "@shrub-lend/common": "1.0.0"
   },
   "devDependencies": {
+    "@chainlink/contracts": "^0.8.0",
     "@nomicfoundation/hardhat-chai-matchers": "1",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",

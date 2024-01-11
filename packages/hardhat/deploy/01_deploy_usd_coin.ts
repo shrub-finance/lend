@@ -7,7 +7,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const initialSupply = 1000000 * 10 ** 6 // 1 million initial supply
+  const initialSupply = 1e6 // 1 million initial supply
 
   await deploy("USDCoin", {
     from: deployer,
