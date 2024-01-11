@@ -1,7 +1,7 @@
 # Shrub Lend
 
 ```
-Node Version 18
+Node Version 20
 ```
 
 ```
