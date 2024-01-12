@@ -666,9 +666,9 @@ describe('testSuite', () => {
                 await lendingPlatform.connect(lender1).deposit(timestamps.mar01_26, parseUnits('4000', 6));
 
                 // Tests for new state here
-                const janPool = await lendingPlatform.getPool(timestamps.jan01_26);
-                const febPool = await lendingPlatform.getPool(timestamps.feb01_26);
-                const marPool = await lendingPlatform.getPool(timestamps.mar01_26);
+                const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
+                const febPool = await lendingPlatform.getLendingPool(timestamps.feb01_26);
+                const marPool = await lendingPlatform.getLendingPool(timestamps.mar01_26);
                 const lender1UsdcBalance = await usdc.balanceOf(lender1.address);
                 const platformUsdcBalance = await usdc.balanceOf(lendingPlatform.getAddress());
 
@@ -725,7 +725,7 @@ describe('testSuite', () => {
                 expect(totalLiquidity).to.equal(parseUnits('0', 6));
             });
         });
-        describe('getPool', () => {
+        describe('getLendingPool', () => {
             // 2026-01-01 1767225600
             // 2026-02-01 1769904000
             // const poolTimestamps = [1767225600, 1769904000];
@@ -734,7 +734,7 @@ describe('testSuite', () => {
             // let usdcLender1: USDCoin;
             let createPoolTxs: (ContractTransactionResponse)[];
             before(async () => {
-                log("running getPool before");
+                log("running getLendingPool before");
 
                 // Blockchain transactions here
                 // Deposit amounts
@@ -758,10 +758,10 @@ describe('testSuite', () => {
                 expect(platformUsdcBalance).to.equal(parseUnits('2500', 6));
                 expect(lender1UsdcBalance).to.equal(parseUnits('0', 6));
 
-                await addSnapshot('Lend-getPool');
+                await addSnapshot('Lend-getLendingPool');
             })
             after(async () => {
-                log('running getPool after');
+                log('running getLendingPool after');
                 await setCurrentSnapshot('contractDeployment')
             })
 
@@ -788,7 +788,7 @@ describe('testSuite', () => {
             // });
 
             it('should return zeros if the pool does not exist', async () => {
-                const pool = await lendingPlatform.getPool(1767225599);
+                const pool = await lendingPlatform.getLendingPool(1767225599);
                 expect(pool.totalLiquidity).to.equal(0);
                 expect(pool.totalLoans).to.equal(0);
                 expect(pool.aaveInterestSnapshot).to.equal(0);
@@ -796,7 +796,7 @@ describe('testSuite', () => {
             });
 
             it('should return the correct pool details for the first pool', async () => {
-                const pool = await lendingPlatform.getPool(1767225600);
+                const pool = await lendingPlatform.getLendingPool(1767225600);
                 expect(pool.totalLiquidity).to.equal(1000 * 10 ** 6);
                 expect(pool.totalLoans).to.equal(0);
                 expect(pool.aaveInterestSnapshot).to.equal(0);
@@ -806,7 +806,7 @@ describe('testSuite', () => {
             });
 
             it('should return the correct pool details for the second pool', async () => {
-                const pool = await lendingPlatform.getPool(1769904000);
+                const pool = await lendingPlatform.getLendingPool(1769904000);
                 expect(pool.totalLiquidity).to.equal(1500 * 10 ** 6);
                 expect(pool.totalLoans).to.equal(0);
                 expect(pool.aaveInterestSnapshot).to.equal(0);
@@ -816,7 +816,7 @@ describe('testSuite', () => {
             });
 
             it('should return zeros if the pool does not exist with a larger timestamp', async () => {
-                const pool = await lendingPlatform.getPool(1769904001);
+                const pool = await lendingPlatform.getLendingPool(1769904001);
                 expect(pool.totalLiquidity).to.equal(0);
                 expect(pool.totalLoans).to.equal(0);
                 expect(pool.aaveInterestSnapshot).to.equal(0);
@@ -1204,12 +1204,12 @@ describe('testSuite', () => {
             })
 
             it('should all deposit into active pool', async () => {
-                const poolBefore = await lendingPlatform.getPool(timestamp);
+                const poolBefore = await lendingPlatform.getLendingPool(timestamp);
                 const usdcLender1Before = await usdc.balanceOf(lender1.getAddress());
                 const usdcPoolBefore = await usdc.balanceOf(lendingPlatform.getAddress());
                 await usdc.connect(lender1).approve(lendingPlatform.getAddress(), 1100 * 10 ** 6)
                 await lendingPlatform.connect(lender1).deposit(timestamp, 800 * 10 ** 6);
-                const poolAfter = await lendingPlatform.getPool(timestamp);
+                const poolAfter = await lendingPlatform.getLendingPool(timestamp);
                 const usdcLender1After = await usdc.balanceOf(lender1.getAddress());
                 const usdcPoolAfter = await usdc.balanceOf(lendingPlatform.getAddress());
                 // Total liquidity should be added to the pool
@@ -1253,9 +1253,9 @@ describe('testSuite', () => {
                 // Tests for new state here
                 const lender1UsdcBalance = await usdc.balanceOf(lender1.address);
                 const lender2UsdcBalance = await usdc.balanceOf(lender2.address);
-                const lendingPool1 = await lendingPlatform.getPool(timestamps.jan01_26);
-                const lendingPool2 = await lendingPlatform.getPool(timestamps.feb01_26);
-                const lendingPool3 = await lendingPlatform.getPool(timestamps.mar01_26);
+                const lendingPool1 = await lendingPlatform.getLendingPool(timestamps.jan01_26);
+                const lendingPool2 = await lendingPlatform.getLendingPool(timestamps.feb01_26);
+                const lendingPool3 = await lendingPlatform.getLendingPool(timestamps.mar01_26);
 
                 expect(lender1UsdcBalance).to.equal(parseUnits('10000', 6));
                 expect(lender2UsdcBalance).to.equal(parseUnits('10000', 6));
@@ -1306,9 +1306,9 @@ describe('testSuite', () => {
                 // Tests for new state here
                 const lender1UsdcBalance = await usdc.balanceOf(lender1.address);
                 const lender2UsdcBalance = await usdc.balanceOf(lender2.address);
-                const lendingPool1 = await lendingPlatform.getPool(timestamps.jan01_26);
-                const lendingPool2 = await lendingPlatform.getPool(timestamps.feb01_26);
-                const lendingPool3 = await lendingPlatform.getPool(timestamps.mar01_26);
+                const lendingPool1 = await lendingPlatform.getLendingPool(timestamps.jan01_26);
+                const lendingPool2 = await lendingPlatform.getLendingPool(timestamps.feb01_26);
+                const lendingPool3 = await lendingPlatform.getLendingPool(timestamps.mar01_26);
                 
                 expect(lender1UsdcBalance).to.equal(parseUnits('10000', 6));
                 expect(lender2UsdcBalance).to.equal(parseUnits('10000', 6));
@@ -1478,7 +1478,7 @@ describe('testSuite', () => {
                     expect(lendingPlatformAEthBalanceAfter).to.equal(parseEther('2'));
                     expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('0'));
 
-                    const janPool = await lendingPlatform.getPool(timestamps.jan01_26);
+                    const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool.totalLoans).to.equal(parseUnits('900', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
@@ -1581,7 +1581,7 @@ describe('testSuite', () => {
                     expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('0'));
                     expect(lendingPlatformAEthBalanceAfter).to.equal(parseEther('3'));
 
-                    const janPool = await lendingPlatform.getPool(timestamps.jan01_26);
+                    const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool.totalLoans).to.equal(parseUnits('1000', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower2.getAddress(), timestamps.jan01_26);
@@ -1621,7 +1621,7 @@ describe('testSuite', () => {
                     const lender1UsdcAllowance = await usdc.allowance(lender1.address, lendingPlatform.getAddress());
                     const lender2UsdcAllowance = await usdc.allowance(lender2.address, lendingPlatform.getAddress());
                     const platformUsdcBalance = await usdc.balanceOf(lendingPlatform.getAddress());
-                    const janPool = await lendingPlatform.getPool(timestamps.jan01_26);
+                    const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
 
                     expect(lender1UsdcBalance).to.equal(parseUnits('9000', 6));
                     expect(lender2UsdcBalance).to.equal(parseUnits('8000', 6));
@@ -1700,7 +1700,7 @@ describe('testSuite', () => {
                     expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('0'));
                     expect(lendingPlatformAEthBalanceAfter).to.equal(parseEther('7'));
 
-                    const janPool = await lendingPlatform.getPool(timestamps.jan01_26);
+                    const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool.totalLoans).to.equal(parseUnits('2900', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
@@ -1855,7 +1855,7 @@ describe('testSuite', () => {
                     expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('0'));
                     expect(lendingPlatformAEthBalanceAfter).to.equal(parseEther('28'));
 
-                    const janPool = await lendingPlatform.getPool(timestamps.jan01_26);
+                    const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     const totalLoans = janPool.totalLoans;
                     // const totalLoans = await lendingPlatform.totalLoans(timestamps.jan01_26);
                     expect(totalLoans).to.equal(parseUnits('7000', 6));
@@ -1910,7 +1910,7 @@ describe('testSuite', () => {
                     expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('0'));
                     expect(lendingPlatformAEthBalanceAfter).to.equal(parseEther('8'));
 
-                    const febPool = await lendingPlatform.getPool(timestamps.feb01_26);
+                    const febPool = await lendingPlatform.getLendingPool(timestamps.feb01_26);
                     expect(febPool.totalLoans).to.equal(parseUnits('2000', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
@@ -1964,7 +1964,7 @@ describe('testSuite', () => {
                     expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('0'));
                     expect(lendingPlatformAEthBalanceAfter).to.equal(parseEther('2'));
 
-                    const marPool = await lendingPlatform.getPool(timestamps.mar01_26);
+                    const marPool = await lendingPlatform.getLendingPool(timestamps.mar01_26);
                     expect(marPool.totalLoans).to.equal(parseUnits('500', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.mar01_26);
@@ -2024,7 +2024,7 @@ describe('testSuite', () => {
                     expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('0'));
                     expect(lendingPlatformAEthBalanceAfter).to.equal(parseEther('22'));
 
-                    const janPool = await lendingPlatform.getPool(timestamps.jan01_26);
+                    const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool.totalLoans).to.equal(parseUnits('5500', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
@@ -2066,9 +2066,9 @@ describe('testSuite', () => {
                     expect(lendingPlatformEthBalanceAfter2).to.equal(parseEther('0'));
                     expect(lendingPlatformAEthBalanceAfter2).to.equal(parseEther('27'));
 
-                    const janPool2 = await lendingPlatform.getPool(timestamps.jan01_26);
+                    const janPool2 = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool2.totalLoans).to.equal(parseUnits('5500', 6));
-                    const febPool2 = await lendingPlatform.getPool(timestamps.feb01_26);
+                    const febPool2 = await lendingPlatform.getLendingPool(timestamps.feb01_26);
                     expect(febPool2.totalLoans).to.equal(parseUnits('1000', 6));
 
                     const loan2 = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
@@ -2129,7 +2129,7 @@ describe('testSuite', () => {
                     expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('0'));
                     expect(lendingPlatformAEthBalanceAfter).to.equal(parseEther('22'));
 
-                    const janPool = await lendingPlatform.getPool(timestamps.jan01_26);
+                    const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool.totalLoans).to.equal(parseUnits('6500', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
@@ -2171,9 +2171,9 @@ describe('testSuite', () => {
                     expect(lendingPlatformEthBalanceAfter2).to.equal(parseEther('0'));
                     expect(lendingPlatformAEthBalanceAfter2).to.equal(parseEther('23'));
 
-                    const janPool2 = await lendingPlatform.getPool(timestamps.jan01_26);
+                    const janPool2 = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool2.totalLoans).to.equal(parseUnits('6500', 6));
-                    const febPool2 = await lendingPlatform.getPool(timestamps.feb01_26);
+                    const febPool2 = await lendingPlatform.getLendingPool(timestamps.feb01_26);
                     expect(febPool2.totalLoans).to.equal(parseUnits('100', 6));
 
                     const loan2 = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);

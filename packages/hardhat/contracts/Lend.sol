@@ -254,7 +254,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         return totalLiquidity;
     }
 
-    function getPool(
+    function getLendingPool(
         uint256 _timestamp
     ) public view returns (PoolDetails memory) {
         LendingPool storage lendingPool = lendingPools[_timestamp];
