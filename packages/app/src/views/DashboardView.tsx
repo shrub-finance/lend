@@ -2,7 +2,6 @@
 import {FC, useEffect, useState} from 'react';
 
 // Wallet
-import {RequestAirdrop} from "../components/RequestAirdrop";
 import {useConnectedWallet, useBalance, useAddress, useContract, useContractRead} from "@thirdweb-dev/react";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 

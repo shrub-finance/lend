@@ -12,10 +12,10 @@ module.exports = {
         'shrub-green-100': '#8ACCA4',
         'shrub-green-50':'#f0fdf9',
         'shrub-blue': '#101828',
+        'shrub-grey': '#475467',
         'shrub-grey-50': '#D0D5DD',
         'shrub-grey-100': '#98A2B3',
         'shrub-grey-200':'#667085',
-        'shrub-grey': '#475467',
         'shrub-grey-700': '#344054',
         'shrub-grey-900': '#202939'
 

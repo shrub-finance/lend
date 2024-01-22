@@ -4,7 +4,7 @@ import {useAddress, useBalance, useConnectedWallet, useContract, useContractRead
 
 import {lendingPlatformAddress, lendingPlatformAbi, usdcAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
-import {timestamps, toEthDate} from "../../utils/ethMethods";
+import {toEthDate} from "../../utils/ethMethods";
 import {calculateLockupPeriod, formatDate, getPlatformDates} from "@shrub-lend/common";
 
 interface LendViewProps {
@@ -15,7 +15,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const w = useConnectedWallet();
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
-  const walletAddress = useAddress();
+
 
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
@@ -23,7 +23,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const [lendAmount, setLendAmount] = useState("0");
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
-  // const [lockupPeriod, setLockupPeriod] = useState("");
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
   const [supplyButtonPressed, setSupplyButtonPressed] = useState(false);
@@ -34,11 +33,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
     isLoading: lendingPlatformIsLoading,
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
-  // const {
-  //   data: totalAvailableLiquidityOneYearFromNow,
-  //   isLoading: totalAvailableLiquidityOneYearFromNowIsLoading,
-  //   error: totalAvailableLiquidityOneYearFromNowError
-  // } = useContracteContractRead(lendingPlatform, 'getTotalAvailableLiquidity', [toEthDate(oneYearFromNow)])
 
     const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
 
@@ -231,7 +225,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   </div>
                 )}
 
-                {/*cta*/}
+                {/*CTA*/}
                 <button
                   className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl normal-case disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
@@ -239,7 +233,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   disabled:border"
                   onClick={handleLendContinue}
                   disabled={Number(lendAmount) <= 0 || !timestamp}
-                >Supply USDC</button>
+                >Continue</button>
               </div>
             </div>
           </div>

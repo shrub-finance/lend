@@ -8,13 +8,15 @@ export function handleErrorMessagesFactory(
     const { err, customMessage } = errorOptions;
     if (err) {
       // @ts-ignore
-      if (err.data) {
+      if (err.reason ) {
+        // @ts-ignore
+        setter(err.reason);
+      }
+      // @ts-ignore
+      else if (err.data) {
           // @ts-ignore
           setter(err.data.message);
-      } else {
-        setter(err.message);
       }
-      console.log(err);
     } else if (customMessage) {
       setter(customMessage);
     }
