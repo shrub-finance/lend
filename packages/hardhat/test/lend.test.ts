@@ -1395,13 +1395,13 @@ describe('testSuite', () => {
                     });
                     it('should reject if pool exists but the timestamp is in the past', async() => {
 
-                        await setTime(new Date('2026-01-01T00:00:01Z'));
+                        await setTime(new Date('2026-01-01T00:00:02Z'));
                         const currentBlock = await ethers.provider.getBlock('latest');
                         if (!currentBlock) {
                             throw new Error('cannot find current block');
                         }
                         const currentTimestamp = currentBlock.timestamp;
-                        expect(currentTimestamp).to.equal(toEthDate(new Date('2026-01-01T00:00:01Z')))
+                        expect(currentTimestamp).to.equal(toEthDate(new Date('2026-01-01T00:00:02Z')))
                         await expect(lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: collateral})).to.be.revertedWith("Invalid pool");
                     });
                     it('should succeed if the pool exists and is in the future', async() => {

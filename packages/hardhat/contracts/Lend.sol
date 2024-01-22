@@ -27,8 +27,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 totalLiquidity;
         uint256 aaveInterestSnapshot;
         PoolShareToken poolShareToken;
+    }
+
+    struct BorrowingPool {
+        uint principal; // Total amount of USDC that has been borrowed in this buckets' loans
+        uint collateral; // The total amount of ETH collateral deposited for loans in this bucket
+        uint poolShareAmount; // Relative claim of the total platform aETH for this bucket. Used to calculate yield for lending pools
         mapping(address => Loan) loans;
-        mapping(address => uint256) deposits;
     }
 
     struct PoolDetails {
@@ -41,17 +46,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     struct Loan {
         uint amount; // The loan amount (6 decimals)
         uint collateral; // The collateral for the loan, presumably in ETH (18 decimals)
-        uint aaveCollateral; // The equivalent amount of aETH (Aave's interest-bearing token for ETH)
         uint32 LTV; // The Loan-to-Value ratio - (valid values: 20, 25, 33, 50)
         uint32 APY; // The Annual Percentage Yield (6 decimals)
-        PoolContribution[] contributingPools; // Array of PoolContributions representing each contributing pool and its liquidity contribution.
+//        PoolContribution[] contributingPools; // Array of PoolContributions representing each contributing pool and its liquidity contribution.
     }
 
-    struct BorrowingPool {
-        uint loans; // Total amount of USDC that has been borrowed in this buckets' loans
-        uint collateral; // The total amount of ETH collateral deposited for loans in this bucket
-        uint poolShareAmount; // Relative claim of the total platform aETH for this bucket. Used to calculate yield for lending pools
-    }
 
     struct ChainlinkResponse {
         uint80 roundId;
@@ -213,12 +212,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // D(i) = max(0, D(i-1) + BP(i-1) - LP(i-1)
         for (uint i = 0; i < activePoolIndex[_timestamp]; i++) {
 //            if (pools[activePools[i]].totalLiquidity >= (deficit + totalLoans[activePools[i]])) {
-            if (lendingPools[activePools[i]].totalLiquidity >= (deficit + borrowingPools[activePools[i]].loans)) {
+            if (lendingPools[activePools[i]].totalLiquidity >= (deficit + borrowingPools[activePools[i]].principal)) {
                 deficit = 0;
             } else {
                 // Important to do the addition first to prevent an underflow
 //                deficit = (deficit + totalLoans[activePools[i]] - pools[activePools[i]].totalLiquidity);
-                deficit = (deficit + borrowingPools[activePools[i]].loans - lendingPools[activePools[i]].totalLiquidity);
+                deficit = (deficit + borrowingPools[activePools[i]].principal - lendingPools[activePools[i]].totalLiquidity);
             }
 //            console.log(string(abi.encodePacked("deficit - ", deficit.toString())));
         }
@@ -234,7 +233,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         for (uint i = activePoolIndex[_timestamp]; i < activePools.length; i++) {
             currentAndFutureLiquidity += lendingPools[activePools[i]].totalLiquidity;
 //            currentAndFutureLoans += totalLoans[activePools[i]];
-            currentAndFutureLoans += borrowingPools[activePools[i]].loans;
+            currentAndFutureLoans += borrowingPools[activePools[i]].principal;
 //            console.log(string(abi.encodePacked("currentAndFutureLiquidity - ", currentAndFutureLiquidity.toString())));
 //            console.log(string(abi.encodePacked("currentAndFutureLoans - ", currentAndFutureLoans.toString())));
         }
@@ -257,6 +256,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     function getLendingPool(
         uint256 _timestamp
     ) public view returns (PoolDetails memory) {
+        // TODO: Update to memory
         LendingPool storage lendingPool = lendingPools[_timestamp];
         PoolDetails memory poolDetails;
 
@@ -264,7 +264,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         poolDetails.aaveInterestSnapshot = lendingPool.aaveInterestSnapshot;
         poolDetails.poolShareTokenAddress = address(lendingPool.poolShareToken);
 //        poolDetails.totalLoans = totalLoans[_timestamp];
-        poolDetails.totalLoans = borrowingPools[_timestamp].loans;
+        poolDetails.totalLoans = borrowingPools[_timestamp].principal;
 
         return poolDetails;
     }
@@ -302,8 +302,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 timestamp
     ) public view returns (Loan memory) {
         // Use LTV == 0 as a proxy for the loan not existing
-        require(lendingPools[timestamp].loans[borrower].LTV != 0, "loan does not exist");
-        return lendingPools[timestamp].loans[borrower];
+        require(borrowingPools[timestamp].loans[borrower].LTV != 0, "loan does not exist");
+        return borrowingPools[timestamp].loans[borrower];
     }
 
     function createPool(uint256 _timestamp) public onlyOwner {
@@ -355,7 +355,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
                 totalPoolValue;
         }
         lendingPools[_timestamp].totalLiquidity += _amount;
-        lendingPools[_timestamp].deposits[msg.sender] += _amount;
         lendingPools[_timestamp].poolShareToken.mint(msg.sender, poolShareTokenAmount);
         emit NewDeposit(
             _timestamp,
@@ -368,6 +367,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 _timestamp,
         uint256 _poolShareTokenAmount
     ) public nonReentrant {
+        // TODO: update this to memory
         LendingPool storage lendingPool = lendingPools[_timestamp];
         require(
             _poolShareTokenAmount > 0,
@@ -453,7 +453,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
         // Reject if a loan already exists in this slot
         require(
-            lendingPools[_timestamp].loans[msg.sender].amount == 0,
+            borrowingPools[_timestamp].loans[msg.sender].amount == 0,
             "Loan already exists in this slot"
         );
 
@@ -465,10 +465,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
 
         // Create loan
-        Loan storage loan = lendingPools[_timestamp].loans[msg.sender];
+        Loan storage loan = borrowingPools[_timestamp].loans[msg.sender];
         loan.amount = _amount;
         loan.collateral = _collateral;
-        loan.aaveCollateral = 0;
         loan.LTV = _ltv;
         loan.APY = apy;
 
@@ -497,7 +496,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //        }
 
         // Update borrowingPools
-        borrowingPools[_timestamp].loans += _amount;
+        borrowingPools[_timestamp].principal += _amount;
 
         // Update totalLoans mapping
         // Replaced with borrowingPools
@@ -545,7 +544,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Update BPT Collateral and loans
         bpt.updateSnapshot(tokenId, debt - repaymentAmount);
         // Update BP Collateral and loans
-        borrowingPools[bpt.getEndDate(tokenId)].loans -= repaymentAmount;
+        borrowingPools[bpt.getEndDate(tokenId)].principal -= repaymentAmount;
         // Update BP pool share amount (aETH)
         // Emit event for tracking/analytics/subgraph
         emit PartialRepayLoan(tokenId, repaymentAmount);
@@ -571,8 +570,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         );
         uint collateral = bpt.getCollateral(tokenId);
         // Update BP Collateral and loans
-        BorrowingPool memory borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
-        borrowingPool.loans -= debt;
+        BorrowingPool storage borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
+        borrowingPool.principal -= debt;
         borrowingPool.collateral -= collateral;
 //        borrowingPool.poolShareAmount
         // Update BP pool share amount (aETH)
