@@ -94,7 +94,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
             </div>
           )}
 
-          <h1 className=" text-4xl font-medium text-base-100">
+          {!lendSuccess && <h1 className=" text-4xl font-medium text-base-100">
             <button onClick={onBackLend}
                     className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600">
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
@@ -104,7 +104,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
               </svg>
             </button>
             Confirm Details
-          </h1>
+          </h1>}
 
 
         </div>
@@ -248,8 +248,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                     </>}
                 </div>}
                 {lendSuccess && <button onClick={handleViewDash}
-                                        className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View
-                  in Dashboard
+                                        className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View in Dashboard
                 </button>}
 
                 {!lendSuccess && <button onClick={onBackLend}
