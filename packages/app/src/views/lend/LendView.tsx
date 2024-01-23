@@ -1,6 +1,6 @@
 import {FC, useEffect, useState} from "react";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
-import {useAddress, useBalance, useConnectedWallet, useContract, useContractRead} from "@thirdweb-dev/react";
+import {useBalance, useConnectedWallet, useContract, useContractRead} from "@thirdweb-dev/react";
 
 import {lendingPlatformAddress, lendingPlatformAbi, usdcAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";

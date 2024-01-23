@@ -1,7 +1,5 @@
-import {FC, useEffect, useState} from "react";
-// import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-// import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
-// import useTokenBalance from "../../hooks/useTokenBalance";
+import {useEffect, useState} from "react";
+
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import {useBalance, useContract, useSDK, useSwitchChain} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAddress} from "../../utils/contracts";
@@ -14,8 +12,7 @@ interface BorrowViewProps {
 }
 
 export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) => {
-  // const wallet = useWallet();
-  // const { connection } = useConnection();
+
 
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
@@ -25,9 +22,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
 
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
-
-  // const sdk = useSDK();
-  // const switchChain = useSwitchChain();
+;
 
   const [maxLoan, setMaxLoan] = useState(ethers.utils.parseEther('0'));
   const [requiredCollateral, setRequiredCollateral] = useState("0");

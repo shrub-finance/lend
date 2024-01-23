@@ -1,6 +1,4 @@
-import {FC, useEffect, useState} from "react";
-// import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import useUserSOLBalanceStore from "../../stores/useUserSOLBalanceStore";
+import {FC, useState} from "react";
 import {useAddress, useContract, useContractWrite, Web3Button} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
 import {fromEthDate, interestToLTV, toEthDate, truncateEthAddress} from "../../utils/ethMethods";
@@ -17,11 +15,6 @@ interface BorrowSummaryViewProps {
 }
 
 export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel, requiredCollateral, timestamp, interestRate, amount}) => {
-    // const wallet = useWallet();
-    // const {connection} = useConnection();
-
-    // const balance = useUserSOLBalanceStore((s) => s.balance)
-    // const {getUserSOLBalance} = useUserSOLBalanceStore()
 
     const router = useRouter();
 
@@ -46,13 +39,6 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
         lendingPlatform,
         "takeLoan",
     );
-
-    // useEffect(() => {
-    //   if (wallet.publicKey) {
-    //     console.log(wallet.publicKey.toBase58())
-    //     getUserSOLBalance(wallet.publicKey, connection)
-    //   }
-    // }, [wallet.publicKey, connection, getUserSOLBalance])
 
 
     // Calculate the end date by adding the number of months to the current date
