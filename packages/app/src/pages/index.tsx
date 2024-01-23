@@ -4,7 +4,7 @@ import {DashboardView} from "../views/DashboardView";
 
 
 
-const Dashboard: NextPage = (props) => {
+const Dashboard: NextPage = () => {
   return (
     <div>
       <Head>
