@@ -6,6 +6,7 @@ import {BigNumber, ethers} from "ethers";
 import {router} from "next/client";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import Image from "next/image";
+import {useRouter} from "next/router";
 
 
 interface LendSummaryViewProps {
@@ -15,11 +16,15 @@ interface LendSummaryViewProps {
   onBackLend: () => void;
 }
 
-const handleViewDash = () => {
-  router.push('/dashboard');
-};
-
 export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp, estimatedAPY, lendAmount}) => {
+
+
+  const router = useRouter();
+
+  const handleViewDash = () => {
+    router.push('/dashboard');
+  };
+
 
   // error handling
   const [localError, setLocalError] = useState("");

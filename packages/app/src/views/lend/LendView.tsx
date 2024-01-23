@@ -57,6 +57,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
     }
 
   };
+  
 
   useEffect(() => {
     if (timestamp) {
