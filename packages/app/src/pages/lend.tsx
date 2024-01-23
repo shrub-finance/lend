@@ -10,20 +10,19 @@ const Lend: NextPage = (props) => {
   const [timestamp, setTimestamp] = useState(0);
   const [lockPeriod, setLockPeriod] = useState<string | undefined>(undefined);
   const [supply, setSupply] = useState<string | undefined>(undefined);
-  const [view, setView] = useState<"lend" | "summary">("lend");
+  const [lendView, setLendView] = useState<"lend" | "summary">("lend");
 
   const handleLendViewChange = (apy: string, timestamp: number, supply: string) => {
     setAPY(apy);
     // setLockPeriod(lockPeriod);
     setTimestamp(timestamp)
     setSupply(supply);
-    setView("summary");
+    setLendView("summary");
   };
 
   const handleBackLend = () => {
-    if (view === "summary") {
-      setView("lend");
-    }
+      setLendView("lend");
+
   };
 
 
@@ -36,8 +35,8 @@ const Lend: NextPage = (props) => {
           content="Lend"
         />
       </Head>
-      {!apy && view === "lend" && <LendView onLendViewChange={handleLendViewChange}/>}
-      {apy && view === "summary" && <LendSummaryView lendAmount={supply} estimatedAPY={apy} timestamp={timestamp} onBackLend={handleBackLend}/>}
+      {lendView === "lend" && <LendView onLendViewChange={handleLendViewChange}/>}
+      {apy && lendView === "summary" && <LendSummaryView lendAmount={supply} estimatedAPY={apy} timestamp={timestamp} onBackLend={handleBackLend}/>}
     </>
   );
 };

@@ -12,31 +12,31 @@ const Borrow: NextPage = (props) => {
   const [timestamp, setTimestamp] = useState(0);
   const [interestRate, setInterestRate] = useState<string | undefined>(undefined);
   const [amount, setAmount] = useState<string | undefined>(undefined);
-  const [view, setView] = useState<"borrow" | "duration" | "summary">("borrow");
+  const [borrowView, setBorrowView] = useState<"borrow" | "duration" | "summary">("borrow");
 
   const handleBorrowViewChange = (collateral: string, interestRate, amount) => {
     setRequiredCollateral(collateral);
     setInterestRate(interestRate);
     setAmount(amount);
-    setView("duration");
+    setBorrowView("duration");
 
   };
 
   const handleTimestampChange = (timestamp: number) => {
     setTimestamp(timestamp);
-    setView("summary");
+    setBorrowView("summary");
   };
 
   const handleBack = () => {
-    if (view === "summary") {
-      setView("duration");
-    } else if (view === "duration") {
-      setView("borrow");
+    if (borrowView === "summary") {
+      setBorrowView("duration");
+    } else if (borrowView === "duration") {
+      setBorrowView("borrow");
     }
   };
 
   const handleCancel = () => {
-    setView("borrow");
+    setBorrowView("borrow");
     
   };
 
@@ -50,9 +50,9 @@ const Borrow: NextPage = (props) => {
         />
       </Head>
       <div>
-        {view === "borrow" &&<BorrowView onBorrowViewChange={handleBorrowViewChange} />}
-        {view === "duration" &&<BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleTimestampChange} onBackDuration={handleBack}/>}
-        {view === "summary" && <BorrowSummaryView timestamp={timestamp} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount} onBack={handleBack} onCancel={handleCancel}/>}
+        {borrowView === "borrow" &&<BorrowView onBorrowViewChange={handleBorrowViewChange} />}
+        {borrowView === "duration" &&<BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleTimestampChange} onBackDuration={handleBack}/>}
+        {borrowView === "summary" && <BorrowSummaryView timestamp={timestamp} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount} onBack={handleBack} onCancel={handleCancel}/>}
       </div>
     </>
   );
