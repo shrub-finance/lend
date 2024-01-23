@@ -27,20 +27,25 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
   const [lendSuccess, setLendSuccess] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
-  const [depositReady, setDepositReady] = useState(false);
-  const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
+  const {data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading} = useBalance(usdcAddress);
   const walletAddress = useAddress();
 
   const {
     contract: usdc,
+    isLoading: usdcIsLoading,
+    error: usdcError
   } = useContract(usdcAddress, usdcAbi);
 
   const {
     contract: lendingPlatform,
+    isLoading: lendingPlatformIsLoading,
+    error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
   const {
     mutateAsync: mutateAsyncDeposit,
+    isLoading: isLoadingTakeDeposit,
+    error: errorDeposit
   } = useContractWrite(
     lendingPlatform,
     "deposit",
@@ -48,6 +53,8 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
   const {
     mutateAsync: mutateAsyncApprove,
+    isLoading: isLoadingApprove,
+    error: errorApprove
   } = useContractWrite(
     usdc,
     "approve",
@@ -55,28 +62,17 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
   const {
     data: allowance,
+    isLoading: isLoadingAllowance,
+    error: errorAllowance
   } = useContractRead(usdc, "allowance", [walletAddress, lendingPlatformAddress]);
 
-  const {} = useContractRead(usdc, "balanceOf", [walletAddress]);
-
-// approve and deposit logic
-  useEffect(() => {
-    if (localError) {
-      setLocalError('');
-    }
-    const balanceValue = BigNumber.from(usdcBalance.value);
-    const sufficientBalance = balanceValue.gte(ethers.utils.parseUnits(lendAmount, 6));
-    const sufficientAllowance = allowance && BigNumber.from(allowance).gte(ethers.utils.parseUnits(lendAmount, 6));
-
-    setDepositReady(sufficientAllowance && sufficientBalance);
-  }, [localError, allowance, lendAmount, usdcBalance]);
 
 
   // Calculate the end date by adding the number of months to the current date
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
 
-  console.log(allowance);
+
   return (
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col">
@@ -181,7 +177,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                   <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row justify-between ">
                       <span className="">Current USDC balance</span>
-                      <span>{usdcBalance.displayValue} USDC</span>
+                      <span>{usdcBalanceData.displayValue} USDC</span>
                     </div>
                     <div className="flex flex-row justify-between">
                       <span className="">Gas Cost</span>
@@ -190,11 +186,11 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                   </div>
 
                   {/*approve and deposit*/}
-                  {usdcBalanceIsLoading ?
+                  {usdcBalanceDataIsLoading ?
                     <p>Loading balance...</p> :
                     <>
                       {/* Check if user has insufficient balance */}
-                      {usdcBalance && BigNumber.from(usdcBalance.value).lt(ethers.utils.parseUnits(lendAmount, 6)) &&
+                      {usdcBalanceData && BigNumber.from(usdcBalanceData.value).lt(ethers.utils.parseUnits(lendAmount, 6)) &&
                         <button
                           disabled={true}
                           className="btn btn-block border-0 normal-case text-xl mb-4 disabled:!text-shrub-grey-200 disabled:!bg-shrub-grey-50"
@@ -204,7 +200,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                       }
                       {/* Show Approve button if allowance is insufficient, and balance is enough */}
                       {!allowance || BigNumber.from(allowance).lt(ethers.utils.parseUnits(lendAmount, 6)) ?
-                        usdcBalance && !BigNumber.from(usdcBalance.value).lt(ethers.utils.parseUnits(lendAmount, 6)) &&
+                        usdcBalanceData && !BigNumber.from(usdcBalanceData.value).lt(ethers.utils.parseUnits(lendAmount, 6)) &&
                         <Web3Button
                           contractAddress={lendingPlatformAddress}
                           className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
@@ -224,7 +220,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                           Approve
                         </Web3Button> : null}
 
-                      {(allowance && !BigNumber.from(allowance).lt(ethers.utils.parseUnits(lendAmount, 6))) && !(usdcBalance && BigNumber.from(usdcBalance.value).lt(ethers.utils.parseUnits(lendAmount, 6))) &&
+                      {(allowance && !BigNumber.from(allowance).lt(ethers.utils.parseUnits(lendAmount, 6))) && !(usdcBalanceData && BigNumber.from(usdcBalanceData.value).lt(ethers.utils.parseUnits(lendAmount, 6))) &&
                         <Web3Button
                           contractAddress={lendingPlatformAddress}
                           className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
