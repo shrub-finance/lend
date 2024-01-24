@@ -1482,7 +1482,7 @@ describe('testSuite', () => {
                     expect(janPool.totalLoans).to.equal(parseUnits('900', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
-                    expect(loan.amount).to.equal(parseUnits('900', 6));
+                    expect(loan.principal).to.equal(parseUnits('900', 6));
                     expect(loan.collateral).to.equal(parseEther('2'));
                     expect(loan.LTV).to.equal(25);
                     expect(loan.APY).to.equal(parseUnits('1', 6));
@@ -1585,7 +1585,7 @@ describe('testSuite', () => {
                     expect(janPool.totalLoans).to.equal(parseUnits('1000', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower2.getAddress(), timestamps.jan01_26);
-                    expect(loan.amount).to.equal(parseUnits('100', 6));
+                    expect(loan.principal).to.equal(parseUnits('100', 6));
                     expect(loan.collateral).to.equal(parseEther('1'));
                     expect(loan.LTV).to.equal(20);
                     expect(loan.APY).to.equal(parseUnits('0', 6));
@@ -1704,7 +1704,7 @@ describe('testSuite', () => {
                     expect(janPool.totalLoans).to.equal(parseUnits('2900', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
-                    expect(loan.amount).to.equal(parseUnits('2900', 6));
+                    expect(loan.principal).to.equal(parseUnits('2900', 6));
                     expect(loan.collateral).to.equal(parseEther('7'));
                     expect(loan.LTV).to.equal(25);
                     expect(loan.APY).to.equal(parseUnits('1', 6));
@@ -1861,7 +1861,7 @@ describe('testSuite', () => {
                     expect(totalLoans).to.equal(parseUnits('7000', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
-                    expect(loan.amount).to.equal(parseUnits('7000', 6));
+                    expect(loan.principal).to.equal(parseUnits('7000', 6));
                     expect(loan.collateral).to.equal(parseEther('28'));
                     expect(loan.LTV).to.equal(33);
                     expect(loan.APY).to.equal(parseUnits('5', 6));
@@ -1914,7 +1914,7 @@ describe('testSuite', () => {
                     expect(febPool.totalLoans).to.equal(parseUnits('2000', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
-                    expect(loan.amount).to.equal(parseUnits('2000', 6));
+                    expect(loan.principal).to.equal(parseUnits('2000', 6));
                     expect(loan.collateral).to.equal(parseEther('8'));
                     expect(loan.LTV).to.equal(33);
                     expect(loan.APY).to.equal(parseUnits('5', 6));
@@ -1968,7 +1968,7 @@ describe('testSuite', () => {
                     expect(marPool.totalLoans).to.equal(parseUnits('500', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.mar01_26);
-                    expect(loan.amount).to.equal(parseUnits('500', 6));
+                    expect(loan.principal).to.equal(parseUnits('500', 6));
                     expect(loan.collateral).to.equal(parseEther('2'));
                     expect(loan.LTV).to.equal(33);
                     expect(loan.APY).to.equal(parseUnits('5', 6));
@@ -2028,7 +2028,7 @@ describe('testSuite', () => {
                     expect(janPool.totalLoans).to.equal(parseUnits('5500', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
-                    expect(loan.amount).to.equal(parseUnits('5500', 6));
+                    expect(loan.principal).to.equal(parseUnits('5500', 6));
                     expect(loan.collateral).to.equal(parseEther('22'));
                     expect(loan.LTV).to.equal(33);
                     expect(loan.APY).to.equal(parseUnits('5', 6));
@@ -2072,7 +2072,7 @@ describe('testSuite', () => {
                     expect(febPool2.totalLoans).to.equal(parseUnits('1000', 6));
 
                     const loan2 = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
-                    expect(loan2.amount).to.equal(parseUnits('1000', 6));
+                    expect(loan2.principal).to.equal(parseUnits('1000', 6));
                     expect(loan2.collateral).to.equal(parseEther('5'));
                     expect(loan2.LTV).to.equal(33);
                     expect(loan2.APY).to.equal(parseUnits('5', 6));
@@ -2133,7 +2133,7 @@ describe('testSuite', () => {
                     expect(janPool.totalLoans).to.equal(parseUnits('6500', 6));
 
                     const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
-                    expect(loan.amount).to.equal(parseUnits('6500', 6));
+                    expect(loan.principal).to.equal(parseUnits('6500', 6));
                     expect(loan.collateral).to.equal(parseEther('22'));
                     expect(loan.LTV).to.equal(33);
                     expect(loan.APY).to.equal(parseUnits('5', 6));
@@ -2177,7 +2177,7 @@ describe('testSuite', () => {
                     expect(febPool2.totalLoans).to.equal(parseUnits('100', 6));
 
                     const loan2 = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
-                    expect(loan2.amount).to.equal(parseUnits('100', 6));
+                    expect(loan2.principal).to.equal(parseUnits('100', 6));
                     expect(loan2.collateral).to.equal(parseEther('1'));
                     expect(loan2.LTV).to.equal(33);
                     expect(loan2.APY).to.equal(parseUnits('5', 6));

@@ -11,18 +11,16 @@ import "hardhat/console.sol";
 struct BorrowData {
     uint40 startDate;  // Max Date with uint40 is 2106 (83 years from now)
     uint40 endDate;
-    uint256 initialPrincipal;
+    uint256 principal;
     uint256 collateral;
     uint32 apy;
-    uint40 snapshotDate;
-    uint256 snapshotDebt;
 }
 
 interface IBorrowPositionToken is IERC721 {
     function mint(address account, BorrowData calldata borrowData) external returns (uint);
     function debt(uint256 tokenId) external returns (uint);
-    function interestSinceSnapshot(uint256 tokenId) external returns (uint256);
-    function updateSnapshot(uint256 tokenId, uint newDebt) external;
+    function interest(uint256 tokenId) external returns (uint256);
+//    function updateSnapshot(uint256 tokenId, uint newDebt) external;
     function getEndDate(uint tokenId) external returns (uint40);
     function getCollateral(uint tokenId) external returns (uint256);
     function burn(uint256 tokenId) external;
@@ -30,6 +28,10 @@ interface IBorrowPositionToken is IERC721 {
 
 uint256 constant SECONDS_IN_YEAR = 365 * 24 * 60 * 60;
 uint256 constant APY_DECIMALS = 10 ** 6;
+
+
+// TODO: Index BPT by endDate so that we can find all of the loans for a timestamp
+// NOTE: BPTs will not be indexed by owner as we can rely on external services to find this and we don't need this functionality in the smart contract itself
 
 contract BorrowPositionToken is ERC721, Ownable {
     IERC20 public usdc;
@@ -80,11 +82,11 @@ contract BorrowPositionToken is ERC721, Ownable {
         return bd.snapshotDebt + interestSinceSnapshot(tokenId);
     }
 
-    function updateSnapshot(uint256 tokenId, uint newDebt) checkExists(tokenId) external onlyOwner {
-        BorrowData storage bd = borrowDatas[tokenId];
-        bd.snapshotDate = uint40(block.timestamp);
-        bd.snapshotDebt = newDebt;
-    }
+//    function updateSnapshot(uint256 tokenId, uint newDebt) checkExists(tokenId) external onlyOwner {
+//        BorrowData storage bd = borrowDatas[tokenId];
+//        bd.snapshotDate = uint40(block.timestamp);
+//        bd.snapshotDebt = newDebt;
+//    }
 
     function burn(uint256 tokenId) external checkExists(tokenId) onlyOwner {
         _burn(tokenId);
@@ -96,10 +98,10 @@ contract BorrowPositionToken is ERC721, Ownable {
     }
 
     // Returns the usdc interest earned since the last adjustment (payment) to a BPT
-    function interestSinceSnapshot(uint256 tokenId) public checkExists(tokenId) returns (uint256) {
+    function interest(uint256 tokenId) public checkExists(tokenId) returns (uint256) {
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         BorrowData memory bd = borrowDatas[tokenId];
-        return bd.apy * bd.snapshotDebt * (block.timestamp - bd.snapshotDate) / (APY_DECIMALS * SECONDS_IN_YEAR);
+        return bd.apy * bd.principal * (block.timestamp - bd.startDate) / (APY_DECIMALS * SECONDS_IN_YEAR);
     }
 
     function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount) external {
