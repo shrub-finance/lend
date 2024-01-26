@@ -182,7 +182,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                   <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row justify-between ">
                       <span className="">Current USDC balance</span>
-                      <span>{usdcBalanceData.displayValue} USDC</span>
+                      <span>{usdcBalanceData?.displayValue} USDC</span>
                     </div>
                     <div className="flex flex-row justify-between">
                       <span className="">Gas Cost</span>

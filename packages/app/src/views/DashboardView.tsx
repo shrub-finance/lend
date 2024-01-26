@@ -9,6 +9,7 @@ import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 import {toEthDate, fromEthDate} from "../utils/ethMethods";
 import { usdcAddress, lendingPlatformAddress, lendingPlatformAbi } from "../utils/contracts";
 import {ethers} from "ethers";
+import Image from "next/image";
 
 const now = new Date();
 const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
@@ -67,52 +68,169 @@ export const DashboardView: FC = ({}) => {
             <div className="md:hero-content flex flex-col">
                 <div className='mt-6 self-start'>
 
-                <h1 className=" text-5xl font-bold text-base-100 self-start">
+                <h1 className=" text-[36px] font-semibold text-base-100 self-start">
                     Dashboard
                 </h1>
-                <p className="text-base-100 text-lg font-light pt-5 pb-5"> Welcome back, <span className="font-semibold">ryan.eth!</span></p>
+                <h3 className="text-base-100  font-normal  pb-5 text-shrub-grey"> Welcome back, ryan.eth!</h3>
                 </div>
                 <div className="relative overflow-x-auto -inset-1 shadow-shrub border rounded-2xl">
-                    <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <table className="w-full text-left text-shrub-grey  dark:text-gray-400">
+                        <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
+                            Earning
+                            <span className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">Total of 3 contracts</span>
+
+                        </caption>
                         <thead
-                          className="text-xs text-shrub-blue bg-gray-50 dark:bg-gray-700">
+                          className="text-xs bg-shrub-grey-light dark:bg-gray-700 border border-shrub-grey-light2">
                         <tr>
-                            <th scope="col" className="px-6 py-3">
-                                ETH Balance
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+                                Amount Deposited
                             </th>
-                            <th scope="col" className="px-6 py-3">
-                                USDC Balance
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+                                Current Value
                             </th>
-                            <th scope="col" className="px-6 py-3">
-                                Wallet Address
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+                                APR
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+                                Earned
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+                                Unlock Rate
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+
                             </th>
                         </tr>
                         </thead>
                         <tbody className="text-lg">
                         <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                            <td className="px-6 py-4">{wallet && !ethBalanceIsLoading ? (
+                            <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
                               <p>{ethers.utils.formatEther(
                                   ethBalance.value
                                       .div(ethers.utils.parseUnits('1',15))
                                       .mul(ethers.utils.parseUnits('1',15))
                               )}</p>
                             ) : (
-                              <p>Loading ETH balance...</p>
+                              <p className="text-sm">Loading ETH balance...</p>
                             )}</td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 text-sm font-bold">
                                 {wallet && !usdcBalanceIsLoading ? (
                                   <p>{(usdcBalance.displayValue || 0).toLocaleString()}</p>
                                 ) : (
-                                  <p>Loading USDC balance...</p>
+                                  <p className="text-sm">Loading USDC balance...</p>
                                 )}
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 text-sm font-bold">
                                 {walletAddress}
                             </td>
+                            <td className="px-6 py-4 text-sm font-bold">
+
+                            </td>
+                            <td className="px-6 py-4 text-sm font-bold">
+
+                            </td>
+                            <td className="px-1 py-4 text-sm font-bold">
+
+                                <button type="button"
+                                        className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Redeem
+                                </button>
+
+
+                            </td>
+                            <td className="px-1 py-4 text-sm font-bold">
+                                <button type="button"
+                                        className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                    <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20} className="mr-2"/>
+                                    Trade
+                                </button>
+                            </td>
+
+
                         </tr>
                         </tbody>
                     </table>
                 </div>
+
+                <div className="relative overflow-x-auto -inset-1 shadow-shrub border rounded-2xl">
+                    <table className="w-full text-left text-shrub-grey  dark:text-gray-400">
+                        <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
+                            Borrowing
+
+                        </caption>
+                        <thead
+                          className="text-xs bg-shrub-grey-light dark:bg-gray-700 border border-shrub-grey-light2">
+                        <tr>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+                                Amount Borrowed
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+                                Amount Paid
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+Time until due date (days)
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+APR
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+Remaining Balance
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+Due Date
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody className="text-lg">
+                        <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                            <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
+                              <p>{ethers.utils.formatEther(
+                                ethBalance.value
+                                  .div(ethers.utils.parseUnits('1',15))
+                                  .mul(ethers.utils.parseUnits('1',15))
+                              )}</p>
+                            ) : (
+                              <p className="text-sm">Loading ETH balance...</p>
+                            )}</td>
+                            <td className="px-6 py-4 text-sm font-bold">
+                                {wallet && !usdcBalanceIsLoading ? (
+                                  <p>{(usdcBalance.displayValue || 0).toLocaleString()}</p>
+                                ) : (
+                                  <p className="text-sm">Loading USDC balance...</p>
+                                )}
+                            </td>
+                            <td className="px-6 py-4 text-sm font-bold">
+                                {walletAddress}
+                            </td>
+                            <td className="px-6 py-4 text-sm font-bold">
+                                {walletAddress}
+                            </td>
+                            <td className="px-6 py-4 text-sm font-bold">
+                                {walletAddress}
+                            </td>
+                            <td className="px-6 py-4 text-sm font-bold">
+                                {walletAddress}
+                            </td>
+                            <td className="px-1 py-4 text-sm font-bold">
+                                <button type="button"
+                                        className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                    <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20} className="mr-2"/>
+                                    Pay
+                                </button>
+                            </td>
+
+
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
 
             </div>
         </div>

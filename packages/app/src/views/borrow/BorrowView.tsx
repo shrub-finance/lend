@@ -43,7 +43,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
 
-  const SOLANA_RATE = 2000;
+
 
 
   // useEffect(() => {
@@ -144,17 +144,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
 
     let requiredCollateralAmount;
 
-    if (interestRate === 0) {
-      requiredCollateralAmount = amount * 5/SOLANA_RATE;
-    } else if (interestRate === .01) {
-      requiredCollateralAmount = amount * 4/SOLANA_RATE;
-    } else if (interestRate === .05) {
-      requiredCollateralAmount = amount * 3/SOLANA_RATE;
-    } else if (interestRate === .08) {
-      requiredCollateralAmount = amount * 2/SOLANA_RATE;
-    } else {
-      requiredCollateralAmount = 0;
-    }
+
 
     if (requiredCollateralAmount) {
       setRequiredCollateral(requiredCollateralAmount.toFixed(4));
