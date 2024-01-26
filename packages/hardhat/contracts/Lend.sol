@@ -22,8 +22,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     struct LendingPool {
         // uint40 endDate
         // uint256 principal
-        // uint256 accumInterest
-        // uint256 accumYield
+        uint256 accumInterest;
+        uint256 accumYield;
         uint256 totalLiquidity;
         uint256 aaveInterestSnapshot;
         PoolShareToken poolShareToken;
@@ -69,6 +69,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     mapping(uint256 => uint256) public activePoolIndex; // mapping of timestamp => index of activePools
 
     uint256[] public activePools; // Sorted ascending list of timestamps of active pools
+    uint lastSnapshotDate;
+    uint aEthSnapshotBalance;
 
     event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
     event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
@@ -93,6 +95,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         wrappedTokenGateway = IMockAaveV3(addresses[2]);
         aeth = IAETH(addresses[3]);
         chainlinkAggregator = AggregatorV3Interface(addresses[4]);
+        lastSnapshotDate = block.timestamp;
     }
 
 
@@ -269,7 +272,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             revert("Invalid LTV");
         }
     }
-
 
     function validPool(uint256 _timestamp) internal view returns (bool) {
         // require that the timestamp be in the future
@@ -492,8 +494,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
         BorrowData memory bd;
         bd.endDate = _timestamp;
-        bd.initialPrincipal = _principal;
-        bd.snapshotDebt = _principal;
+        bd.principal = _principal;
         bd.collateral = _collateral;
         bd.apy = apy;
         uint tokenId = bpt.mint(msg.sender, bd);
@@ -527,7 +528,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             repaymentAmount
         );
         // Update BPT Collateral and loans
-        bpt.updateSnapshot(tokenId, debt - repaymentAmount);
+//        bpt.updateSnapshot(tokenId, debt - repaymentAmount);
         // Update BP Collateral and loans
         borrowingPools[bpt.getEndDate(tokenId)].principal -= repaymentAmount;
         // Update BP pool share amount (aETH)
@@ -566,6 +567,35 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         wrappedTokenGateway.withdrawETH(address(0), collateral, beneficiary);
         // Emit event for tracking/analytics/subgraph
         emit RepayLoan(tokenId, debt, collateral, beneficiary);
+    }
+
+    function takeSnapshot() public onlyOwner {
+//        Get the current balance of bpTotalPoolShares (it is local)
+        // calculate the accumYield for all BP (current balance - snapshot balance)
+        uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) - aEthSnapshotBalance;
+//        Calculate accumInterest for all BP
+        for (uint i = 0; i < activePools.length; i++) {
+//            Find the BPTs related to these timestamps
+//            bptsForPool is an array of tokenIds
+            uint[] memory bptsForPool = bpt.getTokensByTimestamp(uint40(activePools[i]));
+            uint accumInterestBP = 0;
+//            # Loop through the BPTs in order to calculate their accumYield
+            for (uint j = 0; j < bptsForPool.length; j++) {
+                accumInterestBP +=  bpt.interestSinceTimestamp(j, lastSnapshotDate);
+            }
+            // Determine the amount of aETH to distribute from this borrowing pool
+            uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[i].poolShareAmount / bpTotalPoolShares;
+            // Loop through this and future Lending Pools to determine the contribution denominator
+            uint contributionDenominator;
+            for (uint j = i; j < activePools.length; j++) {
+                contributionDenominator += lendingPools[activePools[j]].totalLiquidity;
+            }
+            // distribute accumInterest and accumYield to LPs based on contribution principal
+            for (uint j = i; j < activePools.length; j++) {
+                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].totalLiquidity / contributionDenominator;
+                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].totalLiquidity / contributionDenominator;
+            }
+        }
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {

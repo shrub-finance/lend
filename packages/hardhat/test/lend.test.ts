@@ -839,7 +839,7 @@ describe('testSuite', () => {
         describe('validPool', () => {
             // See takeLoan - validPool tests - this is a private method
         });
-        describe('getLoan', () => {
+        describe.skip('getLoan', () => {
             // Note: getLoan is tested as part of the takeLoan tests
             it('should revert if loan does not exist', async () => {
                await expect(lendingPlatform.getLoan(lender1.address, timestamps.jan01_26)).to.be.revertedWith("loan does not exist");
@@ -1461,6 +1461,7 @@ describe('testSuite', () => {
                     const collateral = parseEther('2');
                     const ltv = 25;
 
+
                     const borrowTx = await lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: collateral});
                     const borrowReceipt = await borrowTx.wait();
                     assert(borrowReceipt);
@@ -1481,11 +1482,16 @@ describe('testSuite', () => {
                     const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool.totalLoans).to.equal(parseUnits('900', 6));
 
-                    const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
+                    const newLoanEvent = await lendingPlatform.getEvent("NewLoan");
+                    const events = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt.blockNumber, borrowReceipt.blockNumber);
+                    expect(events.length).to.equal(1);
+                    const tokenId = events[0].args.tokenId;
+
+                    const loan = await borrowPositionToken.getLoan(tokenId);
                     expect(loan.principal).to.equal(parseUnits('900', 6));
                     expect(loan.collateral).to.equal(parseEther('2'));
-                    expect(loan.LTV).to.equal(25);
-                    expect(loan.APY).to.equal(parseUnits('1', 6));
+                    expect(loan.apy).to.equal(parseUnits('1', 6));
+                    expect(loan.endDate).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools.length).to.equal(1);
                     // expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools[0].liquidityContribution).to.equal(parseUnits('1', 8));
@@ -1493,23 +1499,23 @@ describe('testSuite', () => {
                     const totalAvailableLiquidity = await lendingPlatform.getAvailableForPeriod(timestamps.jan01_26);
                     expect(totalAvailableLiquidity).to.equal(parseUnits('100', 6));
                 });
-                it('should reject a second loan from the same borrower and same timestamp', async() => {
-                    const amount = parseUnits('900', 6);
-                    const collateral = parseEther('2');
-                    const ltv = 25;
-
-                    const borrowTx = await lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: collateral});
-                    const borrowReceipt = await borrowTx.wait();
-                    assert(borrowReceipt);
-                    const txFee = borrowReceipt.gasUsed * borrowTx.gasPrice;
-
-                    const amount2 = parseUnits('9', 6);
-                    const collateral2 = parseEther('2');
-                    const ltv2 = 20;
-
-                    await expect(lendingPlatform.connect(borrower1).takeLoan(amount2, collateral2, ltv2, timestamps.jan01_26, {value: collateral2})).to.be.revertedWith("Loan already exists in this slot");
-
-                });
+                // it('should reject a second loan from the same borrower and same timestamp', async() => {
+                //     const amount = parseUnits('900', 6);
+                //     const collateral = parseEther('2');
+                //     const ltv = 25;
+                //
+                //     const borrowTx = await lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: collateral});
+                //     const borrowReceipt = await borrowTx.wait();
+                //     assert(borrowReceipt);
+                //     const txFee = borrowReceipt.gasUsed * borrowTx.gasPrice;
+                //
+                //     const amount2 = parseUnits('9', 6);
+                //     const collateral2 = parseEther('2');
+                //     const ltv2 = 20;
+                //
+                //     await expect(lendingPlatform.connect(borrower1).takeLoan(amount2, collateral2, ltv2, timestamps.jan01_26, {value: collateral2})).to.be.revertedWith("Loan already exists in this slot");
+                //
+                // });
                 it('should reject if a second loan does not have sufficient liquidity', async() => {
                     const borrower2LendingPlatform = lendingPlatform.connect(borrower2);
 
@@ -1584,11 +1590,17 @@ describe('testSuite', () => {
                     const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool.totalLoans).to.equal(parseUnits('1000', 6));
 
-                    const loan = await lendingPlatform.getLoan(borrower2.getAddress(), timestamps.jan01_26);
+                    const newLoanEvent = await lendingPlatform.getEvent("NewLoan");
+                    const events = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt2.blockNumber, borrowReceipt2.blockNumber);
+                    expect(events.length).to.equal(1);
+                    const tokenId = events[0].args.tokenId;
+
+                    const loan = await borrowPositionToken.getLoan(tokenId);
+                    // const loan = await lendingPlatform.getLoan(borrower2.getAddress(), timestamps.jan01_26);
                     expect(loan.principal).to.equal(parseUnits('100', 6));
                     expect(loan.collateral).to.equal(parseEther('1'));
-                    expect(loan.LTV).to.equal(20);
-                    expect(loan.APY).to.equal(parseUnits('0', 6));
+                    expect(loan.apy).to.equal(parseUnits('0', 6));
+                    expect(loan.endDate).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools.length).to.equal(1);
                     // expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools[0].liquidityContribution).to.equal(parseUnits('1', 8));
@@ -1703,11 +1715,17 @@ describe('testSuite', () => {
                     const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool.totalLoans).to.equal(parseUnits('2900', 6));
 
-                    const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
+                    const newLoanEvent = await lendingPlatform.getEvent("NewLoan");
+                    const events = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt.blockNumber, borrowReceipt.blockNumber);
+                    expect(events.length).to.equal(1);
+                    const tokenId = events[0].args.tokenId;
+
+                    const loan = await borrowPositionToken.getLoan(tokenId);
+                    // const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
                     expect(loan.principal).to.equal(parseUnits('2900', 6));
                     expect(loan.collateral).to.equal(parseEther('7'));
-                    expect(loan.LTV).to.equal(25);
-                    expect(loan.APY).to.equal(parseUnits('1', 6));
+                    expect(loan.apy).to.equal(parseUnits('1', 6));
+                    expect(loan.endDate).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools.length).to.equal(1);
                     // expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools[0].liquidityContribution).to.equal(parseUnits('1', 8));
@@ -1860,11 +1878,17 @@ describe('testSuite', () => {
                     // const totalLoans = await lendingPlatform.totalLoans(timestamps.jan01_26);
                     expect(totalLoans).to.equal(parseUnits('7000', 6));
 
-                    const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
+                    const newLoanEvent = await lendingPlatform.getEvent("NewLoan");
+                    const events = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt.blockNumber, borrowReceipt.blockNumber);
+                    expect(events.length).to.equal(1);
+                    const tokenId = events[0].args.tokenId;
+
+                    const loan = await borrowPositionToken.getLoan(tokenId);
+                    // const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
                     expect(loan.principal).to.equal(parseUnits('7000', 6));
                     expect(loan.collateral).to.equal(parseEther('28'));
-                    expect(loan.LTV).to.equal(33);
-                    expect(loan.APY).to.equal(parseUnits('5', 6));
+                    expect(loan.apy).to.equal(parseUnits('5', 6));
+                    expect(loan.endDate).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools.length).to.equal(3);
                     // expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools[1].poolTimestamp).to.equal(timestamps.feb01_26);
@@ -1913,11 +1937,17 @@ describe('testSuite', () => {
                     const febPool = await lendingPlatform.getLendingPool(timestamps.feb01_26);
                     expect(febPool.totalLoans).to.equal(parseUnits('2000', 6));
 
-                    const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
+                    const newLoanEvent = await lendingPlatform.getEvent("NewLoan");
+                    const events = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt.blockNumber, borrowReceipt.blockNumber);
+                    expect(events.length).to.equal(1);
+                    const tokenId = events[0].args.tokenId;
+
+                    const loan = await borrowPositionToken.getLoan(tokenId);
+                    // const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
                     expect(loan.principal).to.equal(parseUnits('2000', 6));
                     expect(loan.collateral).to.equal(parseEther('8'));
-                    expect(loan.LTV).to.equal(33);
-                    expect(loan.APY).to.equal(parseUnits('5', 6));
+                    expect(loan.apy).to.equal(parseUnits('5', 6));
+                    expect(loan.endDate).to.equal(timestamps.feb01_26);
                     // expect(loan.contributingPools.length).to.equal(2);
                     // expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps.feb01_26);
                     // expect(loan.contributingPools[1].poolTimestamp).to.equal(timestamps.mar01_26);
@@ -1967,11 +1997,17 @@ describe('testSuite', () => {
                     const marPool = await lendingPlatform.getLendingPool(timestamps.mar01_26);
                     expect(marPool.totalLoans).to.equal(parseUnits('500', 6));
 
-                    const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.mar01_26);
+                    const newLoanEvent = await lendingPlatform.getEvent("NewLoan");
+                    const events = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt.blockNumber, borrowReceipt.blockNumber);
+                    expect(events.length).to.equal(1);
+                    const tokenId = events[0].args.tokenId;
+
+                    const loan = await borrowPositionToken.getLoan(tokenId);
+                    // const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.mar01_26);
                     expect(loan.principal).to.equal(parseUnits('500', 6));
                     expect(loan.collateral).to.equal(parseEther('2'));
-                    expect(loan.LTV).to.equal(33);
-                    expect(loan.APY).to.equal(parseUnits('5', 6));
+                    expect(loan.apy).to.equal(parseUnits('5', 6));
+                    expect(loan.endDate).to.equal(timestamps.mar01_26);
                     // expect(loan.contributingPools.length).to.equal(1);
                     // expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps.mar01_26);
                     // expect(loan.contributingPools[0].liquidityContribution).to.equal(parseUnits('1', 8));
@@ -2027,11 +2063,17 @@ describe('testSuite', () => {
                     const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool.totalLoans).to.equal(parseUnits('5500', 6));
 
-                    const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
+                    const newLoanEvent = await lendingPlatform.getEvent("NewLoan");
+                    const events = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt.blockNumber, borrowReceipt.blockNumber);
+                    expect(events.length).to.equal(1);
+                    const tokenId = events[0].args.tokenId;
+
+                    const loan = await borrowPositionToken.getLoan(tokenId);
+                    // const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
                     expect(loan.principal).to.equal(parseUnits('5500', 6));
                     expect(loan.collateral).to.equal(parseEther('22'));
-                    expect(loan.LTV).to.equal(33);
-                    expect(loan.APY).to.equal(parseUnits('5', 6));
+                    expect(loan.apy).to.equal(parseUnits('5', 6));
+                    expect(loan.endDate).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools.length).to.equal(3);
                     // expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools[1].poolTimestamp).to.equal(timestamps.feb01_26);
@@ -2071,11 +2113,16 @@ describe('testSuite', () => {
                     const febPool2 = await lendingPlatform.getLendingPool(timestamps.feb01_26);
                     expect(febPool2.totalLoans).to.equal(parseUnits('1000', 6));
 
-                    const loan2 = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
+                    const events2 = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt2.blockNumber, borrowReceipt2.blockNumber);
+                    expect(events2.length).to.equal(1);
+                    const tokenId2 = events2[0].args.tokenId;
+
+                    const loan2 = await borrowPositionToken.getLoan(tokenId2);
+                    // const loan2 = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
                     expect(loan2.principal).to.equal(parseUnits('1000', 6));
                     expect(loan2.collateral).to.equal(parseEther('5'));
-                    expect(loan2.LTV).to.equal(33);
-                    expect(loan2.APY).to.equal(parseUnits('5', 6));
+                    expect(loan2.apy).to.equal(parseUnits('5', 6));
+                    expect(loan2.endDate).to.equal(timestamps.feb01_26);
                     // expect(loan2.contributingPools.length).to.equal(2);
                     // expect(loan2.contributingPools[0].poolTimestamp).to.equal(timestamps.feb01_26);
                     // expect(loan2.contributingPools[1].poolTimestamp).to.equal(timestamps.mar01_26);
@@ -2132,11 +2179,17 @@ describe('testSuite', () => {
                     const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
                     expect(janPool.totalLoans).to.equal(parseUnits('6500', 6));
 
-                    const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
+                    const newLoanEvent = await lendingPlatform.getEvent("NewLoan");
+                    const events = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt.blockNumber, borrowReceipt.blockNumber);
+                    expect(events.length).to.equal(1);
+                    const tokenId = events[0].args.tokenId;
+
+                    const loan = await borrowPositionToken.getLoan(tokenId);
+                    // const loan = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.jan01_26);
                     expect(loan.principal).to.equal(parseUnits('6500', 6));
                     expect(loan.collateral).to.equal(parseEther('22'));
-                    expect(loan.LTV).to.equal(33);
-                    expect(loan.APY).to.equal(parseUnits('5', 6));
+                    expect(loan.apy).to.equal(parseUnits('5', 6));
+                    expect(loan.endDate).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools.length).to.equal(3);
                     // expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps.jan01_26);
                     // expect(loan.contributingPools[1].poolTimestamp).to.equal(timestamps.feb01_26);
@@ -2176,11 +2229,16 @@ describe('testSuite', () => {
                     const febPool2 = await lendingPlatform.getLendingPool(timestamps.feb01_26);
                     expect(febPool2.totalLoans).to.equal(parseUnits('100', 6));
 
-                    const loan2 = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
+                    const events2 = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt2.blockNumber, borrowReceipt2.blockNumber);
+                    expect(events2.length).to.equal(1);
+                    const tokenId2 = events2[0].args.tokenId;
+
+                    const loan2 = await borrowPositionToken.getLoan(tokenId2);
+                    // const loan2 = await lendingPlatform.getLoan(borrower1.getAddress(), timestamps.feb01_26);
                     expect(loan2.principal).to.equal(parseUnits('100', 6));
                     expect(loan2.collateral).to.equal(parseEther('1'));
-                    expect(loan2.LTV).to.equal(33);
-                    expect(loan2.APY).to.equal(parseUnits('5', 6));
+                    expect(loan2.apy).to.equal(parseUnits('5', 6));
+                    expect(loan2.endDate).to.equal(timestamps.feb01_26);
                     // expect(loan2.contributingPools.length).to.equal(2);
                     // expect(loan2.contributingPools[0].poolTimestamp).to.equal(timestamps.feb01_26);
                     // expect(loan2.contributingPools[1].poolTimestamp).to.equal(timestamps.mar01_26);
