@@ -30,17 +30,17 @@ const Home: NextPage = (props) => {
             <div className="w-full">
               <div className="flex flex-col ">
                 <div className="card w-full text-center">
-                  <div className="card-body text-base-100">
+                  <div className="card-body">
                     <div className="text-center">
                       {/*heading*/}
-                      <p className=" text-5xl font-bold text-base-100 w-100 leading-relaxed font-semibold">
+                      <p className=" text-5xl w-100 leading-relaxed font-semibold">
                         Borrow or lend USDC
                       </p>
-                      <p className=" text-5xl font-bold text-base-100 w-100 font-semibold ">
+                      <p className=" text-5xl w-100 font-semibold ">
                         with <span className="text-shrub-green font-medium">fixed</span> rates
                       </p>
 
-                      <p className=" text-5xl font-bold text-base-100 w-100 leading-relaxed font-light mb-10">
+                      <p className=" text-5xl w-100 leading-relaxed font-light mb-10">
                         (0 -8% APR)
                       </p>
 

@@ -54,7 +54,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
             <div className="md:hero-content flex flex-col">
                 <div className='mt-6 self-start'>
 
-                    <h1 className=" text-4xl font-medium text-base-100">
+                    <h1 className=" text-4xl font-medium ">
                         <button
                             className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600"onClick={onBack}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
@@ -71,7 +71,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                     <div className="absolute -inset-1 shadow-shrub border rounded-3xl "></div>
                     <div className="flex flex-col ">
                         <div className="card w-full">
-                            <div className="card-body text-base-100">
+                            <div className="card-body ">
                                 {!borrowSuccess && <div>
                                 <p className="text-lg font-bold pb-2 text-left">
                                     Borrow
@@ -154,7 +154,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                                 {/*    className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"*/}
                                 {/*    onClick={handleTakeLoan}>Deposit*/}
                                 {/*</button>*/}
-                                <Web3Button contractAddress={lendingPlatformAddress} className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
+                                <Web3Button contractAddress={lendingPlatformAddress} className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl !text-white hover:!bg-shrub-green-500 !mb-4"
 
                                     // uint256 _amount, // Amount of USDC with 6 decimal places
                                     // uint256 _collateral, // Amount of ETH collateral with 18 decimal places

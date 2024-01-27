@@ -52,7 +52,7 @@ const NavElement = ({
             chiplabel={chiplabel}
             passHref
             className={cn(
-                'group flex h-full flex-col items-center justify-between',
+                'group flex h-full flex-col items-center justify-between text-white',
                 disabled &&
                     'pointer-events-none cursor-not-allowed opacity-50'
             )}
