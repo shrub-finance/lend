@@ -99,10 +99,10 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
               <span>{localError}</span>
             </div>
           )}
-          <h1 className=" text-5xl font-bold text-base-100">
+          <h1 className=" text-5xl font-bold ">
             Lend
           </h1>
-          <p className="text-base-100 text-lg font-light pt-2">Supply your USDC on Shrub and earn up to <span
+          <p className=" text-lg font-light pt-2">Supply your USDC on Shrub and earn up to <span
             className="font-semibold">7-12% APY</span></p>
         </div>
 
@@ -110,12 +110,12 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
           <div className="absolute -inset-1 shadow-shrub border rounded-3xl"></div>
           <div className="flex flex-col mt-2">
             <div className="card w-full text-left">
-              <div className="card-body text-base-100">
+              <div className="card-body ">
                 {/*amount control*/}
                 <div className="form-control w-full">
                   <label className="label relative">
                     <span className="label-text text-shrub-blue text-md">Amount</span>
-                    <span className="label-text-alt text-base-100 text-xl font-semibold absolute right-4 top-[57px]">
+                    <span className="label-text-alt  text-xl font-semibold absolute right-4 top-[57px]">
                       <img src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub"/>USDC</span>
                   </label>
                   <input type="text" placeholder="Enter amount"
@@ -228,7 +228,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
 
                 {/*CTA*/}
                 <button
-                  className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl normal-case disabled:bg-shrub-grey-50
+                  className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
                   disabled:text-gray-50
                   disabled:border"

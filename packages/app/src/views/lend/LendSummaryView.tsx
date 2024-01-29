@@ -94,7 +94,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
             </div>
           )}
 
-          {!lendSuccess && <h1 className=" text-4xl font-medium text-base-100">
+          {!lendSuccess && <h1 className=" text-4xl font-medium ">
             <button onClick={onBackLend}
                     className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600">
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
@@ -113,7 +113,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
           <div className="absolute -inset-1 shadow-shrub border rounded-3xl "></div>
           <div className="flex flex-col ">
             <div className="card w-full text-left">
-              <div className="card-body text-base-100">
+              <div className="card-body ">
                 {!lendSuccess && <div>
                   <p className="text-lg font-bold pb-2">
                     Lend amount
@@ -182,7 +182,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                   <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row justify-between ">
                       <span className="">Current USDC balance</span>
-                      <span>{usdcBalanceData.displayValue} USDC</span>
+                      <span>{usdcBalanceData?.displayValue} USDC</span>
                     </div>
                     <div className="flex flex-row justify-between">
                       <span className="">Gas Cost</span>

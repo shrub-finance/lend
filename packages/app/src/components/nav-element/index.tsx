@@ -34,8 +34,8 @@ const NavElement = ({
                 divRef.current.className = cn(
                   'transition-all duration-300 ease-out ',
                   isActive
-                    ? 'bg-gray-900 text-shrub-green-200 rounded-btn font-semibold px-[12px] py-[8px]'
-                    : 'group-hover:bg-shrub-grey-900 hover:text-shrub-green-200 rounded-btn px-[12px] py-[8px]',
+                    ? 'bg-gray-900 text-shrub-green rounded-btn font-semibold px-[12px] py-[8px]'
+                    : 'group-hover:bg-shrub-grey-900 hover:text-shrub-green rounded-btn px-[12px] py-[8px]',
                 );
             }
 
@@ -52,7 +52,7 @@ const NavElement = ({
             chiplabel={chiplabel}
             passHref
             className={cn(
-                'group flex h-full flex-col items-center justify-between',
+                'group flex h-full flex-col items-center justify-between text-white',
                 disabled &&
                     'pointer-events-none cursor-not-allowed opacity-50'
             )}
