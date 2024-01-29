@@ -94,7 +94,12 @@ async function increaseTime(duration: number) {
     await ethers.provider.send('evm_mine');
 }
 
-async function setTime(desiredDate: Date) {
+async function increaseTimeNoMine(duration: number) {
+    // Increase the network time
+    await ethers.provider.send('evm_increaseTime', [duration]);
+}
+
+async function setTime(desiredDate: Date, mineBlock: Boolean = true) {
     const currentBlock = await ethers.provider.getBlock("latest");
     if (!currentBlock) {
         throw new Error('latest block not found');
@@ -104,7 +109,11 @@ async function setTime(desiredDate: Date) {
 
     // Calculate the difference in seconds
     const timeDiff = desiredTimestamp - currentTimestamp;
-    await increaseTime(timeDiff);
+    if (mineBlock) {
+        await increaseTime(timeDiff);
+    } else {
+        await increaseTimeNoMine(timeDiff);
+    }
 }
 
 
@@ -2280,6 +2289,199 @@ describe('testSuite', () => {
                     await expect(lendingPlatform.connect(borrower1).takeLoan(amount2, collateral2, ltv, timestamps.feb01_26, {value: collateral2})).to.be.revertedWith("Insufficient liquidity across pools");
                 });
             })
+        });
+        describe.only('takeSnapshot', () => {
+            before(async () => {
+                log("running takeSnapshot before");
+                log(`before tx block: ${await ethers.provider.getBlockNumber()}`);
+
+                // Blockchain transactions here
+
+                // Send 10000 USDC to both lender1 and lender2
+                // Approve 10000 USDC to the lendingPlatform for both lender1 and lender2
+                // Initialize 3 pools:
+                // 1-Jan-2026 1767225600
+                // 1-Feb-2026 1769904000
+                // 1-Mar-2026 1772323200
+                await usdc.transfer(lender1.getAddress(), parseUnits('10000', 6));
+                await usdc.transfer(lender2.getAddress(), parseUnits('10000', 6));
+
+                await usdc.connect(lender1).approve(lendingPlatform.getAddress(), parseUnits('10000', 6));
+                await usdc.connect(lender2).approve(lendingPlatform.getAddress(), parseUnits('10000', 6));
+
+                await lendingPlatform.createPool(timestamps.jan01_26);
+                await lendingPlatform.createPool(timestamps.feb01_26);
+                await lendingPlatform.createPool(timestamps.mar01_26);
+
+                // Tests for new state here
+                const lender1UsdcBalance = await usdc.balanceOf(lender1.address);
+                const lender2UsdcBalance = await usdc.balanceOf(lender2.address);
+                const lendingPool1 = await lendingPlatform.getLendingPool(timestamps.jan01_26);
+                const lendingPool2 = await lendingPlatform.getLendingPool(timestamps.feb01_26);
+                const lendingPool3 = await lendingPlatform.getLendingPool(timestamps.mar01_26);
+
+                expect(lender1UsdcBalance).to.equal(parseUnits('10000', 6));
+                expect(lender2UsdcBalance).to.equal(parseUnits('10000', 6));
+                expect(lendingPool1.poolShareTokenAddress).to.not.equal(ethers.ZeroAddress);
+                expect(lendingPool2.poolShareTokenAddress).to.not.equal(ethers.ZeroAddress);
+                expect(lendingPool3.poolShareTokenAddress).to.not.equal(ethers.ZeroAddress);
+
+                log(`after tx block: ${await ethers.provider.getBlockNumber()}`);
+
+                // Make a deposit into jan pool
+                await lendingPlatform.connect(lender1).deposit(timestamps.jan01_26, parseUnits('1000', 6));
+
+                // Tests for new state here
+                const totalLiquidityForPool = await lendingPlatform.getTotalLiquidity(timestamps.jan01_26);
+                expect(totalLiquidityForPool).to.equal(parseUnits('1000', 6));
+
+                log(`after tx block: ${await ethers.provider.getBlockNumber()}`);
+
+                await addSnapshot('Lend-takeSnapshot');
+            })
+
+            after(async () => {
+                log('running takeSnapshot after');
+                await setCurrentSnapshot('contractDeployment')
+            })
+
+            describe('general checks', () => {
+                it('should reject if the collateral sent is lower than the amount specified', async() => {
+                    const amount = parseUnits('1000', 6);
+                    const collateral = parseEther('1');
+                    const ltv = 0;
+
+                    await expect(lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: parseEther('0.1')})).to.be.revertedWith("Wrong amount of Ether provided.");
+                });
+                it('should reject if the collateral sent is higher than the amount specified', async() => {
+                    const amount = parseUnits('1000', 6);
+                    const collateral = parseEther('1');
+                    const ltv = 0;
+
+                    await expect(lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: parseEther('2')})).to.be.revertedWith("Wrong amount of Ether provided.");
+                });
+                it('should reject if an invalid pool is specified', async() => {
+                    const amount = parseUnits('1000', 6);
+                    const collateral = parseEther('1');
+                    const ltv = 0;
+
+                    await expect(lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26 + 1, {value: parseEther('1')})).to.be.revertedWith("Invalid pool");
+                });
+                it('should reject if specified ltv is less than the calculated ltv', async() => {
+                    const amount = parseUnits('1000', 6);
+                    const collateral = parseEther('1');
+                    const ltv = 25;
+
+                    await expect(lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: parseEther('1')})).to.be.revertedWith("Insufficient collateral provided for specified ltv");
+                });
+                it('should reject if the ltv specified is not a valid value', async() => {
+                    const amount = parseUnits('1000', 6);
+                    const collateral = parseEther('1');
+                    const ltv = 65;
+
+                    await expect(lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: parseEther('1')})).to.be.revertedWith("Invalid LTV");
+                });
+            });
+
+            it('should revert if called by non-owner', async () => {});
+            it.only('should work in the case of 1 LP and 1 BP', async () => {
+                // First loan taken at
+
+                const borrower1UsdcBalanceBefore = await usdc.balanceOf(borrower1.getAddress());
+                const borrower1EthBalanceBefore = await ethers.provider.getBalance(borrower1.getAddress());
+                const borrower2UsdcBalanceBefore = await usdc.balanceOf(borrower2.getAddress());
+                const borrower2EthBalanceBefore = await ethers.provider.getBalance(borrower2.getAddress());
+                const lendingPlatformUsdcBalanceBefore = await usdc.balanceOf(lendingPlatform.getAddress());
+                const lendingPlatformEthBalanceBefore = await ethers.provider.getBalance(lendingPlatform.getAddress());
+                const lendingPlatformAEthBalanceBefore = await aeth.balanceOf(lendingPlatform.getAddress());
+
+                expect(borrower1EthBalanceBefore).to.equal(parseEther('10000'));
+                expect(borrower2EthBalanceBefore).to.equal(parseEther('10000'));
+                expect(borrower1UsdcBalanceBefore).to.equal(0);
+                expect(borrower2UsdcBalanceBefore).to.equal(0);
+                expect(lendingPlatformUsdcBalanceBefore).to.equal(parseUnits('1000', 6));
+                expect(lendingPlatformEthBalanceBefore).to.equal(0);
+                expect(lendingPlatformAEthBalanceBefore).to.equal(0);
+
+                const amount = parseUnits('900', 6);
+                const collateral = parseEther('2');
+                const ltv = 25;
+
+                // Borrow 900 USDC in Jan2026 BP @ Dec 01 2025
+                await setTime(new Date('2025-12-01T00:00:00Z'), false);
+                const borrowTx = await lendingPlatform.connect(borrower1).takeLoan(amount, collateral, ltv, timestamps.jan01_26, {value: collateral});
+                const borrowReceipt = await borrowTx.wait();
+                assert(borrowReceipt);
+                const borrowBlock = await borrowReceipt.getBlock();
+                const txFee = borrowReceipt.gasUsed * borrowTx.gasPrice;
+                expect(borrowBlock.timestamp).to.equal(toEthDate(new Date('2025-12-01T00:00:00Z')));
+
+                const amount2 = parseUnits('100', 6);
+                const collateral2 = parseEther('1');
+                const ltv2 = 33;
+
+                await setTime(new Date('2025-12-01T06:00:00Z'), false);
+                const borrowTx2 = await lendingPlatform.connect(borrower2).takeLoan(amount2, collateral2, ltv2, timestamps.jan01_26, {value: collateral2});
+                const borrowReceipt2 = await borrowTx2.wait();
+                assert(borrowReceipt2);
+                const borrowBlock2 = await borrowReceipt2.getBlock();
+                const txFee2 = borrowReceipt2.gasUsed * borrowTx2.gasPrice;
+                expect(borrowBlock2.timestamp).to.equal(toEthDate(new Date('2025-12-01T06:00:00Z')));
+
+                const borrower1UsdcBalanceAfter = await usdc.balanceOf(borrower1.getAddress());
+                const borrower1EthBalanceAfter = await ethers.provider.getBalance(borrower1.getAddress());
+                const borrower2UsdcBalanceAfter = await usdc.balanceOf(borrower2.getAddress());
+                const borrower2EthBalanceAfter = await ethers.provider.getBalance(borrower2.getAddress());
+                const lendingPlatformUsdcBalanceAfter = await usdc.balanceOf(lendingPlatform.getAddress());
+                const lendingPlatformEthBalanceAfter = await ethers.provider.getBalance(lendingPlatform.getAddress());
+                const lendingPlatformAEthBalanceAfter = await aeth.balanceOf(lendingPlatform.getAddress());
+
+                expect(borrower1UsdcBalanceAfter).to.equal(parseUnits('900', 6));
+                expect(borrower1EthBalanceAfter).to.equal(parseEther('10000') - txFee - parseEther('2'));
+                expect(borrower2UsdcBalanceAfter).to.equal(parseUnits('100', 6));
+                expect(borrower2EthBalanceAfter).to.equal(parseEther('10000') - txFee2 - parseEther('1'));
+                expect(lendingPlatformUsdcBalanceAfter).to.equal(0);
+                expect(lendingPlatformEthBalanceAfter).to.equal(parseEther('0'));
+                expect(lendingPlatformAEthBalanceAfter).to.equal(parseEther('3'));
+
+                const janPool = await lendingPlatform.getLendingPool(timestamps.jan01_26);
+                expect(janPool.totalLoans).to.equal(parseUnits('1000', 6));
+
+                const newLoanEvent = await lendingPlatform.getEvent("NewLoan");
+                const events = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt.blockNumber, borrowReceipt.blockNumber);
+                const events2 = await lendingPlatform.queryFilter(newLoanEvent, borrowReceipt2.blockNumber, borrowReceipt2.blockNumber);
+                expect(events.length).to.equal(1);
+                expect(events2.length).to.equal(1);
+                const tokenId = events[0].args.tokenId;
+                const tokenId2 = events2[0].args.tokenId;
+
+                const loan1 = await borrowPositionToken.getLoan(tokenId);
+                const loan2 = await borrowPositionToken.getLoan(tokenId2);
+                // const loan = await lendingPlatform.getLoan(borrower2.getAddress(), timestamps.jan01_26);
+                expect(loan1.principal).to.equal(parseUnits('900', 6));
+                expect(loan1.collateral).to.equal(parseEther('2'));
+                expect(loan1.apy).to.equal(parseUnits('1', 6));
+                expect(loan1.endDate).to.equal(timestamps.jan01_26);
+                expect(loan2.principal).to.equal(parseUnits('100', 6));
+                expect(loan2.collateral).to.equal(parseEther('1'));
+                expect(loan2.apy).to.equal(parseUnits('5', 6));
+                expect(loan2.endDate).to.equal(timestamps.jan01_26);
+                // expect(loan.contributingPools.length).to.equal(1);
+                // expect(loan.contributingPools[0].poolTimestamp).to.equal(timestamps.jan01_26);
+                // expect(loan.contributingPools[0].liquidityContribution).to.equal(parseUnits('1', 8));
+
+                const totalAvailableLiquidity = await lendingPlatform.getAvailableForPeriod(timestamps.jan01_26)
+                expect(totalAvailableLiquidity).to.equal(parseUnits('0', 6));
+
+                // The snapshot will take place at midnight on Dec2
+                // loan 1 is for 900 USDC and with 1% APY (24 hours)
+                // loan 2 is for 100 USDC with 5% APY (18 hours)
+
+            });
+            it('should work in the case of multiple LPs and 1 BP', async () => {});
+            it('should work in the case of 1 LP and multiple BPs', async () => {});
+            it('should work in the case of multiple LPs and multiple BPs', async () => {});
+            it('should revert if aETH yield is negative', async () => {});
         });
         describe('partialRepayLoan', () => {});
         describe('repayLoan', () => {});

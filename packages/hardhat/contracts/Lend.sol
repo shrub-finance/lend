@@ -579,7 +579,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //            bptsForPool is an array of tokenIds
             uint[] memory bptsForPool = bpt.getTokensByTimestamp(uint40(activePools[i]));
             uint accumInterestBP = 0;
-//            # Loop through the BPTs in order to calculate their accumYield
+//            # Loop through the BPTs in order to calculate their accumInterest
             for (uint j = 0; j < bptsForPool.length; j++) {
                 accumInterestBP +=  bpt.interestSinceTimestamp(j, lastSnapshotDate);
             }
@@ -595,6 +595,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
                 lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].totalLiquidity / contributionDenominator;
                 lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].totalLiquidity / contributionDenominator;
             }
+
+            // set the last snapshot date to now
+            lastSnapshotDate = block.timestamp;
         }
     }
 
