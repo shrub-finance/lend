@@ -68,15 +68,15 @@ export const DashboardView: FC = ({}) => {
   return (
 
     <div className="md:hero mx-auto p-4">
-      <div className="md:hero-content flex flex-col">
+      <div className="md:hero-content flex flex-col bg-shrub-grey-light">
 
 
-        <div className="relative group mt-4 w-full bg-shrub-grey-light">
+        <div className="relative group mt-4 w-full ">
           <div className="flex flex-col">
-            <div className="card w-full text-left">
-              <div className="card-body">
+            <div className="card w-full text-left ">
+              <div className="card-body ">
 
-                <div className="flex-col gap-2">
+                <div className="flex-col gap-2 ">
                   <div className="flex flex-row text-lg ">
                                         <span className="w-[500px]"><h1
                                           className=" text-[36px] font-semibold self-start leading-9">
@@ -102,7 +102,7 @@ export const DashboardView: FC = ({}) => {
 
                     <ul className="flex flex-col gap-4">
                       <li className="mr-4">
-                        <div className="relative overflow-x-auto -inset-1 shadow-shrub border rounded-2xl">
+                        <div className="relative overflow-x-auto border rounded-2xl">
                           <table className="w-full text-left text-shrub-grey  dark:text-gray-400">
                             <caption
                               className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
@@ -128,9 +128,6 @@ export const DashboardView: FC = ({}) => {
                               </th>
                               <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
                                 Unlock Rate
-                              </th>
-                              <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
-
                               </th>
                               <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
 
@@ -165,22 +162,18 @@ export const DashboardView: FC = ({}) => {
 
                               </td>
                               <td className="px-1 py-4 text-sm font-bold">
-
-                                <button type="button"
-                                        className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Redeem
-                                </button>
-
-
+                                <div className="flex items-center justify-center space-x-2 h-full p-2">
+                                  <button type="button"
+                                          className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                    Redeem
+                                  </button>
+                                  <button type="button"
+                                          className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                    <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20} className="mr-2"/>
+                                    Trade
+                                  </button>
+                                </div>
                               </td>
-                              <td className="px-1 py-4 text-sm font-bold">
-                                <button type="button"
-                                        className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
-                                  <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20}
-                                         className="mr-2"/>
-                                  Trade
-                                </button>
-                              </td>
-
 
                             </tr>
                             </tbody>
@@ -188,7 +181,7 @@ export const DashboardView: FC = ({}) => {
                         </div>
                       </li>
                       <li className="mr-4">
-                        <div className="relative overflow-x-auto -inset-1 shadow-shrub border rounded-2xl">
+                        <div className="relative overflow-x-auto border rounded-2xl">
                           <table className="w-full text-left text-shrub-grey  dark:text-gray-400">
                             <caption
                               className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
@@ -216,9 +209,7 @@ export const DashboardView: FC = ({}) => {
                               <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
                                 Due Date
                               </th>
-                              <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
 
-                              </th>
                             </tr>
                             </thead>
                             <tbody className="text-lg">
