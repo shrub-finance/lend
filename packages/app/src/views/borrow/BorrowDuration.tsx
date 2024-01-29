@@ -21,7 +21,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col">
         <div className='mt-6 self-start'>
-          <h1 className=" text-4xl font-bold text-base-100">
+          <h1 className=" text-4xl font-bold ">
             <button onClick={onBackDuration}
               className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600">
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" className="w-6 grow-0 order-0 flex-none ml-[16px] mt-[4px]">
@@ -29,7 +29,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
               </svg>
             </button> Duration
           </h1>
-          <p className="text-base-100 text-lg font-light pt-2">Borrow USDC on Shrub with fixed-rates as low as<span
+          <p className="text-lg font-light pt-2">Borrow USDC on Shrub with fixed-rates as low as<span
             className="font-semibold">&nbsp;0%</span></p>
 
         </div>
@@ -38,7 +38,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
           <div className="absolute -inset-1 shadow-shrub border rounded-3xl "></div>
           <div className="flex flex-col ">
             <div className="card w-full text-left">
-              <div className="card-body text-base-100">
+              <div className="card-body ">
 
                 <div className="flex-col gap-2">
                   <div className="flex flex-row text-lg ">
@@ -111,7 +111,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
                 {/*cta*/}
                 <button onClick={handleDurationContinue}
-                  className="btn btn-block bg-shrub-green border-0 normal-case text-xl hover:bg-shrub-green-500">Continue
+                  className="btn btn-block bg-shrub-green border-0 normal-case text-white text-xl hover:bg-shrub-green-500">Continue
                 </button>
               </div>
             </div>

@@ -1,10 +1,10 @@
 import {FC, useEffect, useState} from "react";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
-import {useAddress, useBalance, useConnectedWallet, useContract, useContractRead} from "@thirdweb-dev/react";
+import {useBalance, useConnectedWallet, useContract, useContractRead} from "@thirdweb-dev/react";
 
 import {lendingPlatformAddress, lendingPlatformAbi, usdcAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
-import {timestamps, toEthDate} from "../../utils/ethMethods";
+import {toEthDate} from "../../utils/ethMethods";
 import {calculateLockupPeriod, formatDate, getPlatformDates} from "@shrub-lend/common";
 
 interface LendViewProps {
@@ -15,7 +15,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const w = useConnectedWallet();
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
-  const walletAddress = useAddress();
+
 
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
@@ -23,7 +23,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const [lendAmount, setLendAmount] = useState("0");
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
-  // const [lockupPeriod, setLockupPeriod] = useState("");
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
   const [supplyButtonPressed, setSupplyButtonPressed] = useState(false);
@@ -34,11 +33,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
     isLoading: lendingPlatformIsLoading,
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
-  // const {
-  //   data: totalAvailableLiquidityOneYearFromNow,
-  //   isLoading: totalAvailableLiquidityOneYearFromNowIsLoading,
-  //   error: totalAvailableLiquidityOneYearFromNowError
-  // } = useContracteContractRead(lendingPlatform, 'getTotalAvailableLiquidity', [toEthDate(oneYearFromNow)])
 
     const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
 
@@ -63,6 +57,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
     }
 
   };
+  
 
   useEffect(() => {
     if (timestamp) {
@@ -104,10 +99,10 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
               <span>{localError}</span>
             </div>
           )}
-          <h1 className=" text-5xl font-bold text-base-100">
+          <h1 className=" text-5xl font-bold ">
             Lend
           </h1>
-          <p className="text-base-100 text-lg font-light pt-2">Supply your USDC on Shrub and earn up to <span
+          <p className=" text-lg font-light pt-2">Supply your USDC on Shrub and earn up to <span
             className="font-semibold">7-12% APY</span></p>
         </div>
 
@@ -115,12 +110,12 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
           <div className="absolute -inset-1 shadow-shrub border rounded-3xl"></div>
           <div className="flex flex-col mt-2">
             <div className="card w-full text-left">
-              <div className="card-body text-base-100">
+              <div className="card-body ">
                 {/*amount control*/}
                 <div className="form-control w-full">
                   <label className="label relative">
                     <span className="label-text text-shrub-blue text-md">Amount</span>
-                    <span className="label-text-alt text-base-100 text-xl font-semibold absolute right-4 top-[57px]">
+                    <span className="label-text-alt  text-xl font-semibold absolute right-4 top-[57px]">
                       <img src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub"/>USDC</span>
                   </label>
                   <input type="text" placeholder="Enter amount"
@@ -231,15 +226,15 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   </div>
                 )}
 
-                {/*cta*/}
+                {/*CTA*/}
                 <button
-                  className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl normal-case disabled:bg-shrub-grey-50
+                  className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
                   disabled:text-gray-50
                   disabled:border"
                   onClick={handleLendContinue}
                   disabled={Number(lendAmount) <= 0 || !timestamp}
-                >Supply USDC</button>
+                >Continue</button>
               </div>
             </div>
           </div>
