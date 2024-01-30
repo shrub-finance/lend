@@ -4,17 +4,18 @@ type User @entity(immutable: true) {
 }
 
 type LendingPool @entity {
-    "timestamp"
+    "poolShareToken address"
     id: ID!
-    poolShareTokenAddress: Bytes!
+    timestamp: BigInt!
+#    poolShareTokenAddress: Bytes!
     txid: Bytes!
     created: Int!
     createdBlock: Int!
     totalUsdc: BigInt!
-    usdcAvailable: BigInt!
     totalEthYield: BigInt!
     totalUsdcInterest: BigInt!
     tokenSupply: BigInt!
+#    lastSnapshot: BigInt!
 }
 
 type BorrowingPool @entity {
@@ -44,4 +45,6 @@ type LendPosition @entity {
     lendingPool: LendingPool
     user: User
     amount: BigInt!
+    deposits: BigInt!
+    withdraws: BigInt!
 }

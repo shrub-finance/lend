@@ -73,7 +73,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     uint aEthSnapshotBalance;
 
     event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
-    event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
+    event NewDeposit(uint256 timestamp, address poolShareTokenAddress, address depositor, uint256 amount);
     event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 principal, uint32 apy);
     event PartialRepayLoan(uint tokenId, uint repaymentAmount);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
@@ -347,6 +347,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         lendingPools[_timestamp].poolShareToken.mint(msg.sender, poolShareTokenAmount);
         emit NewDeposit(
             _timestamp,
+            address(lendingPools[_timestamp].poolShareToken),
             _msgSender(),
             _amount
         );
