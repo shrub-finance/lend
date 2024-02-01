@@ -25,7 +25,7 @@ dataSources:
       eventHandlers:
         - event: PoolCreated(uint256,address)
           handler: handlePoolCreated
-        - event: NewDeposit(uint256,address,address,uint256)
+        - event: NewDeposit(uint256,address,address,uint256,uint256)
           handler: handleNewDeposit
         - event: NewLoan(uint256,uint256,address,uint256,uint256,uint32)
           handler: handleNewLoan

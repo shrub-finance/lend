@@ -3,7 +3,12 @@ import {
     PoolCreated
 } from "../generated/Contract/LendingPlatform"
 import { log } from '@graphprotocol/graph-ts'
-import {createLendingPool, getLendingPool, lendingPoolDeposit} from "./entities/lending-pool";
+import {
+    createLendingPool,
+    getLendingPool,
+    lendingPoolDeposit,
+    lendingPoolIncrementTokenSupply
+} from "./entities/lending-pool";
 import {getUser} from "./entities/user";
 import {addLoanToPool, getBorrowingPool} from "./entities/borrowing-pool";
 import {getLoan} from "./entities/loan";
@@ -32,6 +37,7 @@ export function handleNewDeposit(event: NewDeposit): void {
     let amount = event.params.amount;
     let timestamp = event.params.timestamp;
     let poolShareTokenAddress = event.params.poolShareTokenAddress;
+    let tokenAmount = event.params.tokenAmount;
     // event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
     // Create User
     getUser(depositor);
@@ -41,6 +47,13 @@ export function handleNewDeposit(event: NewDeposit): void {
         // tokenSupply
     let lendingPool = getLendingPool(poolShareTokenAddress);
     lendingPoolDeposit(lendingPool, amount);
+
+    // Logic for handling the lendPosition part
+    // Increment the totalSupply of tokens for the lendingPool
+    lendingPoolIncrementTokenSupply(lendingPool, tokenAmount);
+    // // Increment the number of tokens for the to
+    let lendPosition = getLendPosition(depositor, lendingPool);
+    incrementLendPosition(lendPosition, tokenAmount);
 }
 
 export function handleNewLoan(event: NewLoan): void {

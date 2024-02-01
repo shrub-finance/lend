@@ -18,6 +18,7 @@ export function incrementLendPosition(
     amount: BigInt
 ): LendPosition {
     lendPosition.amount = lendPosition.amount.plus(amount);
+    lendPosition.depositsUsdc = lendPosition.depositsUsdc.plus(amount);
     lendPosition.save();
     return lendPosition;
 }
@@ -63,8 +64,8 @@ export function createLendPosition(
     lendPosition.amount = Zero;
     lendPosition.lendingPool = lendingPool.id;
     lendPosition.user = user.toHexString();
-    lendPosition.deposits = Zero;
-    lendPosition.withdraws = Zero;
+    lendPosition.depositsUsdc = Zero;
+    lendPosition.withdrawsUsdc = Zero;
     return lendPosition;
 }
 
