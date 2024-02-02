@@ -11,6 +11,8 @@ import {usdcAddress, lendingPlatformAddress, lendingPlatformAbi} from "../utils/
 import {ethers} from "ethers";
 import Image from "next/image";
 import {formatDate} from "@shrub-lend/common";
+import {USER_POSITIONS_QUERY} from "../constants/queries";
+import {useQuery} from "@apollo/client";
 
 const now = new Date();
 const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
@@ -31,6 +33,17 @@ export const DashboardView: FC = ({}) => {
     isLoading: totalAvailableLiquidityOneYearFromNowIsLoading,
     error: totalAvailableLiquidityOneYearFromNowError
   } = useContractRead(lendingPlatform, 'getTotalAvailableLiquidity', [toEthDate(oneYearFromNow)])
+    const {
+        loading: userPositionsDataLoading,
+        error: userPositionsDataError,
+        data: userPositionsData,
+        startPolling: userPositionsDataStartPolling,
+        stopPolling: userPositionsDataStopPolling,
+    } = useQuery(USER_POSITIONS_QUERY, {
+        variables: {
+            user: walletAddress && walletAddress.toLowerCase(),
+        },
+    });
 
   useEffect(() => {
     console.log('running contract useEffect');
@@ -64,6 +77,12 @@ export const DashboardView: FC = ({}) => {
       console.log(totalAvailableLiquidityOneYearFromNow);
     }
   })
+
+    useEffect(() => {
+        console.log('running userPositionsData useEffect');
+        console.log(userPositionsData);
+    }, [userPositionsDataLoading]);
+
 
   return (
 
@@ -127,7 +146,7 @@ export const DashboardView: FC = ({}) => {
                                 Earned
                               </th>
                               <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
-                                Unlock Rate
+                                Unlock Date
                               </th>
                               <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
 

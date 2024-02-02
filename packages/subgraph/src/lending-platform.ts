@@ -77,6 +77,7 @@ export function handleNewLoan(event: NewLoan): void {
         event.params.apy,
         event.params.principal,
         event.params.collateral,
+        event.params.timestamp,
         event.block
     )
     // create a new loanposition

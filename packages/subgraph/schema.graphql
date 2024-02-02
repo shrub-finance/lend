@@ -2,6 +2,7 @@ type User @entity(immutable: true) {
     "address"
     id: ID!
     lendPositions: [LendPosition!]! @derivedFrom(field: "user")
+    loans: [Loan!]! @derivedFrom(field: "user")
 #    optionPositions: [OptionPosition!]! @derivedFrom(field: "userOption")
 }
 
@@ -34,11 +35,12 @@ type Loan @entity(immutable: true) {
     id: ID!
     created: Int!
     createdBlock: Int!
+    timestamp: BigInt!
     amount: BigInt!
     collateral: BigInt!
     ltv: Int!
     apy: Int!
-    owner: User
+    user: User
 }
 
 type LendPosition @entity {
