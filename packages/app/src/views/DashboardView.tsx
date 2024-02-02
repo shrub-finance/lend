@@ -12,7 +12,7 @@ import {ethers} from "ethers";
 import Image from "next/image";
 import {formatDate} from "@shrub-lend/common";
 import {USER_POSITIONS_QUERY} from "../constants/queries";
-import {useQuery} from "@apollo/client";
+import {useQuery, useLazyQuery} from "@apollo/client";
 
 const now = new Date();
 const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
@@ -33,13 +33,13 @@ export const DashboardView: FC = ({}) => {
     isLoading: totalAvailableLiquidityOneYearFromNowIsLoading,
     error: totalAvailableLiquidityOneYearFromNowError
   } = useContractRead(lendingPlatform, 'getTotalAvailableLiquidity', [toEthDate(oneYearFromNow)])
-    const {
+    const [getUserPositions, {
         loading: userPositionsDataLoading,
         error: userPositionsDataError,
         data: userPositionsData,
         startPolling: userPositionsDataStartPolling,
         stopPolling: userPositionsDataStopPolling,
-    } = useQuery(USER_POSITIONS_QUERY, {
+    }] = useLazyQuery(USER_POSITIONS_QUERY, {
         variables: {
             user: walletAddress && walletAddress.toLowerCase(),
         },
@@ -79,9 +79,29 @@ export const DashboardView: FC = ({}) => {
   })
 
     useEffect(() => {
-        console.log('running userPositionsData useEffect');
+        console.log('running walletAddress useEffect');
+        if (!walletAddress) {
+            // walletAddress has not been fetched yet
+            return;
+        }
+        console.log(walletAddress);
+        getUserPositions();
+    }, [walletAddress]);
+
+    useEffect(() => {
+        console.log('running userPositionsDataLoading useEffect');
+        console.log(`userPositionsDataLoading: ${userPositionsDataLoading}`);
+        if (userPositionsDataLoading) {
+            return;
+        }
+        console.log('userPositionsData');
         console.log(userPositionsData);
+        console.log('userPositionsError');
+        console.log(userPositionsDataError)
+        console.log(userPositionsData?.user?.lendPositions)
     }, [userPositionsDataLoading]);
+
+    const testVar = "2";
 
 
   return (
@@ -127,7 +147,7 @@ export const DashboardView: FC = ({}) => {
                               className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
                               Earning
                               <span
-                                className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">Total of 3 contracts</span>
+                                className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">Total of {testVar} contracts</span>
 
                             </caption>
                             <thead
@@ -153,57 +173,111 @@ export const DashboardView: FC = ({}) => {
                               </th>
                             </tr>
                             </thead>
-                            <tbody className="text-lg">
-                            <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                              <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
-                                <p>{ethers.utils.formatEther(
-                                  ethBalance.value
-                                    .div(ethers.utils.parseUnits('1', 15))
-                                    .mul(ethers.utils.parseUnits('1', 15))
-                                )}</p>
-                              ) : (
-                                <p className="text-sm">Loading ETH balance...</p>
-                              )}</td>
-                              <td className="px-6 py-4 text-sm font-bold">
-                                {wallet && !usdcBalanceIsLoading ? (
-                                  <p>{(usdcBalance.displayValue || 0).toLocaleString()}</p>
-                                ) : (
-                                  <p className="text-sm">Loading USDC balance...</p>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 text-sm font-bold">
-                                {walletAddress}
-                              </td>
-                              <td className="px-6 py-4 text-sm font-bold">
+                              <tbody className="text-lg">
+                              {userPositionsData?.user?.lendPositions?.map((item, index) => (
+                                  <tr key={`earnRow-${index}`} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                      {/*<td><p>Hi</p></td>*/}
+                                      {/*<td> Hi</td>*/}
+                                      {/*<td> Hi</td>*/}
+                                      {/*<td> Hi</td>*/}
+                                      {/*<td> Hi</td>*/}
+                                      {/*<td> Hi</td>*/}
+                                      <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
+                                          <p>{ethers.utils.formatUnits(
+                                              item.depositsUsdc, 6
+                                          )}</p>
+                                      ) : (
+                                          <p className="text-sm">Loading ETH balance...</p>
+                                      )}</td>
+                                      <td className="px-6 py-4 text-sm font-bold">
+                                          Current Value
+                                      </td>
+                                      <td className="px-6 py-4 text-sm font-bold">
+                                          X%
+                                      </td>
+                                      <td className="px-6 py-4 text-sm font-bold">
+                                          Earned
+                                      </td>
+                                      <td className="px-6 py-4 text-sm font-bold">
+                                          {fromEthDate(item.lendingPool.timestamp).toLocaleString()}
+                                      </td>
+                                      <td className="px-1 py-4 text-sm font-bold">
+                                          <div className="flex items-center justify-center space-x-2 h-full p-2">
+                                              <button type="button"
+                                                      className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                                  Redeem
+                                              </button>
+                                              <button type="button"
+                                                      className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                                  <Image src="/up-right-arrow.svg" alt="down arrow" width={20}
+                                                         height={20}
+                                                         className="mr-2"/>
+                                                  Trade
+                                              </button>
+                                          </div>
+                                      </td>
 
-                              </td>
-                              <td className="px-6 py-4 text-sm font-bold">
+                                  </tr>
+                              ))}
+                              {/*<tr key={"99"}>*/}
+                              {/*    <td><p>Hi</p></td>*/}
+                              {/*    <td> Hi</td>*/}
+                              {/*    <td> Hi</td>*/}
+                              {/*    <td> Hi</td>*/}
+                              {/*    <td> Hi</td>*/}
+                              {/*    <td> Hi</td>*/}
+                              {/*</tr>*/}
+                              <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                  <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
+                                      <p>{ethers.utils.formatEther(
+                                          ethBalance.value
+                                              .div(ethers.utils.parseUnits('1', 15))
+                                              .mul(ethers.utils.parseUnits('1', 15))
+                                      )}</p>
+                                  ) : (
+                                      <p className="text-sm">Loading ETH balance...</p>
+                                  )}</td>
+                                  <td className="px-6 py-4 text-sm font-bold">
+                                      {wallet && !usdcBalanceIsLoading ? (
+                                          <p>{(usdcBalance.displayValue || 0).toLocaleString()}</p>
+                                      ) : (
+                                          <p className="text-sm">Loading USDC balance...</p>
+                                      )}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm font-bold">
+                                      {walletAddress}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm font-bold">
 
-                              </td>
-                              <td className="px-1 py-4 text-sm font-bold">
-                                <div className="flex items-center justify-center space-x-2 h-full p-2">
-                                  <button type="button"
-                                          className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
-                                    Redeem
-                                  </button>
-                                  <button type="button"
-                                          className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
-                                    <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20} className="mr-2"/>
-                                    Trade
-                                  </button>
-                                </div>
-                              </td>
+                                  </td>
+                                  <td className="px-6 py-4 text-sm font-bold">
 
-                            </tr>
-                            </tbody>
+                                  </td>
+                                  <td className="px-1 py-4 text-sm font-bold">
+                                      <div className="flex items-center justify-center space-x-2 h-full p-2">
+                                          <button type="button"
+                                                  className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                              Redeem
+                                          </button>
+                                          <button type="button"
+                                                  className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                              <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20}
+                                                     className="mr-2"/>
+                                              Trade
+                                          </button>
+                                      </div>
+                                  </td>
+
+                              </tr>
+                              </tbody>
                           </table>
                         </div>
                       </li>
-                      <li className="mr-4">
-                        <div className="relative overflow-x-auto border rounded-2xl">
-                          <table className="w-full text-left text-shrub-grey  dark:text-gray-400">
-                            <caption
-                              className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
+                        <li className="mr-4">
+                            <div className="relative overflow-x-auto border rounded-2xl">
+                                <table className="w-full text-left text-shrub-grey  dark:text-gray-400">
+                                    <caption
+                                        className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
                               Borrowing
 
                             </caption>
@@ -232,43 +306,83 @@ export const DashboardView: FC = ({}) => {
                             </tr>
                             </thead>
                             <tbody className="text-lg">
+
+                            {userPositionsData?.user?.loans?.map((item, index) => (
+                                <tr key={`borrowRow-${index}`} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                    <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
+                                        <p>{ethers.utils.formatUnits(item.amount, 6)}</p>
+                                    ) : (
+                                        <p className="text-sm">Loading ETH balance...</p>
+                                    )}</td>
+                                    <td className="px-6 py-4 text-sm font-bold">
+                                        0
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold">
+                                        time until due
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold">
+                                        <p>{ethers.utils.formatUnits(item.apy, 6)}</p>
+                                        {/*<p>{ethers.utils.parseUnits(item.apy, 6)}</p>*/}
+                                        {/*{ethers.utils.parseUnits(item.apy, 6)}*/}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold">
+                                        remaining balance
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold">
+                                        {fromEthDate(item.timestamp).toLocaleString()}
+                                    </td>
+                                    <td className="px-1 py-4 text-sm font-bold">
+                                        <button type="button"
+                                                className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                            <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20}
+                                                   className="mr-2"/>
+                                            Pay
+                                        </button>
+                                    </td>
+
+
+                                </tr>
+
+                            ))}
+
+
                             <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                              <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
-                                <p>{ethers.utils.formatEther(
-                                  ethBalance.value
-                                    .div(ethers.utils.parseUnits('1', 15))
-                                    .mul(ethers.utils.parseUnits('1', 15))
-                                )}</p>
-                              ) : (
-                                <p className="text-sm">Loading ETH balance...</p>
-                              )}</td>
-                              <td className="px-6 py-4 text-sm font-bold">
-                                {wallet && !usdcBalanceIsLoading ? (
-                                  <p>{(usdcBalance.displayValue || 0).toLocaleString()}</p>
+                                <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
+                                    <p>{ethers.utils.formatEther(
+                                        ethBalance.value
+                                            .div(ethers.utils.parseUnits('1', 15))
+                                            .mul(ethers.utils.parseUnits('1', 15))
+                                    )}</p>
                                 ) : (
-                                  <p className="text-sm">Loading USDC balance...</p>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 text-sm font-bold">
-                                {walletAddress}
-                              </td>
-                              <td className="px-6 py-4 text-sm font-bold">
-                                {walletAddress}
-                              </td>
-                              <td className="px-6 py-4 text-sm font-bold">
-                                {walletAddress}
-                              </td>
-                              <td className="px-6 py-4 text-sm font-bold">
-                                {walletAddress}
-                              </td>
-                              <td className="px-1 py-4 text-sm font-bold">
-                                <button type="button"
-                                        className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
-                                  <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20}
-                                         className="mr-2"/>
-                                  Pay
-                                </button>
-                              </td>
+                                    <p className="text-sm">Loading ETH balance...</p>
+                                )}</td>
+                                <td className="px-6 py-4 text-sm font-bold">
+                                    {wallet && !usdcBalanceIsLoading ? (
+                                        <p>{(usdcBalance.displayValue || 0).toLocaleString()}</p>
+                                    ) : (
+                                        <p className="text-sm">Loading USDC balance...</p>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 text-sm font-bold">
+                                    {walletAddress}
+                                </td>
+                                <td className="px-6 py-4 text-sm font-bold">
+                                    {walletAddress}
+                                </td>
+                                <td className="px-6 py-4 text-sm font-bold">
+                                    {walletAddress}
+                                </td>
+                                <td className="px-6 py-4 text-sm font-bold">
+                                    {walletAddress}
+                                </td>
+                                <td className="px-1 py-4 text-sm font-bold">
+                                    <button type="button"
+                                            className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                        <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20}
+                                               className="mr-2"/>
+                                        Pay
+                                    </button>
+                                </td>
 
 
                             </tr>

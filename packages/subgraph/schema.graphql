@@ -38,8 +38,8 @@ type Loan @entity(immutable: true) {
     timestamp: BigInt!
     amount: BigInt!
     collateral: BigInt!
-    ltv: Int!
-    apy: Int!
+    ltv: BigInt!
+    apy: BigInt!
     user: User
 }
 

@@ -28,6 +28,7 @@ export const USER_POSITIONS_QUERY = gql`
             loans{
                 id
                 timestamp
+                amount
                 collateral
                 created
                 createdBlock

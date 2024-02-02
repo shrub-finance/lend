@@ -8,11 +8,10 @@ import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
 require('../styles/globals.css');
 
 const activeChain = "localhost";
-console.log(`client uri - ${process.env.NEXT_PUBLIC_SUBGRAPH_QUERY}`)
 const client = new ApolloClient({
     uri: process.env.NEXT_PUBLIC_SUBGRAPH_QUERY,
     cache: new InMemoryCache(),
-    connectToDevTools: process.env.REACT_APP_ENVIRONMENT === "development",
+    connectToDevTools: process.env.NEXT_PUBLIC_ENVIRONMENT === "development",
 });
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
