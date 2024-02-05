@@ -7,7 +7,13 @@ import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 
 // Custom
 import {toEthDate, fromEthDate} from "../utils/ethMethods";
-import {usdcAddress, lendingPlatformAddress, lendingPlatformAbi} from "../utils/contracts";
+import {
+    usdcAddress,
+    lendingPlatformAddress,
+    lendingPlatformAbi,
+    chainlinkAggregatorAbi,
+    chainlinkAggregatorAddress
+} from "../utils/contracts";
 import {ethers} from "ethers";
 import Image from "next/image";
 import {formatDate} from "@shrub-lend/common";
@@ -23,16 +29,22 @@ export const DashboardView: FC = ({}) => {
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
   const walletAddress = useAddress();
+  const [ethPrice, setEthPrice] = useState("");
   const {
     contract: lendingPlatform,
     isLoading: lendingPlatformIsLoading,
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
   const {
-    data: totalAvailableLiquidityOneYearFromNow,
-    isLoading: totalAvailableLiquidityOneYearFromNowIsLoading,
-    error: totalAvailableLiquidityOneYearFromNowError
-  } = useContractRead(lendingPlatform, 'getTotalAvailableLiquidity', [toEthDate(oneYearFromNow)])
+      contract: chainLinkAggregator,
+      isLoading: chainLinkAggregatorIsLoading,
+      error: chainLinkAggregatorError
+  } = useContract(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
+    const {
+        data: usdcEthRoundData,
+        isLoading: usdcEthRoundIsLoading,
+        error: usdcEthRoundError
+    } = useContractRead(chainLinkAggregator, 'latestRoundData', [])
     const [getUserPositions, {
         loading: userPositionsDataLoading,
         error: userPositionsDataError,
@@ -71,13 +83,6 @@ export const DashboardView: FC = ({}) => {
     console.log(ethBalance);
   }, [ethBalanceIsLoading])
 
-  useEffect(() => {
-    console.log('running totalLiquidityOneYearFromNow useEffect');
-    if (!totalAvailableLiquidityOneYearFromNowIsLoading && !totalAvailableLiquidityOneYearFromNowError) {
-      console.log(totalAvailableLiquidityOneYearFromNow);
-    }
-  })
-
     useEffect(() => {
         console.log('running walletAddress useEffect');
         if (!walletAddress) {
@@ -102,6 +107,19 @@ export const DashboardView: FC = ({}) => {
     }, [userPositionsDataLoading]);
 
     const testVar = "2";
+
+    useEffect(() => {
+        console.log('running usdcEthRound useEffect')
+        if (usdcEthRoundData) {
+            console.log(usdcEthRoundData);
+            const invertedPrice = usdcEthRoundData.answer;
+            console.log(ethers.utils.formatUnits(invertedPrice, 18));
+            const ethPriceTemp = ethers.utils.parseUnits("1", 24).div(invertedPrice);
+            // console.log(ethers.utils.formatUnits(ethPriceTemp, 6));
+            setEthPrice(ethers.utils.formatUnits(ethPriceTemp, 6))
+        }
+
+    }, [usdcEthRoundIsLoading]);
 
 
   return (
@@ -132,7 +150,7 @@ export const DashboardView: FC = ({}) => {
 
                   </div>
                   <div className="card w-full py-4">
-                    <span className="text-left"><h3 className="font-normal  pb-5 text-shrub-grey"> Welcome back, ryan.eth!</h3></span>
+                    <span className="text-left"><h3 className="font-normal  pb-5 text-shrub-grey"> Welcome back, ryan.eth!</h3><span></span>Eth Price: {ethPrice} USDC</span>
                   </div>
                 </div>
 

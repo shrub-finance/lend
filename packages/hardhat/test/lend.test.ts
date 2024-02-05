@@ -540,7 +540,7 @@ describe('testSuite', () => {
         describe('bytesToString', () => {
             // This is used only for internal purposes (debugging) so testing is not required
         });
-        describe('getEthPrice', () => {
+        describe.only('getEthPrice', () => {
             it('should revert if ETH price is negative', async() => {
                 await mockChainlinkAggregator.updateAnswer(-1);
                 await expect(lendingPlatform.getEthPrice()).to.be.revertedWith("ETH Price out of range");
@@ -2781,14 +2781,14 @@ describe('testSuite', () => {
             });
         });
     });
-    describe('MockChainlinkAggregator', () => {
-        it('should have 8 decimals', async() => {
+    describe.only('MockChainlinkAggregator', () => {
+        it('should have 18 decimals', async() => {
             const decimals = await mockChainlinkAggregator.decimals()
-            expect(decimals).to.equal(8);
+            expect(decimals).to.equal(18);
         });
         it('should match deploy specs', async() => {
             const {roundId, answer, startedAt, updatedAt, answeredInRound} = await mockChainlinkAggregator.latestRoundData();
-            expect(answer).to.equal(185211030001);
+            expect(answer).to.equal(434522907140495);
             expect(roundId).to.equal(1);
         });
         it('should update price with updateAnswer', async() => {

@@ -273,10 +273,25 @@ task("setEthPrice", "udpate the mock Chainlink Aggregator's ETH price")
         const {ethers, deployments, getNamedAccounts} = env;
         const mockChainlinkAggregatorDeployment = await deployments.get('MockChainlinkAggregator');
         const mockChainlinkAggregator = await ethers.getContractAt("MockChainlinkAggregator", mockChainlinkAggregatorDeployment.address);
+        const ethDecimals = 8n;
+        const usdcPriceDecimals = await mockChainlinkAggregator.decimals();
+        const ethPrice = ethers.parseUnits(taskArgs.ethPrice, ethDecimals);
+        const usdcPrice = ethers.parseUnits("1", usdcPriceDecimals + ethDecimals) / ethPrice;
+        await sendTransaction(mockChainlinkAggregator.updateAnswer(usdcPrice), 'updateAnswer');
+        console.log(`Update ETH / USDC pricefeed to ${ethers.formatUnits(usdcPrice, usdcPriceDecimals)}`);
+    });
+
+task("getEthPrice", "Get the ETH price in USD from the Chainlink Aggregator")
+    .setAction(async (taskArgs, env) => {
+        const {ethers, deployments, getNamedAccounts} = env;
+        const mockChainlinkAggregatorDeployment = await deployments.get('MockChainlinkAggregator');
+        const mockChainlinkAggregator = await ethers.getContractAt("MockChainlinkAggregator", mockChainlinkAggregatorDeployment.address);
         const decimals = await mockChainlinkAggregator.decimals();
-        const ethPrice = ethers.parseUnits(taskArgs.ethPrice, decimals);
-        await sendTransaction(mockChainlinkAggregator.updateAnswer(ethPrice), 'updateAnswer');
-        console.log(`Update ETH pricefeed to ${ethers.formatUnits(ethPrice, decimals)}`);
+        const latestRoundData = await mockChainlinkAggregator.latestRoundData();
+        const ethPrice = latestRoundData.answer;
+        // const ethPrice = ethers.parseUnits(taskArgs.ethPrice, decimals);
+        // await sendTransaction(mockChainlinkAggregator.updateAnswer(ethPrice), 'updateAnswer');
+        console.log(`ethPrice: ${ethers.formatUnits(ethPrice, decimals)}`);
     });
 
 task("setTime", "update the blockchain time for the test environment")

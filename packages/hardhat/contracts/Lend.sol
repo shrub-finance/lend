@@ -151,6 +151,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     function getEthPrice() public view returns (uint256) {
+        // Returns an 8 decimal version of USDC / ETH
 //        return 2000 * 10 ** 8;
         // 8 decimals ($1852.11030001)
 //        return 185211030001;
@@ -162,7 +163,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             uint80 answeredInRound
         ) = chainlinkAggregator.latestRoundData();
         require(answer > 0, "ETH Price out of range");
-        return uint256(answer);
+        return uint256(10 ** 26 / answer);  // 18 decimals in answer - want 8 decimals remaining
     }
 
     function maxLoan(uint ltv, uint ethCollateral) public view returns (uint256) {
