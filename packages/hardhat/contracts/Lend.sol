@@ -337,12 +337,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
         // If the pool does not exist or totalLiquidity is 0, user gets 1:1 poolShareTokens
         if (totalPoolValue == 0) {
-            poolShareTokenAmount = _amount;
+            poolShareTokenAmount = _amount * 10 ** 12;
         } else {
             // If the pool exists and has liquidity, calculate poolShareTokens based on the proportion of deposit to total pool value
             poolShareTokenAmount =
-                (_amount * lendingPools[_timestamp].poolShareToken.totalSupply()) /
+                (_amount * lendingPools[_timestamp].poolShareToken.totalSupply()) * 10 ** 12 /
                 totalPoolValue;
+            // Times 10 ** 12 to adjust the decimals of USDC 6 to 18 for the poolShareToken
         }
         lendingPools[_timestamp].totalLiquidity += _amount;
         lendingPools[_timestamp].poolShareToken.mint(msg.sender, poolShareTokenAmount);

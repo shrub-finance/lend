@@ -32,6 +32,9 @@ export const formatDate:any = {
     })
 }
 
+export const secondsInDay = 60 * 60 * 24;
+export const milliSecondsInDay = 1000 * 60 * 60 * 24;
+
 export function calculateLockupPeriod(endDate: Date): string {
     const now = new Date();
     const oneDay = 1000 * 60 * 60 * 24; // milliseconds in a day

@@ -20,6 +20,10 @@ export const USER_POSITIONS_QUERY = gql`
                 lendingPool{
                     id
                     timestamp
+                    totalUsdc
+                    totalEthYield
+                    totalUsdcInterest
+                    tokenSupply
                 }
                 amount
                 depositsUsdc

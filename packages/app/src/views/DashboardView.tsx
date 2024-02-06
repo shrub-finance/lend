@@ -16,7 +16,7 @@ import {
 } from "../utils/contracts";
 import {ethers} from "ethers";
 import Image from "next/image";
-import {formatDate} from "@shrub-lend/common";
+import {formatDate, milliSecondsInDay} from "@shrub-lend/common";
 import {USER_POSITIONS_QUERY} from "../constants/queries";
 import {useQuery, useLazyQuery} from "@apollo/client";
 
@@ -29,7 +29,7 @@ export const DashboardView: FC = ({}) => {
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
   const walletAddress = useAddress();
-  const [ethPrice, setEthPrice] = useState("");
+  const [ethPrice, setEthPrice] = useState(ethers.BigNumber.from(0));
   const {
     contract: lendingPlatform,
     isLoading: lendingPlatformIsLoading,
@@ -114,12 +114,16 @@ export const DashboardView: FC = ({}) => {
             console.log(usdcEthRoundData);
             const invertedPrice = usdcEthRoundData.answer;
             console.log(ethers.utils.formatUnits(invertedPrice, 18));
-            const ethPriceTemp = ethers.utils.parseUnits("1", 24).div(invertedPrice);
-            // console.log(ethers.utils.formatUnits(ethPriceTemp, 6));
-            setEthPrice(ethers.utils.formatUnits(ethPriceTemp, 6))
+            const ethPriceTemp = ethers.utils.parseUnits("1", 26).div(invertedPrice);
+            console.log(ethers.utils.formatUnits(ethPriceTemp, 8));
+            setEthPrice(ethPriceTemp);
         }
 
     }, [usdcEthRoundIsLoading]);
+
+    function daysFromNow(date: Date) {
+        return Math.round((date.valueOf() - now.valueOf()) / milliSecondsInDay);
+    }
 
 
   return (
@@ -150,7 +154,7 @@ export const DashboardView: FC = ({}) => {
 
                   </div>
                   <div className="card w-full py-4">
-                    <span className="text-left"><h3 className="font-normal  pb-5 text-shrub-grey"> Welcome back, ryan.eth!</h3><span></span>Eth Price: {ethPrice} USDC</span>
+                    <span className="text-left"><h3 className="font-normal  pb-5 text-shrub-grey"> Welcome back, ryan.eth!</h3><span></span>Eth Price: {ethers.utils.formatUnits(ethPrice, 8)} USDC</span>
                   </div>
                 </div>
 
@@ -208,7 +212,18 @@ export const DashboardView: FC = ({}) => {
                                           <p className="text-sm">Loading ETH balance...</p>
                                       )}</td>
                                       <td className="px-6 py-4 text-sm font-bold">
-                                          Current Value
+                                          {
+                                              ethers.utils.formatUnits(
+                                                  ethers.BigNumber.from(item.lendingPool.totalUsdc)
+                                                      .add(item.lendingPool.totalUsdcInterest)
+                                                      .add(ethPrice.mul(item.lendingPool.totalEthYield).div(ethers.utils.parseUnits("1", 20)))
+                                                      .mul(item.amount)
+                                                      .div(item.lendingPool.tokenSupply)
+                                                  , 6
+                                              )
+
+                                              // item.lendingPool.totalEthYield * ethPrice
+                                          }
                                       </td>
                                       <td className="px-6 py-4 text-sm font-bold">
                                           X%
@@ -336,7 +351,7 @@ export const DashboardView: FC = ({}) => {
                                         0
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                        time until due
+                                        {daysFromNow(fromEthDate(item.timestamp))}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                         <p>{ethers.utils.formatUnits(item.apy, 6)}</p>
