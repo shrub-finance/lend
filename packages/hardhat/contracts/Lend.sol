@@ -341,7 +341,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         } else {
             // If the pool exists and has liquidity, calculate poolShareTokens based on the proportion of deposit to total pool value
             poolShareTokenAmount =
-                (_amount * lendingPools[_timestamp].poolShareToken.totalSupply()) * 10 ** 12 /
+                (_amount * lendingPools[_timestamp].poolShareToken.totalSupply()) /
                 totalPoolValue;
             // Times 10 ** 12 to adjust the decimals of USDC 6 to 18 for the poolShareToken
         }
@@ -420,10 +420,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // ethPrice 8 decimals
         // _collateral 18 decimals
         // _amount 6 decimals
-        uint ltvCalc = (_principal * 10 ** (18 + 8 - 6 + 2)) /
-            (getEthPrice() * _collateral);
+//        uint ltvCalc = (_principal * 10 ** (18 + 8 - 6 + 2)) / (getEthPrice() * _collateral);
         require(
-            ltvCalc <= _ltv,
+            (_principal * 10 ** (18 + 8 - 6 + 2)) / (getEthPrice() * _collateral) <= _ltv, // ltvCalc
             "Insufficient collateral provided for specified ltv"
         );
 
@@ -448,6 +447,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //            borrowingPools[_timestamp].loans[msg.sender].principal == 0,
 //            "Loan already exists in this slot"
 //        );
+        uint aethGlobalBalance = aeth.balanceOf(address(this));
 
         wrappedTokenGateway.depositETH{value: _collateral}(
             0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2,  // This is the address of the Aave-v3 pool - it is not used
@@ -486,8 +486,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //            loan.contributingPools.push(contribution);
 //        }
 
-        // Update borrowingPools
-        borrowingPools[_timestamp].principal += _principal;
 
         // Update totalLoans mapping
         // Replaced with borrowingPools
@@ -502,6 +500,30 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         bd.collateral = _collateral;
         bd.apy = apy;
         uint tokenId = bpt.mint(msg.sender, bd);
+        console.log("bpt minted");
+        console.log(tokenId);
+
+        // Update borrowingPools
+        borrowingPools[_timestamp].principal += _principal;
+        borrowingPools[_timestamp].collateral += _collateral;
+        uint deltaBpPoolShares;
+
+
+
+        if (aEthSnapshotBalance == 0) {
+            deltaBpPoolShares = _collateral;
+        } else {
+            deltaBpPoolShares = _collateral * bpTotalPoolShares / aEthSnapshotBalance;
+        }
+
+        console.log("calcparams");
+        console.log(_collateral);
+        console.log(bpTotalPoolShares);
+        console.log(aEthSnapshotBalance);
+        console.log(deltaBpPoolShares);
+
+        borrowingPools[_timestamp].poolShareAmount += deltaBpPoolShares;
+        bpTotalPoolShares += deltaBpPoolShares;
 
 //        console.log("-------");
 //        console.log(tokenId);
@@ -574,6 +596,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     function takeSnapshot() public onlyOwner {
+        console.log("running takeSnapshot");
 //        Get the current balance of bpTotalPoolShares (it is local)
         // calculate the accumYield for all BP (current balance - snapshot balance)
         uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) - aEthSnapshotBalance;

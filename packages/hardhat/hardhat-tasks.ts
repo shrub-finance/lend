@@ -195,6 +195,7 @@ task("testLendingPlatform2", "Setup an environment for development")
         const { deployer, account1, account2, account3 } = await getNamedAccounts();
         const { oneMonth, threeMonth, sixMonth, twelveMonth } = getPlatformDates();
         await env.run('distributeUsdc', { to: account1, amount: 10000 });
+        await env.run('distributeUsdc', { to: account2, amount: 10000 });
         await env.run('createPool', { timestamp: feb2025});  // 1 month
         await env.run('createPool', { timestamp: may2025});  // 3 month
         await env.run('createPool', { timestamp: aug2025});  // 6 month
@@ -208,6 +209,21 @@ task("testLendingPlatform2", "Setup an environment for development")
         await env.run('takeLoan', { account: account3, timestamp: jan2026, loanAmount: 22, collateralAmount: 0.1, ltv: 33})
         await env.run('takeLoan', { account: account1, timestamp: feb2025, loanAmount: 5.23, collateralAmount: 0.1, ltv: 25})
         await env.run('takeLoan', { account: account1, timestamp: aug2025, loanAmount: 111.123456, collateralAmount: 0.52345, ltv: 33})
+        await env.run('setTime', {ethDate: feb2025});
+        await env.run('takeSnapshot', { account: deployer });
+        await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2026, account: account2});
+    })
+
+task('takeSnapshot', 'snapshot and update the accumInterest and accumYield')
+    .addParam("account", "Account to call takeSnapshot with", undefined, types.string, true)
+    .setAction(async (taskArgs, env) => {
+        const {ethers, deployments, getNamedAccounts} = env;
+        const { deployer } = await getNamedAccounts();
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+
+        const signer = await ethers.getSigner(taskArgs.account || deployer);
+        await sendTransaction(lendingPlatform.connect(signer).takeSnapshot(), "takeSnapshot");
     })
 
 task('takeLoan', 'take a loan')

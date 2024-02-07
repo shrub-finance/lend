@@ -28,10 +28,11 @@ export function handlePoolCreated(event: PoolCreated): void {
 }
 
 export function handleNewDeposit(event: NewDeposit): void {
-    log.info("NewDeposit: timestamp: {}, depositor: {}, amount: {}", [
+    log.info("NewDeposit: timestamp: {}, depositor: {}, amount: {}, tokenAmount: {}", [
         event.params.timestamp.toString(),
         event.params.depositor.toHexString(),
-        event.params.amount.toString()
+        event.params.amount.toString(),
+        event.params.tokenAmount.toString()
     ]);
     let depositor = event.params.depositor;
     let amount = event.params.amount;
@@ -53,7 +54,7 @@ export function handleNewDeposit(event: NewDeposit): void {
     lendingPoolIncrementTokenSupply(lendingPool, tokenAmount);
     // // Increment the number of tokens for the to
     let lendPosition = getLendPosition(depositor, lendingPool);
-    incrementLendPosition(lendPosition, tokenAmount);
+    incrementLendPosition(lendPosition, amount, tokenAmount);
 }
 
 export function handleNewLoan(event: NewLoan): void {

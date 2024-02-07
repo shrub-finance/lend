@@ -15,10 +15,11 @@ export function mintTokens(
 
 export function incrementLendPosition(
     lendPosition: LendPosition,
-    amount: BigInt
+    usdcAmount: BigInt,
+    tokenAmount: BigInt
 ): LendPosition {
-    lendPosition.amount = lendPosition.amount.plus(amount);
-    lendPosition.depositsUsdc = lendPosition.depositsUsdc.plus(amount);
+    lendPosition.amount = lendPosition.amount.plus(tokenAmount);
+    lendPosition.depositsUsdc = lendPosition.depositsUsdc.plus(usdcAmount);
     lendPosition.save();
     return lendPosition;
 }

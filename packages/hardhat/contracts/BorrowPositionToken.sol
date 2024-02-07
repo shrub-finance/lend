@@ -54,18 +54,20 @@ contract BorrowPositionToken is ERC721, Ownable {
     mapping(uint40 => uint256[]) public tokensByTimestamp;  // mapping of the timestamp to tokenIds with that endDate
 
     modifier checkExists(uint tokenId) {
+        console.log("checkExists");
+        console.log(tokenId);
         require(_exists(tokenId), "token does not exist");
         _;
     }
 
     function mint(address account, BorrowData calldata borrowData) external onlyOwner returns (uint){
-        currentIndex++;
 //        borrowData.startDate = something from the transaction
         borrowDatas[currentIndex] = borrowData;
         borrowDatas[currentIndex].startDate = uint40(block.timestamp);
         _mint(account, currentIndex);
         tokensByTimestamp[borrowData.endDate].push(currentIndex);
-        return currentIndex;
+        currentIndex++;
+        return currentIndex - 1;
     }
 
     function exists(uint256 tokenId) internal view returns (bool) {
