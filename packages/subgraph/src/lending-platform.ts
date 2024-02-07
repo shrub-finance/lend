@@ -1,4 +1,5 @@
 import {
+    LendingPoolYield,
     NewDeposit, NewLoan,
     PoolCreated
 } from "../generated/Contract/LendingPlatform"
@@ -7,7 +8,7 @@ import {
     createLendingPool,
     getLendingPool,
     lendingPoolDeposit,
-    lendingPoolIncrementTokenSupply
+    lendingPoolIncrementTokenSupply, lendingPoolUpdateYield
 } from "./entities/lending-pool";
 import {getUser} from "./entities/user";
 import {addLoanToPool, getBorrowingPool} from "./entities/borrowing-pool";
@@ -85,4 +86,17 @@ export function handleNewLoan(event: NewLoan): void {
     // TODO: What was the point of loan-position again?
     // update the borrowing pool with the loan
     addLoanToPool(borrowingPool, loan);
+}
+
+export function handleLendingPoolYield(event: LendingPoolYield): void {
+    let poolShareTokenAddress = event.params.poolShareTokenAddress;
+    let accumInterest = event.params.accumInterest;
+    let accumYield = event.params.accumYield;
+    log.info("LendingPoolYield: poolShareTokenAddress: {}, accumInterest: {}, accumYield: {}",[
+        poolShareTokenAddress.toHexString(),
+        accumInterest.toString(),
+        accumYield.toString()
+    ]);
+    let lendingPool = getLendingPool(poolShareTokenAddress);
+    lendingPoolUpdateYield(lendingPool, accumInterest, accumYield)
 }

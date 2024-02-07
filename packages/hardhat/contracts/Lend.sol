@@ -77,6 +77,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 principal, uint32 apy);
     event PartialRepayLoan(uint tokenId, uint repaymentAmount);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
+    event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
@@ -621,6 +622,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             for (uint j = i; j < activePools.length; j++) {
                 lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].totalLiquidity / contributionDenominator;
                 lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].totalLiquidity / contributionDenominator;
+                emit LendingPoolYield(
+                    address(lendingPools[activePools[j]].poolShareToken),
+                    lendingPools[activePools[j]].accumInterest,
+                    lendingPools[activePools[j]].accumYield
+                );
             }
 
             // set the last snapshot date to now

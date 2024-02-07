@@ -29,6 +29,8 @@ dataSources:
           handler: handleNewDeposit
         - event: NewLoan(uint256,uint256,address,uint256,uint256,uint32)
           handler: handleNewLoan
+        - event: LendingPoolYield(address,uint256,uint256)
+          handler: handleLendingPoolYield
       file: ./src/lending-platform.ts
 templates:
   - name: PoolShareToken

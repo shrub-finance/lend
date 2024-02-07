@@ -56,6 +56,17 @@ export function lendingPoolIncrementTokenSupply(
     return lendingPool;
 }
 
+export function lendingPoolUpdateYield(
+    lendingPool: LendingPool,
+    accumInterest: BigInt,
+    accumYield: BigInt
+): LendingPool {
+    lendingPool.totalEthYield = accumYield;
+    lendingPool.totalUsdcInterest = accumInterest;
+    lendingPool.save();
+    return lendingPool;
+}
+
 
 
 // type LendingPool @entity(immutable: true) {
