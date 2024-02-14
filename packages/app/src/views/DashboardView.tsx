@@ -229,7 +229,17 @@ export const DashboardView: FC = ({}) => {
                                           X%
                                       </td>
                                       <td className="px-6 py-4 text-sm font-bold">
-                                          Earned
+                                          {
+                                              ethers.utils.formatUnits(
+                                                  ethers.BigNumber.from(item.lendingPool.totalUsdc)
+                                                      .add(item.lendingPool.totalUsdcInterest)
+                                                      .add(ethPrice.mul(item.lendingPool.totalEthYield).div(ethers.utils.parseUnits("1", 20)))
+                                                      .mul(item.amount)
+                                                      .div(item.lendingPool.tokenSupply)
+                                                      .sub(item.depositsUsdc)
+                                                  , 6
+                                              )
+                                          }
                                       </td>
                                       <td className="px-6 py-4 text-sm font-bold">
                                           {fromEthDate(item.lendingPool.timestamp).toLocaleString()}
@@ -260,48 +270,6 @@ export const DashboardView: FC = ({}) => {
                               {/*    <td> Hi</td>*/}
                               {/*    <td> Hi</td>*/}
                               {/*</tr>*/}
-                              <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                  <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
-                                      <p>{ethers.utils.formatEther(
-                                          ethBalance.value
-                                              .div(ethers.utils.parseUnits('1', 15))
-                                              .mul(ethers.utils.parseUnits('1', 15))
-                                      )}</p>
-                                  ) : (
-                                      <p className="text-sm">Loading ETH balance...</p>
-                                  )}</td>
-                                  <td className="px-6 py-4 text-sm font-bold">
-                                      {wallet && !usdcBalanceIsLoading ? (
-                                          <p>{(usdcBalance.displayValue || 0).toLocaleString()}</p>
-                                      ) : (
-                                          <p className="text-sm">Loading USDC balance...</p>
-                                      )}
-                                  </td>
-                                  <td className="px-6 py-4 text-sm font-bold">
-                                      {walletAddress}
-                                  </td>
-                                  <td className="px-6 py-4 text-sm font-bold">
-
-                                  </td>
-                                  <td className="px-6 py-4 text-sm font-bold">
-
-                                  </td>
-                                  <td className="px-1 py-4 text-sm font-bold">
-                                      <div className="flex items-center justify-center space-x-2 h-full p-2">
-                                          <button type="button"
-                                                  className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
-                                              Redeem
-                                          </button>
-                                          <button type="button"
-                                                  className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
-                                              <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20}
-                                                     className="mr-2"/>
-                                              Trade
-                                          </button>
-                                      </div>
-                                  </td>
-
-                              </tr>
                               </tbody>
                           </table>
                         </div>
@@ -330,7 +298,7 @@ export const DashboardView: FC = ({}) => {
                                 APR
                               </th>
                               <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
-                                Remaining Balance
+                                Current Balance
                               </th>
                               <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
                                 Due Date
@@ -359,7 +327,19 @@ export const DashboardView: FC = ({}) => {
                                         {/*{ethers.utils.parseUnits(item.apy, 6)}*/}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                        remaining balance
+                                        {
+                                            // return bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR);
+                                            //  item.apy * item.amount * (toEthDate(new Date('2025-02-01')) - item.created) / (60 * 24 * 365 * 1e8)
+                                            ethers.utils.formatUnits(
+                                                ethers.BigNumber.from(item.apy)
+                                                    .mul(ethers.BigNumber.from(item.amount))
+                                                    .mul(ethers.BigNumber.from(toEthDate(new Date('2025-02-01'))).sub(ethers.BigNumber.from(item.created)))
+                                                    .div(ethers.BigNumber.from(60 * 60 * 24 * 365))
+                                                    .div(ethers.utils.parseUnits('1', 8))
+                                                , 6
+                                            )
+                                            // item.principal
+                                        }
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                         {fromEthDate(item.timestamp).toLocaleString()}
@@ -379,46 +359,6 @@ export const DashboardView: FC = ({}) => {
                             ))}
 
 
-                            <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
-                                    <p>{ethers.utils.formatEther(
-                                        ethBalance.value
-                                            .div(ethers.utils.parseUnits('1', 15))
-                                            .mul(ethers.utils.parseUnits('1', 15))
-                                    )}</p>
-                                ) : (
-                                    <p className="text-sm">Loading ETH balance...</p>
-                                )}</td>
-                                <td className="px-6 py-4 text-sm font-bold">
-                                    {wallet && !usdcBalanceIsLoading ? (
-                                        <p>{(usdcBalance.displayValue || 0).toLocaleString()}</p>
-                                    ) : (
-                                        <p className="text-sm">Loading USDC balance...</p>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 text-sm font-bold">
-                                    {walletAddress}
-                                </td>
-                                <td className="px-6 py-4 text-sm font-bold">
-                                    {walletAddress}
-                                </td>
-                                <td className="px-6 py-4 text-sm font-bold">
-                                    {walletAddress}
-                                </td>
-                                <td className="px-6 py-4 text-sm font-bold">
-                                    {walletAddress}
-                                </td>
-                                <td className="px-1 py-4 text-sm font-bold">
-                                    <button type="button"
-                                            className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
-                                        <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20}
-                                               className="mr-2"/>
-                                        Pay
-                                    </button>
-                                </td>
-
-
-                            </tr>
                             </tbody>
                           </table>
                         </div>

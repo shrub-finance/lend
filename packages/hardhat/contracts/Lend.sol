@@ -629,9 +629,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
                 );
             }
 
-            // set the last snapshot date to now
-            lastSnapshotDate = block.timestamp;
         }
+        // set the last snapshot date to now
+        lastSnapshotDate = block.timestamp;
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {
