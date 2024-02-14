@@ -11,6 +11,7 @@
   "useWorkspaces": true,
   "private": true,
   "scripts": {
+    "preinstall": "node -e 'if (process.versions.node != \"20.11.1\") { console.log(\"You must use Node.js version 20.11.1\"); process.exit(1); }'",
     "app": "yarn workspace @shrub-lend/app dev",
     "program": "yarn workspace @shrub-lend/program dev",
     "build:app": "yarn workspace @shrub-lend/app build",

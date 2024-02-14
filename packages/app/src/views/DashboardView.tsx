@@ -331,14 +331,14 @@ export const DashboardView: FC = ({}) => {
                                             // return bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR);
                                             //  item.apy * item.amount * (toEthDate(new Date('2025-02-01')) - item.created) / (60 * 24 * 365 * 1e8)
                                             ethers.utils.formatUnits(
-                                                ethers.BigNumber.from(item.apy)
-                                                    .mul(ethers.BigNumber.from(item.amount))
-                                                    .mul(ethers.BigNumber.from(toEthDate(new Date('2025-02-01'))).sub(ethers.BigNumber.from(item.created)))
-                                                    .div(ethers.BigNumber.from(60 * 60 * 24 * 365))
-                                                    .div(ethers.utils.parseUnits('1', 8))
-                                                , 6
+                                                ethers.BigNumber.from(item.amount).add(
+                                                    ethers.BigNumber.from(item.apy)
+                                                        .mul(ethers.BigNumber.from(item.amount))
+                                                        .mul(ethers.BigNumber.from(toEthDate(new Date('2025-02-01'))).sub(ethers.BigNumber.from(item.created)))
+                                                        .div(ethers.BigNumber.from(60 * 60 * 24 * 365))
+                                                        .div(ethers.utils.parseUnits('1', 8))
+                                                ), 6
                                             )
-                                            // item.principal
                                         }
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
@@ -363,19 +363,13 @@ export const DashboardView: FC = ({}) => {
                           </table>
                         </div>
                       </li>
-
-
                     </ul>
                   </div>
                 </div>
-
-
               </div>
             </div>
           </div>
         </div>
-
-
       </div>
     </div>
   );
