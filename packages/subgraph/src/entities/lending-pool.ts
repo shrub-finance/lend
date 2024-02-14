@@ -4,9 +4,9 @@ import {Zero} from "../constants";
 
 
 export function getLendingPool(
-    timestamp: BigInt,
+    poolShareTokenAddress: Address,
 ): LendingPool {
-    let id = timestamp.toString();
+    let id = poolShareTokenAddress.toHexString();
     let lendingPool = LendingPool.load(id);
     if (lendingPool === null) {
         throw new Error(`lendingPool with id ${id} does not exist`);
@@ -20,18 +20,17 @@ export function createLendingPool(
     block: ethereum.Block,
     transaction: ethereum.Transaction
 ): LendingPool {
-    let id = timestamp.toString();
+    let id = poolShareTokenAddress.toHexString();
     let lendingPool = LendingPool.load(id);
     if (lendingPool !== null) {
         throw new Error(`lendingPool with id ${id} already exists`);
     }
     lendingPool = new LendingPool(id);
-    lendingPool.poolShareTokenAddress = poolShareTokenAddress;
+    lendingPool.timestamp = timestamp;
     lendingPool.created = block.timestamp.toI32();
     lendingPool.createdBlock = block.number.toI32();
     lendingPool.txid = transaction.hash;
     lendingPool.totalUsdc = Zero;
-    lendingPool.usdcAvailable = Zero;
     lendingPool.totalEthYield = Zero;
     lendingPool.totalUsdcInterest = Zero;
     lendingPool.tokenSupply = Zero;
@@ -40,13 +39,31 @@ export function createLendingPool(
 }
 
 export function lendingPoolDeposit(
-    timestamp: BigInt,
+    lendingPool: LendingPool,
     amount: BigInt
 ): LendingPool {
-    let lendingPool = getLendingPool(timestamp)
     lendingPool.totalUsdc = lendingPool.totalUsdc.plus(amount);
-    lendingPool.usdcAvailable = lendingPool.usdcAvailable.plus(amount);
     lendingPool.save()
+    return lendingPool;
+}
+
+export function lendingPoolIncrementTokenSupply(
+    lendingPool: LendingPool,
+    amount: BigInt
+): LendingPool {
+    lendingPool.tokenSupply = lendingPool.tokenSupply.plus(amount);
+    lendingPool.save();
+    return lendingPool;
+}
+
+export function lendingPoolUpdateYield(
+    lendingPool: LendingPool,
+    accumInterest: BigInt,
+    accumYield: BigInt
+): LendingPool {
+    lendingPool.totalEthYield = accumYield;
+    lendingPool.totalUsdcInterest = accumInterest;
+    lendingPool.save();
     return lendingPool;
 }
 

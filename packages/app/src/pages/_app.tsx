@@ -4,9 +4,15 @@ import { FC } from 'react';
 import { AppBar } from '../components/AppBar';
 import { MobileMenu } from '../components/MobileMenu';
 import {ThirdwebProvider} from '@thirdweb-dev/react';
+import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
 require('../styles/globals.css');
 
 const activeChain = "localhost";
+const client = new ApolloClient({
+    uri: process.env.NEXT_PUBLIC_SUBGRAPH_QUERY,
+    cache: new InMemoryCache(),
+    connectToDevTools: process.env.NEXT_PUBLIC_ENVIRONMENT === "development",
+});
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
     return (
@@ -36,12 +42,15 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
             logoUrl: "https://shrub.finance/static/media/logo-default.3961bf67.svg",
             url: "https://shrub.finance"
           }}>
+
+          <ApolloProvider client={client}>
             <div className="flex flex-col h-screen">
               <AppBar/>
               <MobileMenu>
                 <Component {...pageProps} />
               </MobileMenu>
             </div>
+          </ApolloProvider>
 
           </ThirdwebProvider>
         </>

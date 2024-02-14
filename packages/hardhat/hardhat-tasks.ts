@@ -4,7 +4,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import { Address } from 'hardhat-deploy/types';
 import assert from 'node:assert/strict';
 import {ContractMethod, parseEther, parseUnits, TransactionResponse} from "ethers";
-import {getPlatformDates, toEthDate} from "@shrub-lend/common"
+import {fromEthDate, getPlatformDates, toEthDate} from "@shrub-lend/common"
 
 const x = async () => {}
 async function sendTransaction(sentTx: Promise<TransactionResponse>, description: string) {
@@ -183,6 +183,49 @@ task("testLendingPlatform", "Setup an environment for development")
     await env.run('takeLoan', { account: account3, timestamp: toEthDate(threeMonth), loanAmount: 22, collateralAmount: 0.1, ltv: 33})
   })
 
+task("testLendingPlatform2", "Setup an environment for development")
+    .setAction(async (taskArgs, env) => {
+        const jan2025 = toEthDate(new Date('2025-01-01T00:00:00Z'));
+        const feb2025 = toEthDate(new Date('2025-02-01T00:00:00Z'));
+        const may2025 = toEthDate(new Date('2025-05-01T00:00:00Z'));
+        const aug2025 = toEthDate(new Date('2025-08-01T00:00:00Z'));
+        const jan2026 = toEthDate(new Date('2026-01-01T00:00:00Z'));
+
+        const {ethers, deployments, getNamedAccounts} = env;
+        const { deployer, account1, account2, account3 } = await getNamedAccounts();
+        const { oneMonth, threeMonth, sixMonth, twelveMonth } = getPlatformDates();
+        await env.run('distributeUsdc', { to: account1, amount: 10000 });
+        await env.run('distributeUsdc', { to: account2, amount: 10000 });
+        await env.run('createPool', { timestamp: feb2025});  // 1 month
+        await env.run('createPool', { timestamp: may2025});  // 3 month
+        await env.run('createPool', { timestamp: aug2025});  // 6 month
+        await env.run('createPool', { timestamp: jan2026});  // 12 month
+        await env.run('approveUsdc', { account: account1 });
+        await env.run('setTime', {ethDate: jan2025});
+        await env.run('setEthPrice', {ethPrice: '2000'});
+        await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2026, account: account1});  // 12 month
+        await env.run('provideLiquidity', { usdcAmount: 325.123456, timestamp: may2025, account: account1});  // 12 month
+        await env.run('takeLoan', { account: account2, timestamp: jan2026, loanAmount: 100, collateralAmount: 1, ltv: 20})
+        await env.run('takeLoan', { account: account3, timestamp: jan2026, loanAmount: 22, collateralAmount: 0.1, ltv: 33})
+        await env.run('takeLoan', { account: account1, timestamp: feb2025, loanAmount: 5.23, collateralAmount: 0.1, ltv: 25})
+        await env.run('takeLoan', { account: account1, timestamp: aug2025, loanAmount: 111.123456, collateralAmount: 0.52345, ltv: 33})
+        await env.run('setTime', {ethDate: feb2025});
+        await env.run('takeSnapshot', { account: deployer });
+        await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2026, account: account2});
+    })
+
+task('takeSnapshot', 'snapshot and update the accumInterest and accumYield')
+    .addParam("account", "Account to call takeSnapshot with", undefined, types.string, true)
+    .setAction(async (taskArgs, env) => {
+        const {ethers, deployments, getNamedAccounts} = env;
+        const { deployer } = await getNamedAccounts();
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+
+        const signer = await ethers.getSigner(taskArgs.account || deployer);
+        await sendTransaction(lendingPlatform.connect(signer).takeSnapshot(), "takeSnapshot");
+    })
+
 task('takeLoan', 'take a loan')
     .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
     .addParam("loanAmount", "Amount of USDC to loan - in USD", undefined, types.float, false)
@@ -241,13 +284,60 @@ task("erc20Details", "get the details of an ERC20")
   });
 
 task("setEthPrice", "udpate the mock Chainlink Aggregator's ETH price")
-    .addParam('ethPrice', 'new ETH price, with up to 8 decimals (i.e. 2123.12345678)')
+    .addParam('ethPrice', 'new ETH price, with up to 8 decimals (i.e. 2123.12345678)', undefined, types.string, false)
+    .setAction(async (taskArgs, env) => {
+        const {ethers, deployments, getNamedAccounts} = env;
+        const mockChainlinkAggregatorDeployment = await deployments.get('MockChainlinkAggregator');
+        const mockChainlinkAggregator = await ethers.getContractAt("MockChainlinkAggregator", mockChainlinkAggregatorDeployment.address);
+        const ethDecimals = 8n;
+        const usdcPriceDecimals = await mockChainlinkAggregator.decimals();
+        const ethPrice = ethers.parseUnits(taskArgs.ethPrice, ethDecimals);
+        const usdcPrice = ethers.parseUnits("1", usdcPriceDecimals + ethDecimals) / ethPrice;
+        await sendTransaction(mockChainlinkAggregator.updateAnswer(usdcPrice), 'updateAnswer');
+        console.log(`Update ETH / USDC pricefeed to ${ethers.formatUnits(usdcPrice, usdcPriceDecimals)}`);
+    });
+
+task("getEthPrice", "Get the ETH price in USD from the Chainlink Aggregator")
     .setAction(async (taskArgs, env) => {
         const {ethers, deployments, getNamedAccounts} = env;
         const mockChainlinkAggregatorDeployment = await deployments.get('MockChainlinkAggregator');
         const mockChainlinkAggregator = await ethers.getContractAt("MockChainlinkAggregator", mockChainlinkAggregatorDeployment.address);
         const decimals = await mockChainlinkAggregator.decimals();
-        const ethPrice = ethers.parseUnits(taskArgs.ethPrice, decimals);
-        await sendTransaction(mockChainlinkAggregator.updateAnswer(ethPrice), 'updateAnswer');
-        console.log(`Update ETH pricefeed to ${ethers.formatUnits(ethPrice, decimals)}`);
+        const latestRoundData = await mockChainlinkAggregator.latestRoundData();
+        const ethPrice = latestRoundData.answer;
+        // const ethPrice = ethers.parseUnits(taskArgs.ethPrice, decimals);
+        // await sendTransaction(mockChainlinkAggregator.updateAnswer(ethPrice), 'updateAnswer');
+        console.log(`ethPrice: ${ethers.formatUnits(ethPrice, decimals)}`);
+    });
+
+task("setTime", "update the blockchain time for the test environment")
+    .addParam('ethDate', 'valid ethereum format timestamp in the future', undefined, types.int, false)
+    .setAction(async (taskArgs, env) => {
+        const { ethers } = env;
+        // Mine a new block so that the current time is up to date
+        await ethers.provider.send('evm_mine');
+        const currentBlock = await ethers.provider.getBlock("latest");
+        if (!currentBlock) {
+            throw new Error('latest block not found');
+        }
+        const ethDate = taskArgs.ethDate;
+        const currentTimestamp = currentBlock.timestamp;
+        // const desiredTimestamp = toEthDate(desiredDate); // convert to Unix timestamp
+
+        // Calculate the difference in seconds
+        const timeDiff = ethDate - currentTimestamp;
+        if (timeDiff < 0) {
+            console.log(`Cannot set a time to the past - Current time: ${currentTimestamp} - Value: ${ethDate}`);
+            return;
+        }
+        // Increase the network time
+        await ethers.provider.send('evm_increaseTime', [timeDiff]);
+
+        // Mine a new block so that the time increase takes effect
+        await ethers.provider.send('evm_mine');
+        const latestBlock = await ethers.provider.getBlock("latest");
+        if (!latestBlock) {
+            throw new Error('latest block not found');
+        }
+        console.log(`Time set to ${fromEthDate(latestBlock.timestamp)}`);
     });

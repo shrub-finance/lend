@@ -1,20 +1,24 @@
 type User @entity(immutable: true) {
     "address"
     id: ID!
+    lendPositions: [LendPosition!]! @derivedFrom(field: "user")
+    loans: [Loan!]! @derivedFrom(field: "user")
+#    optionPositions: [OptionPosition!]! @derivedFrom(field: "userOption")
 }
 
 type LendingPool @entity {
-    "timestamp"
+    "poolShareToken address"
     id: ID!
-    poolShareTokenAddress: Bytes!
+    timestamp: BigInt!
+#    poolShareTokenAddress: Bytes!
     txid: Bytes!
     created: Int!
     createdBlock: Int!
     totalUsdc: BigInt!
-    usdcAvailable: BigInt!
     totalEthYield: BigInt!
     totalUsdcInterest: BigInt!
     tokenSupply: BigInt!
+#    lastSnapshot: BigInt!
 }
 
 type BorrowingPool @entity {
@@ -31,11 +35,12 @@ type Loan @entity(immutable: true) {
     id: ID!
     created: Int!
     createdBlock: Int!
+    timestamp: BigInt!
     amount: BigInt!
     collateral: BigInt!
-    ltv: Int!
-    apy: Int!
-    owner: User
+    ltv: BigInt!
+    apy: BigInt!
+    user: User
 }
 
 type LendPosition @entity {
@@ -44,4 +49,6 @@ type LendPosition @entity {
     lendingPool: LendingPool
     user: User
     amount: BigInt!
+    depositsUsdc: BigInt!
+    withdrawsUsdc: BigInt!
 }
