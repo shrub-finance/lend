@@ -322,6 +322,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     function deposit(uint256 _timestamp, uint256 _amount) public nonReentrant {
+        console.log("running deposit");
         require(_amount > 0, "Deposit amount must be greater than 0");
         require(validPool(_timestamp), "Invalid pool");
 
@@ -333,19 +334,25 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Calculate total value of the pool in terms of USDC
         uint256 aethInterest = getAethInterest();
         uint256 aethInterestValueInUsdc = aethInterest * getEthPrice();
-        uint256 totalPoolValue = lendingPools[_timestamp].totalLiquidity +
-            aethInterestValueInUsdc;
+        uint256 totalPoolValue = lendingPools[_timestamp].totalLiquidity + lendingPools[_timestamp].accumInterest + aethInterestValueInUsdc;
 
         // If the pool does not exist or totalLiquidity is 0, user gets 1:1 poolShareTokens
+        console.log("totalPoolValue, _amount, lpt.totalSupply(), poolShareTokenAmount");
+        console.log(totalPoolValue);
+        console.log(_amount);
+        console.log(lendingPools[_timestamp].poolShareToken.totalSupply());
         if (totalPoolValue == 0) {
             poolShareTokenAmount = _amount * 10 ** 12;
+            console.log("PATH 1 - NEW");
         } else {
             // If the pool exists and has liquidity, calculate poolShareTokens based on the proportion of deposit to total pool value
+            console.log("PATH 2 - ESTABLISHED");
             poolShareTokenAmount =
                 (_amount * lendingPools[_timestamp].poolShareToken.totalSupply()) /
                 totalPoolValue;
             // Times 10 ** 12 to adjust the decimals of USDC 6 to 18 for the poolShareToken
         }
+        console.log(poolShareTokenAmount);
         lendingPools[_timestamp].totalLiquidity += _amount;
         lendingPools[_timestamp].poolShareToken.mint(msg.sender, poolShareTokenAmount);
         emit NewDeposit(
