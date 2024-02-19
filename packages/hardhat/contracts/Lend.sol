@@ -71,11 +71,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     uint256[] public activePools; // Sorted ascending list of timestamps of active pools
     uint lastSnapshotDate;
     uint aEthSnapshotBalance;
+    uint newCollateralSinceSnapshot;
+    uint claimedCollateralSinceSnapshot;
 
     event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
     event NewDeposit(uint256 timestamp, address poolShareTokenAddress, address depositor, uint256 amount, uint256 tokenAmount);
     event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 principal, uint32 apy);
-    event PartialRepayLoan(uint tokenId, uint repaymentAmount);
+    event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
     event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
 
@@ -533,6 +535,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         borrowingPools[_timestamp].poolShareAmount += deltaBpPoolShares;
         bpTotalPoolShares += deltaBpPoolShares;
 
+        newCollateralSinceSnapshot += _collateral;  // Keep track of the collateral since the last snapshot
+
 //        console.log("-------");
 //        console.log(tokenId);
 //        console.log(_timestamp);
@@ -547,12 +551,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount) external {
         // Check that msg.sender owns the DPT
-        require(bpt.ownerOf(tokenId) == msg.sender, "msg.sender does not own specified BPT");
+//        require(bpt.ownerOf(tokenId) == msg.sender, "msg.sender does not own specified BPT");
         // Check that the user has sufficient funds
         require(usdc.balanceOf(msg.sender) >= repaymentAmount, "insufficient balance");
         // Check that the funds are less than the owed balance
-        uint debt = bpt.debt(tokenId);
-        require(repaymentAmount < debt, "repayment amount must be less than total debt");
+//        uint debt = bpt.debt(tokenId);
+//        require(repaymentAmount < , "repayment amount must be less than total debt");
+//        uint interest = bpt.getInterest(tokenId);
+//        require(repaymentAmount >= interest, "repayment amount must be at least the accumulated interest");
         // Check that funds are approved
         // NOTE: We are letting the ERC-20 contract handle this
         // Transfer USDC funds to Shrub
@@ -564,10 +570,16 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Update BPT Collateral and loans
 //        bpt.updateSnapshot(tokenId, debt - repaymentAmount);
         // Update BP Collateral and loans
-        borrowingPools[bpt.getEndDate(tokenId)].principal -= repaymentAmount;
+//        borrowingPools[bpt.getEndDate(tokenId)].principal -= repaymentAmount;
         // Update BP pool share amount (aETH)
         // Emit event for tracking/analytics/subgraph
-        emit PartialRepayLoan(tokenId, repaymentAmount);
+//        uint newPrincipal = 0;
+        uint principalReduction = bpt.partialRepayLoan(tokenId, repaymentAmount, lastSnapshotDate);
+
+        BorrowingPool storage borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
+        borrowingPool.principal -= principalReduction;
+
+        emit PartialRepayLoan(tokenId, repaymentAmount, principalReduction);
     }
 
     // No need to specify amount - the full amount will be transferred needed to repay the loan
@@ -639,6 +651,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         }
         // set the last snapshot date to now
         lastSnapshotDate = block.timestamp;
+
+        // zero out the tracking globals;
+        newCollateralSinceSnapshot = 0;
+        claimedCollateralSinceSnapshot = 0;
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {

@@ -3,6 +3,7 @@ import {FC, useEffect, useState} from 'react';
 
 // Wallet
 import {useConnectedWallet, useBalance, useAddress, useContract, useContractRead} from "@thirdweb-dev/react";
+import { useWeb3React } from '@web3-react/core';
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 
 // Custom
@@ -20,11 +21,29 @@ import {formatDate, milliSecondsInDay} from "@shrub-lend/common";
 import {USER_POSITIONS_QUERY} from "../constants/queries";
 import {useQuery, useLazyQuery} from "@apollo/client";
 
+const useLatestBlockTimestamp = () => {
+    const { provider } = useWeb3React();
+    const [timestamp, setTimestamp] = useState<number | null>(null);
+
+    useEffect(() => {
+        const fetchTimestamp = async () => {
+            if (!provider) return;
+            const blockNumber = await provider.getBlockNumber();
+            const block = await provider.getBlock(blockNumber);
+            setTimestamp(block.timestamp);
+        };
+
+        fetchTimestamp();
+    }, [provider]);
+
+    return timestamp;
+};
+
 const now = new Date();
 const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
 
 export const DashboardView: FC = ({}) => {
-  const wallet = useConnectedWallet();
+    const wallet = useConnectedWallet();
 
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
@@ -125,8 +144,10 @@ export const DashboardView: FC = ({}) => {
         return Math.round((date.valueOf() - now.valueOf()) / milliSecondsInDay);
     }
 
+    const latestTimestamp = useLatestBlockTimestamp();
+    console.log(`latestTimestamp: ${latestTimestamp}`);
 
-  return (
+    return (
 
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col bg-shrub-grey-light">
@@ -334,7 +355,7 @@ export const DashboardView: FC = ({}) => {
                                                 ethers.BigNumber.from(item.amount).add(
                                                     ethers.BigNumber.from(item.apy)
                                                         .mul(ethers.BigNumber.from(item.amount))
-                                                        .mul(ethers.BigNumber.from(toEthDate(new Date('2025-02-01'))).sub(ethers.BigNumber.from(item.created)))
+                                                        .mul(ethers.BigNumber.from(toEthDate(new Date('2026-02-01'))).sub(ethers.BigNumber.from(item.created)))
                                                         .div(ethers.BigNumber.from(60 * 60 * 24 * 365))
                                                         .div(ethers.utils.parseUnits('1', 8))
                                                 ), 6

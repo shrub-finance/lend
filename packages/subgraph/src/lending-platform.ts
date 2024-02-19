@@ -1,6 +1,6 @@
 import {
     LendingPoolYield,
-    NewDeposit, NewLoan,
+    NewDeposit, NewLoan, PartialRepayLoan,
     PoolCreated
 } from "../generated/Contract/LendingPlatform"
 import { log } from '@graphprotocol/graph-ts'
@@ -99,4 +99,13 @@ export function handleLendingPoolYield(event: LendingPoolYield): void {
     ]);
     let lendingPool = getLendingPool(poolShareTokenAddress);
     lendingPoolUpdateYield(lendingPool, accumInterest, accumYield)
+}
+
+export function handlePartialRepayLoan(event: PartialRepayLoan): void {
+    // event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
+    let tokenId = event.params.tokenId;
+    let repaymentAmount = event.params.repaymentAmount;
+    let principalReduction = event.params.principalReduction;
+
+    // TODO: Write the logic for this...
 }
