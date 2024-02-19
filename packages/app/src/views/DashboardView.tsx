@@ -1,12 +1,13 @@
 // Next, React
 import {FC, useEffect, useState} from 'react';
+import Link from 'next/link';
 
-// Wallet
+
 import {useConnectedWallet, useBalance, useAddress, useContract, useContractRead} from "@thirdweb-dev/react";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 
-// Custom
-import {toEthDate, fromEthDate} from "../utils/ethMethods";
+
+import {toEthDate, fromEthDate} from "@shrub-lend/common";
 import {
     usdcAddress,
     lendingPlatformAddress,
@@ -24,6 +25,7 @@ const now = new Date();
 const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
 
 export const DashboardView: FC = ({}) => {
+
   const wallet = useConnectedWallet();
 
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
@@ -60,7 +62,7 @@ export const DashboardView: FC = ({}) => {
   useEffect(() => {
     console.log('running contract useEffect');
     console.log(lendingPlatform, lendingPlatformIsLoading, lendingPlatformError);
-
+    
     async function callContract() {
       const APYvalue = await lendingPlatform.call("getAPYBasedOnLTV", [33]);
       console.log(APYvalue);
@@ -144,12 +146,16 @@ export const DashboardView: FC = ({}) => {
                     Dashboard
                 </h1></span>
                       <span className="w-[500px]"></span>
-                    <span> <button type="button"
-                                                         className="text-gray-900 mr-2 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Deposit
-                                                                </button>
+                    <span>
+                      <Link href="/borrow" passHref>
+                        <button type="button"
+                                className="text-gray-900 mr-2 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Borrow</button>
+                      </Link>
+                      <Link href="/lend" passHref>
 <button type="button"
-        className="text-white bg-shrub-green-500 border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Lend
-                                                                </button></span>
+        className="text-white bg-shrub-green-500 border border-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600  dark:focus:ring-gray-700">Lend</button>
+                      </Link>
+</span>
 
 
                   </div>
