@@ -48,6 +48,8 @@ function createLoan(
     loan.apy = apy;
     loan.ltv = Zero;  // This is complicated and would need to be calculated after price changes at some interval - leaving as 0 for now
     loan.amount = amount;
+    loan.originalPrincipal = amount;
+    loan.paid = Zero;
     loan.collateral = collateral;
     loan.save();
     return loan;
@@ -55,6 +57,7 @@ function createLoan(
 
 export function partialRepayLoan(
     tokenId: BigInt,
+    repaymentAmount: BigInt,
     principalReduction: BigInt,
     block: ethereum.Block
 ): Loan {
@@ -66,6 +69,7 @@ export function partialRepayLoan(
     loan.amount = loan.amount.minus(principalReduction);
     loan.updated = block.timestamp.toI32();
     loan.updatedBlock = block.number.toI32();
+    loan.paid = loan.paid.plus(repaymentAmount)
     loan.save()
     return loan;
 }

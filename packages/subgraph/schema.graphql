@@ -39,6 +39,8 @@ type Loan @entity {
     updatedBlock: Int!
     timestamp: BigInt!
     amount: BigInt!
+    originalPrincipal: BigInt!
+    paid: BigInt!
     collateral: BigInt!
     ltv: BigInt!
     apy: BigInt!

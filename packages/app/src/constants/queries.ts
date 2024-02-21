@@ -33,9 +33,13 @@ export const USER_POSITIONS_QUERY = gql`
                 id
                 timestamp
                 amount
+                originalPrincipal
                 collateral
                 created
                 createdBlock
+                updated
+                updatedBlock
+                paid
                 ltv
                 apy
             }

@@ -332,12 +332,14 @@ export const DashboardView: FC = ({}) => {
                             {userPositionsData?.user?.loans?.map((item, index) => (
                                 <tr key={`borrowRow-${index}`} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                                     <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
-                                        <p>{ethers.utils.formatUnits(item.amount, 6)}</p>
+                                        <p>{ethers.utils.formatUnits(item.originalPrincipal, 6)}</p>
                                     ) : (
                                         <p className="text-sm">Loading ETH balance...</p>
                                     )}</td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                        0
+                                        {
+                                            ethers.utils.formatUnits(item.paid, 6)
+                                        }
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                         {daysFromNow(fromEthDate(item.timestamp))}
@@ -355,7 +357,7 @@ export const DashboardView: FC = ({}) => {
                                                 ethers.BigNumber.from(item.amount).add(
                                                     ethers.BigNumber.from(item.apy)
                                                         .mul(ethers.BigNumber.from(item.amount))
-                                                        .mul(ethers.BigNumber.from(toEthDate(new Date('2026-02-01'))).sub(ethers.BigNumber.from(item.created)))
+                                                        .mul(ethers.BigNumber.from(toEthDate(new Date('2026-02-01'))).sub(ethers.BigNumber.from(item.updated)))
                                                         .div(ethers.BigNumber.from(60 * 60 * 24 * 365))
                                                         .div(ethers.utils.parseUnits('1', 8))
                                                 ), 6

@@ -113,5 +113,5 @@ export function handlePartialRepayLoan(event: PartialRepayLoan): void {
     ]);
 
     // TODO: Write the logic for this...
-    partialRepayLoan(tokenId, principalReduction, event.block);
+    partialRepayLoan(tokenId, repaymentAmount, principalReduction, event.block);
 }
