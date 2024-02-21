@@ -149,6 +149,46 @@ task("provideLiquidity", "add USDC to a lending pool")
         await sendTransaction(lendingPlatformAccount.deposit(timestamp, parsedUsdc), `Deposit USDC`);
     })
 
+task("partialRepayLoan", "add USDC to a lending pool")
+    .addParam("tokenId", "tokenId of the loan", undefined, types.int, false)
+    .addParam("repaymentAmount", "Amount of USDC - in USD to repay", undefined, types.float, false)
+    .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
+    .setAction(async (taskArgs, env) => {
+        const tokenId: number = taskArgs.tokenId;
+        const repaymentAmount: number = taskArgs.repaymentAmount;
+        const account = taskArgs.account;
+
+        const {ethers, deployments, getNamedAccounts} = env;
+        const { deployer } = await getNamedAccounts();
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+        const usdCoinDeployment = await deployments.get('USDCoin');
+        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+
+        const borrowerAccount = await ethers.getSigner(account || deployer);
+        const parsedUsdc = ethers.parseUnits(repaymentAmount.toString(), 6);
+
+        // Check balance of account to ensure that it is sufficient
+        const usdcBalance = await usdc.balanceOf(borrowerAccount);
+        const borrowerAccountAddress = await borrowerAccount.getAddress();
+        console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${borrowerAccountAddress}`);
+        if (usdcBalance < parsedUsdc) {
+            console.log('insufficient USDC balance in account - aborting');
+            return;
+        }
+        // Check approval of account to ensure that it is sufficient
+        const approved = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
+        console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
+        // If approval is not sufficient then create an approval tx
+        if (approved < parsedUsdc) {
+            const needToApprove = parsedUsdc - approved;
+            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
+            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
+        }
+        // Send the deposit tx
+        await sendTransaction(lendingPlatform.connect(borrowerAccount).partialRepayLoan(tokenId, parsedUsdc), `Partial Repay Loan`);
+    })
+
 task("approveUsdc", "Approve USDC to the lending platform")
     .addParam("account", "account to approve USDC for", undefined, types.string)
     .setAction(async (taskArgs, env) => {
@@ -248,6 +288,10 @@ task("testLendingPlatform3", "Setup an environment for development")
         await env.run('takeLoan', { account: account3, timestamp: may2026, loanAmount: 100, collateralAmount: 0.1, ltv: 50})
         await env.run('setTime', {ethDate: feb2026});
         await env.run('takeSnapshot', { account: deployer });
+        await env.run('partialRepayLoan', { account: account3, tokenId: 0, repaymentAmount: 50});
+            // .addParam("tokenId", "tokenId of the loan", undefined, types.int, false)
+            // .addParam("repaymentAmount", "Amount of USDC - in USD to repay", undefined, types.float, false)
+            // .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
     })
 
 task('takeSnapshot', 'snapshot and update the accumInterest and accumYield')

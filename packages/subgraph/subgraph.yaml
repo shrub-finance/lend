@@ -31,7 +31,7 @@ dataSources:
           handler: handleNewLoan
         - event: LendingPoolYield(address,uint256,uint256)
           handler: handleLendingPoolYield
-        - event: PartialRepayLoan(uint256,uint256,uint256);
+        - event: PartialRepayLoan(uint256,uint256,uint256)
           handler: handlePartialRepayLoan
       file: ./src/lending-platform.ts
 templates:

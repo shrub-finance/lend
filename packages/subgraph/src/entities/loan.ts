@@ -40,7 +40,9 @@ function createLoan(
     loan = new Loan(id);
     loan.timestamp = timestamp;
     loan.created = block.timestamp.toI32();
+    loan.updated = block.timestamp.toI32();
     loan.createdBlock = block.number.toI32();
+    loan.updatedBlock = block.number.toI32();
     loan.user = userObj.id;
     // loan.owner = owner.toHexString();
     loan.apy = apy;
@@ -48,6 +50,23 @@ function createLoan(
     loan.amount = amount;
     loan.collateral = collateral;
     loan.save();
+    return loan;
+}
+
+export function partialRepayLoan(
+    tokenId: BigInt,
+    principalReduction: BigInt,
+    block: ethereum.Block
+): Loan {
+    let id = tokenId.toString();
+    let loan = Loan.load(id);
+    if (loan == null) {
+        throw new Error(`Loan with id ${id} not found`);
+    }
+    loan.amount = loan.amount.minus(principalReduction);
+    loan.updated = block.timestamp.toI32();
+    loan.updatedBlock = block.number.toI32();
+    loan.save()
     return loan;
 }
 

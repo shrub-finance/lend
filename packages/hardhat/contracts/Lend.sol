@@ -574,7 +574,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Update BP pool share amount (aETH)
         // Emit event for tracking/analytics/subgraph
 //        uint newPrincipal = 0;
-        uint principalReduction = bpt.partialRepayLoan(tokenId, repaymentAmount, lastSnapshotDate);
+        uint principalReduction = bpt.partialRepayLoan(tokenId, repaymentAmount, lastSnapshotDate, msg.sender);
 
         BorrowingPool storage borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
         borrowingPool.principal -= principalReduction;

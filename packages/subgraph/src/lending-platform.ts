@@ -12,7 +12,7 @@ import {
 } from "./entities/lending-pool";
 import {getUser} from "./entities/user";
 import {addLoanToPool, getBorrowingPool} from "./entities/borrowing-pool";
-import {getLoan} from "./entities/loan";
+import {getLoan, partialRepayLoan} from "./entities/loan";
 import {PoolShareToken} from "../generated/templates";
 import {getLendPosition, incrementLendPosition} from "./entities/lend-position";
 
@@ -106,6 +106,12 @@ export function handlePartialRepayLoan(event: PartialRepayLoan): void {
     let tokenId = event.params.tokenId;
     let repaymentAmount = event.params.repaymentAmount;
     let principalReduction = event.params.principalReduction;
+    log.info("partialRepayLoan: tokenId: {}, repaymentAmount: {}, principalReduction: {}",[
+        tokenId.toString(),
+        repaymentAmount.toString(),
+        principalReduction.toString()
+    ]);
 
     // TODO: Write the logic for this...
+    partialRepayLoan(tokenId, principalReduction, event.block);
 }

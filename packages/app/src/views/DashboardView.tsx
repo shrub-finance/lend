@@ -3,7 +3,7 @@ import {FC, useEffect, useState} from 'react';
 
 // Wallet
 import {useConnectedWallet, useBalance, useAddress, useContract, useContractRead} from "@thirdweb-dev/react";
-import { useWeb3React } from '@web3-react/core';
+// import { useWeb3React } from '@web3-react/core';
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 
 // Custom
@@ -21,23 +21,23 @@ import {formatDate, milliSecondsInDay} from "@shrub-lend/common";
 import {USER_POSITIONS_QUERY} from "../constants/queries";
 import {useQuery, useLazyQuery} from "@apollo/client";
 
-const useLatestBlockTimestamp = () => {
-    const { provider } = useWeb3React();
-    const [timestamp, setTimestamp] = useState<number | null>(null);
-
-    useEffect(() => {
-        const fetchTimestamp = async () => {
-            if (!provider) return;
-            const blockNumber = await provider.getBlockNumber();
-            const block = await provider.getBlock(blockNumber);
-            setTimestamp(block.timestamp);
-        };
-
-        fetchTimestamp();
-    }, [provider]);
-
-    return timestamp;
-};
+// const useLatestBlockTimestamp = () => {
+//     const { provider } = useWeb3React();
+//     const [timestamp, setTimestamp] = useState<number | null>(null);
+//
+//     useEffect(() => {
+//         const fetchTimestamp = async () => {
+//             if (!provider) return;
+//             const blockNumber = await provider.getBlockNumber();
+//             const block = await provider.getBlock(blockNumber);
+//             setTimestamp(block.timestamp);
+//         };
+//
+//         fetchTimestamp();
+//     }, [provider]);
+//
+//     return timestamp;
+// };
 
 const now = new Date();
 const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
@@ -144,8 +144,8 @@ export const DashboardView: FC = ({}) => {
         return Math.round((date.valueOf() - now.valueOf()) / milliSecondsInDay);
     }
 
-    const latestTimestamp = useLatestBlockTimestamp();
-    console.log(`latestTimestamp: ${latestTimestamp}`);
+    // const latestTimestamp = useLatestBlockTimestamp();
+    // console.log(`latestTimestamp: ${latestTimestamp}`);
 
     return (
 

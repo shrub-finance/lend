@@ -30,11 +30,13 @@ type BorrowingPool @entity {
     totalBorrowedUsdc: BigInt!
 }
 
-type Loan @entity(immutable: true) {
+type Loan @entity {
     "ERC-721 tokenId"
     id: ID!
     created: Int!
     createdBlock: Int!
+    updated: Int!
+    updatedBlock: Int!
     timestamp: BigInt!
     amount: BigInt!
     collateral: BigInt!

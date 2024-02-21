@@ -29,7 +29,7 @@ interface IBorrowPositionToken is IERC721 {
     function getTokensByTimestamp(uint40 _timestamp) external returns (uint[] calldata);
     function getLoan(uint tokenId) external returns (BorrowData memory);
     function getInterest(uint tokenId) external view returns (uint256);
-    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint lastSnapshotDate) external returns(uint principalReduction);
+    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint lastSnapshotDate, address sender) external returns(uint principalReduction);
 }
 
 uint256 constant SECONDS_IN_YEAR = 365 * 24 * 60 * 60;
@@ -170,11 +170,14 @@ contract BorrowPositionToken is ERC721, Ownable {
         return bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR);
     }
 
-    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint lastSnapshotDate) onlyOwner external returns(uint principalReduction) {
+    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint lastSnapshotDate, address sender) onlyOwner external returns(uint principalReduction) {
+        console.log("Running partialRepayLoan - tokenId, lastSnapshotDate, repaymentAmount, msg.sender");
+        console.log(tokenId);
+        console.log(lastSnapshotDate);
+        console.log(repaymentAmount);
+        console.log(msg.sender);
         // Check that msg.sender owns the DPT
-        require(ownerOf(tokenId) == msg.sender, "msg.sender does not own specified BPT");
-        // Check that the user has sufficient funds
-        require(usdc.balanceOf(msg.sender) >= repaymentAmount, "insuficient balance");
+        require(ownerOf(tokenId) == sender, "msg.sender does not own specified BPT");
         // Check that repaymentAmount is less than the total debt;
         BorrowData storage bd = borrowDatas[tokenId];
         uint interest = interestSinceTimestampsUnchecked(tokenId, bd.startDate, lastSnapshotDate);
