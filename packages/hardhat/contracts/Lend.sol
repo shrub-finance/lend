@@ -14,6 +14,7 @@ import "./MockAaveV3.sol";
 import "./AETH.sol";
 
 import "hardhat/console.sol";
+import {USDCoin} from "./USDCoin.sol";
 
 contract LendingPlatform is Ownable, ReentrancyGuard {
     // using SafeERC20 for IERC20;
@@ -580,6 +581,35 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         borrowingPool.principal -= principalReduction;
 
         emit PartialRepayLoan(tokenId, repaymentAmount, principalReduction);
+    }
+
+    function repayLoan2(
+        uint tokenId,
+        address beneficiary
+    ) external {
+        // Check that msg.sender owns the bpt
+        // Determine the principal, interest, and collateral of the debt
+        BorrowData memory bd = bpt.getLoan(tokenId);
+//        bd.endDate = _timestamp;
+//        bd.principal = _principal;
+//        bd.collateral = _collateral;
+//        bd.apy = apy;
+        uint interest = bpt.getInterest(tokenId);
+        // Ensure that msg.sender has sufficient USDC
+        require(usdc.balanceOf(msg.sender) >= bd.principal + interest);
+        // Ensure that msg.sender has approved sufficient USDC - ERC20 contract can handle this
+        // Transfer funds to Shrub
+        usdc.transferFrom(
+            msg.sender,
+            address(this),
+            bd.principal + interest
+        );
+        // Burn the BPT - NOTE: it must be also removed from tokensByTimestamp - This is done in other contract
+        // Update Borrowing Pool principal, collateral
+        // Update Borrowing Pool poolShareAmount
+        // Update bpTotalPoolShares
+        // Convert collateral amount of aETH to ETH
+        // Transfer ETH to the beneficiary
     }
 
     // No need to specify amount - the full amount will be transferred needed to repay the loan

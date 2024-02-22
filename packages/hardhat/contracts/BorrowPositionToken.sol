@@ -55,6 +55,7 @@ contract BorrowPositionToken is ERC721, Ownable {
 
     mapping(uint256 => BorrowData) borrowDatas;
     mapping(uint40 => uint256[]) public tokensByTimestamp;  // mapping of the timestamp to tokenIds with that endDate
+    mapping(uint40 => uint256[]) public removedTokens; // Tracking of takens that have been burned (keyed by endDate) - this will be used during the snapshot to clean up
 
     modifier checkExists(uint tokenId) {
         console.log("checkExists");
@@ -130,6 +131,36 @@ contract BorrowPositionToken is ERC721, Ownable {
         BorrowData storage bd = borrowDatas[tokenId];
         bd.collateral = 0;
         bd.principal = 0;
+        // because most loans will be paid off at the end - we have intentionally decided to not clean up from
+        // tokensByTimestamp on the burning of the bpt. Rather, this will be handled during the snapshot
+        removedTokens[bd.endDate].push(tokenId);
+    }
+
+    function cleanUpByTimestamp(uint40 timestamp) external onlyOwner {
+        // Cleanup tokensByTimestamp as this isn't done during the burn
+        for (uint i = 0; j < tokensByTimestamp[timestamp].length; i++) {
+            for (uint j = 0; j < removedTokens[timestamp].length; j++) {
+                if (tokensByTimestamp[i] == removedTokens[timestamp][j]) {
+                    // First remove from tokensByTimestamp
+                    uint lastIndex = tokensByTimestamp[timestamp].length - 1;
+                    if (i != lastIndex) {
+                        tokensByTimestamp[timestamp][i] = tokensByTimestamp[timestamp][lastIndex];
+                    }
+                    tokensByTimestamp[timestamp].pop();
+                    // If there is only 1 left, that means that we just got it and now we can return
+                    if (removedTokens[timestamp].length == 1) {
+                        delete removedTokens[timestamp];
+                        return;
+                    }
+                    // Then remove from removedTokens
+                    uint lastIndex2 = removedTokens[timestamp].length - 1;
+                    if (j != lastIndex2) {
+                        removedTokens[timestamp][j] = removedTokens[timestamp][lastIndex2];
+                    }
+                    removedTokens.pop();
+                }
+            }
+        }
     }
 
     function interestSinceTimestampsUnchecked(uint256 tokenId, uint256 timestampStart, uint256 timestampEnd) internal view returns (uint256) {
@@ -161,6 +192,9 @@ contract BorrowPositionToken is ERC721, Ownable {
         console.log("---");
 
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
+        if (bd.apy == 0) {
+            return 0;
+        }
         if (bd.startDate > timestamp) {
             console.log("bpt created after start date - using startDate in place of timestamp");
             console.log(bd.apy * bd.principal * (block.timestamp - bd.startDate) / (APY_DECIMALS * SECONDS_IN_YEAR));
@@ -190,6 +224,15 @@ contract BorrowPositionToken is ERC721, Ownable {
         // Make updates to BorrowPositionToken
         bd.startDate = uint40(block.timestamp);
         bd.principal -= principalReduction;
+    }
+
+    function repayLoan(uint256 tokenId) onlyOwner external returns (uint, uint) {
+        console.log("Running repayLoan");
+        // Check that msg.sender owns the DPT
+        require(ownerOf(tokenId) == sender, "msg.sender does not own specified BPT");
+        // burn the token
+        _burn(tokenId);
+        return (borrowDatas[tokenId].principal, borrowDatas[tokenId].collateral);
     }
 
     function getCurrentIndex() public view returns(uint) {
