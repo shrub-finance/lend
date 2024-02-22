@@ -138,9 +138,9 @@ contract BorrowPositionToken is ERC721, Ownable {
 
     function cleanUpByTimestamp(uint40 timestamp) external onlyOwner {
         // Cleanup tokensByTimestamp as this isn't done during the burn
-        for (uint i = 0; j < tokensByTimestamp[timestamp].length; i++) {
+        for (uint i = 0; i < tokensByTimestamp[timestamp].length; i++) {
             for (uint j = 0; j < removedTokens[timestamp].length; j++) {
-                if (tokensByTimestamp[i] == removedTokens[timestamp][j]) {
+                if (tokensByTimestamp[timestamp][i] == removedTokens[timestamp][j]) {
                     // First remove from tokensByTimestamp
                     uint lastIndex = tokensByTimestamp[timestamp].length - 1;
                     if (i != lastIndex) {
@@ -157,7 +157,7 @@ contract BorrowPositionToken is ERC721, Ownable {
                     if (j != lastIndex2) {
                         removedTokens[timestamp][j] = removedTokens[timestamp][lastIndex2];
                     }
-                    removedTokens.pop();
+                    removedTokens[timestamp].pop();
                 }
             }
         }
@@ -226,7 +226,7 @@ contract BorrowPositionToken is ERC721, Ownable {
         bd.principal -= principalReduction;
     }
 
-    function repayLoan(uint256 tokenId) onlyOwner external returns (uint, uint) {
+    function repayLoan(uint256 tokenId, address sender) onlyOwner external returns (uint, uint) {
         console.log("Running repayLoan");
         // Check that msg.sender owns the DPT
         require(ownerOf(tokenId) == sender, "msg.sender does not own specified BPT");
