@@ -103,20 +103,19 @@ contract BorrowPositionToken is ERC721, Ownable {
     }
 
     // Returns the total owed on a loan
-    function debt(uint256 tokenId, uint256 timestamp) public view checkExists(tokenId) returns (uint256) {
+    function debt(uint256 tokenId) public view checkExists(tokenId) returns (uint256) {
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         console.log("running bd.debt - (tokenId, bd.startDate, timestamp)");
-        BorrowData memory bd = borrowDatas[tokenId];
+//        BorrowData memory bd = borrowDatas[tokenId];
         console.log(tokenId);
-        console.log(bd.startDate);
-        console.log(timestamp);
-        if (bd.startDate > timestamp) {
-            console.log("startDate greater than timestamp");
-            console.log(bd.startDate);
-            return bd.principal + interestSinceTimestamp(tokenId, bd.startDate);
-        }
-        return bd.principal + interestSinceTimestamp(tokenId, timestamp);
-        console.log("--- end debt logs---");
+//        console.log(bd.startDate);
+//        console.log(timestamp);
+//        if (bd.startDate > timestamp) {
+//            console.log("startDate greater than timestamp");
+//            console.log(bd.startDate);
+//            return bd.principal + interestSinceTimestamp(tokenId, bd.startDate);
+//        }
+        return borrowDatas[tokenId].principal + interestSinceTimestamp(tokenId, borrowDatas[tokenId].startDate);
     }
 
 //    function updateSnapshot(uint256 tokenId, uint newDebt) checkExists(tokenId) external onlyOwner {
@@ -126,14 +125,12 @@ contract BorrowPositionToken is ERC721, Ownable {
 //    }
 
     function burn(uint256 tokenId) external checkExists(tokenId) onlyOwner {
-        _burn(tokenId);
-        // Cleanup the borrowData associated with this token
-        BorrowData storage bd = borrowDatas[tokenId];
-        bd.collateral = 0;
-        bd.principal = 0;
         // because most loans will be paid off at the end - we have intentionally decided to not clean up from
         // tokensByTimestamp on the burning of the bpt. Rather, this will be handled during the snapshot
-        removedTokens[bd.endDate].push(tokenId);
+        removedTokens[borrowDatas[tokenId].endDate].push(tokenId);
+        // Cleanup the borrowData associated with this token
+        delete borrowDatas[tokenId];
+        _burn(tokenId);
     }
 
     function cleanUpByTimestamp(uint40 timestamp) external onlyOwner {

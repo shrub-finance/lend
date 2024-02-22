@@ -583,7 +583,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         emit PartialRepayLoan(tokenId, repaymentAmount, principalReduction);
     }
 
-    function repayLoan2(
+    function repayLoan(
         uint tokenId,
         address beneficiary
     ) external {
@@ -605,13 +605,24 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             bd.principal + interest
         );
         // Burn the BPT - NOTE: it must be also removed from tokensByTimestamp - This is done in other contract
+        bpt.burn(tokenId);
         // Update Borrowing Pool principal, collateral
+        borrowingPools[bd.endDate].principal -= bd.principal;
+        borrowingPools[bd.endDate].collateral -= bd.collateral;
         // Update Borrowing Pool poolShareAmount
+        console.log('aEthSnapshotBalance');
+        console.log(aEthSnapshotBalance);
+        uint deltaBpPoolShares = bd.collateral * bpTotalPoolShares / aEthSnapshotBalance;
+        borrowingPools[bd.endDate].poolShareAmount -= deltaBpPoolShares;
         // Update bpTotalPoolShares
-        // Convert collateral amount of aETH to ETH
-        // Transfer ETH to the beneficiary
+        bpTotalPoolShares -= deltaBpPoolShares;
+        // Convert collateral amount of aETH to ETH and Transfer ETH to the beneficiary
+        wrappedTokenGateway.withdrawETH(address(0), bd.collateral, beneficiary);
+        // Emit event for tracking/analytics/subgraph
+        emit RepayLoan(tokenId, bd.principal + interest, bd.collateral, beneficiary);
     }
 
+    /*
     // No need to specify amount - the full amount will be transferred needed to repay the loan
     function repayLoan(
         uint tokenId, // tokenId of the ERC-721 DPT
@@ -644,6 +655,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Emit event for tracking/analytics/subgraph
         emit RepayLoan(tokenId, debt, collateral, beneficiary);
     }
+    */
 
     function takeSnapshot() public onlyOwner {
         console.log("running takeSnapshot");
@@ -681,6 +693,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         }
         // set the last snapshot date to now
         lastSnapshotDate = block.timestamp;
+        aEthSnapshotBalance = aeth.balanceOf(address(this));
 
         // zero out the tracking globals;
         newCollateralSinceSnapshot = 0;

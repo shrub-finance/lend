@@ -149,6 +149,50 @@ task("provideLiquidity", "add USDC to a lending pool")
         await sendTransaction(lendingPlatformAccount.deposit(timestamp, parsedUsdc), `Deposit USDC`);
     })
 
+task("repayLoan", "add USDC to a lending pool")
+    .addParam("tokenId", "tokenId of the loan", undefined, types.int, false)
+    .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
+    .addParam("beneficiary", "Address of account to receive the collateral", undefined, types.string, true)
+    .setAction(async (taskArgs, env) => {
+        const tokenId: number = taskArgs.tokenId;
+        const account = taskArgs.account;
+
+        const {ethers, deployments, getNamedAccounts} = env;
+        const { deployer } = await getNamedAccounts();
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+        const usdCoinDeployment = await deployments.get('USDCoin');
+        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+        const borrowPositionTokenDeployment = await deployments.get('BorrowPositionToken');
+        const borrowPositionToken = await ethers.getContractAt("BorrowPositionToken", borrowPositionTokenDeployment.address);
+
+        const borrowerAccount = await ethers.getSigner(account || deployer);
+        const beneficiary = taskArgs.beneficiary || borrowerAccount.address;
+        // const parsedUsdc = ethers.parseUnits(repaymentAmount.toString(), 6);
+
+        const debt = await borrowPositionToken.debt(tokenId);
+
+        // Check balance of account to ensure that it is sufficient
+        const usdcBalance = await usdc.balanceOf(borrowerAccount);
+        const borrowerAccountAddress = await borrowerAccount.getAddress();
+        console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${borrowerAccountAddress}`);
+        if (usdcBalance < debt) {
+            console.log('insufficient USDC balance in account - aborting');
+            return;
+        }
+        // Check approval of account to ensure that it is sufficient
+        const approved = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
+        console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
+        // If approval is not sufficient then create an approval tx
+        if (approved < debt) {
+            const needToApprove = debt - approved;
+            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
+            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
+        }
+        // Send the deposit tx
+        await sendTransaction(lendingPlatform.connect(borrowerAccount).repayLoan(tokenId, beneficiary), `Fully Repay Loan`);
+    })
+
 task("partialRepayLoan", "add USDC to a lending pool")
     .addParam("tokenId", "tokenId of the loan", undefined, types.int, false)
     .addParam("repaymentAmount", "Amount of USDC - in USD to repay", undefined, types.float, false)
@@ -267,6 +311,7 @@ task("testLendingPlatform3", "Setup an environment for development")
     .setAction(async (taskArgs, env) => {
         const jan2026 = toEthDate(new Date('2026-01-01T00:00:00Z'));
         const feb2026 = toEthDate(new Date('2026-02-01T00:00:00Z'));
+        const apr2026 = toEthDate(new Date('2026-04-01T00:00:00Z'));
         const may2026 = toEthDate(new Date('2026-05-01T00:00:00Z'));
         const aug2026 = toEthDate(new Date('2026-08-01T00:00:00Z'));
         const jan2027 = toEthDate(new Date('2027-01-01T00:00:00Z'));
@@ -289,6 +334,9 @@ task("testLendingPlatform3", "Setup an environment for development")
         await env.run('setTime', {ethDate: feb2026});
         await env.run('takeSnapshot', { account: deployer });
         await env.run('partialRepayLoan', { account: account3, tokenId: 0, repaymentAmount: 50});
+        await env.run('setTime', {ethDate: apr2026});
+        await env.run('distributeUsdc', { to: account3, amount: 5 });
+        await env.run('repayLoan', { account: account3, tokenId: 0 })
             // .addParam("tokenId", "tokenId of the loan", undefined, types.int, false)
             // .addParam("repaymentAmount", "Amount of USDC - in USD to repay", undefined, types.float, false)
             // .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
