@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
 import "hardhat-abi-exporter";
 import "./hardhat-tasks";
+import "./hardhat-tests";
 
 
 const config: HardhatUserConfig = {
