@@ -261,7 +261,7 @@ export const DashboardView: FC = ({}) => {
                                   }
                                 </td>
                                 <td className="px-6 py-4 text-sm font-bold">
-                                  <span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                                  <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
                                      X%
                                   </span>
 
@@ -361,7 +361,7 @@ export const DashboardView: FC = ({}) => {
                                   {daysFromNow(fromEthDate(item.timestamp))}
                                 </td>
                                 <td className="px-6 py-4 text-sm font-bold">
-                                  <p>{ethers.utils.formatUnits(item.apy, 6)}</p>
+                                  <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{ethers.utils.formatUnits(item.apy, 6)}</span>
                                   {/*<p>{ethers.utils.parseUnits(item.apy, 6)}</p>*/}
                                   {/*{ethers.utils.parseUnits(item.apy, 6)}*/}
                                 </td>
