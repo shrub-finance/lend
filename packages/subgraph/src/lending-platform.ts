@@ -11,8 +11,13 @@ import {
     lendingPoolIncrementTokenSupply, lendingPoolUpdateYield
 } from "./entities/lending-pool";
 import {getUser} from "./entities/user";
-import {addLoanToPool, getBorrowingPool} from "./entities/borrowing-pool";
-import {getLoan, partialRepayLoan, repayLoan} from "./entities/loan";
+import {
+    addLoanToPool,
+    getBorrowingPool,
+    partialRepayBorrowingPool,
+    removeLoanFromPool
+} from "./entities/borrowing-pool";
+import {getLoan, getLoanByTokenId, partialRepayLoan, repayLoan} from "./entities/loan";
 import {PoolShareToken} from "../generated/templates";
 import {getLendPosition, incrementLendPosition} from "./entities/lend-position";
 
@@ -112,6 +117,9 @@ export function handlePartialRepayLoan(event: PartialRepayLoan): void {
         principalReduction.toString()
     ]);
 
+    let loan = getLoanByTokenId(tokenId);
+    let borrowingPool = getBorrowingPool(loan.timestamp, event.block);
+    partialRepayBorrowingPool(borrowingPool, principalReduction);
     partialRepayLoan(tokenId, repaymentAmount, principalReduction, event.block);
 }
 
@@ -128,5 +136,8 @@ export function handleRepayLoan(event: RepayLoan): void {
         beneficiary.toHexString()
     ]);
 
+    let loan = getLoanByTokenId(tokenId);
+    let borrowingPool = getBorrowingPool(loan.timestamp, event.block);
+    removeLoanFromPool(borrowingPool, loan);
     repayLoan(tokenId, repaymentAmount, collateralReturned, beneficiary, event.block);
 }

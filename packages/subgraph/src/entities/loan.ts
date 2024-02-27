@@ -3,11 +3,22 @@ import {Loan, User} from "../../generated/schema";
 import {getUser} from "./user";
 import {Zero} from "../constants";
 
+export function getLoanByTokenId(
+    tokenId: BigInt
+): Loan {
+    let id = tokenId.toString();
+    let loan = Loan.load(id);
+    if (loan == null) {
+        throw new Error(`No loan found with tokenId ${tokenId}`);
+    }
+    return loan;
+}
+
 export function getLoan(
     tokenId: BigInt,
     user: Address,
     apy: BigInt,
-    amount: BigInt,
+    principal: BigInt,
     collateral: BigInt,
     timestamp: BigInt,
     block: ethereum.Block
@@ -19,7 +30,7 @@ export function getLoan(
     if (loan !== null) {
         return loan;
     }
-    return createLoan(id, user, apy, amount, collateral, timestamp, block);
+    return createLoan(id, user, apy, principal, collateral, timestamp, block);
 }
 
 // Private Methods
@@ -27,7 +38,7 @@ function createLoan(
     id: string,
     user: Address,
     apy: BigInt,
-    amount: BigInt,
+    principal: BigInt,
     collateral: BigInt,
     timestamp: BigInt,
     block: ethereum.Block
@@ -48,8 +59,8 @@ function createLoan(
     // loan.owner = owner.toHexString();
     loan.apy = apy;
     loan.ltv = Zero;  // This is complicated and would need to be calculated after price changes at some interval - leaving as 0 for now
-    loan.amount = amount;
-    loan.originalPrincipal = amount;
+    loan.principal = principal;
+    loan.originalPrincipal = principal;
     loan.paid = Zero;
     loan.collateral = collateral;
     loan.collateralReturned = Zero;
@@ -68,7 +79,7 @@ export function partialRepayLoan(
     if (loan == null) {
         throw new Error(`Loan with id ${id} not found`);
     }
-    loan.amount = loan.amount.minus(principalReduction);
+    loan.principal = loan.principal.minus(principalReduction);
     loan.updated = block.timestamp.toI32();
     loan.updatedBlock = block.number.toI32();
     loan.paid = loan.paid.plus(repaymentAmount)
@@ -90,7 +101,7 @@ export function repayLoan(
     }
     // TODO: Write this logic
     let beneficiaryObj = getUser(beneficiary);
-    loan.amount = Zero;
+    loan.principal = Zero;
     loan.updated = block.timestamp.toI32();
     loan.updatedBlock = block.number.toI32();
     loan.closed = block.timestamp.toI32();
@@ -107,7 +118,7 @@ export function repayLoan(
 //     id: ID!
 //     created: Int!
 //     createdBlock: Int!
-//     amount: BigInt!
+//     principal: BigInt!
 //     collateral: BigInt!
 //     ltv: Int!
 //     apy: Int!

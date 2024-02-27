@@ -41,7 +41,7 @@ type Loan @entity {
     closed: Int
     closedBlock: Int
     timestamp: BigInt!
-    amount: BigInt!
+    principal: BigInt!
     originalPrincipal: BigInt!
     paid: BigInt!
     collateral: BigInt!

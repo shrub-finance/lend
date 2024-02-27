@@ -327,11 +327,11 @@ task("testLendingPlatform3", "Setup an environment for development")
         await env.run('createPool', { timestamp: jan2027});  // 12 month
         await env.run('approveUsdc', { account: account1 });
         await env.run('setTime', {ethDate: jan2026});
+        await env.run('takeSnapshot', { account: deployer });
         await env.run('setEthPrice', {ethPrice: '2000'});
         await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2027, account: account1});  // 12 month
         await env.run('provideLiquidity', { usdcAmount: 500, timestamp: may2026, account: account2});  // 4 month
         await env.run('takeLoan', { account: account3, timestamp: may2026, loanAmount: 100, collateralAmount: 0.1, ltv: 50})
-        await env.run('takeSnapshot', { account: deployer });
         await env.run('setTime', {ethDate: feb2026});
         await env.run('takeSnapshot', { account: deployer });
         await env.run('partialRepayLoan', { account: account3, tokenId: 0, repaymentAmount: 50});
