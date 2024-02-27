@@ -38,6 +38,7 @@ function createLoan(
     }
     let userObj = getUser(user);
     loan = new Loan(id);
+    loan.active = true;
     loan.timestamp = timestamp;
     loan.created = block.timestamp.toI32();
     loan.updated = block.timestamp.toI32();
@@ -51,6 +52,7 @@ function createLoan(
     loan.originalPrincipal = amount;
     loan.paid = Zero;
     loan.collateral = collateral;
+    loan.collateralReturned = Zero;
     loan.save();
     return loan;
 }
@@ -74,6 +76,32 @@ export function partialRepayLoan(
     return loan;
 }
 
+export function repayLoan(
+    tokenId: BigInt,
+    repaymentAmount: BigInt,
+    collateralReturned: BigInt,
+    beneficiary: Address,
+    block: ethereum.Block
+): Loan {
+    let id = tokenId.toString();
+    let loan = Loan.load(id);
+    if (loan == null) {
+        throw new Error(`Loan with id ${id} not found`);
+    }
+    // TODO: Write this logic
+    let beneficiaryObj = getUser(beneficiary);
+    loan.amount = Zero;
+    loan.updated = block.timestamp.toI32();
+    loan.updatedBlock = block.number.toI32();
+    loan.closed = block.timestamp.toI32();
+    loan.closedBlock = block.number.toI32();
+    loan.paid = loan.paid.plus(repaymentAmount)
+    loan.active = false;
+    loan.collateralReturned = loan.collateralReturned.plus(collateralReturned);
+    loan.beneficiary = beneficiaryObj.id;
+    loan.save()
+    return loan;
+}
 
 // type Loan @entity(immutable: true) {
 //     id: ID!

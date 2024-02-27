@@ -1,7 +1,7 @@
 import {
     LendingPoolYield,
     NewDeposit, NewLoan, PartialRepayLoan,
-    PoolCreated
+    PoolCreated, RepayLoan
 } from "../generated/Contract/LendingPlatform"
 import { log } from '@graphprotocol/graph-ts'
 import {
@@ -12,7 +12,7 @@ import {
 } from "./entities/lending-pool";
 import {getUser} from "./entities/user";
 import {addLoanToPool, getBorrowingPool} from "./entities/borrowing-pool";
-import {getLoan, partialRepayLoan} from "./entities/loan";
+import {getLoan, partialRepayLoan, repayLoan} from "./entities/loan";
 import {PoolShareToken} from "../generated/templates";
 import {getLendPosition, incrementLendPosition} from "./entities/lend-position";
 
@@ -112,6 +112,21 @@ export function handlePartialRepayLoan(event: PartialRepayLoan): void {
         principalReduction.toString()
     ]);
 
-    // TODO: Write the logic for this...
     partialRepayLoan(tokenId, repaymentAmount, principalReduction, event.block);
+}
+
+export function handleRepayLoan(event: RepayLoan): void {
+    // event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
+    let tokenId = event.params.tokenId;
+    let repaymentAmount = event.params.repaymentAmount;
+    let collateralReturned = event.params.collateralReturned;
+    let beneficiary = event.params.beneficiary;
+    log.info("handleRepayLoan: tokenId: {}. repaymentAmount: {}, collateralReturned, beneficiary: {}", [
+        tokenId.toString(),
+        repaymentAmount.toString(),
+        collateralReturned.toString(),
+        beneficiary.toHexString()
+    ]);
+
+    repayLoan(tokenId, repaymentAmount, collateralReturned, beneficiary, event.block);
 }

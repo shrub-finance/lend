@@ -618,6 +618,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         bpTotalPoolShares -= deltaBpPoolShares;
         // Convert collateral amount of aETH to ETH and Transfer ETH to the beneficiary
         wrappedTokenGateway.withdrawETH(address(0), bd.collateral, beneficiary);
+        claimedCollateralSinceSnapshot += bd.collateral;
         // Emit event for tracking/analytics/subgraph
         emit RepayLoan(tokenId, bd.principal + interest, bd.collateral, beneficiary);
     }
@@ -661,9 +662,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         console.log("running takeSnapshot");
 //        Get the current balance of bpTotalPoolShares (it is local)
         // calculate the accumYield for all BP (current balance - snapshot balance)
-        uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) - aEthSnapshotBalance;
+        console.log(aeth.balanceOf(address(this)));
+        console.log(aEthSnapshotBalance);
+        console.log("---");
+        uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) + claimedCollateralSinceSnapshot - newCollateralSinceSnapshot - aEthSnapshotBalance;
 //        Calculate accumInterest for all BP
         for (uint i = 0; i < activePools.length; i++) {
+            // Cleanup paid off BPTs
+            bpt.cleanUpByTimestamp(uint40(activePools[i]));
 //            Find the BPTs related to these timestamps
 //            bptsForPool is an array of tokenIds
             uint[] memory bptsForPool = bpt.getTokensByTimestamp(uint40(activePools[i]));
@@ -673,12 +679,21 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
                 accumInterestBP +=  bpt.interestSinceTimestamp(j, lastSnapshotDate);
             }
             // Determine the amount of aETH to distribute from this borrowing pool
+            if (borrowingPools[i].poolShareAmount == 0) {
+                console.log("poolShareAmount in borrowing pool 0 - skipping");
+                continue;
+            }
+            console.log("bpTotalPoolShares");
+            console.log(bpTotalPoolShares);
+            console.log(borrowingPools[i].poolShareAmount);
             uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[i].poolShareAmount / bpTotalPoolShares;
             // Loop through this and future Lending Pools to determine the contribution denominator
             uint contributionDenominator;
             for (uint j = i; j < activePools.length; j++) {
                 contributionDenominator += lendingPools[activePools[j]].totalLiquidity;
             }
+            console.log("contributionDenominator");
+            console.log(contributionDenominator);
             // distribute accumInterest and accumYield to LPs based on contribution principal
             for (uint j = i; j < activePools.length; j++) {
                 lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].totalLiquidity / contributionDenominator;
@@ -691,6 +706,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             }
 
         }
+        console.log("i for loop concluded");
         // set the last snapshot date to now
         lastSnapshotDate = block.timestamp;
         aEthSnapshotBalance = aeth.balanceOf(address(this));

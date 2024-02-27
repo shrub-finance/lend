@@ -30,6 +30,7 @@ interface IBorrowPositionToken is IERC721 {
     function getLoan(uint tokenId) external returns (BorrowData memory);
     function getInterest(uint tokenId) external view returns (uint256);
     function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint lastSnapshotDate, address sender) external returns(uint principalReduction);
+    function cleanUpByTimestamp(uint40 timestamp) external;
 }
 
 uint256 constant SECONDS_IN_YEAR = 365 * 24 * 60 * 60;

@@ -33,18 +33,23 @@ type BorrowingPool @entity {
 type Loan @entity {
     "ERC-721 tokenId"
     id: ID!
+    active: Boolean
     created: Int!
     createdBlock: Int!
     updated: Int!
     updatedBlock: Int!
+    closed: Int
+    closedBlock: Int
     timestamp: BigInt!
     amount: BigInt!
     originalPrincipal: BigInt!
     paid: BigInt!
     collateral: BigInt!
+    collateralReturned: BigInt!
     ltv: BigInt!
     apy: BigInt!
     user: User
+    beneficiary: User
 }
 
 type LendPosition @entity {

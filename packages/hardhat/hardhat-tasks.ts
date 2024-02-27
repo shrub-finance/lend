@@ -331,15 +331,15 @@ task("testLendingPlatform3", "Setup an environment for development")
         await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2027, account: account1});  // 12 month
         await env.run('provideLiquidity', { usdcAmount: 500, timestamp: may2026, account: account2});  // 4 month
         await env.run('takeLoan', { account: account3, timestamp: may2026, loanAmount: 100, collateralAmount: 0.1, ltv: 50})
+        await env.run('takeSnapshot', { account: deployer });
         await env.run('setTime', {ethDate: feb2026});
         await env.run('takeSnapshot', { account: deployer });
         await env.run('partialRepayLoan', { account: account3, tokenId: 0, repaymentAmount: 50});
         await env.run('setTime', {ethDate: apr2026});
+        await env.run('takeSnapshot', { account: deployer });
         await env.run('distributeUsdc', { to: account3, amount: 5 });
         await env.run('repayLoan', { account: account3, tokenId: 0 })
-            // .addParam("tokenId", "tokenId of the loan", undefined, types.int, false)
-            // .addParam("repaymentAmount", "Amount of USDC - in USD to repay", undefined, types.float, false)
-            // .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
+        await env.run('takeSnapshot', { account: deployer });
     })
 
 task('takeSnapshot', 'snapshot and update the accumInterest and accumYield')
