@@ -3,7 +3,7 @@ import Head from "next/head";
 import {DashboardView} from "../views/DashboardView";
 
 
-
+// we are using dashboard view also as the home view, can be changed in the future
 const Dashboard: NextPage = () => {
   return (
     <div>

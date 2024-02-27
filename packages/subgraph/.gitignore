@@ -6,3 +6,4 @@ tests/abis
 tests/build
 tests/generated
 tests/src
+.yarn/
