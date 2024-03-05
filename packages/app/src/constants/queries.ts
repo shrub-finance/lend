@@ -32,7 +32,7 @@ export const USER_POSITIONS_QUERY = gql`
             loans(where:{active:true}){
                 id
                 timestamp
-                amount
+                principal
                 originalPrincipal
                 collateral
                 created

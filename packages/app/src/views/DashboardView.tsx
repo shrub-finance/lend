@@ -382,8 +382,8 @@ export const DashboardView: FC = ({}) => {
                                     <td className="px-6 py-4 text-sm font-bold">
                                         {daysFromNow(fromEthDate(item.timestamp))}
                                     </td>
-                                    <td className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
-                                        <p>{ethers.utils.formatUnits(item.apy, 6)}</p>
+                                    <td >
+                                        <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${ethers.utils.formatUnits(item.apy, 6)}%`}</span>
                                         {/*<p>{ethers.utils.parseUnits(item.apy, 6)}</p>*/}
                                         {/*{ethers.utils.parseUnits(item.apy, 6)}*/}
                                     </td>
@@ -392,9 +392,9 @@ export const DashboardView: FC = ({}) => {
                                             // return bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR);
                                             //  item.apy * item.amount * (toEthDate(new Date('2025-02-01')) - item.created) / (60 * 24 * 365 * 1e8)
                                             ethers.utils.formatUnits(
-                                                ethers.BigNumber.from(item.amount).add(
+                                                ethers.BigNumber.from(item.principal).add(
                                                     ethers.BigNumber.from(item.apy)
-                                                        .mul(ethers.BigNumber.from(item.amount))
+                                                        .mul(ethers.BigNumber.from(item.principal))
                                                         .mul(ethers.BigNumber.from(toEthDate(new Date('2026-02-01'))).sub(ethers.BigNumber.from(item.updated)))
                                                         .div(ethers.BigNumber.from(60 * 60 * 24 * 365))
                                                         .div(ethers.utils.parseUnits('1', 8))
