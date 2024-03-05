@@ -14,6 +14,7 @@ import "./MockAaveV3.sol";
 import "./AETH.sol";
 
 import "hardhat/console.sol";
+import {USDCoin} from "./USDCoin.sol";
 
 contract LendingPlatform is Ownable, ReentrancyGuard {
     // using SafeERC20 for IERC20;
@@ -71,11 +72,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     uint256[] public activePools; // Sorted ascending list of timestamps of active pools
     uint lastSnapshotDate;
     uint aEthSnapshotBalance;
+    uint newCollateralSinceSnapshot;
+    uint claimedCollateralSinceSnapshot;
 
     event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
     event NewDeposit(uint256 timestamp, address poolShareTokenAddress, address depositor, uint256 amount, uint256 tokenAmount);
     event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 principal, uint32 apy);
-    event PartialRepayLoan(uint tokenId, uint repaymentAmount);
+    event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
     event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
 
@@ -322,6 +325,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     function deposit(uint256 _timestamp, uint256 _amount) public nonReentrant {
+        console.log("running deposit");
         require(_amount > 0, "Deposit amount must be greater than 0");
         require(validPool(_timestamp), "Invalid pool");
 
@@ -333,19 +337,25 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Calculate total value of the pool in terms of USDC
         uint256 aethInterest = getAethInterest();
         uint256 aethInterestValueInUsdc = aethInterest * getEthPrice();
-        uint256 totalPoolValue = lendingPools[_timestamp].totalLiquidity +
-            aethInterestValueInUsdc;
+        uint256 totalPoolValue = lendingPools[_timestamp].totalLiquidity + lendingPools[_timestamp].accumInterest + aethInterestValueInUsdc;
 
         // If the pool does not exist or totalLiquidity is 0, user gets 1:1 poolShareTokens
+        console.log("totalPoolValue, _amount, lpt.totalSupply(), poolShareTokenAmount");
+        console.log(totalPoolValue);
+        console.log(_amount);
+        console.log(lendingPools[_timestamp].poolShareToken.totalSupply());
         if (totalPoolValue == 0) {
             poolShareTokenAmount = _amount * 10 ** 12;
+            console.log("PATH 1 - NEW");
         } else {
             // If the pool exists and has liquidity, calculate poolShareTokens based on the proportion of deposit to total pool value
+            console.log("PATH 2 - ESTABLISHED");
             poolShareTokenAmount =
                 (_amount * lendingPools[_timestamp].poolShareToken.totalSupply()) /
                 totalPoolValue;
             // Times 10 ** 12 to adjust the decimals of USDC 6 to 18 for the poolShareToken
         }
+        console.log(poolShareTokenAmount);
         lendingPools[_timestamp].totalLiquidity += _amount;
         lendingPools[_timestamp].poolShareToken.mint(msg.sender, poolShareTokenAmount);
         emit NewDeposit(
@@ -526,6 +536,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         borrowingPools[_timestamp].poolShareAmount += deltaBpPoolShares;
         bpTotalPoolShares += deltaBpPoolShares;
 
+        newCollateralSinceSnapshot += _collateral;  // Keep track of the collateral since the last snapshot
+
 //        console.log("-------");
 //        console.log(tokenId);
 //        console.log(_timestamp);
@@ -540,12 +552,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount) external {
         // Check that msg.sender owns the DPT
-        require(bpt.ownerOf(tokenId) == msg.sender, "msg.sender does not own specified BPT");
+//        require(bpt.ownerOf(tokenId) == msg.sender, "msg.sender does not own specified BPT");
         // Check that the user has sufficient funds
         require(usdc.balanceOf(msg.sender) >= repaymentAmount, "insufficient balance");
         // Check that the funds are less than the owed balance
-        uint debt = bpt.debt(tokenId);
-        require(repaymentAmount < debt, "repayment amount must be less than total debt");
+//        uint debt = bpt.debt(tokenId);
+//        require(repaymentAmount < , "repayment amount must be less than total debt");
+//        uint interest = bpt.getInterest(tokenId);
+//        require(repaymentAmount >= interest, "repayment amount must be at least the accumulated interest");
         // Check that funds are approved
         // NOTE: We are letting the ERC-20 contract handle this
         // Transfer USDC funds to Shrub
@@ -557,12 +571,59 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Update BPT Collateral and loans
 //        bpt.updateSnapshot(tokenId, debt - repaymentAmount);
         // Update BP Collateral and loans
-        borrowingPools[bpt.getEndDate(tokenId)].principal -= repaymentAmount;
+//        borrowingPools[bpt.getEndDate(tokenId)].principal -= repaymentAmount;
         // Update BP pool share amount (aETH)
         // Emit event for tracking/analytics/subgraph
-        emit PartialRepayLoan(tokenId, repaymentAmount);
+//        uint newPrincipal = 0;
+        uint principalReduction = bpt.partialRepayLoan(tokenId, repaymentAmount, lastSnapshotDate, msg.sender);
+
+        BorrowingPool storage borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
+        borrowingPool.principal -= principalReduction;
+
+        emit PartialRepayLoan(tokenId, repaymentAmount, principalReduction);
     }
 
+    function repayLoan(
+        uint tokenId,
+        address beneficiary
+    ) external {
+        // Check that msg.sender owns the bpt
+        // Determine the principal, interest, and collateral of the debt
+        BorrowData memory bd = bpt.getLoan(tokenId);
+//        bd.endDate = _timestamp;
+//        bd.principal = _principal;
+//        bd.collateral = _collateral;
+//        bd.apy = apy;
+        uint interest = bpt.getInterest(tokenId);
+        // Ensure that msg.sender has sufficient USDC
+        require(usdc.balanceOf(msg.sender) >= bd.principal + interest);
+        // Ensure that msg.sender has approved sufficient USDC - ERC20 contract can handle this
+        // Transfer funds to Shrub
+        usdc.transferFrom(
+            msg.sender,
+            address(this),
+            bd.principal + interest
+        );
+        // Burn the BPT - NOTE: it must be also removed from tokensByTimestamp - This is done in other contract
+        bpt.burn(tokenId);
+        // Update Borrowing Pool principal, collateral
+        borrowingPools[bd.endDate].principal -= bd.principal;
+        borrowingPools[bd.endDate].collateral -= bd.collateral;
+        // Update Borrowing Pool poolShareAmount
+        console.log('aEthSnapshotBalance');
+        console.log(aEthSnapshotBalance);
+        uint deltaBpPoolShares = bd.collateral * bpTotalPoolShares / aEthSnapshotBalance;
+        borrowingPools[bd.endDate].poolShareAmount -= deltaBpPoolShares;
+        // Update bpTotalPoolShares
+        bpTotalPoolShares -= deltaBpPoolShares;
+        // Convert collateral amount of aETH to ETH and Transfer ETH to the beneficiary
+        wrappedTokenGateway.withdrawETH(address(0), bd.collateral, beneficiary);
+        claimedCollateralSinceSnapshot += bd.collateral;
+        // Emit event for tracking/analytics/subgraph
+        emit RepayLoan(tokenId, bd.principal + interest, bd.collateral, beneficiary);
+    }
+
+    /*
     // No need to specify amount - the full amount will be transferred needed to repay the loan
     function repayLoan(
         uint tokenId, // tokenId of the ERC-721 DPT
@@ -595,14 +656,20 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Emit event for tracking/analytics/subgraph
         emit RepayLoan(tokenId, debt, collateral, beneficiary);
     }
+    */
 
     function takeSnapshot() public onlyOwner {
         console.log("running takeSnapshot");
 //        Get the current balance of bpTotalPoolShares (it is local)
         // calculate the accumYield for all BP (current balance - snapshot balance)
-        uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) - aEthSnapshotBalance;
+        console.log(aeth.balanceOf(address(this)));
+        console.log(aEthSnapshotBalance);
+        console.log("---");
+        uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) + claimedCollateralSinceSnapshot - newCollateralSinceSnapshot - aEthSnapshotBalance;
 //        Calculate accumInterest for all BP
         for (uint i = 0; i < activePools.length; i++) {
+            // Cleanup paid off BPTs
+            bpt.cleanUpByTimestamp(uint40(activePools[i]));
 //            Find the BPTs related to these timestamps
 //            bptsForPool is an array of tokenIds
             uint[] memory bptsForPool = bpt.getTokensByTimestamp(uint40(activePools[i]));
@@ -612,12 +679,21 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
                 accumInterestBP +=  bpt.interestSinceTimestamp(j, lastSnapshotDate);
             }
             // Determine the amount of aETH to distribute from this borrowing pool
+            if (borrowingPools[i].poolShareAmount == 0) {
+                console.log("poolShareAmount in borrowing pool 0 - skipping");
+                continue;
+            }
+            console.log("bpTotalPoolShares");
+            console.log(bpTotalPoolShares);
+            console.log(borrowingPools[i].poolShareAmount);
             uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[i].poolShareAmount / bpTotalPoolShares;
             // Loop through this and future Lending Pools to determine the contribution denominator
             uint contributionDenominator;
             for (uint j = i; j < activePools.length; j++) {
                 contributionDenominator += lendingPools[activePools[j]].totalLiquidity;
             }
+            console.log("contributionDenominator");
+            console.log(contributionDenominator);
             // distribute accumInterest and accumYield to LPs based on contribution principal
             for (uint j = i; j < activePools.length; j++) {
                 lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].totalLiquidity / contributionDenominator;
@@ -630,8 +706,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             }
 
         }
+        console.log("i for loop concluded");
         // set the last snapshot date to now
         lastSnapshotDate = block.timestamp;
+        aEthSnapshotBalance = aeth.balanceOf(address(this));
+
+        // zero out the tracking globals;
+        newCollateralSinceSnapshot = 0;
+        claimedCollateralSinceSnapshot = 0;
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {

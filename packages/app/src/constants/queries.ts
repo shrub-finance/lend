@@ -29,13 +29,17 @@ export const USER_POSITIONS_QUERY = gql`
                 depositsUsdc
                 withdrawsUsdc
             }
-            loans{
+            loans(where:{active:true}){
                 id
                 timestamp
-                amount
+                principal
+                originalPrincipal
                 collateral
                 created
                 createdBlock
+                updated
+                updatedBlock
+                paid
                 ltv
                 apy
             }

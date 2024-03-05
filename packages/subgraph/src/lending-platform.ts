@@ -1,7 +1,7 @@
 import {
     LendingPoolYield,
-    NewDeposit, NewLoan,
-    PoolCreated
+    NewDeposit, NewLoan, PartialRepayLoan,
+    PoolCreated, RepayLoan
 } from "../generated/Contract/LendingPlatform"
 import { log } from '@graphprotocol/graph-ts'
 import {
@@ -11,8 +11,13 @@ import {
     lendingPoolIncrementTokenSupply, lendingPoolUpdateYield
 } from "./entities/lending-pool";
 import {getUser} from "./entities/user";
-import {addLoanToPool, getBorrowingPool} from "./entities/borrowing-pool";
-import {getLoan} from "./entities/loan";
+import {
+    addLoanToPool,
+    getBorrowingPool,
+    partialRepayBorrowingPool,
+    removeLoanFromPool
+} from "./entities/borrowing-pool";
+import {getLoan, getLoanByTokenId, partialRepayLoan, repayLoan} from "./entities/loan";
 import {PoolShareToken} from "../generated/templates";
 import {getLendPosition, incrementLendPosition} from "./entities/lend-position";
 
@@ -99,4 +104,40 @@ export function handleLendingPoolYield(event: LendingPoolYield): void {
     ]);
     let lendingPool = getLendingPool(poolShareTokenAddress);
     lendingPoolUpdateYield(lendingPool, accumInterest, accumYield)
+}
+
+export function handlePartialRepayLoan(event: PartialRepayLoan): void {
+    // event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
+    let tokenId = event.params.tokenId;
+    let repaymentAmount = event.params.repaymentAmount;
+    let principalReduction = event.params.principalReduction;
+    log.info("partialRepayLoan: tokenId: {}, repaymentAmount: {}, principalReduction: {}",[
+        tokenId.toString(),
+        repaymentAmount.toString(),
+        principalReduction.toString()
+    ]);
+
+    let loan = getLoanByTokenId(tokenId);
+    let borrowingPool = getBorrowingPool(loan.timestamp, event.block);
+    partialRepayBorrowingPool(borrowingPool, principalReduction);
+    partialRepayLoan(tokenId, repaymentAmount, principalReduction, event.block);
+}
+
+export function handleRepayLoan(event: RepayLoan): void {
+    // event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
+    let tokenId = event.params.tokenId;
+    let repaymentAmount = event.params.repaymentAmount;
+    let collateralReturned = event.params.collateralReturned;
+    let beneficiary = event.params.beneficiary;
+    log.info("handleRepayLoan: tokenId: {}. repaymentAmount: {}, collateralReturned, beneficiary: {}", [
+        tokenId.toString(),
+        repaymentAmount.toString(),
+        collateralReturned.toString(),
+        beneficiary.toHexString()
+    ]);
+
+    let loan = getLoanByTokenId(tokenId);
+    let borrowingPool = getBorrowingPool(loan.timestamp, event.block);
+    removeLoanFromPool(borrowingPool, loan);
+    repayLoan(tokenId, repaymentAmount, collateralReturned, beneficiary, event.block);
 }

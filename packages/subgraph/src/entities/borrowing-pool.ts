@@ -15,8 +15,21 @@ export function getBorrowingPool(
 }
 
 export function addLoanToPool(borrowingPool: BorrowingPool, loan: Loan): BorrowingPool {
-    borrowingPool.totalBorrowedUsdc = borrowingPool.totalBorrowedUsdc.plus(loan.amount);
+    borrowingPool.totalBorrowedUsdc = borrowingPool.totalBorrowedUsdc.plus(loan.principal);
     borrowingPool.totalCollateralEth = borrowingPool.totalCollateralEth.plus(loan.collateral);
+    borrowingPool.save();
+    return borrowingPool;
+}
+
+export function removeLoanFromPool(borrowingPool: BorrowingPool, loan: Loan): BorrowingPool {
+    borrowingPool.totalBorrowedUsdc = borrowingPool.totalBorrowedUsdc.minus(loan.principal);
+    borrowingPool.totalCollateralEth = borrowingPool.totalCollateralEth.minus(loan.collateral);
+    borrowingPool.save();
+    return borrowingPool;
+}
+
+export function partialRepayBorrowingPool(borrowingPool: BorrowingPool, principalReduction: BigInt): BorrowingPool {
+    borrowingPool.totalBorrowedUsdc = borrowingPool.totalBorrowedUsdc.minus(principalReduction);
     borrowingPool.save();
     return borrowingPool;
 }

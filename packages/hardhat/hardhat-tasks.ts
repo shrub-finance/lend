@@ -149,6 +149,90 @@ task("provideLiquidity", "add USDC to a lending pool")
         await sendTransaction(lendingPlatformAccount.deposit(timestamp, parsedUsdc), `Deposit USDC`);
     })
 
+task("repayLoan", "add USDC to a lending pool")
+    .addParam("tokenId", "tokenId of the loan", undefined, types.int, false)
+    .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
+    .addParam("beneficiary", "Address of account to receive the collateral", undefined, types.string, true)
+    .setAction(async (taskArgs, env) => {
+        const tokenId: number = taskArgs.tokenId;
+        const account = taskArgs.account;
+
+        const {ethers, deployments, getNamedAccounts} = env;
+        const { deployer } = await getNamedAccounts();
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+        const usdCoinDeployment = await deployments.get('USDCoin');
+        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+        const borrowPositionTokenDeployment = await deployments.get('BorrowPositionToken');
+        const borrowPositionToken = await ethers.getContractAt("BorrowPositionToken", borrowPositionTokenDeployment.address);
+
+        const borrowerAccount = await ethers.getSigner(account || deployer);
+        const beneficiary = taskArgs.beneficiary || borrowerAccount.address;
+        // const parsedUsdc = ethers.parseUnits(repaymentAmount.toString(), 6);
+
+        const debt = await borrowPositionToken.debt(tokenId);
+
+        // Check balance of account to ensure that it is sufficient
+        const usdcBalance = await usdc.balanceOf(borrowerAccount);
+        const borrowerAccountAddress = await borrowerAccount.getAddress();
+        console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${borrowerAccountAddress}`);
+        if (usdcBalance < debt) {
+            console.log('insufficient USDC balance in account - aborting');
+            return;
+        }
+        // Check approval of account to ensure that it is sufficient
+        const approved = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
+        console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
+        // If approval is not sufficient then create an approval tx
+        if (approved < debt) {
+            const needToApprove = debt - approved;
+            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
+            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
+        }
+        // Send the deposit tx
+        await sendTransaction(lendingPlatform.connect(borrowerAccount).repayLoan(tokenId, beneficiary), `Fully Repay Loan`);
+    })
+
+task("partialRepayLoan", "add USDC to a lending pool")
+    .addParam("tokenId", "tokenId of the loan", undefined, types.int, false)
+    .addParam("repaymentAmount", "Amount of USDC - in USD to repay", undefined, types.float, false)
+    .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
+    .setAction(async (taskArgs, env) => {
+        const tokenId: number = taskArgs.tokenId;
+        const repaymentAmount: number = taskArgs.repaymentAmount;
+        const account = taskArgs.account;
+
+        const {ethers, deployments, getNamedAccounts} = env;
+        const { deployer } = await getNamedAccounts();
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+        const usdCoinDeployment = await deployments.get('USDCoin');
+        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+
+        const borrowerAccount = await ethers.getSigner(account || deployer);
+        const parsedUsdc = ethers.parseUnits(repaymentAmount.toString(), 6);
+
+        // Check balance of account to ensure that it is sufficient
+        const usdcBalance = await usdc.balanceOf(borrowerAccount);
+        const borrowerAccountAddress = await borrowerAccount.getAddress();
+        console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${borrowerAccountAddress}`);
+        if (usdcBalance < parsedUsdc) {
+            console.log('insufficient USDC balance in account - aborting');
+            return;
+        }
+        // Check approval of account to ensure that it is sufficient
+        const approved = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
+        console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
+        // If approval is not sufficient then create an approval tx
+        if (approved < parsedUsdc) {
+            const needToApprove = parsedUsdc - approved;
+            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
+            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
+        }
+        // Send the deposit tx
+        await sendTransaction(lendingPlatform.connect(borrowerAccount).partialRepayLoan(tokenId, parsedUsdc), `Partial Repay Loan`);
+    })
+
 task("approveUsdc", "Approve USDC to the lending platform")
     .addParam("account", "account to approve USDC for", undefined, types.string)
     .setAction(async (taskArgs, env) => {
@@ -165,54 +249,14 @@ task("approveUsdc", "Approve USDC to the lending platform")
         await sendTransaction(usdcAccount.approve(lendingPlatformDeployment.address, ethers.MaxUint256), "Approve USDC");
     })
 
-task("testLendingPlatform", "Setup an environment for development")
-  .setAction(async (taskArgs, env) => {
-    const {ethers, deployments, getNamedAccounts} = env;
-    const { deployer, account1, account2, account3 } = await getNamedAccounts();
-    const { oneMonth, threeMonth, sixMonth, twelveMonth } = getPlatformDates();
-    // await env.run('distributeUsdc', { to: account1, amount: 1000 });
-    await env.run('distributeUsdc', { to: account1, amount: 10000 });
-    // await env.run('distributeUsdc', { to: account3, amount: 3000 });
-    await env.run('createPool', { timestamp: toEthDate(oneMonth)});  // 1 month
-    await env.run('createPool', { timestamp: toEthDate(threeMonth)});  // 3 month
-    await env.run('createPool', { timestamp: toEthDate(sixMonth)});  // 6 month
-    await env.run('createPool', { timestamp: toEthDate(twelveMonth)});  // 12 month
-    await env.run('approveUsdc', { account: account1 });
-    await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(twelveMonth), account: account1});  // 12 month
-    await env.run('takeLoan', { account: account2, timestamp: toEthDate(twelveMonth), loanAmount: 100, collateralAmount: 1, ltv: 20})
-    await env.run('takeLoan', { account: account3, timestamp: toEthDate(threeMonth), loanAmount: 22, collateralAmount: 0.1, ltv: 33})
-  })
-
-task("testLendingPlatform2", "Setup an environment for development")
+task("createPlatformPools", "Create the pools that are used by the app")
     .setAction(async (taskArgs, env) => {
-        const jan2025 = toEthDate(new Date('2025-01-01T00:00:00Z'));
-        const feb2025 = toEthDate(new Date('2025-02-01T00:00:00Z'));
-        const may2025 = toEthDate(new Date('2025-05-01T00:00:00Z'));
-        const aug2025 = toEthDate(new Date('2025-08-01T00:00:00Z'));
-        const jan2026 = toEthDate(new Date('2026-01-01T00:00:00Z'));
-
-        const {ethers, deployments, getNamedAccounts} = env;
-        const { deployer, account1, account2, account3 } = await getNamedAccounts();
         const { oneMonth, threeMonth, sixMonth, twelveMonth } = getPlatformDates();
-        await env.run('distributeUsdc', { to: account1, amount: 10000 });
-        await env.run('distributeUsdc', { to: account2, amount: 10000 });
-        await env.run('createPool', { timestamp: feb2025});  // 1 month
-        await env.run('createPool', { timestamp: may2025});  // 3 month
-        await env.run('createPool', { timestamp: aug2025});  // 6 month
-        await env.run('createPool', { timestamp: jan2026});  // 12 month
-        await env.run('approveUsdc', { account: account1 });
-        await env.run('setTime', {ethDate: jan2025});
-        await env.run('setEthPrice', {ethPrice: '2000'});
-        await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2026, account: account1});  // 12 month
-        await env.run('provideLiquidity', { usdcAmount: 325.123456, timestamp: may2025, account: account1});  // 12 month
-        await env.run('takeLoan', { account: account2, timestamp: jan2026, loanAmount: 100, collateralAmount: 1, ltv: 20})
-        await env.run('takeLoan', { account: account3, timestamp: jan2026, loanAmount: 22, collateralAmount: 0.1, ltv: 33})
-        await env.run('takeLoan', { account: account1, timestamp: feb2025, loanAmount: 5.23, collateralAmount: 0.1, ltv: 25})
-        await env.run('takeLoan', { account: account1, timestamp: aug2025, loanAmount: 111.123456, collateralAmount: 0.52345, ltv: 33})
-        await env.run('setTime', {ethDate: feb2025});
-        await env.run('takeSnapshot', { account: deployer });
-        await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2026, account: account2});
-    })
+        await env.run('createPool', { timestamp: toEthDate(oneMonth)});  // 1 month
+        await env.run('createPool', { timestamp: toEthDate(threeMonth)});  // 3 month
+        await env.run('createPool', { timestamp: toEthDate(sixMonth)});  // 6 month
+        await env.run('createPool', { timestamp: toEthDate(twelveMonth)});  // 12 month
+    });
 
 task('takeSnapshot', 'snapshot and update the accumInterest and accumYield')
     .addParam("account", "Account to call takeSnapshot with", undefined, types.string, true)

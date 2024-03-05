@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 
 
 import {useConnectedWallet, useBalance, useAddress, useContract, useContractRead} from "@thirdweb-dev/react";
+// import { useWeb3React } from '@web3-react/core';
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 
 
@@ -21,6 +22,24 @@ import Image from "next/image";
 import {formatDate, milliSecondsInDay} from "@shrub-lend/common";
 import {USER_POSITIONS_QUERY} from "../constants/queries";
 import {useQuery, useLazyQuery} from "@apollo/client";
+
+// const useLatestBlockTimestamp = () => {
+//     const { provider } = useWeb3React();
+//     const [timestamp, setTimestamp] = useState<number | null>(null);
+//
+//     useEffect(() => {
+//         const fetchTimestamp = async () => {
+//             if (!provider) return;
+//             const blockNumber = await provider.getBlockNumber();
+//             const block = await provider.getBlock(blockNumber);
+//             setTimestamp(block.timestamp);
+//         };
+//
+//         fetchTimestamp();
+//     }, [provider]);
+//
+//     return timestamp;
+// };
 
 const now = new Date();
 const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 1));
@@ -132,8 +151,10 @@ export const DashboardView: FC = ({}) => {
     return Math.round((date.valueOf() - now.valueOf()) / milliSecondsInDay);
   }
 
+    // const latestTimestamp = useLatestBlockTimestamp();
+    // console.log(`latestTimestamp: ${latestTimestamp}`);
 
-  return (
+    return (
 
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col ">
@@ -347,50 +368,51 @@ export const DashboardView: FC = ({}) => {
                             <tbody className="text-lg">
 
                             {userPositionsData?.user?.loans?.map((item, index) => (
-                              <tr key={`borrowRow-${index}`}
-                                  className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
-                                  <p>{ethers.utils.formatUnits(item.amount, 6)}</p>
-                                ) : (
-                                  <p className="text-sm">Loading ETH balance...</p>
-                                )}</td>
-                                <td className="px-6 py-4 text-sm font-bold">
-                                  0
-                                </td>
-                                <td className="px-6 py-4 text-sm font-bold">
-                                  {daysFromNow(fromEthDate(item.timestamp))}
-                                </td>
-                                <td className="px-6 py-4 text-sm font-bold">
-                                  <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{ethers.utils.formatUnits(item.apy, 6)}</span>
-                                  {/*<p>{ethers.utils.parseUnits(item.apy, 6)}</p>*/}
-                                  {/*{ethers.utils.parseUnits(item.apy, 6)}*/}
-                                </td>
-                                <td className="px-6 py-4 text-sm font-bold">
-                                  {
-                                    // return bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR);
-                                    //  item.apy * item.amount * (toEthDate(new Date('2025-02-01')) - item.created) / (60 * 24 * 365 * 1e8)
-                                    ethers.utils.formatUnits(
-                                      ethers.BigNumber.from(item.amount).add(
-                                        ethers.BigNumber.from(item.apy)
-                                          .mul(ethers.BigNumber.from(item.amount))
-                                          .mul(ethers.BigNumber.from(toEthDate(new Date('2025-02-01'))).sub(ethers.BigNumber.from(item.created)))
-                                          .div(ethers.BigNumber.from(60 * 60 * 24 * 365))
-                                          .div(ethers.utils.parseUnits('1', 8))
-                                      ), 6
-                                    )
-                                  }
-                                </td>
-                                <td className="px-6 py-4 text-sm font-bold">
-                                  {fromEthDate(item.timestamp).toLocaleString()}
-                                </td>
-                                <td className="px-1 py-4 text-sm font-bold">
-                                  <button type="button"
-                                          className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
-                                    <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20}
-                                           className="mr-2"/>
-                                    Pay
-                                  </button>
-                                </td>
+                                <tr key={`borrowRow-${index}`} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                    <td className="px-6 py-4 text-sm font-bold">{wallet && !ethBalanceIsLoading ? (
+                                        <p>{ethers.utils.formatUnits(item.originalPrincipal, 6)}</p>
+                                    ) : (
+                                        <p className="text-sm">Loading ETH balance...</p>
+                                    )}</td>
+                                    <td className="px-6 py-4 text-sm font-bold">
+                                        {
+                                            ethers.utils.formatUnits(item.paid, 6)
+                                        }
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold">
+                                        {daysFromNow(fromEthDate(item.timestamp))}
+                                    </td>
+                                    <td >
+                                        <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${ethers.utils.formatUnits(item.apy, 6)}%`}</span>
+                                        {/*<p>{ethers.utils.parseUnits(item.apy, 6)}</p>*/}
+                                        {/*{ethers.utils.parseUnits(item.apy, 6)}*/}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold">
+                                        {
+                                            // return bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR);
+                                            //  item.apy * item.amount * (toEthDate(new Date('2025-02-01')) - item.created) / (60 * 24 * 365 * 1e8)
+                                            ethers.utils.formatUnits(
+                                                ethers.BigNumber.from(item.principal).add(
+                                                    ethers.BigNumber.from(item.apy)
+                                                        .mul(ethers.BigNumber.from(item.principal))
+                                                        .mul(ethers.BigNumber.from(toEthDate(new Date('2026-02-01'))).sub(ethers.BigNumber.from(item.updated)))
+                                                        .div(ethers.BigNumber.from(60 * 60 * 24 * 365))
+                                                        .div(ethers.utils.parseUnits('1', 8))
+                                                ), 6
+                                            )
+                                        }
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold">
+                                        {fromEthDate(item.timestamp).toLocaleString()}
+                                    </td>
+                                    <td className="px-1 py-4 text-sm font-bold">
+                                        <button type="button"
+                                                className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                                            <Image src="/up-right-arrow.svg" alt="down arrow" width={20} height={20}
+                                                   className="mr-2"/>
+                                            Pay
+                                        </button>
+                                    </td>
 
 
                               </tr>
