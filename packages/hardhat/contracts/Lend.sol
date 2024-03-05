@@ -679,14 +679,15 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
                 accumInterestBP +=  bpt.interestSinceTimestamp(j, lastSnapshotDate);
             }
             // Determine the amount of aETH to distribute from this borrowing pool
-            if (borrowingPools[i].poolShareAmount == 0) {
-                console.log("poolShareAmount in borrowing pool 0 - skipping");
+            if (borrowingPools[activePools[i]].poolShareAmount == 0) {
+                console.log("poolShareAmount in borrowing pool is 0 - skipping - %s", activePools[i]);
+//                console.log("poolShareAmount in borrowing pool 0 - skipping");
                 continue;
             }
             console.log("bpTotalPoolShares");
             console.log(bpTotalPoolShares);
-            console.log(borrowingPools[i].poolShareAmount);
-            uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[i].poolShareAmount / bpTotalPoolShares;
+            console.log(borrowingPools[activePools[i]].poolShareAmount);
+            uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[activePools[i]].poolShareAmount / bpTotalPoolShares;
             // Loop through this and future Lending Pools to determine the contribution denominator
             uint contributionDenominator;
             for (uint j = i; j < activePools.length; j++) {
