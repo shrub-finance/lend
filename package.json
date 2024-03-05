@@ -1,11 +1,7 @@
 {
   "name": "shrub-lend",
   "workspaces": [
-    "packages/app",
-    "packages/hardhat",
-    "packages/common",
-    "packages/subgraph",
-    "packages/graph-node"
+    "packages/*"
   ],
   "npmClient": "yarn",
   "useWorkspaces": true,
@@ -13,9 +9,9 @@
   "scripts": {
     "preinstall": "node -e 'if (process.versions.node != \"20.11.1\") { console.log(\"You must use Node.js version 20.11.1\"); process.exit(1); }'",
     "app": "yarn workspace @shrub-lend/app dev",
-    "program": "yarn workspace @shrub-lend/program dev",
     "build:app": "yarn workspace @shrub-lend/app build",
-    "build:program": "yarn workspace @shrub-lend/program build",
+    "website": "yarn workspace @shrub-lend/website dev",
+    "build:website": "yarn workspace @shrub-lend/website build",
     "hardhat": "yarn workspace @shrub-lend/hardhat hardhat",
     "test": "yarn workspace @shrub-lend/hardhat test",
     "compile": "yarn workspace @shrub-lend/hardhat compile",

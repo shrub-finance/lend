@@ -82,17 +82,16 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col">
         <div className='mt-6 self-start'>
-
           {localError && (
-            <div className="alert alert-warning justify-start">
-              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 ml-4p mr-2" fill="none"
-                   viewBox="0 0 24 24">
+            <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 flex items-center" role="alert">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
               <span>{localError}</span>
             </div>
           )}
+
 
           {!lendSuccess && <h1 className=" text-4xl font-medium ">
             <button onClick={onBackLend}
@@ -208,7 +207,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                         usdcBalanceData && !BigNumber.from(usdcBalanceData.value).lt(ethers.utils.parseUnits(lendAmount, 6)) &&
                         <Web3Button
                           contractAddress={lendingPlatformAddress}
-                          className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
+                          className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
                           action={() => mutateAsyncApprove({
                             args: [
                               lendingPlatformAddress,
@@ -228,14 +227,14 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                       {(allowance && !BigNumber.from(allowance).lt(ethers.utils.parseUnits(lendAmount, 6))) && !(usdcBalanceData && BigNumber.from(usdcBalanceData.value).lt(ethers.utils.parseUnits(lendAmount, 6))) &&
                         <Web3Button
                           contractAddress={lendingPlatformAddress}
-                          className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
+                          className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
                           action={() => mutateAsyncDeposit({
                             args: [
                               timestamp,
                               ethers.utils.parseUnits(lendAmount, 6)
                             ]
                           })}
-                          onSuccess={() => setLendSuccess(true)}
+                          onSuccess={() => {setLocalError(''); setLendSuccess(true)}}
                           onError={(e) => {
                             if (e instanceof Error) {
                               handleErrorMessages({err: e});

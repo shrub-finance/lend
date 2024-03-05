@@ -27,11 +27,13 @@
     "next-transpile-modules": "^10.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "recharts": "^2.12.1",
     "zustand": "^3.6.9"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
+    "@types/recharts": "^1.8.29",
     "autoprefixer": "^10.4.2",
     "eslint": "8.7.0",
     "eslint-config-next": "^13.1.5",
