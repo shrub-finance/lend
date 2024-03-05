@@ -22,11 +22,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     struct LendingPool {
         // uint40 endDate
-        // uint256 principal
-        uint256 accumInterest;
-        uint256 accumYield;
-        uint256 totalLiquidity;
-        uint256 aaveInterestSnapshot;
+        uint256 principal; // Total amount of USDC that has been contributed to the LP
+        uint256 accumInterest; // The amount of USDC interest earned
+        uint256 accumYield; // The amount of aETH earned through Aave
+        uint256 shrubInterest; // Interest allocated for Shrub Treasury
+        uint256 shrubYield; // Yield allocated for Shrub Treasury
+//        uint256 aaveInterestSnapshot;
         PoolShareToken poolShareToken;
     }
 
@@ -34,12 +35,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint principal; // Total amount of USDC that has been borrowed in this buckets' loans
         uint collateral; // The total amount of ETH collateral deposited for loans in this bucket
         uint poolShareAmount; // Relative claim of the total platform aETH for this bucket. Used to calculate yield for lending pools
-//        mapping(address => Loan) loans;
+        uint totalAccumInterest; // Tracking accumulator for use in case of loan default
+        uint totalAccumYield; // Tracking accumulator for use in case of loan default
+        uint totalRepaid; // Tracking accumulator for use in case of loan default - tracks USDC paid back
     }
 
     struct PoolDetails {
         uint256 totalLiquidity;
-        uint256 aaveInterestSnapshot;
+//        uint256 aaveInterestSnapshot;
         address poolShareTokenAddress;
         uint256 totalLoans;
     }
@@ -207,12 +210,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // D(i) = max(0, D(i-1) + BP(i-1) - LP(i-1)
         for (uint i = 0; i < activePoolIndex[_timestamp]; i++) {
 //            if (pools[activePools[i]].totalLiquidity >= (deficit + totalLoans[activePools[i]])) {
-            if (lendingPools[activePools[i]].totalLiquidity >= (deficit + borrowingPools[activePools[i]].principal)) {
+            if (lendingPools[activePools[i]].principal >= (deficit + borrowingPools[activePools[i]].principal)) {
                 deficit = 0;
             } else {
                 // Important to do the addition first to prevent an underflow
 //                deficit = (deficit + totalLoans[activePools[i]] - pools[activePools[i]].totalLiquidity);
-                deficit = (deficit + borrowingPools[activePools[i]].principal - lendingPools[activePools[i]].totalLiquidity);
+                deficit = (deficit + borrowingPools[activePools[i]].principal - lendingPools[activePools[i]].principal);
             }
 //            console.log(string(abi.encodePacked("deficit - ", deficit.toString())));
         }
@@ -226,7 +229,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint currentAndFutureLiquidity = 0;
         uint currentAndFutureLoans = 0;
         for (uint i = activePoolIndex[_timestamp]; i < activePools.length; i++) {
-            currentAndFutureLiquidity += lendingPools[activePools[i]].totalLiquidity;
+            currentAndFutureLiquidity += lendingPools[activePools[i]].principal;
 //            currentAndFutureLoans += totalLoans[activePools[i]];
             currentAndFutureLoans += borrowingPools[activePools[i]].principal;
 //            console.log(string(abi.encodePacked("currentAndFutureLiquidity - ", currentAndFutureLiquidity.toString())));
@@ -243,7 +246,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             if (activePools[i] < _timestamp) {
                 continue; // Don't count liquidity that is in a pool that has a timestamp before what it requested
             }
-            totalLiquidity += lendingPools[activePools[i]].totalLiquidity;
+            totalLiquidity += lendingPools[activePools[i]].principal;
         }
         return totalLiquidity;
     }
@@ -254,8 +257,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         LendingPool memory lendingPool = lendingPools[_timestamp];
         PoolDetails memory poolDetails;
 
-        poolDetails.totalLiquidity = lendingPool.totalLiquidity;
-        poolDetails.aaveInterestSnapshot = lendingPool.aaveInterestSnapshot;
+        poolDetails.totalLiquidity = lendingPool.principal;
+//        poolDetails.aaveInterestSnapshot = lendingPool.aaveInterestSnapshot;
         poolDetails.poolShareTokenAddress = address(lendingPool.poolShareToken);
 //        poolDetails.totalLoans = totalLoans[_timestamp];
         poolDetails.totalLoans = borrowingPools[_timestamp].principal;
@@ -337,7 +340,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Calculate total value of the pool in terms of USDC
         uint256 aethInterest = getAethInterest();
         uint256 aethInterestValueInUsdc = aethInterest * getEthPrice();
-        uint256 totalPoolValue = lendingPools[_timestamp].totalLiquidity + lendingPools[_timestamp].accumInterest + aethInterestValueInUsdc;
+        uint256 totalPoolValue = lendingPools[_timestamp].principal + lendingPools[_timestamp].accumInterest + aethInterestValueInUsdc;
 
         // If the pool does not exist or totalLiquidity is 0, user gets 1:1 poolShareTokens
         console.log("totalPoolValue, _amount, lpt.totalSupply(), poolShareTokenAmount");
@@ -356,7 +359,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             // Times 10 ** 12 to adjust the decimals of USDC 6 to 18 for the poolShareToken
         }
         console.log(poolShareTokenAmount);
-        lendingPools[_timestamp].totalLiquidity += _amount;
+        lendingPools[_timestamp].principal += _amount;
         lendingPools[_timestamp].poolShareToken.mint(msg.sender, poolShareTokenAmount);
         emit NewDeposit(
             _timestamp,
@@ -372,6 +375,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 _poolShareTokenAmount
     ) public nonReentrant {
         LendingPool memory lendingPool = lendingPools[_timestamp];
+        // TODO: Need to require that the pool is closed
         require(
             _poolShareTokenAmount > 0,
             "Withdrawal amount must be greater than 0"
@@ -387,9 +391,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
         // Calculate the corresponding USDC amount to withdraw
         uint256 usdcWithdrawalAmount = withdrawalProportion *
-            lendingPool.totalLiquidity;
+            lendingPool.principal;
         require(
-            usdcWithdrawalAmount <= lendingPool.totalLiquidity,
+            usdcWithdrawalAmount <= lendingPool.principal,
             "Not enough liquidity in the pool for withdrawal"
         );
 
@@ -401,7 +405,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         lendingPool.poolShareToken.burn(msg.sender, _poolShareTokenAmount);
 
         // Update the total liquidity in the pool
-        lendingPool.totalLiquidity -= usdcWithdrawalAmount;
+        lendingPool.principal -= usdcWithdrawalAmount;
 
         // Transfer USDC and aETH to the user
         usdc.transfer(msg.sender, usdcWithdrawalAmount);
@@ -691,14 +695,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             // Loop through this and future Lending Pools to determine the contribution denominator
             uint contributionDenominator;
             for (uint j = i; j < activePools.length; j++) {
-                contributionDenominator += lendingPools[activePools[j]].totalLiquidity;
+                contributionDenominator += lendingPools[activePools[j]].principal;
             }
             console.log("contributionDenominator");
             console.log(contributionDenominator);
             // distribute accumInterest and accumYield to LPs based on contribution principal
             for (uint j = i; j < activePools.length; j++) {
-                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].totalLiquidity / contributionDenominator;
-                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].totalLiquidity / contributionDenominator;
+                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal / contributionDenominator;
+                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal / contributionDenominator;
                 emit LendingPoolYield(
                     address(lendingPools[activePools[j]].poolShareToken),
                     lendingPools[activePools[j]].accumInterest,
