@@ -29,6 +29,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 shrubYield; // Yield allocated for Shrub Treasury
 //        uint256 aaveInterestSnapshot;
         PoolShareToken poolShareToken;
+        bool finalized; // If the pool is finalized and eligible for withdraws
     }
 
     struct BorrowingPool {
@@ -78,12 +79,15 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     uint newCollateralSinceSnapshot;
     uint claimedCollateralSinceSnapshot;
 
+    address shrubTreasury;
+
     event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
     event NewDeposit(uint256 timestamp, address poolShareTokenAddress, address depositor, uint256 amount, uint256 tokenAmount);
     event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 principal, uint32 apy);
     event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
     event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
+    event Withdraw(address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcAmount);
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
@@ -96,27 +100,15 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     // ETH price with 8 decimal places
 //    uint public ethPrice = 2000 * 10 ** 8;
-    constructor(address[5] memory addresses) {
+    constructor(address[6] memory addresses) {
         usdc = IERC20(addresses[0]);
         bpt = IBorrowPositionToken(addresses[1]);
         wrappedTokenGateway = IMockAaveV3(addresses[2]);
         aeth = IAETH(addresses[3]);
         chainlinkAggregator = AggregatorV3Interface(addresses[4]);
         lastSnapshotDate = block.timestamp;
+        shrubTreasury = addresses[5];
     }
-
-
-//    constructor(
-//        address usdcAddress,
-//        address bptAddress,
-//        address wrappedTokenGatewayAddress,
-//        address aETHAddress
-//    ) {
-//        usdc = IERC20(usdcAddress);
-//        bpt = IBorrowPositionToken(bptAddress);
-//        wrappedTokenGateway = IMockAaveV3(wrappedTokenGatewayAddress);
-//        aeth = IAETH(aETHAddress);
-//    }
 
     function insertIntoSortedArr(uint[] storage arr, uint newValue) internal {
         if (arr.length == 0) {
@@ -318,9 +310,22 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             string(abi.encodePacked("PoolShareToken_", _timestamp.toString())),
             string(abi.encodePacked("PST_", _timestamp.toString()))
         );
+        lendingPools[_timestamp].finalized = false;
         // Make sure to keep the pool sorted
         insertIntoSortedArr(activePools, _timestamp);
         emit PoolCreated(_timestamp, address(lendingPools[_timestamp].poolShareToken));
+    }
+
+    function finalizeLendingPool(uint _timestamp) public onlyOwner {
+        LendingPool storage lendingPool = lendingPools[_timestamp];
+        require(lendingPool.poolShareToken != PoolShareToken(address(0)), "Pool does not exist");
+        require(!lendingPool.finalized, "Pool already finalized");
+        require(block.timestamp >= _timestamp + 6 * 60 * 60, "Must wait until six hours after endDate for finalization"); // Time must be greater than six hours since pool expiration
+        // TODO: Insert extra logic for ensuring everything is funded
+        lendingPool.finalized = true;
+        // Send funds to Shrub
+        aeth.transfer(shrubTreasury, lendingPool.shrubYield);
+        usdc.transfer(shrubTreasury, lendingPool.shrubInterest);
     }
 
     function getUsdcAddress() public view returns (address) {
@@ -374,8 +379,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 _timestamp,
         uint256 _poolShareTokenAmount
     ) public nonReentrant {
+        console.log("running withdraw");
         LendingPool memory lendingPool = lendingPools[_timestamp];
-        // TODO: Need to require that the pool is closed
+        require(lendingPool.finalized, "Pool must be finalized before withdraw");
         require(
             _poolShareTokenAmount > 0,
             "Withdrawal amount must be greater than 0"
@@ -385,31 +391,35 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             "Insufficient pool share tokens for withdrawal"
         );
 
-        // Calculate the proportion of the pool that the user is withdrawing
-        uint256 withdrawalProportion = _poolShareTokenAmount /
+        console.log(_poolShareTokenAmount);
+        console.log(lendingPool.poolShareToken.totalSupply());
+        console.log(lendingPool.principal);
+        console.log(lendingPool.accumInterest);
+        console.log(lendingPool.accumYield);
+        // Calculate the proportion of the pool that the user is withdrawing (use 8 decimals)
+        uint256 withdrawalProportion = _poolShareTokenAmount * 10 ** 8 /
             lendingPool.poolShareToken.totalSupply();
+        console.log(withdrawalProportion);
 
         // Calculate the corresponding USDC amount to withdraw
-        uint256 usdcWithdrawalAmount = withdrawalProportion *
-            lendingPool.principal;
-        require(
-            usdcWithdrawalAmount <= lendingPool.principal,
-            "Not enough liquidity in the pool for withdrawal"
-        );
+        uint256 usdcPrincipalAmount = withdrawalProportion * lendingPool.principal / 10 ** 8;
+        uint256 usdcInterestAmount = withdrawalProportion * lendingPool.accumInterest / 10 ** 8;
 
         // Calculate the corresponding aETH interest to withdraw
-        uint256 aethInterest = getAethInterest();
-        uint256 aethWithdrawalAmount = withdrawalProportion * aethInterest;
+        uint256 aethWithdrawalAmount = withdrawalProportion * lendingPool.accumYield / 10 ** 8;
 
         // Burn the pool share tokens
         lendingPool.poolShareToken.burn(msg.sender, _poolShareTokenAmount);
 
         // Update the total liquidity in the pool
-        lendingPool.principal -= usdcWithdrawalAmount;
+        lendingPool.principal -= usdcPrincipalAmount;
+        lendingPool.accumInterest -= usdcInterestAmount;
 
         // Transfer USDC and aETH to the user
-        usdc.transfer(msg.sender, usdcWithdrawalAmount);
-        aeth.transfer(msg.sender, aethWithdrawalAmount);
+        usdc.transfer(msg.sender, usdcInterestAmount + usdcPrincipalAmount);
+        wrappedTokenGateway.withdrawETH(address(0), aethWithdrawalAmount, msg.sender);
+        emit Withdraw(address(lendingPool.poolShareToken), _poolShareTokenAmount, aethWithdrawalAmount, usdcPrincipalAmount + usdcInterestAmount);
+//        event Withdraw(address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcAmount);
     }
 
     function takeLoan(
@@ -719,6 +729,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // zero out the tracking globals;
         newCollateralSinceSnapshot = 0;
         claimedCollateralSinceSnapshot = 0;
+    }
+
+    function setShrubTreasury(address _address) public onlyOwner {
+        shrubTreasury = _address;
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {

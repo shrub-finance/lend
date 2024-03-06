@@ -22,7 +22,8 @@ const config: HardhatUserConfig = {
     account3: 3,
     account4: 4,
     account5: 5,
-    account6: 6
+    account6: 6,
+    shrubTreasury: 7
   },
     abiExporter: {
         path: "../subgraph/abis",
