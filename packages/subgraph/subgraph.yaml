@@ -35,6 +35,10 @@ dataSources:
           handler: handlePartialRepayLoan
         - event: RepayLoan(uint256,uint256,uint256,address)
           handler: handleRepayLoan
+        - event: Withdraw(address,address,uint256,uint256,uint256,uint256)
+          handler: handleWithdraw
+        - event: FinalizeLendingPool(address,uint256,uint256)
+          handler: handleFinalizeLendingPool
       file: ./src/lending-platform.ts
 templates:
   - name: PoolShareToken

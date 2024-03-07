@@ -298,7 +298,7 @@ if (chain) {
                                 <td className="px-6 py-4 text-sm font-bold">
                                   {
                                     ethers.utils.formatUnits(
-                                      ethers.BigNumber.from(item.lendingPool.totalUsdc)
+                                      ethers.BigNumber.from(item.lendingPool.totalPrincipal)
                                         .add(item.lendingPool.totalUsdcInterest)
                                         .add(ethPrice.mul(item.lendingPool.totalEthYield).div(ethers.utils.parseUnits("1", 20)))
                                         .mul(item.amount)
@@ -318,7 +318,7 @@ if (chain) {
                                 <td className="px-6 py-4 text-sm font-bold">
                                   {
                                     ethers.utils.formatUnits(
-                                      ethers.BigNumber.from(item.lendingPool.totalUsdc)
+                                      ethers.BigNumber.from(item.lendingPool.totalPrincipal)
                                         .add(item.lendingPool.totalUsdcInterest)
                                         .add(ethPrice.mul(item.lendingPool.totalEthYield).div(ethers.utils.parseUnits("1", 20)))
                                         .mul(item.amount)

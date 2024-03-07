@@ -87,7 +87,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
     event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
-    event Withdraw(address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcAmount);
+    event Withdraw(address user, address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcPrincipal, uint usdcInterest);
+    event FinalizeLendingPool(address poolShareTokenAddress, uint shrubInterest, uint shrubYield);
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
@@ -326,6 +327,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Send funds to Shrub
         aeth.transfer(shrubTreasury, lendingPool.shrubYield);
         usdc.transfer(shrubTreasury, lendingPool.shrubInterest);
+        emit FinalizeLendingPool(address(lendingPool.poolShareToken), lendingPool.shrubInterest, lendingPool.shrubYield);
     }
 
     function getUsdcAddress() public view returns (address) {
@@ -418,7 +420,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Transfer USDC and aETH to the user
         usdc.transfer(msg.sender, usdcInterestAmount + usdcPrincipalAmount);
         wrappedTokenGateway.withdrawETH(address(0), aethWithdrawalAmount, msg.sender);
-        emit Withdraw(address(lendingPool.poolShareToken), _poolShareTokenAmount, aethWithdrawalAmount, usdcPrincipalAmount + usdcInterestAmount);
+        emit Withdraw(msg.sender, address(lendingPool.poolShareToken), _poolShareTokenAmount, aethWithdrawalAmount, usdcPrincipalAmount, usdcInterestAmount);
 //        event Withdraw(address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcAmount);
     }
 

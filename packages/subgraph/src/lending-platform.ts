@@ -1,14 +1,15 @@
 import {
+    FinalizeLendingPool,
     LendingPoolYield,
     NewDeposit, NewLoan, PartialRepayLoan,
-    PoolCreated, RepayLoan
+    PoolCreated, RepayLoan, Withdraw
 } from "../generated/Contract/LendingPlatform"
 import { log } from '@graphprotocol/graph-ts'
 import {
     createLendingPool,
     getLendingPool,
-    lendingPoolDeposit,
-    lendingPoolIncrementTokenSupply, lendingPoolUpdateYield
+    lendingPoolDeposit, lendingPoolFinalize,
+    lendingPoolIncrementTokenSupply, lendingPoolUpdateYield, lendingPoolWithdraw
 } from "./entities/lending-pool";
 import {getUser} from "./entities/user";
 import {
@@ -19,7 +20,7 @@ import {
 } from "./entities/borrowing-pool";
 import {getLoan, getLoanByTokenId, partialRepayLoan, repayLoan} from "./entities/loan";
 import {PoolShareToken} from "../generated/templates";
-import {getLendPosition, incrementLendPosition} from "./entities/lend-position";
+import {getLendPosition, incrementLendPosition, lendPostionWithdraw} from "./entities/lend-position";
 
 
 export function handlePoolCreated(event: PoolCreated): void {
@@ -140,4 +141,44 @@ export function handleRepayLoan(event: RepayLoan): void {
     let borrowingPool = getBorrowingPool(loan.timestamp, event.block);
     removeLoanFromPool(borrowingPool, loan);
     repayLoan(tokenId, repaymentAmount, collateralReturned, beneficiary, event.block);
+}
+
+export function handleWithdraw(event: Withdraw): void {
+// #    event Withdraw(address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcAmount);
+    let userAddress = event.params.user;
+    let poolShareTokenAddress = event.params.poolShareTokenAddress;
+    let tokenAmount = event.params.tokenAmount;
+    let ethAmount = event.params.ethAmount;
+    let usdcPrincipal = event.params.usdcPrincipal;
+    let usdcInterest = event.params.usdcInterest;
+    log.info("handleRepayLoan: user: {}, poolShareTokenAddress: {}, tokenAmount: {}, ethAmount, usdcPrincipal: {}, usdcInterest: {}", [
+        userAddress.toHexString(),
+        poolShareTokenAddress.toHexString(),
+        tokenAmount.toString(),
+        ethAmount.toString(),
+        usdcPrincipal.toString(),
+        usdcInterest.toString()
+    ]);
+
+    // Update Lending Pool
+    let lendingPool = getLendingPool(poolShareTokenAddress);
+    lendingPool = lendingPoolWithdraw(lendingPool, usdcPrincipal, usdcInterest, ethAmount, tokenAmount);
+    // Update Lend Position
+    let lendPosition = getLendPosition(userAddress, lendingPool);
+    let withdrawsUsdc = usdcPrincipal.plus(usdcInterest);
+    lendPostionWithdraw(lendPosition, withdrawsUsdc, ethAmount, tokenAmount);
+}
+
+export function handleFinalizeLendingPool(event: FinalizeLendingPool): void {
+// #    event FinalizeLendingPool(address poolShareTokenAddress, uint shrubInterest, uint shrubYield);
+    let poolShareTokenAddress = event.params.poolShareTokenAddress;
+    let shrubInterest = event.params.shrubInterest;
+    let shrubYield = event.params.shrubYield;
+    log.info("handleRepayLoan: poolShareTokenAddress: {}. shrubInterest: {}, shrubYield", [
+        poolShareTokenAddress.toHexString(),
+        shrubInterest.toString(),
+        shrubYield.toString()
+    ]);
+    let lendingPool = getLendingPool(poolShareTokenAddress);
+    lendingPoolFinalize(lendingPool, shrubInterest, shrubYield);
 }
