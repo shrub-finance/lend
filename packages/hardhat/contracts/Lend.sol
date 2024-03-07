@@ -78,6 +78,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     uint aEthSnapshotBalance;
     uint newCollateralSinceSnapshot;
     uint claimedCollateralSinceSnapshot;
+    uint shrubFee = 10;
 
     address shrubTreasury;
 
@@ -713,8 +714,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             console.log(contributionDenominator);
             // distribute accumInterest and accumYield to LPs based on contribution principal
             for (uint j = i; j < activePools.length; j++) {
-                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal / contributionDenominator;
-                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal / contributionDenominator;
+                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * (100 - shrubFee) / 100 / contributionDenominator;
+                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal * (100 - shrubFee) / 100 / contributionDenominator;
+                lendingPools[activePools[j]].shrubYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * shrubFee / 100 / contributionDenominator;
+                lendingPools[activePools[j]].shrubInterest += accumInterestBP * lendingPools[activePools[j]].principal * shrubFee / 100 / contributionDenominator;
                 emit LendingPoolYield(
                     address(lendingPools[activePools[j]].poolShareToken),
                     lendingPools[activePools[j]].accumInterest,
