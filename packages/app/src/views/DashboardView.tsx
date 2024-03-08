@@ -4,9 +4,9 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
 
-import {useConnectedWallet, useBalance, useAddress, useContract, useContractRead} from "@thirdweb-dev/react";
+import {useConnectedWallet, useBalance, useAddress, useContract, useContractRead, useChain} from "@thirdweb-dev/react";
 // import { useWeb3React } from '@web3-react/core';
-import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
+import {getBlock, getBlockNumber, NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 
 
 import {toEthDate, fromEthDate} from "@shrub-lend/common";
@@ -19,7 +19,7 @@ import {
 } from "../utils/contracts";
 import {ethers} from "ethers";
 import Image from "next/image";
-import {formatDate, milliSecondsInDay} from "@shrub-lend/common";
+import {formatDate, milliSecondsInDay, secondsInDay} from "@shrub-lend/common";
 import {USER_POSITIONS_QUERY} from "../constants/queries";
 import {useQuery, useLazyQuery} from "@apollo/client";
 
@@ -56,6 +56,7 @@ export const DashboardView: FC = ({}) => {
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
   const walletAddress = useAddress();
   const [ethPrice, setEthPrice] = useState(ethers.BigNumber.from(0));
+  const [blockchainTime, setBlockchainTime] = useState(0);
   const {
     contract: lendingPlatform,
     isLoading: lendingPlatformIsLoading,
@@ -145,10 +146,26 @@ export const DashboardView: FC = ({}) => {
       setEthPrice(ethPriceTemp);
     }
 
+
   }, [usdcEthRoundIsLoading]);
 
+    useEffect(() => {
+        console.log('running block useEffect')
+        getBlockTest()
+    }, [userPositionsDataLoading]);
+
+    async function getBlockTest() {
+        const block = await getBlock({
+            network: "localhost",
+            block: "latest"
+        });
+        console.log(block);
+        setBlockchainTime(block.timestamp);
+    }
+
   function daysFromNow(date: Date) {
-    return Math.round((date.valueOf() - now.valueOf()) / milliSecondsInDay);
+    // return Math.round((date.valueOf() - now.valueOf()) / milliSecondsInDay);
+      return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
     // const latestTimestamp = useLatestBlockTimestamp();
@@ -184,7 +201,13 @@ export const DashboardView: FC = ({}) => {
 
                   </div>
                   <div className="card w-full py-4">
-                    <span className="text-left"><h3 className="font-normal  pb-5 text-shrub-grey"> Welcome back, ryan.eth!</h3><span></span>Eth Price: {ethers.utils.formatUnits(ethPrice, 8)} USDC</span>
+                    <span className="text-left">
+                        <h3 className="font-normal  pb-5 text-shrub-grey"> Welcome back, ryan.eth!</h3>
+                        Eth Price: {ethers.utils.formatUnits(ethPrice, 8)} USDC
+                    </span>
+                      <span>
+                          {fromEthDate(blockchainTime).toLocaleString()}
+                      </span>
                   </div>
                 </div>
 
@@ -270,7 +293,7 @@ export const DashboardView: FC = ({}) => {
                                 <td className="px-6 py-4 text-sm font-bold">
                                   {
                                     ethers.utils.formatUnits(
-                                      ethers.BigNumber.from(item.lendingPool.totalUsdc)
+                                      ethers.BigNumber.from(item.lendingPool.totalPrincipal)
                                         .add(item.lendingPool.totalUsdcInterest)
                                         .add(ethPrice.mul(item.lendingPool.totalEthYield).div(ethers.utils.parseUnits("1", 20)))
                                         .mul(item.amount)
@@ -290,7 +313,7 @@ export const DashboardView: FC = ({}) => {
                                 <td className="px-6 py-4 text-sm font-bold">
                                   {
                                     ethers.utils.formatUnits(
-                                      ethers.BigNumber.from(item.lendingPool.totalUsdc)
+                                      ethers.BigNumber.from(item.lendingPool.totalPrincipal)
                                         .add(item.lendingPool.totalUsdcInterest)
                                         .add(ethPrice.mul(item.lendingPool.totalEthYield).div(ethers.utils.parseUnits("1", 20)))
                                         .mul(item.amount)
@@ -383,9 +406,9 @@ export const DashboardView: FC = ({}) => {
                                         {daysFromNow(fromEthDate(item.timestamp))}
                                     </td>
                                     <td >
-                                        <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${ethers.utils.formatUnits(item.apy, 6)}%`}</span>
-                                        {/*<p>{ethers.utils.parseUnits(item.apy, 6)}</p>*/}
-                                        {/*{ethers.utils.parseUnits(item.apy, 6)}*/}
+                                        <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                                            {`${ethers.utils.formatUnits(item.apy, 6)}%`}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                         {
@@ -395,7 +418,7 @@ export const DashboardView: FC = ({}) => {
                                                 ethers.BigNumber.from(item.principal).add(
                                                     ethers.BigNumber.from(item.apy)
                                                         .mul(ethers.BigNumber.from(item.principal))
-                                                        .mul(ethers.BigNumber.from(toEthDate(new Date('2026-02-01'))).sub(ethers.BigNumber.from(item.updated)))
+                                                        .mul(ethers.BigNumber.from(blockchainTime).sub(ethers.BigNumber.from(item.updated)))
                                                         .div(ethers.BigNumber.from(60 * 60 * 24 * 365))
                                                         .div(ethers.utils.parseUnits('1', 8))
                                                 ), 6

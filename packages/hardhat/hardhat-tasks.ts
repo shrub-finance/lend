@@ -106,6 +106,25 @@ task("createPool", "Create a lending pool")
         console.log(`Pool created with timestamp ${timestamp}. Confirmed in block: ${txReceipt?.blockNumber}`);
     })
 
+task("finalizeLendingPool", "Finalize a lending pool")
+    .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
+    .setAction(async (taskArgs, env) => {
+        const timestamp: Address = taskArgs.timestamp;
+
+        const {ethers, deployments, getNamedAccounts} = env;
+        const { deployer } = await getNamedAccounts();
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+
+        const deployerAccount = await ethers.getSigner(deployer);
+        const lendingPlatformDeployer = lendingPlatform.connect(deployerAccount);
+
+        const tx = await lendingPlatform.connect(deployerAccount).finalizeLendingPool(timestamp);
+        console.log(`Finalize pool transaction broadcast with txid: ${tx.hash}`);
+        const txReceipt = await tx.wait();
+        console.log(`Pool with timestamp ${timestamp} finalized. Confirmed in block: ${txReceipt?.blockNumber}`);
+    })
+
 task("provideLiquidity", "add USDC to a lending pool")
     .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
     .addParam("usdcAmount", "Amount of USDC - in USD", undefined, types.float, false)
@@ -301,6 +320,32 @@ task('takeLoan', 'take a loan')
             {value: collateralAmountBigInt}
         ), `Loan USDC`);
     });
+
+task('withdraw', 'take a loan')
+    .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
+    .addParam("account", "Address of account to take loan with (or named account)", undefined, types.string, false)
+    .setAction(async (taskArgs, env) => {
+        const timestamp: number = taskArgs.timestamp;
+        const account = taskArgs.account;
+        const {ethers, deployments, getNamedAccounts} = env;
+        const namedAccounts = await getNamedAccounts();
+        const withdrawAccount = namedAccounts[account] ?
+            await ethers.getSigner(namedAccounts[account]) :
+            await ethers.getSigner(account);
+        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
+        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+        const lendingPoolDetails = await lendingPlatform.getLendingPool(timestamp);
+        const poolShareTokenAddress = lendingPoolDetails.poolShareTokenAddress;
+        const poolShareToken = await ethers.getContractAt("PoolShareToken", poolShareTokenAddress);
+        const poolShareTokenBalance = await poolShareToken.balanceOf(withdrawAccount.address);
+        console.log(`Exchanging ${poolShareTokenBalance} of poolShareToken `)
+
+        await sendTransaction(lendingPlatform.connect(withdrawAccount).withdraw(
+            timestamp,
+            poolShareTokenBalance
+        ), `withdraw USDC`);
+    });
+
 task("erc20Details", "get the details of an ERC20")
   .addParam('address', "contract address of the ERC-20", "", types.string)
   .setAction(async (taskArgs, env) => {

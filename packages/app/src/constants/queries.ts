@@ -16,11 +16,12 @@ export const USER_POSITIONS_QUERY = gql`
     query GetUserPositions($user: ID!) {
         user(id: $user) {
             id
-            lendPositions {
+            lendPositions(where:{amount_gt:0}){
                 lendingPool{
                     id
                     timestamp
-                    totalUsdc
+                    totalPrincipal
+                    totalUsdcInterest
                     totalEthYield
                     totalUsdcInterest
                     tokenSupply
