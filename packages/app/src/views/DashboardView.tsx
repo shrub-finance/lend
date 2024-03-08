@@ -47,11 +47,6 @@ const oneYearFromNow = new Date((new Date(now)).setFullYear(now.getFullYear() + 
 export const DashboardView: FC = ({}) => {
 
 
-const chain = useChain();
-if (chain) {
-    console.log("chain");
-    console.log(chain);
-}
   const DynamicLineChartComponent = dynamic(() => import('../components/charts/LineChart'), {
     ssr: false,
   });

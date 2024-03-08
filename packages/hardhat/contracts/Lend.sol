@@ -383,7 +383,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 _poolShareTokenAmount
     ) public nonReentrant {
         console.log("running withdraw");
-        LendingPool memory lendingPool = lendingPools[_timestamp];
+        LendingPool storage lendingPool = lendingPools[_timestamp];
         require(lendingPool.finalized, "Pool must be finalized before withdraw");
         require(
             _poolShareTokenAmount > 0,
@@ -394,7 +394,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             "Insufficient pool share tokens for withdrawal"
         );
 
-        console.log(_poolShareTokenAmount);
+        console.log("_poolShareTokenAmount - %s", _poolShareTokenAmount);
         console.log(lendingPool.poolShareToken.totalSupply());
         console.log(lendingPool.principal);
         console.log(lendingPool.accumInterest);

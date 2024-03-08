@@ -74,6 +74,8 @@ task("testLendingPlatform3", "Setup an environment for development")
         await partE();
         await partF();
         await partG();
+        await partH();
+        await partI();
 
 
 
@@ -98,6 +100,7 @@ task("testLendingPlatform3", "Setup an environment for development")
         async function partC() {
             await env.run('setTime', {ethDate: feb2026});
             await env.run('takeSnapshot', { account: deployer });
+            await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2027, account: account2});  // 12 month
         }
 
         async function partD() {
@@ -122,5 +125,16 @@ task("testLendingPlatform3", "Setup an environment for development")
             await env.run('takeSnapshot', { account: deployer });
             await env.run('finalizeLendingPool', {timestamp: may2026});
             await env.run('withdraw', {account: account2, timestamp: may2026});
+        }
+
+        async function partH() {
+            await env.run('setTime', {ethDate: jan2027 + 6 * 60 * 60})
+            await env.run('takeSnapshot', { account: deployer });
+            await env.run('finalizeLendingPool', {timestamp: jan2027});
+        }
+
+        async function partI() {
+            await env.run('withdraw', {account: account1, timestamp: jan2027});
+            await env.run('withdraw', {account: account2, timestamp: jan2027});
         }
     })

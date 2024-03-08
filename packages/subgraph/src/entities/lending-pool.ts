@@ -91,8 +91,8 @@ export function lendingPoolFinalize(
     lendingPool.finalUsdcInterest = lendingPool.totalUsdcInterest;
     lendingPool.finalPrincipal = lendingPool.totalPrincipal;
     lendingPool.finalized = true;
-    lendingPool.totalEthYield = lendingPool.totalEthYield.minus(shrubYield);
-    lendingPool.totalUsdcInterest = lendingPool.totalUsdcInterest.minus(shrubInterest);
+    // lendingPool.totalEthYield = lendingPool.totalEthYield.minus(shrubYield);
+    // lendingPool.totalUsdcInterest = lendingPool.totalUsdcInterest.minus(shrubInterest);
     lendingPool.save();
     return lendingPool;
 }
