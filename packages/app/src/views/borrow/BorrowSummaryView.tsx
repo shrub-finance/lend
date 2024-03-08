@@ -5,6 +5,7 @@ import {fromEthDate, interestToLTV, toEthDate, truncateEthAddress} from "../../u
 import {ethers} from "ethers";
 import {useRouter} from "next/router";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
+import {useFinancialData} from "../../components/FinancialDataContext";
 
 interface BorrowSummaryViewProps {
     requiredCollateral: string;
@@ -24,6 +25,8 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
     const handleViewDash = () => {
         router.push('/dashboard');
     };
+
+    const { dispatch } = useFinancialData();
 
     const [borrowSuccess, setBorrowSuccess] = useState(false);
 
@@ -141,11 +144,6 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                                         <span>{truncateEthAddress(lendingPlatformAddress)}<img src="/copy.svg"
                                                                     className="w-6 hidden md:inline align-baseline ml-2"/> </span>
                                     </div>
-                                    {/*<div className="flex flex-row  justify-between">*/}
-                                    {/*  <span className="">Late Penalty<img src="/info-circle.svg"*/}
-                                    {/*                                               className="w-6 ml-2 inline"/></span>*/}
-                                    {/*  <span>1%</span>*/}
-                                    {/*</div>*/}
                                 </div>
 
                                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
@@ -160,17 +158,8 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                                         <span>0.0012 ETH</span>
                                     </div>
                                 </div>
-                                {/*cta*/}
-                                {/*<button*/}
-                                {/*    className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl mb-4"*/}
-                                {/*    onClick={handleTakeLoan}>Deposit*/}
-                                {/*</button>*/}
                                 <Web3Button contractAddress={lendingPlatformAddress} className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl !text-white hover:!bg-shrub-green-500 !mb-4"
 
-                                    // uint256 _amount, // Amount of USDC with 6 decimal places
-                                    // uint256 _collateral, // Amount of ETH collateral with 18 decimal places
-                                    // uint256 _ltv,
-                                    // uint256 _timestamp
                                             action={() => mutateAsyncTakeLoan({ args: [
                                                     ethers.utils.parseUnits(amount, 6),
                                                     ethers.utils.parseEther(requiredCollateral),
@@ -179,7 +168,20 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({onBack, onCancel,
                                                 ], overrides: {
                                                     value: ethers.utils.parseEther(requiredCollateral)
                                                 } })}
-                                            onSuccess={(result) => {setLocalError(''); setBorrowSuccess(true)}}
+                                            onSuccess={(result) => {
+                                                console.log('borrow receipt', result);
+                                                setLocalError('');
+                                                setBorrowSuccess(true);
+                                                const newLoan = {
+                                                    id: result.receipt.blockHash,
+                                                    active: true,
+                                                    created: Date.now(),
+
+                                                };
+                                                dispatch({
+                                                    type: "ADD_LOAN",
+                                                    payload: newLoan,
+                                                });}}
                                             onError={(e) => {
                                                 if (e instanceof Error) {
                                                     handleErrorMessages({err: e});

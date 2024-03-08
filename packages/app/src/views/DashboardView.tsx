@@ -1,6 +1,7 @@
 // Next, React
-import { FC, useEffect, useState } from "react";
+import {FC, useContext, useEffect, useState} from "react";
 import Link from "next/link";
+
 
 import {
   useConnectedWallet,
@@ -24,14 +25,20 @@ import Image from "next/image";
 import { formatDate, milliSecondsInDay } from "@shrub-lend/common";
 import { USER_POSITIONS_QUERY } from "../constants/queries";
 import { useLazyQuery } from "@apollo/client";
+import {useFinancialData} from "../components/FinancialDataContext";
+import {Confetti} from "../components/Confetti";
 
 const now = new Date();
 const oneYearFromNow = new Date(
   new Date(now).setFullYear(now.getFullYear() + 1)
 );
 
+
+
 export const DashboardView: FC = ({}) => {
   const wallet = useConnectedWallet();
+
+  const { state, dispatch } = useFinancialData();
 
   const { data: usdcBalance, isLoading: usdcBalanceIsLoading } =
     useBalance(usdcAddress);
@@ -39,21 +46,25 @@ export const DashboardView: FC = ({}) => {
     useBalance(NATIVE_TOKEN_ADDRESS);
   const walletAddress = useAddress();
   const [ethPrice, setEthPrice] = useState(ethers.BigNumber.from(0));
+
   const {
     contract: lendingPlatform,
     isLoading: lendingPlatformIsLoading,
     error: lendingPlatformError,
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
+
   const {
     contract: chainLinkAggregator,
     isLoading: chainLinkAggregatorIsLoading,
     error: chainLinkAggregatorError,
   } = useContract(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
+
   const {
     data: usdcEthRoundData,
     isLoading: usdcEthRoundIsLoading,
     error: usdcEthRoundError,
   } = useContractRead(chainLinkAggregator, "latestRoundData", []);
+
   const [
     getUserPositions,
     {
@@ -70,7 +81,7 @@ export const DashboardView: FC = ({}) => {
   });
 
   useEffect(() => {
-    console.log("running contract useEffect");
+    // console.log("running contract useEffect");
 
     async function callContract() {
       const APYvalue = await lendingPlatform.call("getAPYBasedOnLTV", [33]);
@@ -82,15 +93,15 @@ export const DashboardView: FC = ({}) => {
   }, [lendingPlatformIsLoading, lendingPlatformError]);
 
   useEffect(() => {
-    console.log("running usdc useEffect");
+    // console.log("running usdc useEffect");
   }, [usdcBalanceIsLoading]);
 
   useEffect(() => {
-    console.log("running eth useEffect");
+    // console.log("running eth useEffect");
   }, [ethBalanceIsLoading]);
 
   useEffect(() => {
-    console.log("running walletAddress useEffect");
+    // console.log("running walletAddress useEffect");
     if (!walletAddress) {
       // walletAddress has not been fetched yet
       return;
@@ -99,16 +110,37 @@ export const DashboardView: FC = ({}) => {
   }, [walletAddress]);
 
   useEffect(() => {
-    console.log("running userPositionsDataLoading useEffect");
+    // console.log("running userPositionsDataLoading useEffect");
     if (userPositionsDataLoading) {
       return;
     }
   }, [userPositionsDataLoading]);
 
-  const testVar = "2";
+  useEffect(() => {
+    // Once data is loaded and not loading, update the store
+    if (!userPositionsDataLoading && userPositionsData) {
+      const { loans, lendPositions } = userPositionsData.user;
+      dispatch({
+        type: "SET_USER_DATA",
+        payload: {
+          loans,
+          lendPositions,
+        },
+      });
+    }
+  }, [userPositionsDataLoading, userPositionsData, dispatch]);
+
 
   useEffect(() => {
-    console.log("running usdcEthRound useEffect");
+    console.log("state", state);
+  }, [state]); // Listening for changes in state
+
+
+  const testVar = "2";
+  // console.log(userPositionsData);
+  
+  useEffect(() => {
+    // console.log("running usdcEthRound useEffect");
     if (usdcEthRoundData) {
       const invertedPrice = usdcEthRoundData.answer;
       const ethPriceTemp = ethers.utils.parseUnits("1", 26).div(invertedPrice);
@@ -165,7 +197,6 @@ export const DashboardView: FC = ({}) => {
                     </span>
                   </div>
                 </div>
-
                 <div className="flex flex-wrap -m-4">
                   <a
                     href="#"
@@ -195,7 +226,6 @@ export const DashboardView: FC = ({}) => {
                     </div>
                   </a>
                 </div>
-
                 <div className="form-control w-full mt-6">
                   <div>
                     <ul className="flex flex-col gap-4">
@@ -247,7 +277,7 @@ export const DashboardView: FC = ({}) => {
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {userPositionsData?.user?.lendPositions?.map(
+                              {state?.lendPositions?.map(
                                 (item, index) => (
                                   <tr
                                     key={`earnRow-${index}`}
@@ -299,7 +329,6 @@ export const DashboardView: FC = ({}) => {
                                           6
                                         )
 
-                                        // item.lendingPool.totalEthYield * ethPrice
                                       }
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
@@ -361,14 +390,6 @@ export const DashboardView: FC = ({}) => {
                                   </tr>
                                 )
                               )}
-                              {/*<tr key={"99"}>*/}
-                              {/*    <td><p>Hi</p></td>*/}
-                              {/*    <td> Hi</td>*/}
-                              {/*    <td> Hi</td>*/}
-                              {/*    <td> Hi</td>*/}
-                              {/*    <td> Hi</td>*/}
-                              {/*    <td> Hi</td>*/}
-                              {/*</tr>*/}
                             </tbody>
                           </table>
                         </div>
@@ -420,7 +441,7 @@ export const DashboardView: FC = ({}) => {
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {userPositionsData?.user?.loans?.map(
+                              {state?.loans?.map(
                                 (item, index) => (
                                   <tr
                                     key={`borrowRow-${index}`}
@@ -430,7 +451,7 @@ export const DashboardView: FC = ({}) => {
                                       {wallet && !ethBalanceIsLoading ? (
                                         <p>
                                           {ethers.utils.formatUnits(
-                                            item.originalPrincipal,
+                                            item.originalPrincipal?? "0",
                                             6
                                           )}
                                         </p>
@@ -441,31 +462,27 @@ export const DashboardView: FC = ({}) => {
                                       )}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {ethers.utils.formatUnits(item.paid, 6)}
+                                      {ethers.utils.formatUnits(item.paid?? "0", 6)}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {daysFromNow(fromEthDate(item.timestamp))}
+                                      {daysFromNow(fromEthDate(item.timestamp?? "0"))}
                                     </td>
                                     <td>
                                       <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${ethers.utils.formatUnits(
-                                        item.apy,
+                                        item.apy?? "0",
                                         6
                                       )}%`}</span>
-                                      {/*<p>{ethers.utils.parseUnits(item.apy, 6)}</p>*/}
-                                      {/*{ethers.utils.parseUnits(item.apy, 6)}*/}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {
-                                        // return bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR);
-                                        //  item.apy * item.amount * (toEthDate(new Date('2025-02-01')) - item.created) / (60 * 24 * 365 * 1e8)
                                         ethers.utils.formatUnits(
                                           ethers.BigNumber.from(
-                                            item.principal
+                                            item.principal?? "0"
                                           ).add(
-                                            ethers.BigNumber.from(item.apy)
+                                            ethers.BigNumber.from(item.apy?? "0")
                                               .mul(
                                                 ethers.BigNumber.from(
-                                                  item.principal
+                                                  item.principal?? "0"
                                                 )
                                               )
                                               .mul(
@@ -475,7 +492,7 @@ export const DashboardView: FC = ({}) => {
                                                   )
                                                 ).sub(
                                                   ethers.BigNumber.from(
-                                                    item.updated
+                                                    item.updated?? "0"
                                                   )
                                                 )
                                               )
@@ -494,7 +511,7 @@ export const DashboardView: FC = ({}) => {
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {fromEthDate(
-                                        item.timestamp
+                                        item.timestamp?? "0"
                                       ).toLocaleString()}
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
