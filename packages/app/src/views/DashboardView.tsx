@@ -412,7 +412,7 @@ export const DashboardView: FC = ({}) => {
                                   scope="col"
                                   className="px-6 py-3 text-shrub-grey font-medium"
                                 >
-                                  Amount Paid
+                                  Amount Paid Back
                                 </th>
                                 <th
                                   scope="col"

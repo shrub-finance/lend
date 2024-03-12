@@ -20,8 +20,7 @@ const financialDataReducer = (state: UserFinancialDataState, action: UserFinanci
         !state.loans.some((existingLoan) => existingLoan.id === newLoan.id));
       // Place new loans at the beginning of the loans array
       const mergedLoans = [...newLoans, ...state.loans];
-
-      // Similarly, filter out lend positions that are already present in the state
+      //filter out lend positions that are already present in the state
       const newLendPositions = action.payload.lendPositions.filter((newPosition) =>
         !state.lendPositions.some((existingPosition) => existingPosition.id === newPosition.id));
       // Place new lend positions at the beginning of the lendPositions array
@@ -32,7 +31,6 @@ const financialDataReducer = (state: UserFinancialDataState, action: UserFinanci
         loans: mergedLoans,
         lendPositions: mergedLendPositions,
       };
-
     case "CLEAR_USER_DATA":
       return { ...initialState };
     case "ADD_LOAN":
