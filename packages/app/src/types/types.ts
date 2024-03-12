@@ -3,12 +3,12 @@ export type PendingStatuses = "confirming" | "confirmed" | "failed";
 
 export type Loan = {
   id: string;
-  // Add more properties as per your Loan object structure
+  
 };
 
 export type LendPosition = {
   lendingPoolId: string;
-  // Add more properties as per your LendPosition object structure
+
 };
 
 export type UserFinancialDataState = {
