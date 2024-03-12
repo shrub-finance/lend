@@ -67,6 +67,19 @@ export function createLendPosition(
     lendPosition.user = user.toHexString();
     lendPosition.depositsUsdc = Zero;
     lendPosition.withdrawsUsdc = Zero;
+    lendPosition.withdrawsEth = Zero;
     return lendPosition;
 }
 
+// lendPosition = lendPositionWithdraw(lendPosition, withdrawsUsdc, ethAmount, tokenAmount);
+export function lendPostionWithdraw(
+    lendPosition: LendPosition,
+    withdrawsUsdc: BigInt,
+    withdrawsEth: BigInt,
+    tokenAmount: BigInt
+): void {
+    lendPosition.amount = lendPosition.amount.minus(tokenAmount);
+    lendPosition.withdrawsUsdc = lendPosition.withdrawsUsdc.plus(withdrawsUsdc);
+    lendPosition.withdrawsEth = lendPosition.withdrawsEth.plus(withdrawsEth);
+    lendPosition.save();
+}

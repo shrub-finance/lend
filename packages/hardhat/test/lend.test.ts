@@ -540,7 +540,7 @@ describe('testSuite', () => {
         describe('bytesToString', () => {
             // This is used only for internal purposes (debugging) so testing is not required
         });
-        describe.only('getEthPrice', () => {
+        describe('getEthPrice', () => {
             it('should revert if ETH price is negative', async() => {
                 await mockChainlinkAggregator.updateAnswer(-1);
                 await expect(lendingPlatform.getEthPrice()).to.be.revertedWith("ETH Price out of range");
@@ -800,7 +800,6 @@ describe('testSuite', () => {
                 const pool = await lendingPlatform.getLendingPool(1767225599);
                 expect(pool.totalLiquidity).to.equal(0);
                 expect(pool.totalLoans).to.equal(0);
-                expect(pool.aaveInterestSnapshot).to.equal(0);
                 expect(pool.poolShareTokenAddress).to.equal(ethers.ZeroAddress);
             });
 
@@ -808,7 +807,6 @@ describe('testSuite', () => {
                 const pool = await lendingPlatform.getLendingPool(1767225600);
                 expect(pool.totalLiquidity).to.equal(1000 * 10 ** 6);
                 expect(pool.totalLoans).to.equal(0);
-                expect(pool.aaveInterestSnapshot).to.equal(0);
                 // expect(pool.poolShareTokenAddress).to.equal(createPoolTxs[0])
                 expect(createPoolTxs[0]).to.emit(lendingPlatform, "poolCreated").withArgs(pool.poolShareTokenAddress);
                 // expect(pool.poolShareTokenAddress).to.equal(createPoolEvents[0]?.args?.poolShareTokenAddress);
@@ -818,7 +816,6 @@ describe('testSuite', () => {
                 const pool = await lendingPlatform.getLendingPool(1769904000);
                 expect(pool.totalLiquidity).to.equal(1500 * 10 ** 6);
                 expect(pool.totalLoans).to.equal(0);
-                expect(pool.aaveInterestSnapshot).to.equal(0);
                 // expect(pool.poolShareTokenAddress).to.equal(createPoolEvents[1]?.args?.poolShareTokenAddress);
                 expect(createPoolTxs[1]).to.emit(lendingPlatform, "poolCreated").withArgs(pool.poolShareTokenAddress);
 
@@ -828,7 +825,6 @@ describe('testSuite', () => {
                 const pool = await lendingPlatform.getLendingPool(1769904001);
                 expect(pool.totalLiquidity).to.equal(0);
                 expect(pool.totalLoans).to.equal(0);
-                expect(pool.aaveInterestSnapshot).to.equal(0);
                 expect(pool.poolShareTokenAddress).to.equal(ethers.ZeroAddress);
             });
         });
@@ -860,8 +856,7 @@ describe('testSuite', () => {
                 await lendingPlatform.createPool(timestamp);
 
                 const pool = await lendingPlatform.lendingPools(timestamp);
-                expect(pool.totalLiquidity).to.equal(0);
-                expect(pool.aaveInterestSnapshot).to.equal(0);
+                expect(pool.principal).to.equal(0);
             });
 
             it('should revert if a non-owner tries to create a pool', async () => {
@@ -2290,7 +2285,7 @@ describe('testSuite', () => {
                 });
             })
         });
-        describe.only('takeSnapshot', () => {
+        describe('takeSnapshot', () => {
             before(async () => {
                 log("running takeSnapshot before");
                 log(`before tx block: ${await ethers.provider.getBlockNumber()}`);
@@ -2384,7 +2379,7 @@ describe('testSuite', () => {
             });
 
             it('should revert if called by non-owner', async () => {});
-            it.only('should work in the case of 1 LP and 1 BP', async () => {
+            it('should work in the case of 1 LP and 1 BP', async () => {
                 // First loan taken at
 
                 const borrower1UsdcBalanceBefore = await usdc.balanceOf(borrower1.getAddress());
@@ -2781,7 +2776,7 @@ describe('testSuite', () => {
             });
         });
     });
-    describe.only('MockChainlinkAggregator', () => {
+    describe('MockChainlinkAggregator', () => {
         it('should have 18 decimals', async() => {
             const decimals = await mockChainlinkAggregator.decimals()
             expect(decimals).to.equal(18);

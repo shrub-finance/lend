@@ -14,9 +14,13 @@ type LendingPool @entity {
     txid: Bytes!
     created: Int!
     createdBlock: Int!
-    totalUsdc: BigInt!
+    finalized: Boolean!
+    totalPrincipal: BigInt!
     totalEthYield: BigInt!
     totalUsdcInterest: BigInt!
+    finalPrincipal: BigInt
+    finalUsdcInterest: BigInt
+    finalEthYield: BigInt
     tokenSupply: BigInt!
 #    lastSnapshot: BigInt!
 }
@@ -60,4 +64,5 @@ type LendPosition @entity {
     amount: BigInt!
     depositsUsdc: BigInt!
     withdrawsUsdc: BigInt!
+    withdrawsEth: BigInt!
 }

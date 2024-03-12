@@ -2,7 +2,6 @@ import {LendingPool} from "../../generated/schema";
 import {Address, BigInt, ethereum} from "@graphprotocol/graph-ts";
 import {Zero} from "../constants";
 
-
 export function getLendingPool(
     poolShareTokenAddress: Address,
 ): LendingPool {
@@ -30,7 +29,8 @@ export function createLendingPool(
     lendingPool.created = block.timestamp.toI32();
     lendingPool.createdBlock = block.number.toI32();
     lendingPool.txid = transaction.hash;
-    lendingPool.totalUsdc = Zero;
+    lendingPool.finalized = false;
+    lendingPool.totalPrincipal = Zero;
     lendingPool.totalEthYield = Zero;
     lendingPool.totalUsdcInterest = Zero;
     lendingPool.tokenSupply = Zero;
@@ -42,7 +42,22 @@ export function lendingPoolDeposit(
     lendingPool: LendingPool,
     amount: BigInt
 ): LendingPool {
-    lendingPool.totalUsdc = lendingPool.totalUsdc.plus(amount);
+    lendingPool.totalPrincipal = lendingPool.totalPrincipal.plus(amount);
+    lendingPool.save()
+    return lendingPool;
+}
+
+export function lendingPoolWithdraw(
+    lendingPool: LendingPool,
+    principal: BigInt,
+    interest: BigInt,
+    ethAmount: BigInt,
+    tokenAmount: BigInt,
+): LendingPool {
+    lendingPool.totalPrincipal = lendingPool.totalPrincipal.minus(principal);
+    lendingPool.totalUsdcInterest = lendingPool.totalUsdcInterest.minus(interest);
+    lendingPool.totalEthYield = lendingPool.totalEthYield.minus(ethAmount);
+    lendingPool.tokenSupply = lendingPool.tokenSupply.minus(tokenAmount);
     lendingPool.save()
     return lendingPool;
 }
@@ -63,6 +78,21 @@ export function lendingPoolUpdateYield(
 ): LendingPool {
     lendingPool.totalEthYield = accumYield;
     lendingPool.totalUsdcInterest = accumInterest;
+    lendingPool.save();
+    return lendingPool;
+}
+
+export function lendingPoolFinalize(
+    lendingPool: LendingPool,
+    shrubInterest: BigInt,
+    shrubYield: BigInt
+): LendingPool {
+    lendingPool.finalEthYield = lendingPool.totalEthYield;
+    lendingPool.finalUsdcInterest = lendingPool.totalUsdcInterest;
+    lendingPool.finalPrincipal = lendingPool.totalPrincipal;
+    lendingPool.finalized = true;
+    // lendingPool.totalEthYield = lendingPool.totalEthYield.minus(shrubYield);
+    // lendingPool.totalUsdcInterest = lendingPool.totalUsdcInterest.minus(shrubInterest);
     lendingPool.save();
     return lendingPool;
 }

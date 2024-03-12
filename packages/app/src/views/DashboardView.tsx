@@ -9,8 +9,9 @@ import {
   useAddress,
   useContract,
   useContractRead,
+  useChain
 } from "@thirdweb-dev/react";
-import { NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
+import { getBlock, getBlockNumber, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
 
 import { toEthDate, fromEthDate } from "@shrub-lend/common";
 import {
@@ -22,7 +23,7 @@ import {
 } from "../utils/contracts";
 import { ethers } from "ethers";
 import Image from "next/image";
-import { formatDate, milliSecondsInDay } from "@shrub-lend/common";
+import { formatDate, milliSecondsInDay , secondsInDay} from "@shrub-lend/common";
 import { USER_POSITIONS_QUERY } from "../constants/queries";
 import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
@@ -46,7 +47,7 @@ export const DashboardView: FC = ({}) => {
     useBalance(NATIVE_TOKEN_ADDRESS);
   const walletAddress = useAddress();
   const [ethPrice, setEthPrice] = useState(ethers.BigNumber.from(0));
-
+  const [blockchainTime, setBlockchainTime] = useState(0);
   const {
     contract: lendingPlatform,
     isLoading: lendingPlatformIsLoading,
@@ -138,7 +139,7 @@ export const DashboardView: FC = ({}) => {
 
   const testVar = "2";
   // console.log(userPositionsData);
-  
+
   useEffect(() => {
     // console.log("running usdcEthRound useEffect");
     if (usdcEthRoundData) {
@@ -146,10 +147,27 @@ export const DashboardView: FC = ({}) => {
       const ethPriceTemp = ethers.utils.parseUnits("1", 26).div(invertedPrice);
       setEthPrice(ethPriceTemp);
     }
+
+
   }, [usdcEthRoundIsLoading]);
 
+    useEffect(() => {
+        console.log('running block useEffect')
+        getBlockTest()
+    }, [userPositionsDataLoading]);
+
+    async function getBlockTest() {
+        const block = await getBlock({
+            network: "localhost",
+            block: "latest"
+        });
+        console.log(block);
+        setBlockchainTime(block.timestamp);
+    }
+
   function daysFromNow(date: Date) {
-    return Math.round((date.valueOf() - now.valueOf()) / milliSecondsInDay);
+    // return Math.round((date.valueOf() - now.valueOf()) / milliSecondsInDay);
+      return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
   return (
@@ -192,9 +210,12 @@ export const DashboardView: FC = ({}) => {
                         {" "}
                         Welcome back, ryan.eth!
                       </h3>
-                      <span></span>Eth Price:{" "}
+                      Eth Price:{" "}
                       {ethers.utils.formatUnits(ethPrice, 8)} USDC
                     </span>
+                      <span>
+                          {fromEthDate(blockchainTime).toLocaleString()}
+                      </span>
                   </div>
                 </div>
                 <div className="flex flex-wrap -m-4">
@@ -307,7 +328,7 @@ export const DashboardView: FC = ({}) => {
                                       {
                                         ethers.utils.formatUnits(
                                           ethers.BigNumber.from(
-                                            item.lendingPool.totalUsdc
+                                            item.lendingPool.totalPrincipal
                                           )
                                             .add(
                                               item.lendingPool.totalUsdcInterest
@@ -339,7 +360,7 @@ export const DashboardView: FC = ({}) => {
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {ethers.utils.formatUnits(
                                         ethers.BigNumber.from(
-                                          item.lendingPool.totalUsdc
+                                          item.lendingPool.totalPrincipal
                                         )
                                           .add(
                                             item.lendingPool.totalUsdcInterest
@@ -486,11 +507,7 @@ export const DashboardView: FC = ({}) => {
                                                 )
                                               )
                                               .mul(
-                                                ethers.BigNumber.from(
-                                                  toEthDate(
-                                                    new Date("2026-02-01")
-                                                  )
-                                                ).sub(
+                                                ethers.BigNumber.from(blockchainTime).sub(
                                                   ethers.BigNumber.from(
                                                     item.updated?? "0"
                                                   )
@@ -502,7 +519,7 @@ export const DashboardView: FC = ({}) => {
                                                 )
                                               )
                                               .div(
-                                                ethers.utils.parseUnits("1", 8)
+                                                ethers.utils.parseUnits('1', 8)
                                               )
                                           ),
                                           6
