@@ -78,7 +78,6 @@ task("testLendingPlatform3", "Setup an environment for development")
         await partI();
 
 
-
         async function partA() {
             await env.run('createPlatformPools');
             await env.run('distributeUsdc', { to: account1, amount: 10000 });
@@ -107,6 +106,10 @@ task("testLendingPlatform3", "Setup an environment for development")
             await env.run('partialRepayLoan', { account: account3, tokenId: 0, repaymentAmount: 50});
             await env.run('setTime', {ethDate: apr2026});
             await env.run('takeSnapshot', { account: deployer });
+        }
+
+        async function partD2() {
+            // await env.run()
         }
 
         async function partE() {

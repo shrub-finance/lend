@@ -46,6 +46,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //        uint256 aaveInterestSnapshot;
         address poolShareTokenAddress;
         uint256 totalLoans;
+        uint256 accumInterest; // The amount of USDC interest earned
+        uint256 accumYield; // The amount of aETH earned through Aave
     }
 
 //    struct Loan {
@@ -256,6 +258,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         poolDetails.poolShareTokenAddress = address(lendingPool.poolShareToken);
 //        poolDetails.totalLoans = totalLoans[_timestamp];
         poolDetails.totalLoans = borrowingPools[_timestamp].principal;
+        poolDetails.accumInterest = lendingPools[_timestamp].accumInterest;
+        poolDetails.accumYield = lendingPools[_timestamp].accumYield;
 
         return poolDetails;
     }
@@ -381,10 +385,18 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     function withdraw(
         uint256 _timestamp,
         uint256 _poolShareTokenAmount
-    ) public nonReentrant {
-        console.log("running withdraw");
+    ) external nonReentrant {
+        require(lendingPools[_timestamp].finalized, "Pool must be finalized before withdraw");
+        withdrawUnchecked(_timestamp, _poolShareTokenAmount);
+    }
+
+    function withdrawUnchecked(
+        uint256 _timestamp,
+        uint256 _poolShareTokenAmount
+    ) private returns (uint usdcWithdrawn, uint ethWithdrawn) {
+        console.log("running withdrawUnchecked");
         LendingPool storage lendingPool = lendingPools[_timestamp];
-        require(lendingPool.finalized, "Pool must be finalized before withdraw");
+//        require(lendingPool.finalized, "Pool must be finalized before withdraw");
         require(
             _poolShareTokenAmount > 0,
             "Withdrawal amount must be greater than 0"
@@ -401,7 +413,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         console.log(lendingPool.accumYield);
         // Calculate the proportion of the pool that the user is withdrawing (use 8 decimals)
         uint256 withdrawalProportion = _poolShareTokenAmount * 10 ** 8 /
-            lendingPool.poolShareToken.totalSupply();
+                                lendingPool.poolShareToken.totalSupply();
         console.log(withdrawalProportion);
 
         // Calculate the corresponding USDC amount to withdraw
@@ -423,7 +435,56 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         wrappedTokenGateway.withdrawETH(address(0), aethWithdrawalAmount, msg.sender);
         emit Withdraw(msg.sender, address(lendingPool.poolShareToken), _poolShareTokenAmount, aethWithdrawalAmount, usdcPrincipalAmount, usdcInterestAmount);
 //        event Withdraw(address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcAmount);
+        return (usdcInterestAmount + usdcPrincipalAmount, aethWithdrawalAmount);
     }
+
+
+//    function withdraw(
+//        uint256 _timestamp,
+//        uint256 _poolShareTokenAmount
+//    ) public nonReentrant {
+//        console.log("running withdraw");
+//        LendingPool storage lendingPool = lendingPools[_timestamp];
+//        require(lendingPool.finalized, "Pool must be finalized before withdraw");
+//        require(
+//            _poolShareTokenAmount > 0,
+//            "Withdrawal amount must be greater than 0"
+//        );
+//        require(
+//            lendingPool.poolShareToken.balanceOf(msg.sender) >= _poolShareTokenAmount,
+//            "Insufficient pool share tokens for withdrawal"
+//        );
+//
+//        console.log("_poolShareTokenAmount - %s", _poolShareTokenAmount);
+//        console.log(lendingPool.poolShareToken.totalSupply());
+//        console.log(lendingPool.principal);
+//        console.log(lendingPool.accumInterest);
+//        console.log(lendingPool.accumYield);
+//        // Calculate the proportion of the pool that the user is withdrawing (use 8 decimals)
+//        uint256 withdrawalProportion = _poolShareTokenAmount * 10 ** 8 /
+//            lendingPool.poolShareToken.totalSupply();
+//        console.log(withdrawalProportion);
+//
+//        // Calculate the corresponding USDC amount to withdraw
+//        uint256 usdcPrincipalAmount = withdrawalProportion * lendingPool.principal / 10 ** 8;
+//        uint256 usdcInterestAmount = withdrawalProportion * lendingPool.accumInterest / 10 ** 8;
+//
+//        // Calculate the corresponding aETH interest to withdraw
+//        uint256 aethWithdrawalAmount = withdrawalProportion * lendingPool.accumYield / 10 ** 8;
+//
+//        // Burn the pool share tokens
+//        lendingPool.poolShareToken.burn(msg.sender, _poolShareTokenAmount);
+//
+//        // Update the total liquidity in the pool
+//        lendingPool.principal -= usdcPrincipalAmount;
+//        lendingPool.accumInterest -= usdcInterestAmount;
+//
+//        // Transfer USDC and aETH to the user
+//        usdc.transfer(msg.sender, usdcInterestAmount + usdcPrincipalAmount);
+//        wrappedTokenGateway.withdrawETH(address(0), aethWithdrawalAmount, msg.sender);
+//        emit Withdraw(msg.sender, address(lendingPool.poolShareToken), _poolShareTokenAmount, aethWithdrawalAmount, usdcPrincipalAmount, usdcInterestAmount);
+////        event Withdraw(address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcAmount);
+//    }
 
     function takeLoan(
         uint256 _principal, // Amount of USDC with 6 decimal places
@@ -640,40 +701,37 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         emit RepayLoan(tokenId, bd.principal + interest, bd.collateral, beneficiary);
     }
 
-    /*
-    // No need to specify amount - the full amount will be transferred needed to repay the loan
-    function repayLoan(
-        uint tokenId, // tokenId of the ERC-721 DPT
-        address beneficiary  // Address of the recipient of the collateral
+    function extendDeposit(
+        uint currentTimestamp,
+        uint newTimestamp,
+        uint tokenAmount
     ) external {
-        // Check that msg.sender owns the DPT
-        require(bpt.ownerOf(tokenId) == msg.sender, "msg.sender does not own specified BPT");
-        // Check that the user has sufficient funds
-        uint debt = bpt.debt(tokenId);
-        require(usdc.balanceOf(msg.sender) >= debt, "insufficient balance");
-        // Check that funds are approved
-        // NOTE: let the ERC-20 contract handle this
-        // Transfer USDC funds to Shrub
-        usdc.transferFrom(
-            msg.sender,
-            address(this),
-            debt
-        );
-        uint collateral = bpt.getCollateral(tokenId);
-        // Update BP Collateral and loans
-        BorrowingPool storage borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
-        borrowingPool.principal -= debt;
-        borrowingPool.collateral -= collateral;
-//        borrowingPool.poolShareAmount
-        // Update BP pool share amount (aETH)
-        // Burn the BPT ERC-721
-        bpt.burn(tokenId);
-        // Redeem aETH on Aave for ETH on behalf of onBehalfOf (redeemer)
-        wrappedTokenGateway.withdrawETH(address(0), collateral, beneficiary);
-        // Emit event for tracking/analytics/subgraph
-        emit RepayLoan(tokenId, debt, collateral, beneficiary);
+        console.log("running extendDeposit");
+        // Check that user owns this amount on poolShareTokens
+
+        // Check that newTimestamp is after currentTimestamp
+        require(newTimestamp > currentTimestamp, "newTimestamp must be greater than currentTimestamp");
+        // essentially perform a withdraw - the poolShareTokens are burned - aETH is sent to user
+        (uint usdc, uint eth) = withdrawUnchecked(currentTimestamp, tokenAmount);
+        // essentially perform a deposit - USDC proceeds from the withdraw are deposited to the future timestamp
+        deposit(newTimestamp, usdc);
     }
-    */
+
+    function extendLoan(
+        uint tokenId,
+        uint newTimestamp,
+        uint256 additionalCollateral, // Amount of new ETH collateral with - 18 decimals
+        uint256 additionalRepayment, // Amount of new USDC to be used to repay the existing loan - 6 decimals
+        uint32 _ltv,
+        uint40 _timestamp
+    ) external {
+        console.log("running extendLoan");
+        // Check that the user owns the token
+        // Check that the newTimestamp is after the endDate of the token
+        // Use the existing collateral and additionalCollateral to take a loan at the newTimestamp of the current loan debt minue additionalRepayment
+        // Check that the ltv specified is supported by the value of the collateral
+        // Use the proceeds of this loan to repay the original loan along with burning the LPT
+    }
 
     function takeSnapshot() public onlyOwner {
         console.log("running takeSnapshot");
