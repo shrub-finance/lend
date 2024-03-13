@@ -169,11 +169,11 @@ task("provideLiquidity", "add USDC to a lending pool")
     })
 
 task("extendDeposit", "extend an existing deposit")
-    .addParam("timestamp", "End Date of the current lend position", undefined, types.int)
+    .addParam("currentTimestamp", "End Date of the current lend position", undefined, types.int)
     .addParam("newTimestamp", "End Date of the new lend position", undefined, types.int)
     .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
     .setAction(async (taskArgs, env) => {
-        const timestamp: number = taskArgs.timestamp;
+        const currentTimestamp: number = taskArgs.currentTimestamp;
         const newTimestamp: number = taskArgs.newTimestamp;
         const account = taskArgs.account;
 
@@ -185,32 +185,64 @@ task("extendDeposit", "extend an existing deposit")
         const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
 
         const liquidityAccount = await ethers.getSigner(account || deployer);
-        const lendingPool = await lendingPlatform.getLendingPool(timestamp);
+        const lendingPool = await lendingPlatform.getLendingPool(currentTimestamp);
         const oldPoolShareTokenAddress = lendingPool.poolShareTokenAddress;
-        const oldPoolTotalUsdc = lendingPool.totalLiquidity + lendingPool.accumInterest;
-        // TODO: STart from here and build out this method
-        // const usdcToExtend = oldPoolTotalUsdc
-        const parsedUsdc = ethers.parseUnits(usdcAmount.toString(), 6);
+        const oldPoolShareToken = await ethers.getContractAt('PoolShareToken', oldPoolShareTokenAddress);
+        const tokenAmount = await oldPoolShareToken.balanceOf(liquidityAccount.address);
+        const tokenTotalSupply = await oldPoolShareToken.totalSupply();
 
-        // Check balance of account to ensure that it is sufficient
-        const usdcBalance = await usdcAccount.balanceOf(liquidityAccount);
-        const liquidityAccountAddress = await liquidityAccount.getAddress();
-        console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${liquidityAccountAddress}`);
-        if (usdcBalance < parsedUsdc) {
-            console.log('insufficient USDC balance in account - aborting');
-            return;
-        }
-        // Check approval of account to ensure that it is sufficient
-        const approved = await usdcAccount.allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
-        console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
+        // Check if oldPoolShareToken is already approved
+        const approved = await oldPoolShareToken.allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
+        console.log(`approval is currently ${ethers.formatUnits(approved, 18)} poolShareToken`);
         // If approval is not sufficient then create an approval tx
-        if (approved < parsedUsdc) {
-            const needToApprove = parsedUsdc - approved;
-            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
-            await sendTransaction(usdcAccount.approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
+        if (approved < tokenAmount) {
+            const needToApprove = tokenAmount - approved;
+            console.log(`approving additional ${ethers.formatUnits(needToApprove, 18)} poolShareToken for deposit`);
+            await sendTransaction(oldPoolShareToken.connect(liquidityAccount).approve(lendingPlatform.getAddress(), needToApprove), "oldPoolShareToken Approval");
         }
-        // Send the deposit tx
-        await sendTransaction(lendingPlatformAccount.deposit(timestamp, parsedUsdc), `Deposit USDC`);
+        // Approve oldPoolShareToken for moving if not
+        const usdcToDeposit = (lendingPool.totalLiquidity + lendingPool.accumInterest) * tokenAmount / tokenTotalSupply;
+        // // Check approval of account to ensure that it is sufficient
+        const usdcApproved = await usdc.allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
+        console.log(`approval is currently ${ethers.formatUnits(usdcApproved, 6)} USDC`);
+        // If approval is not sufficient then create an approval tx
+        if (approved < usdcToDeposit) {
+            const needToApprove = usdcToDeposit - approved;
+            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
+            await sendTransaction(usdc.connect(liquidityAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
+        }
+
+        await sendTransaction(lendingPlatform.connect(liquidityAccount).extendDeposit(currentTimestamp, newTimestamp, tokenAmount), "Extend Deposit");
+
+
+        // function extendDeposit(
+        //     uint currentTimestamp,
+        //     uint newTimestamp,
+        //     uint tokenAmount
+        // ) external {
+
+
+        // const parsedUsdc = ethers.parseUnits(usdcAmount.toString(), 6);
+        //
+        // // Check balance of account to ensure that it is sufficient
+        // const usdcBalance = await usdcAccount.balanceOf(liquidityAccount);
+        // const liquidityAccountAddress = await liquidityAccount.getAddress();
+        // console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${liquidityAccountAddress}`);
+        // if (usdcBalance < parsedUsdc) {
+        //     console.log('insufficient USDC balance in account - aborting');
+        //     return;
+        // }
+        // // Check approval of account to ensure that it is sufficient
+        // const approved = await usdcAccount.allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
+        // console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
+        // // If approval is not sufficient then create an approval tx
+        // if (approved < parsedUsdc) {
+        //     const needToApprove = parsedUsdc - approved;
+        //     console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
+        //     await sendTransaction(usdcAccount.approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
+        // }
+        // // Send the deposit tx
+        // await sendTransaction(lendingPlatformAccount.deposit(currentTimestamp, parsedUsdc), `Deposit USDC`);
     });
 
 task("repayLoan", "add USDC to a lending pool")

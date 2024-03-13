@@ -71,11 +71,12 @@ task("testLendingPlatform3", "Setup an environment for development")
         await partB();
         await partC();
         await partD();
-        await partE();
-        await partF();
-        await partG();
-        await partH();
-        await partI();
+        await partD2();
+        // await partE();
+        // await partF();
+        // await partG();
+        // await partH();
+        // await partI();
 
 
         async function partA() {
@@ -109,7 +110,7 @@ task("testLendingPlatform3", "Setup an environment for development")
         }
 
         async function partD2() {
-            // await env.run()
+            await env.run('extendDeposit', {account: account2, currentTimestamp: may2026, newTimestamp: aug2026});
         }
 
         async function partE() {
