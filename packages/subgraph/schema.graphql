@@ -61,7 +61,7 @@ type LendPosition @entity {
     id: ID!
     lendingPool: LendingPool
     user: User
-    amount: BigInt!
+    amount: BigInt! # amount of pool share token tied to lending pool
     depositsUsdc: BigInt!
     withdrawsUsdc: BigInt!
     withdrawsEth: BigInt!
