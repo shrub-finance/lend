@@ -1,12 +1,15 @@
-import {FC, useEffect, useState} from "react";
-import {useAddress, useBalance, useContract, useContractRead, useContractWrite, Web3Button} from "@thirdweb-dev/react";
-import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts";
-import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods";
-import {BigNumber, ethers} from "ethers";
-import {router} from "next/client";
-import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
+import {FC, useEffect, useState} from "react"
+import {useAddress, useBalance, useContract, useContractRead, useContractWrite, Web3Button} from "@thirdweb-dev/react"
+import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts"
+import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods"
+import {BigNumber, ethers} from "ethers"
+import {router} from "next/client"
+import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages"
 import Image from "next/image";
-import {useRouter} from "next/router";
+import {useRouter} from "next/router"
+import { useFinancialData } from '../../components/FinancialDataContext'
+import { useLazyQuery } from '@apollo/client'
+import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries'
 
 
 interface LendSummaryViewProps {
@@ -18,35 +21,38 @@ interface LendSummaryViewProps {
 
 export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp, estimatedAPY, lendAmount}) => {
 
-
   const router = useRouter();
-
+  const {dispatch} = useFinancialData();
   const handleViewDash = () => {
     router.push('/dashboard');
   };
+  const [
+    getActiveLendingPools,
+    {
+      loading: activeLendingPoolsLoading,
+      error: activeLendingPoolsError,
+      data: activeLendingPoolsData,
+      startPolling: activeLendingPoolsStartPolling,
+      stopPolling: activeLendingPoolsStopPolling,
+    },
+  ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
 
-
-  // error handling
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
-
   const [lendSuccess, setLendSuccess] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const {data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading} = useBalance(usdcAddress);
   const walletAddress = useAddress();
-
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
     error: usdcError
   } = useContract(usdcAddress, usdcAbi);
-
   const {
     contract: lendingPlatform,
     isLoading: lendingPlatformIsLoading,
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
-
   const {
     mutateAsync: mutateAsyncDeposit,
     isLoading: isLoadingTakeDeposit,
@@ -55,7 +61,6 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
     lendingPlatform,
     "deposit",
   );
-
   const {
     mutateAsync: mutateAsyncApprove,
     isLoading: isLoadingApprove,
@@ -72,11 +77,24 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
   } = useContractRead(usdc, "allowance", [walletAddress, lendingPlatformAddress]);
 
 
-
   // Calculate the end date by adding the number of months to the current date
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
 
+  useEffect(() => {
+    // console.log("running walletAddress useEffect");
+    if (!walletAddress) {
+      return;
+    }
+    getActiveLendingPools();
+  }, [walletAddress]);
+
+  useEffect(() => {
+    // console.log("running userPositionsDataLoading useEffect");
+    if (activeLendingPoolsLoading) {
+      return;
+    }
+  }, [activeLendingPoolsLoading]);
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -150,10 +168,6 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                       <span className="">Lockup ends</span>
                       <span>{endDate.toDateString()}</span>
                     </div>
-                    {/*<div className="flex flex-row  justify-between">*/}
-                    {/*  <span className="">Bonus APR ✨</span>*/}
-                    {/*  <span className="font-semibold text-shrub-green-500"> 5%</span>*/}
-                    {/*</div>*/}
                     <div className="flex flex-row  justify-between">
                       <span className="">Estimated Yield</span>
                       <span className="font-semibold text-shrub-green-500"> {estimatedAPY}%</span>
@@ -161,15 +175,12 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
                     <div className="flex flex-row  justify-between">
                       <span>Wallet</span>
-                      <span>{truncateEthAddress(walletAddress)}<Image src="/copy.svg"
-                                                                      className="hidden w-6 md:inline align-baseline ml-2"
-                                                                      alt={"copy icon"} width={6} height={6}/> </span>
+                      <span>{truncateEthAddress(walletAddress)}
+                        <Image src="/copy.svg" className="hidden w-6 md:inline align-baseline ml-2" alt={"copy icon"} width={6} height={6}/> </span>
                     </div>
                     <div className="flex flex-row  justify-between">
                       <span>Contract Address</span>
-                      <span>{truncateEthAddress(lendingPlatformAddress)}<Image src="/copy.svg"
-                                                                               className="hidden md:inline w-6 align-baseline ml-2"
-                                                                               alt={"copy icon"} width={6} height={6}/> </span>
+                      <span>{truncateEthAddress(lendingPlatformAddress)}<Image src="/copy.svg" className="hidden md:inline w-6 align-baseline ml-2" alt={"copy icon"} width={6} height={6}/> </span>
                     </div>
                   </div>
                   <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
@@ -234,7 +245,33 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               ethers.utils.parseUnits(lendAmount, 6)
                             ]
                           })}
-                          onSuccess={() => {setLocalError(''); setLendSuccess(true)}}
+                          onSuccess={(result) => {
+                            setLocalError('')
+                            setLendSuccess(true)
+                            const filteredLendingPools = activeLendingPoolsData.lendingPools.filter(pool => pool.timestamp === timestamp.toString());
+                            const matchedLendingPool = filteredLendingPools.length > 0 ? filteredLendingPools[0] : null;
+                            const newLendPosition = {
+                              id: result.receipt.blockHash,
+                              depositsUsdc: lendAmount * 1000000,
+                              apy : estimatedAPY,
+                              lendingPool: {
+                                id: matchedLendingPool.id,
+                                timestamp: matchedLendingPool.timestamp,
+                                tokenSupply: matchedLendingPool.tokenSupply,
+                                totalEthYield: matchedLendingPool.totalEthYield,
+                                totalPrincipal: matchedLendingPool.totalPrincipal,
+                                totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
+                                __typename: matchedLendingPool.__typename,
+                              },
+                              timestamp: timestamp,
+                              updated: Math.floor(Date.now() / 1000),
+                            };
+                            console.log(newLendPosition);
+                            dispatch({
+                              type: "ADD_LEND_POSITION",
+                              payload: newLendPosition,
+                            });
+                          }}
                           onError={(e) => {
                             if (e instanceof Error) {
                               handleErrorMessages({err: e});

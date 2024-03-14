@@ -179,7 +179,6 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                 }
                               })}
                               onSuccess={(result) => {
-                                console.log('borrow receipt', result);
                                 setLocalError('');
                                 setBorrowSuccess(true);
                                 const newLoan = {
@@ -196,10 +195,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   updated: Math.floor(Date.now() / 1000),
                                   updatedBlock: result.receipt.blockNumber,
                                   __typename: "Loan",
-
-
                                 };
-                                console.log(newLoan);
                                 dispatch({
                                   type: "ADD_LOAN",
                                   payload: newLoan,

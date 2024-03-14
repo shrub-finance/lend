@@ -7,8 +7,6 @@ const initialState: UserFinancialDataState = {
   lendPositions: [],
 };
 
-
-
 const FinancialDataContext = createContext<{ state: UserFinancialDataState; dispatch: React.Dispatch<UserFinancialDataAction>; }>({ state: initialState, dispatch: () => null });
 
 const financialDataReducer = (state: UserFinancialDataState, action: UserFinancialDataAction): UserFinancialDataState => {
@@ -36,6 +34,9 @@ const financialDataReducer = (state: UserFinancialDataState, action: UserFinanci
     case "ADD_LOAN":
       const updatedState = { ...state, loans: [action.payload, ...state.loans] };
       return updatedState;
+    case "ADD_LEND_POSITION":
+      const updatedLendPositions = { ...state, lendPositions: [action.payload, ...state.lendPositions] };
+      return updatedLendPositions;
     default:
       return state;
   }

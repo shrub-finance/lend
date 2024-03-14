@@ -30,21 +30,13 @@ import {useFinancialData} from "../components/FinancialDataContext";
 import {Confetti} from "../components/Confetti";
 
 const now = new Date();
-const oneYearFromNow = new Date(
-  new Date(now).setFullYear(now.getFullYear() + 1)
-);
-
-
-
+const oneYearFromNow = new Date(new Date(now).setFullYear(now.getFullYear() + 1));
 export const DashboardView: FC = ({}) => {
+
   const wallet = useConnectedWallet();
-
   const { state, dispatch } = useFinancialData();
-
-  const { data: usdcBalance, isLoading: usdcBalanceIsLoading } =
-    useBalance(usdcAddress);
-  const { data: ethBalance, isLoading: ethBalanceIsLoading } =
-    useBalance(NATIVE_TOKEN_ADDRESS);
+  const { data: usdcBalance, isLoading: usdcBalanceIsLoading } = useBalance(usdcAddress);
+  const { data: ethBalance, isLoading: ethBalanceIsLoading } = useBalance(NATIVE_TOKEN_ADDRESS);
   const walletAddress = useAddress();
   const [ethPrice, setEthPrice] = useState(ethers.BigNumber.from(0));
   const [blockchainTime, setBlockchainTime] = useState(0);
@@ -53,23 +45,19 @@ export const DashboardView: FC = ({}) => {
     isLoading: lendingPlatformIsLoading,
     error: lendingPlatformError,
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
-
   const {
     contract: chainLinkAggregator,
     isLoading: chainLinkAggregatorIsLoading,
     error: chainLinkAggregatorError,
   } = useContract(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
-
   const {
     data: usdcEthRoundData,
     isLoading: usdcEthRoundIsLoading,
     error: usdcEthRoundError,
   } = useContractRead(chainLinkAggregator, "latestRoundData", []);
-
   const [
     getUserPositions,
-    {
-      loading: userPositionsDataLoading,
+    { loading: userPositionsDataLoading,
       error: userPositionsDataError,
       data: userPositionsData,
       startPolling: userPositionsDataStartPolling,
@@ -81,9 +69,22 @@ export const DashboardView: FC = ({}) => {
     },
   });
 
+  let newlyAddedLendPosition = state.lendPositions.filter(item => item.hasOwnProperty('id'));
+
+  newlyAddedLendPosition = newlyAddedLendPosition[0]; // Directly access the single item
+
+  let calculatedPoolShareTokenAmount = (newlyAddedLendPosition?.totalPrincipal + newlyAddedLendPosition?.totalUsdcInterest + newlyAddedLendPosition?.totalEthYield === 0) ?
+    newlyAddedLendPosition?.depositsUsdc * 1e12 :
+    (newlyAddedLendPosition?.depositsUsdc * newlyAddedLendPosition?.lendingPool?.tokenSupply) /
+    (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest +
+      (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
+
+  console.log(newlyAddedLendPosition);
+  console.log(calculatedPoolShareTokenAmount);
+
+
   useEffect(() => {
     // console.log("running contract useEffect");
-
     async function callContract() {
       const APYvalue = await lendingPlatform.call("getAPYBasedOnLTV", [33]);
     }
@@ -104,7 +105,6 @@ export const DashboardView: FC = ({}) => {
   useEffect(() => {
     // console.log("running walletAddress useEffect");
     if (!walletAddress) {
-      // walletAddress has not been fetched yet
       return;
     }
     getUserPositions();
@@ -118,7 +118,7 @@ export const DashboardView: FC = ({}) => {
   }, [userPositionsDataLoading]);
 
   useEffect(() => {
-    // Once data is loaded and not loading, update the store
+    // Once data is loaded, update the store
     if (!userPositionsDataLoading && userPositionsData) {
       const { loans, lendPositions } = userPositionsData.user;
       dispatch({
@@ -132,13 +132,9 @@ export const DashboardView: FC = ({}) => {
   }, [userPositionsDataLoading, userPositionsData, dispatch]);
 
 
-  useEffect(() => {
-    console.log("state", state);
-  }, [state]); // Listening for changes in state
-
-
   const testVar = "2";
   // console.log(userPositionsData);
+  console.log("store", state);
 
   useEffect(() => {
     // console.log("running usdcEthRound useEffect");
@@ -147,12 +143,10 @@ export const DashboardView: FC = ({}) => {
       const ethPriceTemp = ethers.utils.parseUnits("1", 26).div(invertedPrice);
       setEthPrice(ethPriceTemp);
     }
-
-
   }, [usdcEthRoundIsLoading]);
 
     useEffect(() => {
-        console.log('running block useEffect')
+        // console.log('running block useEffect')
         getBlockTest()
     }, [userPositionsDataLoading]);
 
@@ -161,12 +155,11 @@ export const DashboardView: FC = ({}) => {
             network: "localhost",
             block: "latest"
         });
-        console.log(block);
+        // console.log(block);
         setBlockchainTime(block.timestamp);
     }
 
   function daysFromNow(date: Date) {
-    // return Math.round((date.valueOf() - now.valueOf()) / milliSecondsInDay);
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
@@ -213,9 +206,7 @@ export const DashboardView: FC = ({}) => {
                       Eth Price:{" "}
                       {ethers.utils.formatUnits(ethPrice, 8)} USDC
                     </span>
-                      <span>
-                          {fromEthDate(blockchainTime).toLocaleString()}
-                      </span>
+                    <span>{fromEthDate(blockchainTime).toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="flex flex-wrap -m-4">
@@ -345,7 +336,7 @@ export const DashboardView: FC = ({}) => {
                                                   )
                                                 )
                                             )
-                                            .mul(item.amount)
+                                            .mul(item.amount ?? "0")
                                             .div(item.lendingPool.tokenSupply),
                                           6
                                         )
@@ -354,7 +345,7 @@ export const DashboardView: FC = ({}) => {
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
-                                        X%
+                                        {(item.apy)?item.apy :"X%"}
                                       </span>
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
@@ -374,7 +365,7 @@ export const DashboardView: FC = ({}) => {
                                                 ethers.utils.parseUnits("1", 20)
                                               )
                                           )
-                                          .mul(item.amount)
+                                          .mul(item.amount ? item.amount : calculatedPoolShareTokenAmount.toString())
                                           .div(item.lendingPool.tokenSupply)
                                           .sub(item.depositsUsdc),
                                         6
@@ -462,93 +453,94 @@ export const DashboardView: FC = ({}) => {
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {state?.loans?.map(
-                                (item, index) => (
-                                  <tr
-                                    key={`borrowRow-${index}`}
-                                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
-                                  >
-                                    <td className="px-6 py-4 text-sm font-bold">
-                                      {wallet && !ethBalanceIsLoading ? (
-                                        <p>
-                                          {ethers.utils.formatUnits(
-                                            item.originalPrincipal?? "0",
-                                            6
-                                          )}
-                                        </p>
-                                      ) : (
-                                        <p className="text-sm">
-                                          Loading ETH balance...
-                                        </p>
-                                      )}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-bold">
-                                      {ethers.utils.formatUnits(item.paid?? "0", 6)}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-bold">
-                                      {daysFromNow(fromEthDate(item.timestamp?? "0"))}
-                                    </td>
-                                    <td>
-                                      <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${ethers.utils.formatUnits(
-                                        item.apy?? "0",
-                                        6
-                                      )}%`}</span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-bold">
-                                      {
-                                        ethers.utils.formatUnits(
-                                          ethers.BigNumber.from(
-                                            item.principal?? "0"
-                                          ).add(
-                                            ethers.BigNumber.from(item.apy?? "0")
-                                              .mul(
-                                                ethers.BigNumber.from(
-                                                  item.principal?? "0"
-                                                )
-                                              )
-                                              .mul(
-                                                ethers.BigNumber.from(blockchainTime).sub(
-                                                  ethers.BigNumber.from(
-                                                    item.updated?? "0"
-                                                  )
-                                                )
-                                              )
-                                              .div(
-                                                ethers.BigNumber.from(
-                                                  60 * 60 * 24 * 365
-                                                )
-                                              )
-                                              .div(
-                                                ethers.utils.parseUnits('1', 8)
-                                              )
-                                          ),
-                                          6
-                                        )
-                                      }
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-bold">
-                                      {fromEthDate(
-                                        item.timestamp?? "0"
-                                      ).toLocaleString()}
-                                    </td>
-                                    <td className="px-1 py-4 text-sm font-bold">
-                                      <button
-                                        type="button"
-                                        className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-                                      >
-                                        <Image
-                                          src="/up-right-arrow.svg"
-                                          alt="down arrow"
-                                          width={20}
-                                          height={20}
-                                          className="mr-2"
-                                        />
-                                        Pay
-                                      </button>
-                                    </td>
-                                  </tr>
-                                )
-                              )}
+                              {state?.loans?.map((item, index) => (
+                                <tr
+                                  key={`borrowRow-${index}`}
+                                  className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+                                >
+                                  <td className="px-6 py-4 text-sm font-bold">
+                                    {wallet && !ethBalanceIsLoading ? (
+                                      <p>
+                                        {ethers.utils.formatUnits(
+                                          item.originalPrincipal ?? "0",
+                                          6,
+                                        )}
+                                      </p>
+                                    ) : (
+                                      <p className="text-sm">
+                                        Loading ETH balance...
+                                      </p>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm font-bold">
+                                    {ethers.utils.formatUnits(
+                                      item.paid ?? "0",
+                                      6,
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm font-bold">
+                                    {daysFromNow(
+                                      fromEthDate(item.timestamp ?? "0"),
+                                    )}
+                                  </td>
+                                  <td>
+                                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${ethers.utils.formatUnits(
+                                      item.apy ?? "0",
+                                      6,
+                                    )}%`}</span>
+                                  </td>
+                                  <td className="px-6 py-4 text-sm font-bold">
+                                    {ethers.utils.formatUnits(
+                                      ethers.BigNumber.from(
+                                        item.principal ?? "0",
+                                      ).add(
+                                        ethers.BigNumber.from(item.apy ?? "0")
+                                          .mul(
+                                            ethers.BigNumber.from(
+                                              item.principal ?? "0",
+                                            ),
+                                          )
+                                          .mul(
+                                            ethers.BigNumber.from(
+                                              blockchainTime,
+                                            ).sub(
+                                              ethers.BigNumber.from(
+                                                item.updated ?? "0",
+                                              ),
+                                            ),
+                                          )
+                                          .div(
+                                            ethers.BigNumber.from(
+                                              60 * 60 * 24 * 365,
+                                            ),
+                                          )
+                                          .div(ethers.utils.parseUnits("1", 8)),
+                                      ),
+                                      6,
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm font-bold">
+                                    {fromEthDate(
+                                      item.timestamp ?? "0",
+                                    ).toLocaleString()}
+                                  </td>
+                                  <td className="px-1 py-4 text-sm font-bold">
+                                    <button
+                                      type="button"
+                                      className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+                                    >
+                                      <Image
+                                        src="/up-right-arrow.svg"
+                                        alt="down arrow"
+                                        width={20}
+                                        height={20}
+                                        className="mr-2"
+                                      />
+                                      Pay
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
                             </tbody>
                           </table>
                         </div>
