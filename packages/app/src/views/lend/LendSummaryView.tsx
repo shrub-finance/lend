@@ -254,6 +254,8 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               id: result.receipt.blockHash,
                               depositsUsdc: lendAmount * 1000000,
                               apy : estimatedAPY,
+                              currentBalanceOverride: lendAmount,
+                              interestEarnedOverride: "0",
                               lendingPool: {
                                 id: matchedLendingPool.id,
                                 timestamp: matchedLendingPool.timestamp,
@@ -266,7 +268,6 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               timestamp: timestamp,
                               updated: Math.floor(Date.now() / 1000),
                             };
-                            console.log(newLendPosition);
                             dispatch({
                               type: "ADD_LEND_POSITION",
                               payload: newLendPosition,
