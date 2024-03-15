@@ -1,4 +1,4 @@
-import { task } from 'hardhat/config'
+import {task, types} from 'hardhat/config'
 import "@nomicfoundation/hardhat-toolbox";
 import {TransactionResponse} from "ethers";
 import {getPlatformDates, toEthDate} from "@shrub-lend/common"
@@ -71,7 +71,8 @@ task("testLendingPlatform3", "Setup an environment for development")
         await partB();
         await partC();
         await partD();
-        await partD2();
+        // await partD2();
+        await partD3();
         // await partE();
         // await partF();
         // await partG();
@@ -111,6 +112,17 @@ task("testLendingPlatform3", "Setup an environment for development")
 
         async function partD2() {
             await env.run('extendDeposit', {account: account2, currentTimestamp: may2026, newTimestamp: aug2026});
+        }
+
+        async function partD3() {
+            await env.run('extendLoan', {account: account3, tokenId: 0, newTimestamp: aug2026, ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
+                // .addParam("account", "Address of account to extend loan with (must be the holder of the loan)", undefined, types.string, true)
+                // .addParam("tokenId", "tokenId of the loan position token ERC-721", undefined, types.int)
+                // .addParam("newTimestamp", "End Date of the new loan", undefined, types.int)
+                // .addParam("ltv", "Specified LTV of the new loan", undefined, types.int, false)
+                // .addParam("additionalCollateral", "Additional ETH collateral to provide for the new loan", 0, types.int)
+                // .addParam("additionalRepayment", "Additional USDC payment to make to the previous loan", 0, types.int)
+
         }
 
         async function partE() {

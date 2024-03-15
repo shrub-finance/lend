@@ -187,7 +187,6 @@ contract BorrowPositionToken is ERC721, Ownable {
         console.log(bd.principal);
         console.log(APY_DECIMALS);
         console.log(SECONDS_IN_YEAR);
-        console.log("---");
 
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         if (bd.apy == 0) {
@@ -199,6 +198,7 @@ contract BorrowPositionToken is ERC721, Ownable {
             return bd.apy * bd.principal * (block.timestamp - bd.startDate) / (APY_DECIMALS * SECONDS_IN_YEAR);
         }
         console.log(bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR));
+        console.log("--- done running interestSinceTimestamp");
         return bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR);
     }
 
