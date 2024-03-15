@@ -32,8 +32,8 @@ const financialDataReducer = (state: UserFinancialDataState, action: UserFinanci
     case "CLEAR_USER_DATA":
       return { ...initialState };
     case "ADD_LOAN":
-      const updatedState = { ...state, loans: [action.payload, ...state.loans] };
-      return updatedState;
+      const updatedLoan = { ...state, loans: [action.payload, ...state.loans] };
+      return updatedLoan;
     case "ADD_LEND_POSITION":
       const updatedLendPositions = { ...state, lendPositions: [action.payload, ...state.lendPositions] };
       return updatedLendPositions;

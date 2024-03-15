@@ -69,19 +69,7 @@ export const DashboardView: FC = ({}) => {
     },
   });
 
-  let newlyAddedLendPosition = state.lendPositions.filter(item => item.hasOwnProperty('id'));
-
-  newlyAddedLendPosition = newlyAddedLendPosition[0]; // Directly access the single item
-
-  let calculatedPoolShareTokenAmount = (newlyAddedLendPosition?.totalPrincipal + newlyAddedLendPosition?.totalUsdcInterest + newlyAddedLendPosition?.totalEthYield === 0) ?
-    newlyAddedLendPosition?.depositsUsdc * 1e12 :
-    (newlyAddedLendPosition?.depositsUsdc * newlyAddedLendPosition?.lendingPool?.tokenSupply) /
-    (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest +
-      (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
-
-  console.log(newlyAddedLendPosition);
-  console.log(calculatedPoolShareTokenAmount);
-
+  const testVar = "2";
 
   useEffect(() => {
     // console.log("running contract useEffect");
@@ -131,11 +119,6 @@ export const DashboardView: FC = ({}) => {
     }
   }, [userPositionsDataLoading, userPositionsData, dispatch]);
 
-
-  const testVar = "2";
-  // console.log(userPositionsData);
-  console.log("store", state);
-
   useEffect(() => {
     // console.log("running usdcEthRound useEffect");
     if (usdcEthRoundData) {
@@ -145,12 +128,12 @@ export const DashboardView: FC = ({}) => {
     }
   }, [usdcEthRoundIsLoading]);
 
-    useEffect(() => {
+  useEffect(() => {
         // console.log('running block useEffect')
         getBlockTest()
     }, [userPositionsDataLoading]);
 
-    async function getBlockTest() {
+  async function getBlockTest() {
         const block = await getBlock({
             network: "localhost",
             block: "latest"
@@ -162,6 +145,16 @@ export const DashboardView: FC = ({}) => {
   function daysFromNow(date: Date) {
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
+
+  /** might need this later **/
+  // let newlyAddedLendPosition = state.lendPositions.filter(item => item.hasOwnProperty('id'));
+  // newlyAddedLendPosition = newlyAddedLendPosition[0];
+  // let calculatedPoolShareTokenAmount = (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest + newlyAddedLendPosition?.lendingPool?.totalEthYield === 0) ?
+  //   newlyAddedLendPosition?.depositsUsdc * 1e12 :
+  //   (newlyAddedLendPosition?.depositsUsdc * newlyAddedLendPosition?.lendingPool?.tokenSupply) /
+  //   (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest +
+  //     (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
+
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -245,47 +238,29 @@ export const DashboardView: FC = ({}) => {
                         <div className="relative overflow-x-auto border rounded-2xl">
                           <table className="w-full text-left text-shrub-grey  dark:text-gray-400">
                             <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
-                              Earning
+                              Earn Account
                               <span className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
                                 Total of {testVar} Earning Pools
                               </span>
                             </caption>
                             <thead className="text-xs bg-shrub-grey-light dark:bg-gray-700 border border-shrub-grey-light2">
                               <tr>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
+                                <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
                                   Amount Deposited
                                 </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
-                                  Current Value
+                                <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+                                  Interest Earned
                                 </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
+                                <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
+                                  Current Balance
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
                                   APR
                                 </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
-                                  Earned
-                                </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
+                                <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
                                   Unlock Date
                                 </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                ></th>
+                                <th scope="col" className="px-6 py-3 text-shrub-grey font-medium"></th>
                               </tr>
                             </thead>
                             <tbody className="text-lg">
@@ -297,17 +272,8 @@ export const DashboardView: FC = ({}) => {
                                   >
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {wallet && !ethBalanceIsLoading ? (
-                                        <p>
-                                          {" "}
-                                          <img
-                                            src="/usdc-logo.svg"
-                                            className="w-6 mr-2 inline align-middle"
-                                          />
-                                          {ethers.utils.formatUnits(
-                                            item.depositsUsdc,
-                                            6
-                                          )}{" "}
-                                          USDC
+                                        <p>{" "}<img src="/usdc-logo.svg" className="w-6 mr-2 inline align-middle" />
+                                          {ethers.utils.formatUnits(item.depositsUsdc ?? "0", 6)}{" "} USDC
                                         </p>
                                       ) : (
                                         <p className="text-sm">
@@ -316,65 +282,35 @@ export const DashboardView: FC = ({}) => {
                                       )}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {
+                                      {item.interestEarnedOverride ? item.interestEarnedOverride :
                                         ethers.utils.formatUnits(
-                                          ethers.BigNumber.from(
-                                            item.lendingPool.totalPrincipal
-                                          )
-                                            .add(
-                                              item.lendingPool.totalUsdcInterest
-                                            )
-                                            .add(
-                                              ethPrice
-                                                .mul(
-                                                  item.lendingPool.totalEthYield
-                                                )
-                                                .div(
-                                                  ethers.utils.parseUnits(
-                                                    "1",
-                                                    20
-                                                  )
-                                                )
-                                            )
-                                            .mul(item.amount ?? "0")
-                                            .div(item.lendingPool.tokenSupply),
-                                          6
-                                        )
-
-                                      }
+                                          ethers.BigNumber.from(item.lendingPool.totalPrincipal)
+                                            .add(item.lendingPool.totalUsdcInterest)
+                                            .add(ethPrice
+                                              .mul(item.lendingPool.totalEthYield)
+                                              .div(ethers.utils.parseUnits("1", 20)))
+                                            .mul(item.amount)
+                                            .div(item.lendingPool.tokenSupply), 6)}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold">
+                                      {item.currentBalanceOverride ? item.currentBalanceOverride :
+                                        ethers.utils.formatUnits(
+                                          ethers.BigNumber.from(item.lendingPool.totalPrincipal)
+                                            .add(item.lendingPool.totalUsdcInterest)
+                                            .add(ethPrice
+                                              .mul(item.lendingPool.totalEthYield)
+                                              .div(ethers.utils.parseUnits("1", 20)))
+                                            .mul(item.amount)
+                                            .div(item.lendingPool.tokenSupply)
+                                            .sub(item.depositsUsdc), 6)}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
-                                        {(item.apy)?item.apy :"X%"}
+                                        {(item.apy)?item.apy :"X"}%
                                       </span>
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {ethers.utils.formatUnits(
-                                        ethers.BigNumber.from(
-                                          item.lendingPool.totalPrincipal
-                                        )
-                                          .add(
-                                            item.lendingPool.totalUsdcInterest
-                                          )
-                                          .add(
-                                            ethPrice
-                                              .mul(
-                                                item.lendingPool.totalEthYield
-                                              )
-                                              .div(
-                                                ethers.utils.parseUnits("1", 20)
-                                              )
-                                          )
-                                          .mul(item.amount ? item.amount : calculatedPoolShareTokenAmount.toString())
-                                          .div(item.lendingPool.tokenSupply)
-                                          .sub(item.depositsUsdc),
-                                        6
-                                      )}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-bold">
-                                      {fromEthDate(
-                                        item.lendingPool.timestamp
-                                      ).toLocaleString()}
+                                      {fromEthDate(item.lendingPool.timestamp).toLocaleString()}
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className="flex items-center justify-center space-x-2 h-full p-2">
@@ -410,7 +346,7 @@ export const DashboardView: FC = ({}) => {
                         <div className="relative overflow-x-auto border rounded-2xl">
                           <table className="w-full text-left text-shrub-grey  dark:text-gray-400">
                             <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
-                              Borrowing
+                              Borrow Account
                             </caption>
                             <thead className="text-xs bg-shrub-grey-light dark:bg-gray-700 border border-shrub-grey-light2">
                               <tr>
