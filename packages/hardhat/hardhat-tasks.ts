@@ -237,6 +237,8 @@ task("extendLoan", "extend an existing loan")
         const borrowPositionToken = await ethers.getContractAt("BorrowPositionToken", borrowPositionTokenDeployment.address);
         const usdCoinDeployment = await deployments.get('USDCoin');
         const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+        const aethDeployment = await deployments.get("AETH");
+        const aeth = await ethers.getContractAt("AETH", aethDeployment.address);
 
         const borrowerAccount = await ethers.getSigner(account);
         const parsedAdditionalCollateral = ethers.parseUnits(additionalCollateral.toString(),6);
@@ -252,6 +254,7 @@ task("extendLoan", "extend an existing loan")
             console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
             await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
         }
+        await sendTransaction(aeth.connect(borrowerAccount).approve(lendingPlatform.getAddress(), ethers.parseEther("100")), "aETH Approval");
 
         await sendTransaction(
             lendingPlatform.connect(borrowerAccount).extendLoan(

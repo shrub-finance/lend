@@ -65,7 +65,7 @@ task("testLendingPlatform3", "Setup an environment for development")
         const jan2027 = toEthDate(new Date('2027-01-01T00:00:00Z'));
 
         const {ethers, deployments, getNamedAccounts} = env;
-        const { deployer, account1, account2, account3 } = await getNamedAccounts();
+        const { deployer, account1, account2, account3, account4 } = await getNamedAccounts();
 
         await partA();
         await partB();
@@ -97,6 +97,7 @@ task("testLendingPlatform3", "Setup an environment for development")
             await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2027, account: account1});  // 12 month
             await env.run('provideLiquidity', { usdcAmount: 500, timestamp: may2026, account: account2});  // 4 month
             await env.run('takeLoan', { account: account3, timestamp: may2026, loanAmount: 100, collateralAmount: 0.1, ltv: 50})
+            await env.run('takeLoan', { account: account4, timestamp: may2026, loanAmount: 100, collateralAmount: 0.1, ltv: 50})
         }
         async function partC() {
             await env.run('setTime', {ethDate: feb2026});

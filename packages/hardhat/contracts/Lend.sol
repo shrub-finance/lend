@@ -527,7 +527,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         if (aEthSnapshotBalance == 0) {
             deltaBpPoolShares = _collateral;
         } else {
-            deltaBpPoolShares = _collateral * bpTotalPoolShares / aEthSnapshotBalance;
+            deltaBpPoolShares = _collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
         }
 
         console.log("calcparams");
@@ -644,7 +644,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Update Borrowing Pool poolShareAmount
         console.log('aEthSnapshotBalance: %s', aEthSnapshotBalance);
         console.log("bd.collateral: %s, bpTotalPoolShares: %s, aEthSnapshotBalance: %s", bd.collateral, bpTotalPoolShares, aEthSnapshotBalance);
-        uint deltaBpPoolShares = bd.collateral * bpTotalPoolShares / aEthSnapshotBalance;
+        uint deltaBpPoolShares = bd.collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
         console.log('deltaBpPoolShares: %s', deltaBpPoolShares);
         console.log('borrowing pool with endDate %s has poolShareAmount: %s', bd.endDate, borrowingPools[bd.endDate].poolShareAmount);
         console.log("about to decrement above pool...");
@@ -737,10 +737,16 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             aeth.transfer(msg.sender, flashLoanAmount);
         }
         console.log("extendLoan-before-take-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
+        aeth.transferFrom(msg.sender, address(this), newPrincipal);
         takeLoanInternal(newPrincipal, newCollateral, _ltv, newTimestamp, msg.sender);
 //        takeLoan{value: newCollateral}(newPrincipal, newCollateral, _ltv, newTimestamp);
         console.log("extendLoan-before-repay-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         uint freedCollateral = repayLoanInternal(tokenId, msg.sender, msg.sender);
+        console.log("msg.sender: %s, freedCollateral: %s, sender-aETH-balance: %s",
+            msg.sender,
+            freedCollateral,
+            aeth.balanceOf(msg.sender)
+        );
         aeth.transfer(msg.sender, freedCollateral);
         console.log("extendLoan-before-repay-flash-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         if (flashLoanAmount > 0) {
