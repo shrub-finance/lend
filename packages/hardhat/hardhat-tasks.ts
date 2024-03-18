@@ -3,8 +3,9 @@ import "@nomicfoundation/hardhat-toolbox";
 
 import { Address } from 'hardhat-deploy/types';
 import assert from 'node:assert/strict';
-import {ContractMethod, parseEther, parseUnits, TransactionResponse} from "ethers";
+import {Contract, ContractMethod, parseEther, parseUnits, TransactionResponse} from "ethers";
 import {fromEthDate, getPlatformDates, toEthDate} from "@shrub-lend/common"
+import {HardhatRuntimeEnvironment} from "hardhat/types";
 
 const x = async () => {}
 async function sendTransaction(sentTx: Promise<TransactionResponse>, description: string) {
@@ -12,6 +13,18 @@ async function sendTransaction(sentTx: Promise<TransactionResponse>, description
     console.log(`${description} transaction broadcast with txid: ${tx.hash}`);
     const txReceipt = await tx.wait();
     console.log(`${description} transaction confirmed in block: ${txReceipt?.blockNumber}`);
+}
+
+async function getDeployedContracts(env: HardhatRuntimeEnvironment) {
+    const {ethers, deployments} = env;
+    return {
+        aeth: await ethers.getContractAt("AETH", (await deployments.get('AETH')).address),
+        usdc: await ethers.getContractAt("USDCoin", (await deployments.get('USDCoin')).address),
+        bpt: await ethers.getContractAt("BorrowPositionToken", (await deployments.get('BorrowPositionToken')).address),
+        lendingPlatform: await ethers.getContractAt("LendingPlatform", (await deployments.get('LendingPlatform')).address),
+        mockAaveV3: await ethers.getContractAt("MockAaveV3", (await deployments.get('MockAaveV3')).address),
+        mockChainlinkAggregator: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregator')).address),
+    }
 }
 
 // Tasks
@@ -27,31 +40,45 @@ task("accounts", "Prints the list of accounts", async (taskArgs, env) => {
 task("getBalances", "Prints the ETH and USDC balance in all named accounts", async(taskArgs, env) => {
     const { ethers, getNamedAccounts, deployments } = env;
     const accounts = await getNamedAccounts();
-    const usdCoinDeployment = await deployments.get('USDCoin');
-    const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
-    const usdcDecimals = await usdc.decimals();
     const aETHDeployment = await deployments.get('AETH');
-    const aeth = await ethers.getContractAt('AETH', aETHDeployment.address);
-    const aethDecimals = await aeth.decimals();
     const mockAaveV3Deployment = await deployments.get('MockAaveV3');
     const lendDeployment = await deployments.get('LendingPlatform')
     accounts.lendingPlatform = lendDeployment.address;
     accounts.aETH = aETHDeployment.address;
     accounts.mockAaveV3 = mockAaveV3Deployment.address;
-    for (const [accountName, address] of Object.entries(accounts)) {
-        // console.log(`${accountName} - ${address}`);
-        const ethBalance = await ethers.provider.getBalance(address);
-        const usdcBalance = await usdc.balanceOf(address);
-        const aethBalance = await aeth.balanceOf(address);
-        console.log(`
-${accountName} - ${address}
+    for (const accountName of Object.keys(accounts)) {
+        await env.run('getBalance', {account: accountName});
+    }
+})
+
+task("getBalance", "Prints the ETH and USDC balance in specified account")
+    .addParam("account", "either namedAccount name or address")
+    .setAction(async (taskArgs, env) => {
+    const { ethers, getNamedAccounts, deployments } = env;
+    const account = taskArgs.account;
+    const {usdc, aeth} = await getDeployedContracts(env);
+    const namedAccounts = await getNamedAccounts();
+    const signer = namedAccounts[account] ?
+        await ethers.getSigner(namedAccounts[account]) :
+        await ethers.getSigner(account);
+    const accountName = namedAccounts[account] ?
+        account :
+        "address";
+    // const usdc = await getDeployedContract('USDCoin', env);
+    // const aeth = await getDeployedContract('AETH', env);
+    const usdcDecimals = await usdc.decimals();
+    const aethDecimals = await aeth.decimals();
+    const ethBalance = await ethers.provider.getBalance(signer.address);
+    const usdcBalance = await usdc.balanceOf(signer.address);
+    const aethBalance = await aeth.balanceOf(signer.address);
+    console.log(`
+${accountName} - ${signer.address}
 ==============
 ETH: ${ethers.formatEther(ethBalance)}
 USDC: ${ethers.formatUnits(usdcBalance, usdcDecimals)}
 AETH: ${ethers.formatUnits(aethBalance, aethDecimals)}
 `);
-    }
-})
+});
 
 task("distributeUsdc", "distribute USDC from the deployer account")
   .addParam("to", "address to send funds to", null, types.string)
@@ -471,6 +498,25 @@ task("erc20Details", "get the details of an ERC20")
       totalSupply: ${totalSupply}
     `)
   });
+
+task("getLendingPool", "get deatils of a lending pool")
+    .addParam('timestamp', 'timestamp of the lending pool', "", types.int)
+    .setAction(async (taskArgs, env) => {
+        const ethDate = taskArgs.timestamp;
+        const {ethers, deployments, getNamedAccounts} = env;
+        const {lendingPlatform} = await getDeployedContracts(env);
+        const res = await lendingPlatform.getLendingPool(ethDate);
+        console.log(res);
+        console.log(`
+Lending Pool
+============
+endDate: ${fromEthDate(ethDate)}
+poolShareTokenAddress: ${res.poolShareTokenAddress}
+principal: ${ethers.formatUnits(res.totalLiquidity), 6}
+accumInterest: ${ethers.formatUnits(res.accumInterest, 6)}
+accumYield: ${ethers.formatEther(res.accumYield)}
+        `)
+    })
 
 task("setEthPrice", "udpate the mock Chainlink Aggregator's ETH price")
     .addParam('ethPrice', 'new ETH price, with up to 8 decimals (i.e. 2123.12345678)', undefined, types.string, false)
