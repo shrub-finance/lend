@@ -146,6 +146,7 @@ export const DashboardView: FC = ({}) => {
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
+
   /** might need this later **/
   // let newlyAddedLendPosition = state.lendPositions.filter(item => item.hasOwnProperty('id'));
   // newlyAddedLendPosition = newlyAddedLendPosition[0];
@@ -274,6 +275,12 @@ export const DashboardView: FC = ({}) => {
                                       {wallet && !ethBalanceIsLoading ? (
                                         <p>{" "}<img src="/usdc-logo.svg" className="w-6 mr-2 inline align-middle" />
                                           {ethers.utils.formatUnits(item.depositsUsdc ?? "0", 6)}{" "} USDC
+                                          {item.status === 'pending' && (
+                                            <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
+                                          )}
+                                          {item.status === 'failed' && (
+                                            <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
+                                          )}
                                         </p>
                                       ) : (
                                         <p className="text-sm">

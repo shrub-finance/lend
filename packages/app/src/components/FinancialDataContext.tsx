@@ -37,6 +37,21 @@ const financialDataReducer = (state: UserFinancialDataState, action: UserFinanci
     case "ADD_LEND_POSITION":
       const updatedLendPositions = { ...state, lendPositions: [action.payload, ...state.lendPositions] };
       return updatedLendPositions;
+    case "UPDATE_LEND_POSITION_STATUS":
+      // console.log("Updating lend position status", action.payload); // Log the action payload before the update
+      const updatedState = {
+        ...state,
+        lendPositions: state.lendPositions.map(position => {
+          if (position.id === action.payload.id) {
+            // console.log("Found position to update", position); // Log the position being updated
+            return { ...position, status: action.payload.status };
+          }
+          return position;
+        }),
+      };
+      // console.log("Updated lend positions", updatedState.lendPositions); // Log the updated lend positions array
+      return updatedState;
+
     default:
       return state;
   }
