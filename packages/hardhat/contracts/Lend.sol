@@ -763,6 +763,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         console.log("extendLoan-before-repay-flash-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         if (flashLoanAmount > 0) {
             // Transfer USDC from sender to Shrub to repay flash loan
+            console.log("about to send %s from %s with %s allowance", flashLoanAmount, msg.sender, aeth.allowance(msg.sender, address(this)));
             aeth.transferFrom(msg.sender, address(this), flashLoanAmount);
         }
     }

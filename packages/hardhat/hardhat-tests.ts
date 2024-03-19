@@ -67,10 +67,10 @@ task("testLendingPlatform3", "Setup an environment for development")
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer, account1, account2, account3, account4 } = await getNamedAccounts();
 
-        await partA();
-        await partB();
-        await partC();
-        await partD();
+        // await partA();
+        // await partB();
+        // await partC();
+        // await partD();
         // await partD2();
         await partD3();
         // await partE();
@@ -81,7 +81,7 @@ task("testLendingPlatform3", "Setup an environment for development")
 
 
         async function partA() {
-            await env.run('createPlatformPools');
+            // await env.run('createPlatformPools');
             await env.run('distributeUsdc', { to: account1, amount: 10000 });
             await env.run('distributeUsdc', { to: account2, amount: 10000 });
             await env.run('createPool', { timestamp: feb2026});  // 1 month
@@ -153,5 +153,12 @@ task("testLendingPlatform3", "Setup an environment for development")
         async function partI() {
             await env.run('withdraw', {account: account1, timestamp: jan2027});
             await env.run('withdraw', {account: account2, timestamp: jan2027});
+        }
+
+        async function printPools() {
+            await env.run('getPool', {timestamp: feb2026});
+            await env.run('getPool', {timestamp: may2026});
+            await env.run('getPool', {timestamp: aug2026});
+            await env.run('getPool', {timestamp: jan2027});
         }
     })

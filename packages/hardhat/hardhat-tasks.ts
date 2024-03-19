@@ -89,8 +89,7 @@ task("distributeUsdc", "distribute USDC from the deployer account")
 
     const {ethers, deployments, getNamedAccounts} = env;
     const { deployer } = await getNamedAccounts();
-    const usdCoinDeployment = await deployments.get('USDCoin');
-    const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+    const {usdc} = await getDeployedContracts(env);
 
     const toFormatted = ethers.getAddress(to);
     const amountInUnits = amount * 10 ** 6;
@@ -101,9 +100,7 @@ task("distributeUsdc", "distribute USDC from the deployer account")
     assert.equal(amountInUnits, Math.floor(amountInUnits), "Amount must have no more than 6 decimals")
     const deployerAccount = await ethers.getSigner(deployer);
 
-    const usdcDeployer = usdc.connect(deployerAccount);
-
-    const tx = await usdcDeployer.transfer(toFormatted, amountInUnits)
+    const tx = await usdc.connect(deployerAccount).transfer(toFormatted, amountInUnits)
     // console.log(`${amount} USDC sent to ${toFormatted}`);
     const txReceipt = await tx.wait();
     if (!txReceipt) {
@@ -121,13 +118,11 @@ task("createPool", "Create a lending pool")
 
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer } = await getNamedAccounts();
-        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+        const {lendingPlatform} = await getDeployedContracts(env);
 
         const deployerAccount = await ethers.getSigner(deployer);
-        const lendingPlatformDeployer = lendingPlatform.connect(deployerAccount);
 
-        const tx = await lendingPlatformDeployer.createPool(timestamp);
+        const tx = await lendingPlatform.connect(deployerAccount).createPool(timestamp);
         console.log(`Create pool transaction broadcast with txid: ${tx.hash}`);
         const txReceipt = await tx.wait();
         console.log(`Pool created with timestamp ${timestamp}. Confirmed in block: ${txReceipt?.blockNumber}`);
@@ -140,11 +135,9 @@ task("finalizeLendingPool", "Finalize a lending pool")
 
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer } = await getNamedAccounts();
-        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+        const {lendingPlatform} = await getDeployedContracts(env);
 
         const deployerAccount = await ethers.getSigner(deployer);
-        const lendingPlatformDeployer = lendingPlatform.connect(deployerAccount);
 
         const tx = await lendingPlatform.connect(deployerAccount).finalizeLendingPool(timestamp);
         console.log(`Finalize pool transaction broadcast with txid: ${tx.hash}`);
@@ -163,19 +156,13 @@ task("provideLiquidity", "add USDC to a lending pool")
 
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer } = await getNamedAccounts();
-        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
-        const usdCoinDeployment = await deployments.get('USDCoin');
-        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+        const {lendingPlatform, usdc} = await getDeployedContracts(env);
 
         const liquidityAccount = await ethers.getSigner(account || deployer);
-        const lendingPlatformAccount = lendingPlatform.connect(liquidityAccount);
-        const usdcAccount = usdc.connect(liquidityAccount);
-
         const parsedUsdc = ethers.parseUnits(usdcAmount.toString(), 6);
 
         // Check balance of account to ensure that it is sufficient
-        const usdcBalance = await usdcAccount.balanceOf(liquidityAccount);
+        const usdcBalance = await usdc.connect(liquidityAccount).balanceOf(liquidityAccount);
         const liquidityAccountAddress = await liquidityAccount.getAddress();
         console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${liquidityAccountAddress}`);
         if (usdcBalance < parsedUsdc) {
@@ -183,16 +170,16 @@ task("provideLiquidity", "add USDC to a lending pool")
             return;
         }
         // Check approval of account to ensure that it is sufficient
-        const approved = await usdcAccount.allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
+        const approved = await usdc.connect(liquidityAccount).allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
         console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
         // If approval is not sufficient then create an approval tx
         if (approved < parsedUsdc) {
             const needToApprove = parsedUsdc - approved;
             console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
-            await sendTransaction(usdcAccount.approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
+            await sendTransaction(usdc.connect(liquidityAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
         }
         // Send the deposit tx
-        await sendTransaction(lendingPlatformAccount.deposit(timestamp, parsedUsdc), `Deposit USDC`);
+        await sendTransaction(lendingPlatform.connect(liquidityAccount).deposit(timestamp, parsedUsdc), `Deposit USDC`);
     })
 
 task("extendDeposit", "extend an existing deposit")
@@ -206,14 +193,11 @@ task("extendDeposit", "extend an existing deposit")
 
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer } = await getNamedAccounts();
-        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
-        const usdCoinDeployment = await deployments.get('USDCoin');
-        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
+        const {lendingPlatform, usdc} = await getDeployedContracts(env);
 
         const liquidityAccount = await ethers.getSigner(account || deployer);
-        const lendingPool = await lendingPlatform.getLendingPool(currentTimestamp);
-        const oldPoolShareTokenAddress = lendingPool.poolShareTokenAddress;
+        const lendingPool = await lendingPlatform.getPool(currentTimestamp);
+        const oldPoolShareTokenAddress = lendingPool.lendPoolShareTokenAddress;
         const oldPoolShareToken = await ethers.getContractAt('PoolShareToken', oldPoolShareTokenAddress);
         const tokenAmount = await oldPoolShareToken.balanceOf(liquidityAccount.address);
         const tokenTotalSupply = await oldPoolShareToken.totalSupply();
@@ -228,7 +212,7 @@ task("extendDeposit", "extend an existing deposit")
             await sendTransaction(oldPoolShareToken.connect(liquidityAccount).approve(lendingPlatform.getAddress(), needToApprove), "oldPoolShareToken Approval");
         }
         // Approve oldPoolShareToken for moving if not
-        const usdcToDeposit = (lendingPool.totalLiquidity + lendingPool.accumInterest) * tokenAmount / tokenTotalSupply;
+        const usdcToDeposit = (lendingPool.lendPrincipal + lendingPool.lendAccumInterest) * tokenAmount / tokenTotalSupply;
         // // Check approval of account to ensure that it is sufficient
         const usdcApproved = await usdc.allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
         console.log(`approval is currently ${ethers.formatUnits(usdcApproved, 6)} USDC`);
@@ -258,20 +242,13 @@ task("extendLoan", "extend an existing loan")
         const additionalRepayment = taskArgs.additionalRepayment;
 
         const {ethers, deployments, getNamedAccounts} = env;
-        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
-        const borrowPositionTokenDeployment = await deployments.get("BorrowPositionToken");
-        const borrowPositionToken = await ethers.getContractAt("BorrowPositionToken", borrowPositionTokenDeployment.address);
-        const usdCoinDeployment = await deployments.get('USDCoin');
-        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
-        const aethDeployment = await deployments.get("AETH");
-        const aeth = await ethers.getContractAt("AETH", aethDeployment.address);
+        const {lendingPlatform, usdc, aeth, bpt} = await getDeployedContracts(env);
 
         const borrowerAccount = await ethers.getSigner(account);
         const parsedAdditionalCollateral = ethers.parseUnits(additionalCollateral.toString(),6);
         const parsedAdditionalRepayment = ethers.parseEther(additionalRepayment.toString());
 
-        const usdcRequirement = await borrowPositionToken.debt(tokenId) + parsedAdditionalRepayment;
+        const usdcRequirement = await bpt.debt(tokenId) + parsedAdditionalRepayment;
         // Check approval of account to ensure that it is sufficient
         const approved = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
         console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
@@ -305,18 +282,13 @@ task("repayLoan", "add USDC to a lending pool")
 
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer } = await getNamedAccounts();
-        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
-        const usdCoinDeployment = await deployments.get('USDCoin');
-        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
-        const borrowPositionTokenDeployment = await deployments.get('BorrowPositionToken');
-        const borrowPositionToken = await ethers.getContractAt("BorrowPositionToken", borrowPositionTokenDeployment.address);
+        const {lendingPlatform, usdc, aeth, bpt} = await getDeployedContracts(env);
 
         const borrowerAccount = await ethers.getSigner(account || deployer);
         const beneficiary = taskArgs.beneficiary || borrowerAccount.address;
         // const parsedUsdc = ethers.parseUnits(repaymentAmount.toString(), 6);
 
-        const debt = await borrowPositionToken.debt(tokenId);
+        const debt = await bpt.debt(tokenId);
 
         // Check balance of account to ensure that it is sufficient
         const usdcBalance = await usdc.balanceOf(borrowerAccount);
@@ -349,11 +321,8 @@ task("partialRepayLoan", "add USDC to a lending pool")
         const account = taskArgs.account;
 
         const {ethers, deployments, getNamedAccounts} = env;
+        const {lendingPlatform, usdc} = await getDeployedContracts(env);
         const { deployer } = await getNamedAccounts();
-        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
-        const usdCoinDeployment = await deployments.get('USDCoin');
-        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
 
         const borrowerAccount = await ethers.getSigner(account || deployer);
         const parsedUsdc = ethers.parseUnits(repaymentAmount.toString(), 6);
@@ -384,15 +353,12 @@ task("approveUsdc", "Approve USDC to the lending platform")
     .setAction(async (taskArgs, env) => {
         const account: Address = taskArgs.account;
         const {ethers, deployments, getNamedAccounts} = env;
+        const {usdc} = await getDeployedContracts(env);
 
         const signer = await ethers.getSigner(account);
-
         const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const usdCoinDeployment = await deployments.get('USDCoin');
-        const usdc = await ethers.getContractAt("USDCoin", usdCoinDeployment.address);
-        const usdcAccount = usdc.connect(signer);
 
-        await sendTransaction(usdcAccount.approve(lendingPlatformDeployment.address, ethers.MaxUint256), "Approve USDC");
+        await sendTransaction(usdc.connect(signer).approve(lendingPlatformDeployment.address, ethers.MaxUint256), "Approve USDC");
     })
 
 task("createPlatformPools", "Create the pools that are used by the app")
@@ -409,8 +375,7 @@ task('takeSnapshot', 'snapshot and update the accumInterest and accumYield')
     .setAction(async (taskArgs, env) => {
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer } = await getNamedAccounts();
-        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
+        const {lendingPlatform} = await getDeployedContracts(env);
 
         const signer = await ethers.getSigner(taskArgs.account || deployer);
         await sendTransaction(lendingPlatform.connect(signer).takeSnapshot(), "takeSnapshot");
@@ -429,17 +394,15 @@ task('takeLoan', 'take a loan')
         const ltv = taskArgs.ltv;
         const account = taskArgs.account;
         const {ethers, deployments, getNamedAccounts} = env;
+        const {lendingPlatform} = await getDeployedContracts(env);
         const namedAccounts = await getNamedAccounts();
         const loanAccount = namedAccounts[account] ?
             await ethers.getSigner(namedAccounts[account]) :
             await ethers.getSigner(account);
-        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
-        const lendingPlatformAccount = lendingPlatform.connect(loanAccount);
         const loanAmountBigInt = parseUnits(loanAmount.toString(), 6);
         const collateralAmountBigInt = parseEther(collateralAmount.toString());
 
-        await sendTransaction(lendingPlatformAccount.takeLoan(
+        await sendTransaction(lendingPlatform.connect(loanAccount).takeLoan(
             loanAmountBigInt,
             collateralAmountBigInt,
             ltv,
@@ -455,14 +418,13 @@ task('withdraw', 'take a loan')
         const timestamp: number = taskArgs.timestamp;
         const account = taskArgs.account;
         const {ethers, deployments, getNamedAccounts} = env;
+        const {lendingPlatform} = await getDeployedContracts(env);
         const namedAccounts = await getNamedAccounts();
         const withdrawAccount = namedAccounts[account] ?
             await ethers.getSigner(namedAccounts[account]) :
             await ethers.getSigner(account);
-        const lendingPlatformDeployment = await deployments.get('LendingPlatform');
-        const lendingPlatform = await ethers.getContractAt("LendingPlatform", lendingPlatformDeployment.address);
-        const lendingPoolDetails = await lendingPlatform.getLendingPool(timestamp);
-        const poolShareTokenAddress = lendingPoolDetails.poolShareTokenAddress;
+        const lendingPoolDetails = await lendingPlatform.getPool(timestamp);
+        const poolShareTokenAddress = lendingPoolDetails.lendPoolShareTokenAddress;
         const poolShareToken = await ethers.getContractAt("PoolShareToken", poolShareTokenAddress);
         const poolShareTokenBalance = await poolShareToken.balanceOf(withdrawAccount.address);
         console.log(`Exchanging ${poolShareTokenBalance} of poolShareToken `)
@@ -499,6 +461,29 @@ task("erc20Details", "get the details of an ERC20")
     `)
   });
 
+task("getAllPools", "get deatils of all active pools")
+    .setAction(async (taskArgs, env) => {
+        const {ethers, deployments, getNamedAccounts} = env;
+        const {lendingPlatform} = await getDeployedContracts(env);
+        let active = true;
+        let i = 0;
+        const activePoolTimestamps: bigint[] = [];
+        while (active === true) {
+            try {
+                const timestamp = await lendingPlatform.activePools(i);
+                activePoolTimestamps.push(timestamp);
+                i++;
+            } catch (e) {
+                active = false;
+            }
+        }
+        for (const activePoolTimestamp of activePoolTimestamps) {
+            // console.log(activePoolTimestamp);
+            await env.run('getPool', {timestamp: Number(activePoolTimestamp)});
+        }
+    })
+
+
 task("getPool", "get deatils of a lending pool")
     .addParam('timestamp', 'timestamp of the lending pool', "", types.int)
     .setAction(async (taskArgs, env) => {
@@ -507,9 +492,8 @@ task("getPool", "get deatils of a lending pool")
         const {lendingPlatform} = await getDeployedContracts(env);
         const res = await lendingPlatform.getPool(ethDate);
         const bpTotalPoolShares = await lendingPlatform.bpTotalPoolShares();
-        console.log(res);
         console.log(`
-Lending Pool: ${ethDate} - ${fromEthDate(ethDate)}
+Lending Pool: ${ethDate} - ${fromEthDate(ethDate).toISOString().split('T')[0]}
 ============
 poolShareTokenAddress: ${res.lendPoolShareTokenAddress}
 principal: ${ethers.formatUnits(res.lendPrincipal, 6)} USDC
@@ -518,7 +502,7 @@ accumYield: ${ethers.formatEther(res.lendAccumYield)} ETH
 shrubInterest: ${ethers.formatUnits(res.lendShrubInterest, 6)} USDC
 shrubYield: ${ethers.formatEther(res.lendShrubYield)} ETH
 
-Borrow Pool: ${ethDate} - ${fromEthDate(ethDate)}
+Borrow Pool: ${ethDate} - ${fromEthDate(ethDate).toISOString().split('T')[0]}
 ============
 pool share amount: ${res.borrowPoolShareAmount} of ${bpTotalPoolShares} (${bpTotalPoolShares === 0n ? 0 : ethers.formatUnits(res.borrowPoolShareAmount * 10000n / bpTotalPoolShares, 2)}%)
 principal: ${ethers.formatUnits(res.borrowPrincipal, 6)} USDC
@@ -529,12 +513,35 @@ total repaid: ${ethers.formatUnits(res.borrowTotalRepaid, 6)} USDC
         `)
     })
 
+task("getLoan", "get deatils of a loan")
+    .addParam('tokenid', 'tokenId of the loan', "", types.int)
+    .setAction(async (taskArgs, env) => {
+        const tokenId = taskArgs.tokenid;
+        const {ethers, deployments, getNamedAccounts} = env;
+        const {lendingPlatform, bpt} = await getDeployedContracts(env);
+        const res = await bpt.getLoan(tokenId);
+        const interest = await bpt.getInterest(tokenId);
+        const debt = await bpt.debt(tokenId);
+        console.log(res);
+        console.log(`
+Loan: ${tokenId}
+============
+endDate: ${fromEthDate(Number(res.endDate)).toISOString()}
+startDate: ${fromEthDate(Number(res.startDate)).toISOString()}
+principal: ${ethers.formatUnits(res.principal, 6)} USDC
+interest: ${ethers.formatUnits(interest, 6)}
+collateral: ${ethers.formatEther(res.collateral)} ETH
+apy: ${ethers.formatUnits(res.apy, 6)}%
+
+total debt: ${ethers.formatUnits(debt, 6)} ETH
+`)
+    })
+
 task("setEthPrice", "udpate the mock Chainlink Aggregator's ETH price")
     .addParam('ethPrice', 'new ETH price, with up to 8 decimals (i.e. 2123.12345678)', undefined, types.string, false)
     .setAction(async (taskArgs, env) => {
         const {ethers, deployments, getNamedAccounts} = env;
-        const mockChainlinkAggregatorDeployment = await deployments.get('MockChainlinkAggregator');
-        const mockChainlinkAggregator = await ethers.getContractAt("MockChainlinkAggregator", mockChainlinkAggregatorDeployment.address);
+        const {mockChainlinkAggregator} = await getDeployedContracts(env);
         const ethDecimals = 8n;
         const usdcPriceDecimals = await mockChainlinkAggregator.decimals();
         const ethPrice = ethers.parseUnits(taskArgs.ethPrice, ethDecimals);
@@ -546,8 +553,7 @@ task("setEthPrice", "udpate the mock Chainlink Aggregator's ETH price")
 task("getEthPrice", "Get the ETH price in USD from the Chainlink Aggregator")
     .setAction(async (taskArgs, env) => {
         const {ethers, deployments, getNamedAccounts} = env;
-        const mockChainlinkAggregatorDeployment = await deployments.get('MockChainlinkAggregator');
-        const mockChainlinkAggregator = await ethers.getContractAt("MockChainlinkAggregator", mockChainlinkAggregatorDeployment.address);
+        const {mockChainlinkAggregator} = await getDeployedContracts(env);
         const decimals = await mockChainlinkAggregator.decimals();
         const latestRoundData = await mockChainlinkAggregator.latestRoundData();
         const ethPrice = latestRoundData.answer;
