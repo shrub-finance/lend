@@ -22,3 +22,9 @@ a {
   box-sizing: border-box;
 }
 
+.web3button svg circle{
+  stroke: #38f6c9;
+
+}
+
+

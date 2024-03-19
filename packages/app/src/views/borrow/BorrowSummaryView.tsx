@@ -35,7 +35,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
 
   const {dispatch} = useFinancialData();
 
-  const [borrowSuccess, setBorrowSuccess] = useState(false);
+  const [borrowActionInitiated, setBorrowActionInitiated] = useState(false);
 
 
   const walletAddress = useAddress();
@@ -93,7 +93,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
           <div className="flex flex-col ">
             <div className="card w-full">
               <div className="card-body ">
-                {!borrowSuccess && <div>
+                {!borrowActionInitiated && <div>
                   <p className="text-lg font-bold pb-2 text-left">
                     Borrow
                   </p>
@@ -107,7 +107,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     the loan is fully paid, and then returned to
                     you.</p>
                 </div>}
-                {borrowSuccess &&
+                {borrowActionInitiated &&
                   <>
                     <p className="text-lg font-bold pb-2 text-left">
                       Borrow successful
@@ -120,8 +120,8 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   </>}
 
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
-                {!borrowSuccess && <div>
-                  {/*receipt start*/}
+                {/*receipt start*/}
+                {!borrowActionInitiated && <div>
                   <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row  justify-between">
                       <span className="">Required Collateral</span>
@@ -180,7 +180,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                               })}
                               onSuccess={(result) => {
                                 setLocalError('');
-                                setBorrowSuccess(true);
+                                setBorrowActionInitiated(true);
                                 const newLoan = {
                                   id: result.receipt.blockHash,
                                   collateral: ethers.utils.parseEther(requiredCollateral),
@@ -207,15 +207,15 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                 }
                               }}
                   >
-                    Borrow
+                    Initiate Borrow
                   </Web3Button>
                 </div>}
-                {borrowSuccess && <button onClick={handleViewDash}
+                {borrowActionInitiated && <button onClick={handleViewDash}
                                           className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View
                   in Dashboard
                 </button>}
 
-                {!borrowSuccess && <button onClick={onCancel}
+                {!borrowActionInitiated && <button onClick={onCancel}
                                            className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel</button>}
               </div>
             </div>
