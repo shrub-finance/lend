@@ -40,7 +40,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
   const { state } = useFinancialData();
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
-  const [lendSuccess, setLendSuccess] = useState(false);
+  const [lendActionInitiated, setLendActionInitiated] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const {data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading} = useBalance(usdcAddress);
   const walletAddress = useAddress();
@@ -116,7 +116,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
           )}
 
 
-          {!lendSuccess && <h1 className=" text-4xl font-medium ">
+          {!lendActionInitiated && <h1 className=" text-4xl font-medium ">
             <button onClick={onBackLend}
                     className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600">
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
@@ -136,7 +136,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
           <div className="flex flex-col ">
             <div className="card w-full text-left">
               <div className="card-body ">
-                {!lendSuccess && <div>
+                {!lendActionInitiated && <div>
                   <p className="text-lg font-bold pb-2">
                     Lend amount
                   </p>
@@ -147,20 +147,17 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 </div>
                 }
 
-                {lendSuccess &&
+                {lendActionInitiated &&
                   <>
                     <p className="text-lg font-bold pb-2 text-left">
                       Deposit Initiated
                     </p>
                     <div className="p-20">
                       {latestEntry?.status === "pending" &&
-                      <div role="status">
-                        <svg aria-hidden="true" class="inline w-[250px] h-[250px] text-gray-200 animate-spin dark:text-gray-600 fill-shrub-green" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
-                          <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
-                        </svg>
-                        <span class="sr-only">Loading...</span>
-                      </div>}
+                            <div class="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin">
+                              <div class="w-[205px] h-[205px] rounded-full bg-white"></div>
+                            </div>
+                      }
                       {latestEntry?.status === "confirmed" &&
                         <div role="status">
                       <svg className="w-[250px] h-[250px] text-shrub-green dark:text-white m-[20px]" aria-hidden="true"
@@ -173,10 +170,12 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                       }
                       {latestEntry?.status === "failed" &&
                         <div role="status">
-                      <svg class="w-[250px] h-[250px] text-red-400 dark:text-red" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 13V8m0 8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                      </svg>
-                      <span class="sr-only">Loading...</span>
+                          <svg className="w-[250px] h-[250px] text-red-400 dark:text-white m-[20px]" aria-hidden="true"
+                               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                  <path d="M10 11V6M10 14H10.01M19 10C19 11.1819 18.7672 12.3522 18.3149 13.4442C17.8626 14.5361 17.1997 15.5282 16.364 16.364C15.5282 17.1997 14.5361 17.8626 13.4442 18.3149C12.3522 18.7672 11.1819 19 10 19C8.8181 19 7.64778 18.7672 6.55585 18.3149C5.46392 17.8626 4.47177 17.1997 3.63604 16.364C2.80031 15.5282 2.13738 14.5361 1.68508 13.4442C1.23279 12.3522 1 11.1819 1 10C1 7.61305 1.94821 5.32387 3.63604 3.63604C5.32387 1.94821 7.61305 1 10 1C12.3869 1 14.6761 1.94821 16.364 3.63604C18.0518 5.32387 19 7.61305 19 10Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+
+                          <span class="sr-only">Loading...</span>
                       </div>
                       }
                     </div>
@@ -184,7 +183,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
                 {/*receipt start*/}
-                {!lendSuccess && <div>
+                {!lendActionInitiated && <div>
                   <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row  justify-between">
                       <span className="">Lockup starts</span>
@@ -214,7 +213,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
 
                 {/*total*/}
-                {!lendSuccess && <div>
+                {!lendActionInitiated && <div>
                   <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row justify-between ">
                       <span className="">Current USDC balance</span>
@@ -274,7 +273,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                           onSubmit={(result) =>
                           {
                             setLocalError('')
-                            setLendSuccess(true)
+                            setLendActionInitiated(true)
                             const filteredLendingPools = activeLendingPoolsData.lendingPools.filter(pool => pool.timestamp === timestamp.toString());
                             const matchedLendingPool = filteredLendingPools.length > 0 ? filteredLendingPools[0] : null;
                             const newLendPosition = {
@@ -333,11 +332,11 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                       }
                     </>}
                 </div>}
-                {lendSuccess && <button onClick={handleViewDash}
+                {lendActionInitiated && <button onClick={handleViewDash}
                                         className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View in Dashboard
                 </button>}
 
-                {!lendSuccess && <button onClick={onBackLend}
+                {!lendActionInitiated && <button onClick={onBackLend}
                                          className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel
                 </button>}
               </div>
