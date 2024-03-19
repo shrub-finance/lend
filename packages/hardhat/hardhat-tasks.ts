@@ -499,22 +499,33 @@ task("erc20Details", "get the details of an ERC20")
     `)
   });
 
-task("getLendingPool", "get deatils of a lending pool")
+task("getPool", "get deatils of a lending pool")
     .addParam('timestamp', 'timestamp of the lending pool', "", types.int)
     .setAction(async (taskArgs, env) => {
         const ethDate = taskArgs.timestamp;
         const {ethers, deployments, getNamedAccounts} = env;
         const {lendingPlatform} = await getDeployedContracts(env);
-        const res = await lendingPlatform.getLendingPool(ethDate);
+        const res = await lendingPlatform.getPool(ethDate);
+        const bpTotalPoolShares = await lendingPlatform.bpTotalPoolShares();
         console.log(res);
         console.log(`
-Lending Pool
+Lending Pool: ${ethDate} - ${fromEthDate(ethDate)}
 ============
-endDate: ${fromEthDate(ethDate)}
-poolShareTokenAddress: ${res.poolShareTokenAddress}
-principal: ${ethers.formatUnits(res.totalLiquidity), 6}
-accumInterest: ${ethers.formatUnits(res.accumInterest, 6)}
-accumYield: ${ethers.formatEther(res.accumYield)}
+poolShareTokenAddress: ${res.lendPoolShareTokenAddress}
+principal: ${ethers.formatUnits(res.lendPrincipal, 6)} USDC
+accumInterest: ${ethers.formatUnits(res.lendAccumInterest, 6)} USDC
+accumYield: ${ethers.formatEther(res.lendAccumYield)} ETH
+shrubInterest: ${ethers.formatUnits(res.lendShrubInterest, 6)} USDC
+shrubYield: ${ethers.formatEther(res.lendShrubYield)} ETH
+
+Borrow Pool: ${ethDate} - ${fromEthDate(ethDate)}
+============
+pool share amount: ${res.borrowPoolShareAmount} of ${bpTotalPoolShares} (${bpTotalPoolShares === 0n ? 0 : ethers.formatUnits(res.borrowPoolShareAmount * 10000n / bpTotalPoolShares, 2)}%)
+principal: ${ethers.formatUnits(res.borrowPrincipal, 6)} USDC
+collateral: ${ethers.formatEther(res.borrowCollateral)} ETH
+total accum interest: ${ethers.formatUnits(res.borrowTotalAccumInterest, 6)} USDC 
+total accum yield: ${ethers.formatEther(res.borrowTotalAccumYield)} ETH
+total repaid: ${ethers.formatUnits(res.borrowTotalRepaid, 6)} USDC 
         `)
     })
 

@@ -42,12 +42,18 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     struct PoolDetails {
-        uint256 totalLiquidity;
-//        uint256 aaveInterestSnapshot;
-        address poolShareTokenAddress;
-        uint256 totalLoans;
-        uint256 accumInterest; // The amount of USDC interest earned
-        uint256 accumYield; // The amount of aETH earned through Aave
+        uint lendPrincipal;
+        uint lendAccumInterest;
+        uint lendAccumYield;
+        address lendPoolShareTokenAddress;
+        uint lendShrubInterest;
+        uint lendShrubYield;
+        uint borrowPrincipal;
+        uint borrowCollateral;
+        uint borrowPoolShareAmount;
+        uint borrowTotalAccumInterest;
+        uint borrowTotalAccumYield;
+        uint borrowTotalRepaid;
     }
 
 //    struct Loan {
@@ -100,7 +106,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     IMockAaveV3 public wrappedTokenGateway;
     AggregatorV3Interface public chainlinkAggregator;  // Chainlink interface
 
-    uint private bpTotalPoolShares;
+    uint public bpTotalPoolShares;
 
     // ETH price with 8 decimal places
 //    uint public ethPrice = 2000 * 10 ** 8;
@@ -241,19 +247,25 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         return totalLiquidity;
     }
 
-    function getLendingPool(
+    function getPool(
         uint256 _timestamp
     ) public view returns (PoolDetails memory) {
         LendingPool memory lendingPool = lendingPools[_timestamp];
         PoolDetails memory poolDetails;
 
-        poolDetails.totalLiquidity = lendingPool.principal;
-//        poolDetails.aaveInterestSnapshot = lendingPool.aaveInterestSnapshot;
-        poolDetails.poolShareTokenAddress = address(lendingPool.poolShareToken);
-//        poolDetails.totalLoans = totalLoans[_timestamp];
-        poolDetails.totalLoans = borrowingPools[_timestamp].principal;
-        poolDetails.accumInterest = lendingPools[_timestamp].accumInterest;
-        poolDetails.accumYield = lendingPools[_timestamp].accumYield;
+        poolDetails.lendPrincipal = lendingPool.principal;
+        poolDetails.lendAccumInterest = lendingPools[_timestamp].accumInterest;
+        poolDetails.lendAccumYield = lendingPools[_timestamp].accumYield;
+        poolDetails.lendPoolShareTokenAddress = address(lendingPool.poolShareToken);
+        poolDetails.lendShrubInterest = lendingPools[_timestamp].shrubInterest;
+        poolDetails.lendShrubYield = lendingPools[_timestamp].shrubYield;
+
+        poolDetails.borrowPrincipal = borrowingPools[_timestamp].principal;
+        poolDetails.borrowCollateral = borrowingPools[_timestamp].collateral;
+        poolDetails.borrowPoolShareAmount = borrowingPools[_timestamp].poolShareAmount;
+        poolDetails.borrowTotalAccumInterest = borrowingPools[_timestamp].totalAccumInterest;
+        poolDetails.borrowTotalAccumYield = borrowingPools[_timestamp].totalAccumYield;
+        poolDetails.borrowTotalRepaid = borrowingPools[_timestamp].totalRepaid;
 
         return poolDetails;
     }
