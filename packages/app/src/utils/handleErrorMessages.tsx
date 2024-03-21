@@ -9,8 +9,14 @@ export function handleErrorMessagesFactory(
     if (err) {
       // @ts-ignore
       if (err.reason ) {
-        // @ts-ignore
-        setter(err.reason);
+        if(err.reason.includes('user rejected transaction')) {
+          setter("This transaction was cancelled. You can try again if you would like.")
+        }
+        else {
+          // @ts-ignore
+          setter(err.reason);
+        }
+
       }
       // @ts-ignore
       else if (err.data) {

@@ -13,15 +13,13 @@ const financialDataReducer = (state: UserFinancialDataState, action: UserFinanci
   // console.log('Dispatching action:', action.type);
   switch (action.type) {
     case "SET_USER_DATA":
-      // Filter out loans from the subgraph that are already present in the state
       const newLoans = action.payload.loans.filter((newLoan) =>
         !state.loans.some((existingLoan) => existingLoan.id === newLoan.id));
-      // Place new loans at the beginning of the loans array
+      // Place new loans at the beginning
       const mergedLoans = [...newLoans, ...state.loans];
-      //filter out lend positions that are already present in the state
       const newLendPositions = action.payload.lendPositions.filter((newPosition) =>
         !state.lendPositions.some((existingPosition) => existingPosition.id === newPosition.id));
-      // Place new lend positions at the beginning of the lendPositions array
+      // Place new lend positions at the beginning
       const mergedLendPositions = [...newLendPositions, ...state.lendPositions];
 
       return {
@@ -51,6 +49,17 @@ const financialDataReducer = (state: UserFinancialDataState, action: UserFinanci
       };
       // console.log("Updated lend positions", updatedState.lendPositions); // Log the updated lend positions array
       return updatedState;
+    case "UPDATE_LOAN_STATUS":
+      const updatedLoanState = {
+        ...state,
+        loans: state.loans.map(loan => {
+          if (loan.id === action.payload.id) {
+            return { ...loan, status: action.payload.status };
+          }
+          return loan;
+        }),
+      };
+      return updatedLoanState;
 
     default:
       return state;

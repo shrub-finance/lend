@@ -1,8 +1,8 @@
-import {FC, useState} from "react";
+import {FC, useEffect, useState} from "react";
 import {useAddress, useContract, useContractWrite, Web3Button} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
 import {fromEthDate, interestToLTV, toEthDate, truncateEthAddress} from "../../utils/ethMethods";
-import {ethers} from "ethers";
+import { ethers } from 'ethers'
 import {useRouter} from "next/router";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import {useFinancialData} from "../../components/FinancialDataContext";
@@ -33,7 +33,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
     router.push('/dashboard');
   };
 
-  const {dispatch} = useFinancialData();
+  const {state, dispatch} = useFinancialData();
 
   const [borrowActionInitiated, setBorrowActionInitiated] = useState(false);
 
@@ -57,6 +57,10 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   // Calculate the end date by adding the number of months to the current date
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
+
+
+  const latestLoan = state?.loans?.reduce((latest, current) =>
+    current.updated > latest.updated ? current : latest, state?.loans[0] || {});
 
 
   return (
@@ -109,19 +113,37 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 </div>}
                 {borrowActionInitiated &&
                   <>
-                    <p className="text-lg font-bold pb-2 text-left">
-                      Borrow successful
-                    </p>
-                    <svg className="w-[250px] h-[250px] text-shrub-green dark:text-white m-[108px]" aria-hidden="true"
-                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                            strokeWidth="1" d="m7 10 2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                    </svg>
+                  {latestLoan?.status === "confirmed" && (
+                    <>
+                      <p className="text-lg font-bold pb-2 text-left">
+                        Borrow Successful!
+                      </p>
+                      <p role="status" className="w-[250px] h-[250px] m-[108px] sm:self-center">
+                        <img src="/checkmark.svg" alt="Loading" className="w-full h-full" />
+                        <span className="sr-only">Loading...</span>
+                      </p>
+                    </>
+
+                    )}
+
+                    {latestLoan?.status === "failed" && (
+                      <>
+                        <p className="text-lg font-bold pb-2 text-left">
+                          Borrow Unsuccessful
+                        </p>
+                        <p role="status" className="w-[250px] h-[250px] m-[108px] sm:self-center">
+                          <img src="/exclamation.svg" alt="Loading" className="w-full h-full" />
+                          <span className="sr-only">Loading...</span>
+                        </p>
+                      </>
+
+                    )}
                   </>}
 
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+
                 {/*receipt start*/}
-                {!borrowActionInitiated && <div>
+                {(!borrowActionInitiated || latestLoan?.status === "pending" )&& <div>
                   <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row  justify-between">
                       <span className="">Required Collateral</span>
@@ -166,26 +188,26 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     </div>
                   </div>
                   <Web3Button contractAddress={lendingPlatformAddress}
-                              className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl !text-white hover:!bg-shrub-green-500 !mb-4"
-
-                              action={() => mutateAsyncTakeLoan({
-                                args: [
-                                  ethers.utils.parseUnits(amount, 6),
+                              isDisabled={latestLoan?.status === "pending"}
+                              contractAbi={lendingPlatformAbi}
+                              className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl !text-white hover:!bg-shrub-green-500 !mb-4 web3button"
+                              action={async (lendingPlatform) => {
+                                setLocalError('');
+                                return await lendingPlatform?.contractWrapper?.writeContract.takeLoan(ethers.utils.parseUnits(amount, 6),
                                   ethers.utils.parseEther(requiredCollateral),
                                   interestToLTV[interestRate],
-                                  timestamp
-                                ], overrides: {
-                                  value: ethers.utils.parseEther(requiredCollateral)
-                                }
-                              })}
-                              onSuccess={(result) => {
+                                  timestamp, {
+                                        value: ethers.utils.parseEther(requiredCollateral)
+                                      })
+                              }}
+
+                              onSuccess={async (tx) => {
                                 setLocalError('');
-                                setBorrowActionInitiated(true);
                                 const newLoan = {
-                                  id: result.receipt.blockHash,
+                                  id: tx.hash,
                                   collateral: ethers.utils.parseEther(requiredCollateral),
                                   created: Math.floor(Date.now() / 1000),
-                                  createdBlock: result.receipt.blockNumber,
+                                  createdBlock: tx.hash.blockNumber,
                                   ltv: interestToLTV[interestRate].toString(),
                                   originalPrincipal: amount * 1000000,
                                   paid: "0",
@@ -193,29 +215,59 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   principal: amount * 1000000,
                                   timestamp: timestamp,
                                   updated: Math.floor(Date.now() / 1000),
-                                  updatedBlock: result.receipt.blockNumber,
+                                  updatedBlock: tx.hash.blockNumber,
+                                  status: "pending",
                                   __typename: "Loan",
                                 };
                                 dispatch({
                                   type: "ADD_LOAN",
                                   payload: newLoan,
                                 });
+
+
+                                try {
+                                  const receipt = await tx.wait();
+                                  if(!receipt.status) {
+                                    throw new Error("Transaction failed")
+                                  }
+                                  dispatch({
+                                    type: "UPDATE_LOAN_STATUS",
+                                    payload: {
+                                      id: tx.hash,
+                                      status: "confirmed",
+                                    },
+                                  });
+                                } catch (e) {
+                                  console.log("Transaction failed:", e);
+                                  dispatch({
+                                    type: "UPDATE_LOAN_STATUS",
+                                    payload: {
+                                      id: tx.hash,
+                                      status: "failed",
+                                    },
+                                  });
+                                }
+                                setBorrowActionInitiated(true);
                               }}
+
                               onError={(e) => {
                                 if (e instanceof Error) {
                                   handleErrorMessages({err: e});
                                 }
                               }}
                   >
-                    Initiate Borrow
+                    {latestLoan?.status === "pending"? "Borrow Order Submitted":"Initiate Borrow"}
                   </Web3Button>
-                </div>}
-                {borrowActionInitiated && <button onClick={handleViewDash}
+
+                </div>
+                }
+
+                {(borrowActionInitiated || latestLoan?.status === "pending") && <button onClick={handleViewDash}
                                           className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View
                   in Dashboard
                 </button>}
 
-                {!borrowActionInitiated && <button onClick={onCancel}
+                {!borrowActionInitiated && latestLoan?.status !== "pending" && <button onClick={onCancel}
                                            className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel</button>}
               </div>
             </div>
