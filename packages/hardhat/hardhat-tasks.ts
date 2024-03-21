@@ -3,7 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 
 import { Address } from 'hardhat-deploy/types';
 import assert from 'node:assert/strict';
-import {Contract, ContractMethod, parseEther, parseUnits, TransactionResponse} from "ethers";
+import {parseEther, parseUnits, TransactionResponse} from "ethers";
 import {fromEthDate, getPlatformDates, toEthDate} from "@shrub-lend/common"
 import {HardhatRuntimeEnvironment} from "hardhat/types";
 
@@ -255,8 +255,15 @@ task("extendLoan", "extend an existing loan")
         // If approval is not sufficient then create an approval tx
         if (approved < usdcRequirement) {
             const needToApprove = usdcRequirement - approved;
+            console.log(`
+bpt.debt: ${await bpt.debt(tokenId)}
+parsedAdditionalRequirement: ${parsedAdditionalRepayment}
+approved: ${approved}
+usdcRequirement: ${usdcRequirement}
+needToApprove: ${needToApprove}
+`)
             console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
-            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
+            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove * 3n), "USDC Approval");
         }
         await sendTransaction(aeth.connect(borrowerAccount).approve(lendingPlatform.getAddress(), ethers.parseEther("100")), "aETH Approval");
 

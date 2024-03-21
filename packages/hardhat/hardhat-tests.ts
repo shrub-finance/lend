@@ -1,9 +1,7 @@
-import {task, types} from 'hardhat/config'
+import {task} from 'hardhat/config'
 import "@nomicfoundation/hardhat-toolbox";
-import {TransactionResponse} from "ethers";
 import {getPlatformDates, toEthDate} from "@shrub-lend/common"
 import "./hardhat-tasks"
-import {HardhatRuntimeEnvironment} from "hardhat/types";
 
 // Tasks
 task("testLendingPlatform", "Setup an environment for development")
@@ -67,13 +65,13 @@ task("testLendingPlatform3", "Setup an environment for development")
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer, account1, account2, account3, account4 } = await getNamedAccounts();
 
-        // await partA();
-        // await partB();
-        // await partC();
-        // await partD();
-        // await partD2();
+        await partA();
+        await partB();
+        await partC();
+        await partD();
+        await partD2();
         await partD3();
-        // await partE();
+        await partE();
         // await partF();
         // await partG();
         // await partH();
@@ -128,7 +126,7 @@ task("testLendingPlatform3", "Setup an environment for development")
 
         async function partE() {
             await env.run('distributeUsdc', { to: account3, amount: 5 });
-            await env.run('repayLoan', { account: account3, tokenId: 0 })
+            await env.run('repayLoan', { account: account3, tokenId: 2 })
             await env.run('takeSnapshot', { account: deployer });
         }
 
