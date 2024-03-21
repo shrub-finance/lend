@@ -2,12 +2,12 @@
 export type PendingStatuses = "confirming" | "confirmed" | "failed";
 
 export type Loan = {
-  id: string;
+  
   
 };
 
 export type LendPosition = {
-  lendingPoolId: string;
+  
 
 };
 
@@ -17,8 +17,14 @@ export type UserFinancialDataState = {
 };
 
 export type UserFinancialDataAction =
-  | { type: "SET_USER_DATA"; payload: { loans: Loan[]; lendPositions: LendPosition[]; } }
+  | {
+      type: "SET_USER_DATA";
+      payload: { loans: Loan[]; lendPositions: LendPosition[] };
+    }
   | { type: "CLEAR_USER_DATA" }
-  | { type: "ADD_LOAN"; payload: Loan }; // Adding ADD_LOAN action type
+  | { type: "ADD_LOAN"; payload: Loan }
+  | { type: "ADD_LEND_POSITION"; payload: LendPosition }
+  | { type: "UPDATE_LEND_POSITION_STATUS"; payload: LendPosition }
+  | { type: "UPDATE_LOAN_STATUS"; payload: Loan };
 
 

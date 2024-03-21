@@ -27,7 +27,6 @@ import { formatDate, milliSecondsInDay , secondsInDay} from "@shrub-lend/common"
 import { USER_POSITIONS_QUERY } from "../constants/queries";
 import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
-import {Confetti} from "../components/Confetti";
 
 const now = new Date();
 const oneYearFromNow = new Date(new Date(now).setFullYear(now.getFullYear() + 1));
@@ -156,6 +155,7 @@ export const DashboardView: FC = ({}) => {
   //   (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest +
   //     (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
 
+   // console.log(state);
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -297,10 +297,11 @@ export const DashboardView: FC = ({}) => {
                                               .mul(item.lendingPool.totalEthYield)
                                               .div(ethers.utils.parseUnits("1", 20)))
                                             .mul(item.amount)
-                                            .div(item.lendingPool.tokenSupply), 6)}
+                                            .div(item.lendingPool.tokenSupply)
+                                            .sub(item.depositsUsdc), 6)}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {item.currentBalanceOverride ? item.currentBalanceOverride :
+                                      {item.currentBalanceOverride ? item.currentBalanceOverride:
                                         ethers.utils.formatUnits(
                                           ethers.BigNumber.from(item.lendingPool.totalPrincipal)
                                             .add(item.lendingPool.totalUsdcInterest)
@@ -308,9 +309,9 @@ export const DashboardView: FC = ({}) => {
                                               .mul(item.lendingPool.totalEthYield)
                                               .div(ethers.utils.parseUnits("1", 20)))
                                             .mul(item.amount)
-                                            .div(item.lendingPool.tokenSupply)
-                                            .sub(item.depositsUsdc), 6)}
+                                            .div(item.lendingPool.tokenSupply), 6)}
                                     </td>
+
                                     <td className="px-6 py-4 text-sm font-bold">
                                       <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
                                         {(item.apy)?item.apy :"X"}%
@@ -407,6 +408,12 @@ export const DashboardView: FC = ({}) => {
                                         {ethers.utils.formatUnits(
                                           item.originalPrincipal ?? "0",
                                           6,
+                                        )}
+                                        {item.status === 'pending' && (
+                                          <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
+                                        )}
+                                        {item.status === 'failed' && (
+                                          <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
                                         )}
                                       </p>
                                     ) : (
