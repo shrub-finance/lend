@@ -744,28 +744,35 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint flashLoanAmount = newCollateral - aeth.balanceOf(msg.sender);
         console.log("flash loan amount: %s", flashLoanAmount);
         console.log("extendLoan-before-flash-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
+        console.log("1 - platform aETH balance: %s", aeth.balanceOf(address(this)));
         if (flashLoanAmount > 0) {
             // Transfer USDC from this contract to sender as a flash loan
             aeth.transfer(msg.sender, flashLoanAmount);
         }
+        console.log("2 - platform aETH balance: %s", aeth.balanceOf(address(this)));
         console.log("extendLoan-before-take-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
-        aeth.transferFrom(msg.sender, address(this), newPrincipal);
+        aeth.transferFrom(msg.sender, address(this), newCollateral);
+        console.log("3 - platform aETH balance: %s", aeth.balanceOf(address(this)));
         takeLoanInternal(newPrincipal, newCollateral, _ltv, newTimestamp, msg.sender);
+        console.log("4 - platform aETH balance: %s", aeth.balanceOf(address(this)));
 //        takeLoan{value: newCollateral}(newPrincipal, newCollateral, _ltv, newTimestamp);
         console.log("extendLoan-before-repay-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         uint freedCollateral = repayLoanInternal(tokenId, msg.sender, msg.sender);
+        console.log("5 - platform aETH balance: %s", aeth.balanceOf(address(this)));
         console.log("msg.sender: %s, freedCollateral: %s, sender-aETH-balance: %s",
             msg.sender,
             freedCollateral,
             aeth.balanceOf(msg.sender)
         );
         aeth.transfer(msg.sender, freedCollateral);
+        console.log("6 - platform aETH balance: %s", aeth.balanceOf(address(this)));
         console.log("extendLoan-before-repay-flash-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         if (flashLoanAmount > 0) {
             // Transfer USDC from sender to Shrub to repay flash loan
             console.log("about to send %s from %s with %s allowance", flashLoanAmount, msg.sender, aeth.allowance(msg.sender, address(this)));
             aeth.transferFrom(msg.sender, address(this), flashLoanAmount);
         }
+        console.log("7 - platform aETH balance: %s", aeth.balanceOf(address(this)));
     }
 
 //    function extendLoan(
@@ -800,23 +807,32 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //    }
 
     function takeSnapshot() public onlyOwner {
-        console.log("running takeSnapshot");
+        uint aETHBalance = aeth.balanceOf(address(this));
+//        console.log("running takeSnapshot, platformAEthBalance: %s, aEthSnapshotBalance: %s, claimedCollateralSinceSnapshot: %s, newCollateralSinceSnapshot: %s", aETHBalance, claimedCollateralSinceSnapshot, newCollateralSinceSnapshot, aEthSnapshotBalance);
+        console.log("running takeSnapshot, platformAEthBalance: %s, aEthSnapshotBalance: %s, claimedCollateralSinceSnapshot: %s", aETHBalance, aEthSnapshotBalance, claimedCollateralSinceSnapshot);
+        console.log("newCollateralSinceSnapshot: %s", newCollateralSinceSnapshot);
+        console.log("lastSnaphot: %s, now: %s, elapsed: %s", lastSnapshotDate, block.timestamp, block.timestamp - lastSnapshotDate);
 //        Get the current balance of bpTotalPoolShares (it is local)
         // calculate the accumYield for all BP (current balance - snapshot balance)
-        console.log(aeth.balanceOf(address(this)));
-        console.log(aEthSnapshotBalance);
-        console.log("---");
+//        console.log(aeth.balanceOf(address(this)));
+//        console.log(claimedCollateralSinceSnapshot);
+//        console.log(newCollateralSinceSnapshot);
+//        console.log(aEthSnapshotBalance);
+//        console.log("---");
         uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) + claimedCollateralSinceSnapshot - newCollateralSinceSnapshot - aEthSnapshotBalance;
+        console.log("aEthYieldSinceLastSnapshot: %s", aEthYieldSinceLastSnapshot);
 //        Calculate accumInterest for all BP
         for (uint i = 0; i < activePools.length; i++) {
             // Cleanup paid off BPTs
             bpt.cleanUpByTimestamp(uint40(activePools[i]));
+            console.log("finished running cleanUpByTimestamp for %s", uint40(activePools[i]));
 //            Find the BPTs related to these timestamps
 //            bptsForPool is an array of tokenIds
             uint[] memory bptsForPool = bpt.getTokensByTimestamp(uint40(activePools[i]));
             uint accumInterestBP = 0;
 //            # Loop through the BPTs in order to calculate their accumInterest
             for (uint j = 0; j < bptsForPool.length; j++) {
+                console.log("in token loop - analyzing tokenId: %s", j);
                 accumInterestBP +=  bpt.interestSinceTimestamp(j, lastSnapshotDate);
             }
             // Determine the amount of aETH to distribute from this borrowing pool
@@ -825,8 +841,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //                console.log("poolShareAmount in borrowing pool 0 - skipping");
                 continue;
             }
-            console.log("bpTotalPoolShares");
-            console.log(bpTotalPoolShares);
+            console.log("bpTotalPoolShares - %s", bpTotalPoolShares);
             console.log(borrowingPools[activePools[i]].poolShareAmount);
             uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[activePools[i]].poolShareAmount / bpTotalPoolShares;
             // Loop through this and future Lending Pools to determine the contribution denominator
@@ -834,26 +849,30 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             for (uint j = i; j < activePools.length; j++) {
                 contributionDenominator += lendingPools[activePools[j]].principal;
             }
-            console.log("contributionDenominator");
-            console.log(contributionDenominator);
             // distribute accumInterest and accumYield to LPs based on contribution principal
+            console.log("contributionDenominator - %s", contributionDenominator);
+            console.log("aEthYieldDistribution: %s", aEthYieldDistribution);
+            console.log("accumInterestBP: %s", accumInterestBP);
+            console.log("shrubFee: %s", shrubFee);
             for (uint j = i; j < activePools.length; j++) {
+                console.log("in loop: lendingPool: %s, lendingPoolContribution: %s / %s", activePools[j], lendingPools[activePools[j]].principal, contributionDenominator);
                 lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * (100 - shrubFee) / 100 / contributionDenominator;
                 lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal * (100 - shrubFee) / 100 / contributionDenominator;
                 lendingPools[activePools[j]].shrubYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * shrubFee / 100 / contributionDenominator;
                 lendingPools[activePools[j]].shrubInterest += accumInterestBP * lendingPools[activePools[j]].principal * shrubFee / 100 / contributionDenominator;
+                console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
                 emit LendingPoolYield(
                     address(lendingPools[activePools[j]].poolShareToken),
                     lendingPools[activePools[j]].accumInterest,
                     lendingPools[activePools[j]].accumYield
                 );
             }
-
         }
-        console.log("i for loop concluded");
         // set the last snapshot date to now
         lastSnapshotDate = block.timestamp;
         aEthSnapshotBalance = aeth.balanceOf(address(this));
+        console.log("aEthSnapshotBalance set to: %s", aEthSnapshotBalance);
+        console.log("lastSnapshotDate set to: %s", lastSnapshotDate);
 
         // zero out the tracking globals;
         newCollateralSinceSnapshot = 0;

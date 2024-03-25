@@ -57,6 +57,7 @@ task("testLendingPlatform3", "Setup an environment for development")
     .setAction(async (taskArgs, env) => {
         const jan2026 = toEthDate(new Date('2026-01-01T00:00:00Z'));
         const feb2026 = toEthDate(new Date('2026-02-01T00:00:00Z'));
+        const mar2026 = toEthDate(new Date('2026-03-01T00:00:00Z'));
         const apr2026 = toEthDate(new Date('2026-04-01T00:00:00Z'));
         const may2026 = toEthDate(new Date('2026-05-01T00:00:00Z'));
         const aug2026 = toEthDate(new Date('2026-08-01T00:00:00Z'));
@@ -69,9 +70,9 @@ task("testLendingPlatform3", "Setup an environment for development")
         await partB();
         await partC();
         await partD();
-        await partD2();
+        // await partD2();
         await partD3();
-        await partE();
+        // await partE();
         // await partF();
         // await partG();
         // await partH();
@@ -111,17 +112,13 @@ task("testLendingPlatform3", "Setup an environment for development")
 
         async function partD2() {
             await env.run('extendDeposit', {account: account2, currentTimestamp: may2026, newTimestamp: aug2026});
+            await env.run('takeSnapshot', { account: deployer });
         }
 
         async function partD3() {
             await env.run('extendLoan', {account: account3, tokenId: 0, newTimestamp: aug2026, ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
-                // .addParam("account", "Address of account to extend loan with (must be the holder of the loan)", undefined, types.string, true)
-                // .addParam("tokenId", "tokenId of the loan position token ERC-721", undefined, types.int)
-                // .addParam("newTimestamp", "End Date of the new loan", undefined, types.int)
-                // .addParam("ltv", "Specified LTV of the new loan", undefined, types.int, false)
-                // .addParam("additionalCollateral", "Additional ETH collateral to provide for the new loan", 0, types.int)
-                // .addParam("additionalRepayment", "Additional USDC payment to make to the previous loan", 0, types.int)
-
+            await env.run('setTime', {ethDate: may2026});
+            await env.run('takeSnapshot', { account: deployer });
         }
 
         async function partE() {

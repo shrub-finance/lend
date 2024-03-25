@@ -59,8 +59,7 @@ contract BorrowPositionToken is ERC721, Ownable {
     mapping(uint40 => uint256[]) public removedTokens; // Tracking of takens that have been burned (keyed by endDate) - this will be used during the snapshot to clean up
 
     modifier checkExists(uint tokenId) {
-        console.log("checkExists");
-        console.log(tokenId);
+        console.log("running checkExists for tokenId: %s - result: %s", tokenId, _exists(tokenId));
         require(_exists(tokenId), "token does not exist");
         _;
     }
@@ -177,16 +176,17 @@ contract BorrowPositionToken is ERC721, Ownable {
 
     // Returns the usdc interest earned since the last adjustment (payment) to a BPT
     function interestSinceTimestamp(uint256 tokenId, uint timestamp) public view checkExists(tokenId) returns (uint256) {
-        console.log("running interestSinceTimestamp - (tokenId, bd.startDate, timestamp, block.timestamp, apy, principal, apydecimals, secondsinyear)");
+        console.log("running interestSinceTimestamp");
+//        console.log("running interestSinceTimestamp - (tokenId, bd.startDate, timestamp, block.timestamp, apy, principal, apydecimals, secondsinyear)");
         BorrowData memory bd = borrowDatas[tokenId];
-        console.log(tokenId);
-        console.log(bd.startDate);
-        console.log(timestamp);
-        console.log(block.timestamp);
-        console.log(bd.apy);
-        console.log(bd.principal);
-        console.log(APY_DECIMALS);
-        console.log(SECONDS_IN_YEAR);
+//        console.log(tokenId);
+//        console.log(bd.startDate);
+//        console.log(timestamp);
+//        console.log(block.timestamp);
+//        console.log(bd.apy);
+//        console.log(bd.principal);
+//        console.log(APY_DECIMALS);
+//        console.log(SECONDS_IN_YEAR);
 
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         if (bd.apy == 0) {
@@ -194,11 +194,13 @@ contract BorrowPositionToken is ERC721, Ownable {
         }
         if (bd.startDate > timestamp) {
             console.log("bpt created after start date - using startDate in place of timestamp");
-            console.log(bd.apy * bd.principal * (block.timestamp - bd.startDate) / (APY_DECIMALS * SECONDS_IN_YEAR));
+            console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - bd.startDate) / (APY_DECIMALS * SECONDS_IN_YEAR));
+//            console.log(bd.apy * bd.principal * (block.timestamp - bd.startDate) / (APY_DECIMALS * SECONDS_IN_YEAR));
             return bd.apy * bd.principal * (block.timestamp - bd.startDate) / (APY_DECIMALS * SECONDS_IN_YEAR);
         }
-        console.log(bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR));
-        console.log("--- done running interestSinceTimestamp");
+//        console.log(bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR));
+//        console.log("--- done running interestSinceTimestamp");
+        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR));
         return bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR);
     }
 
