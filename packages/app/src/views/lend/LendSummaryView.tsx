@@ -3,14 +3,12 @@ import {useAddress, useBalance, useContract, useContractRead, useContractWrite, 
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts"
 import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods"
 import {BigNumber, ethers} from "ethers"
-import {router} from "next/client"
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages"
 import Image from "next/image";
 import {useRouter} from "next/router"
 import { useFinancialData } from '../../components/FinancialDataContext'
 import { useLazyQuery } from '@apollo/client'
 import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries'
-import { LendingPlatform } from '@shrub-lend/hardhat/typechain-types'
 
 
 interface LendSummaryViewProps {
@@ -87,7 +85,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
       return;
     }
     getActiveLendingPools();
-  }, [walletAddress]);
+  }, [walletAddress, getActiveLendingPools]);
 
   useEffect(() => {
     // console.log("running userPositionsDataLoading useEffect");
@@ -184,7 +182,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                     {latestLendPosition?.status === "confirmed" && <p className="text-lg font-bold pb-2 text-left">
                       Deposit Successful
                     </p>}
-
+                      {/*spinner */}
                       {/*{latestLendPosition?.status === "pending" && (*/}
                       {/*  <div class="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin">*/}
                       {/*    <div class="w-[205px] h-[205px] rounded-full bg-white"></div>*/}
@@ -194,7 +192,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                       {latestLendPosition?.status === "confirmed" && (
                         <div className="p-20">
                           <div role="status" className="w-[250px] h-[250px] m-[20px]">
-                            <img src="/checkmark.svg" alt="Loading" className="w-full h-full" />
+                            <Image src="/checkmark.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
                             <span className="sr-only">Loading...</span>
                           </div>
                         </div>
@@ -203,7 +201,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                       {latestLendPosition?.status === "failed" && (
                         <div className="p-20">
                           <div role="status" className="w-[250px] h-[250px] m-[20px]">
-                            <img src="/exclamation.svg" alt="Loading" className="w-full h-full" />
+                            <Image src="/exclamation.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
                             <span className="sr-only">Loading...</span>
                           </div>
                         </div>
@@ -344,13 +342,6 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               action={async (lendingPlatform) =>
                               {console.log(lendingPlatform)
                                 return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(lendAmount, 6))
-
-                                // mutateAsyncDeposit({
-                                //   args: [
-                                //     timestamp,
-                                //     ethers.utils.parseUnits(lendAmount, 6),
-                                //   ],
-                                // })
                               }}
                               onSubmit={() => {
                                 setLocalError("");

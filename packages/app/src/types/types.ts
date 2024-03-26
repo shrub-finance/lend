@@ -1,15 +1,24 @@
-// types.ts
-export type PendingStatuses = "confirming" | "confirmed" | "failed";
+import { ethers } from 'ethers'
+
+
+export type PendingStatuses = "pending" | "confirmed" | "failed";
 
 export type Loan = {
-  
-  
+  id?: string,
+  status?: PendingStatuses,
+  collateral?: ethers.BigNumber,
+  created?: number,
+  ltv?: string,
+  originalPrincipal?: string,
+  paid?: string,
+  apy?: string,
+  principal?: string,
+  timestamp?: number,
+  updated?: number,
+  __typename?: string,
 };
 
-export type LendPosition = {
-  
-
-};
+export type LendPosition = {};
 
 export type UserFinancialDataState = {
   loans: Loan[];

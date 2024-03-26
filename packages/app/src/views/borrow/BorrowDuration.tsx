@@ -1,6 +1,7 @@
-import {useEffect, useState} from "react";
-import {toEthDate} from "../../utils/ethMethods";
+import React, {useState} from "react";
+import {toEthDate} from '@shrub-lend/common';
 import {formatDate, getPlatformDates} from "@shrub-lend/common"
+import Image from 'next/image'
 
 interface BorrowDurationViewProps {
   requiredCollateral: string;
@@ -11,6 +12,7 @@ interface BorrowDurationViewProps {
 export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDuration, requiredCollateral, onDurationChange }) => {
 
   const [timestamp, setTimestamp] = useState(0);
+  const [selectedDuration, setSelectedDuration] = useState('');
   const dates = getPlatformDates();
   const durations = [
     { id: 'smallest-duration', duration: dates.oneMonth },
@@ -49,7 +51,9 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                 <div className="flex-col gap-2">
                   <div className="flex flex-row text-lg ">
                     <span className="w-[500px]">Required collateral</span>
-                    <span className="hidden md:inline"><img src="/eth-logo.svg" className="w-4 inline align-middle"/> ETH</span>
+                    <span className="hidden md:inline">
+                      <Image alt="ETH logo" src="/eth-logo.svg" className="w-4 inline align-middle" width="16" height="24"/> ETH
+                    </span>
                   </div>
                   <div className="card w-full py-4">
                     <span className="text-5xl text-shrub-green-500 font-bold text-left">{requiredCollateral} ETH</span>
@@ -65,7 +69,10 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                     <ul className="flex flex-col gap-4">
                       {durations.map(({ id, duration }) => (
                         <li className="mr-4" key={id}>
-                          <input type="radio" id={id} name="loan" value={id} className="hidden peer" required onChange={() => setTimestamp(toEthDate(duration))}/>
+                          <input type="radio" id={id} name="loan" value={id} className="hidden peer" required onChange={(e) => {
+                            setSelectedDuration(e.target.value)
+                            setTimestamp(toEthDate(duration))}}
+                                 checked={selectedDuration === id}/>
                           <label htmlFor={id}
                                  className="inline-flex items-center justify-center w-full px-8 py-3 text-gray-600 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                             <div className="block">
@@ -80,7 +87,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
 
                 <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
                 {/*cta*/}
-                <button onClick={handleDurationContinue} disabled={!durations.some(({ id }) => document.getElementById(id)?.checked)}
+                <button onClick={handleDurationContinue} disabled={!selectedDuration}
                   className="btn btn-block bg-shrub-green border-0 normal-case text-white text-xl hover:bg-shrub-green-500 disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
                   disabled:text-gray-50

@@ -7,6 +7,7 @@ import {useRouter} from "next/router";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import {useFinancialData} from "../../components/FinancialDataContext";
 import Image from 'next/image'
+import { Loan } from '../../types/types'
 
 interface BorrowSummaryViewProps {
   requiredCollateral: string;
@@ -30,8 +31,8 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
 
-  const handleViewDash = () => {
-    router.push('/dashboard');
+  const handleViewDash = async () => {
+    await router.push('/dashboard');
   };
 
   const {state, dispatch} = useFinancialData();
@@ -206,20 +207,18 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
 
                               onSuccess={async (tx) => {
                                 setLocalError('');
-                                const newLoan = {
+                                const newLoan:Loan = {
                                   id: tx.hash,
+                                  status: "pending",
                                   collateral: ethers.utils.parseEther(requiredCollateral),
                                   created: Math.floor(Date.now() / 1000),
-                                  createdBlock: tx.hash.blockNumber,
                                   ltv: interestToLTV[interestRate].toString(),
-                                  originalPrincipal: amount * 1000000,
+                                  originalPrincipal: (parseFloat(amount) * 1000000).toString(),
                                   paid: "0",
-                                  apy: interestRate * 1000000,
-                                  principal: amount * 1000000,
+                                  apy: (parseFloat(interestRate) * 1000000).toString(),
+                                  principal: (parseFloat(amount) * 1000000).toString(),
                                   timestamp: timestamp,
                                   updated: Math.floor(Date.now() / 1000),
-                                  updatedBlock: tx.hash.blockNumber,
-                                  status: "pending",
                                   __typename: "Loan",
                                 };
                                 dispatch({
