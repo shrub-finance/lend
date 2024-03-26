@@ -67,7 +67,9 @@ contract BorrowPositionToken is ERC721, Ownable {
     function mint(address account, BorrowData calldata borrowData) external onlyOwner returns (uint){
 //        borrowData.startDate = something from the transaction
         borrowDatas[currentIndex] = borrowData;
-        borrowDatas[currentIndex].startDate = uint40(block.timestamp);
+//        if (!borrowData.startDate) {
+//            borrowDatas[currentIndex].startDate = uint40(block.timestamp);
+//        }
         _mint(account, currentIndex);
         tokensByTimestamp[borrowData.endDate].push(currentIndex);
         currentIndex++;

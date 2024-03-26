@@ -411,15 +411,16 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             "Insufficient pool share tokens for withdrawal"
         );
 
-        console.log("_poolShareTokenAmount - %s", _poolShareTokenAmount);
-        console.log(lendingPool.poolShareToken.totalSupply());
-        console.log(lendingPool.principal);
-        console.log(lendingPool.accumInterest);
-        console.log(lendingPool.accumYield);
+        console.log("_poolShareTokenAmount - %s, poolShareToken.totalSupply - %s", _poolShareTokenAmount, lendingPool.poolShareToken.totalSupply());
+//        console.log(lendingPool.poolShareToken.totalSupply());
+        console.log("lendingPool - principal: %s, accumInterest: %s, accumYield: %s", lendingPool.principal, lendingPool.accumInterest, lendingPool.accumYield);
+//        console.log(lendingPool.principal);
+//        console.log(lendingPool.accumInterest);
+//        console.log(lendingPool.accumYield);
         // Calculate the proportion of the pool that the user is withdrawing (use 8 decimals)
         uint256 withdrawalProportion = _poolShareTokenAmount * 10 ** 8 /
                                 lendingPool.poolShareToken.totalSupply();
-        console.log(withdrawalProportion);
+        console.log("withdrawlPropotion: %s", withdrawalProportion);
 
         // Calculate the corresponding USDC amount to withdraw
         uint256 usdcPrincipalAmount = withdrawalProportion * lendingPool.principal / 10 ** 8;
@@ -448,6 +449,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 _collateral, // Amount of ETH collateral with 18 decimal places
         uint32 _ltv,
         uint40 _timestamp,
+        uint40 _startDate,
         address beneficiary
     ) internal {
         console.log("running takeLoanInternal");
@@ -475,6 +477,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         usdc.transfer(beneficiary, _principal);
 
         BorrowData memory bd;
+        bd.startDate = _startDate;
         bd.endDate = _timestamp;
         bd.principal = _principal;
         bd.collateral = _collateral;
@@ -534,7 +537,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             0
         );
 
-        takeLoanInternal(_principal, _collateral, _ltv, _timestamp, msg.sender);
+        takeLoanInternal(_principal, _collateral, _ltv, _timestamp, uint40(block.timestamp), msg.sender);
     }
 
     function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount) external {
@@ -705,7 +708,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         console.log("extendLoan-before-take-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         aeth.transferFrom(msg.sender, address(this), newCollateral);
         console.log("3 - platform aETH balance: %s", aeth.balanceOf(address(this)));
-        takeLoanInternal(newPrincipal, newCollateral, _ltv, newTimestamp, msg.sender);
+        takeLoanInternal(newPrincipal, newCollateral, _ltv, newTimestamp, lastSnapshotDate, msg.sender);
         console.log("4 - platform aETH balance: %s", aeth.balanceOf(address(this)));
 //        takeLoan{value: newCollateral}(newPrincipal, newCollateral, _ltv, newTimestamp);
         console.log("extendLoan-before-repay-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
