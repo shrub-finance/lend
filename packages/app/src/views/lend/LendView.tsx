@@ -1,11 +1,12 @@
 import {FC, useEffect, useState} from "react";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
-import {useBalance, useConnectedWallet, useContract, useContractRead} from "@thirdweb-dev/react";
+import {useBalance, useConnectedWallet, useContract} from "@thirdweb-dev/react";
 
 import {lendingPlatformAddress, lendingPlatformAbi, usdcAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
-import {toEthDate} from "../../utils/ethMethods";
-import {calculateLockupPeriod, formatDate, getPlatformDates} from "@shrub-lend/common";
+import {toEthDate} from '@shrub-lend/common';
+import {calculateLockupPeriod, getPlatformDates} from "@shrub-lend/common";
+import Image from 'next/image'
 
 interface LendViewProps {
   onLendViewChange: (estimatedAPY: string, timestamp: number, lendAmount: string) => void;
@@ -57,26 +58,25 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
     }
 
   };
-  
 
   useEffect(() => {
+    const handleAPYCalc = () => {
+      setSupplyButtonPressed(true);
+
+      const apyGenerated = timestamp === oneMonth.getTime() / 1000 ? 7.56 :
+        timestamp === threeMonth.getTime() / 1000 ? 8.14 :
+          timestamp === sixMonth.getTime() / 1000 ? 9.04 :
+            timestamp === twelveMonth.getTime() / 1000 ? 10.37 : Math.random() * 5 + 7;
+
+      setEstimatedAPY(apyGenerated.toFixed(2).toString());
+    };
+
     if (timestamp) {
       handleAPYCalc();
     }
-  }, [timestamp]);
+  }, [timestamp]); // Removed handleAPYCalc from dependencies
 
-  function handleAPYCalc() {
-    setSupplyButtonPressed(true);
 
-    // Calculate required collateral
-    const apyGenerated = timestamp === oneMonth.getTime() / 1000 ? 7.56 :
-        timestamp === threeMonth.getTime() / 1000 ? 8.14 :
-        timestamp === sixMonth.getTime() / 1000 ? 9.04 :
-        timestamp === twelveMonth.getTime() / 1000 ? 10.37 : Math.random() * 5 + 7;
-      // const apyGenerated = Math.random() * 5 + 7;
-    setEstimatedAPY(apyGenerated.toFixed(2).toString())
-
-  }
 
   const handleLendContinue = () => {
     onLendViewChange(estimatedAPY, timestamp, lendAmount);
@@ -116,7 +116,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   <label className="label relative">
                     <span className="label-text text-shrub-blue text-md">Amount</span>
                     <span className="label-text-alt  text-xl font-semibold absolute right-4 top-[57px]">
-                      <img src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub"/>USDC</span>
+                      <Image src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub" width="40" height="40" alt="usdc logo"/>USDC</span>
                   </label>
                   <input type="text" placeholder="Enter amount"
                          className="input input-bordered w-full  h-[70px] bg-white border-solid border border-gray-200 text-lg

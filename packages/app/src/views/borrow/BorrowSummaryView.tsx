@@ -217,7 +217,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   paid: "0",
                                   apy: (parseFloat(interestRate) * 1000000).toString(),
                                   principal: (parseFloat(amount) * 1000000).toString(),
-                                  timestamp: timestamp,
+                                  timestamp: (timestamp).toString(),
                                   updated: Math.floor(Date.now() / 1000),
                                   __typename: "Loan",
                                 };

@@ -9,6 +9,7 @@ import {useRouter} from "next/router"
 import { useFinancialData } from '../../components/FinancialDataContext'
 import { useLazyQuery } from '@apollo/client'
 import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries'
+import { LendPosition } from '../../types/types'
 
 
 interface LendSummaryViewProps {
@@ -22,8 +23,8 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
   const router = useRouter();
   const {state, dispatch} = useFinancialData();
-  const handleViewDash = () => {
-    router.push('/dashboard');
+  const handleViewDash = async () => {
+    await router.push('/dashboard');
   };
   const [
     getActiveLendingPools,
@@ -75,17 +76,17 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
   } = useContractRead(usdc, "allowance", [walletAddress, lendingPlatformAddress]);
 
 
-  // Calculate the end date by adding the number of months to the current date
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
 
   useEffect(() => {
-    // console.log("running walletAddress useEffect");
-    if (!walletAddress) {
-      return;
-    }
-    getActiveLendingPools();
+    if (!walletAddress) return;
+
+    getActiveLendingPools().then().catch(error => {
+      console.error("Failed to fetch active lending pools:", error);
+    });
   }, [walletAddress, getActiveLendingPools]);
+
 
   useEffect(() => {
     // console.log("running userPositionsDataLoading useEffect");
@@ -94,7 +95,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
     }
   }, [activeLendingPoolsLoading]);
 
-  const latestLendPosition = state?.lendPositions?.reduce((latest, current) =>
+  const latestLendPosition: LendPosition = state?.lendPositions?.reduce((latest, current) =>
     current.updated > latest.updated ? current : latest, state?.lendPositions[0] || {});
 
 
@@ -358,10 +359,10 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                     filteredLendingPools.length > 0
                                       ? filteredLendingPools[0]
                                       : null;
-                                  const newLendPosition = {
+                                  const newLendPosition: LendPosition = {
                                     id: matchedLendingPool.id,
                                     status: "pending",
-                                    depositsUsdc: lendAmount * 1000000,
+                                    depositsUsdc: (parseFloat(lendAmount) * 1000000).toString(),
                                     apy: estimatedAPY,
                                     currentBalanceOverride: lendAmount,
                                     interestEarnedOverride: "0",

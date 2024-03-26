@@ -1,6 +1,6 @@
 // FinancialDataContext.tsx
-import React, {createContext, useReducer, useContext, ReactNode, useEffect} from 'react';
-import { UserFinancialDataState, UserFinancialDataAction } from '../types/types';
+import React, {createContext, useReducer, useContext, ReactNode, useEffect} from 'react'
+import { UserFinancialDataState, UserFinancialDataAction, Loan, LendPosition } from '../types/types'
 
 const initialState: UserFinancialDataState = {
   loans: [],
@@ -33,7 +33,7 @@ const financialDataReducer = (state: UserFinancialDataState, action: UserFinanci
       const updatedLoan = { ...state, loans: [action.payload, ...state.loans] };
       return updatedLoan;
     case "ADD_LEND_POSITION":
-      const updatedLendPositions = { ...state, lendPositions: [action.payload, ...state.lendPositions] };
+      const updatedLendPositions: { loans: Loan[]; lendPositions: (LendPosition | LendPosition)[] } = { ...state, lendPositions: [action.payload, ...state.lendPositions] };
       return updatedLendPositions;
     case "UPDATE_LEND_POSITION_STATUS":
       // console.log("Updating lend position status", action.payload); // Log the action payload before the update

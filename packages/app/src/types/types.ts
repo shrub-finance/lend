@@ -13,12 +13,35 @@ export type Loan = {
   paid?: string,
   apy?: string,
   principal?: string,
-  timestamp?: number,
+  timestamp?: string,
   updated?: number,
   __typename?: string,
 };
 
-export type LendPosition = {};
+
+type LendingPool = {
+  id: string;
+  timestamp: string;
+  tokenSupply: number;
+  totalEthYield: number;
+  totalPrincipal: number;
+  totalUsdcInterest: number;
+  __typename: string;
+};
+
+  export type LendPosition = {
+    id?: string;
+    status?: PendingStatuses;
+    depositsUsdc?: string;
+    apy?: string;
+    currentBalanceOverride?: string;
+    interestEarnedOverride?: string;
+    lendingPool?: LendingPool;
+    timestamp?: number;
+    updated?: number;
+    amount?:number;
+  };
+
 
 export type UserFinancialDataState = {
   loans: Loan[];
@@ -26,8 +49,7 @@ export type UserFinancialDataState = {
 };
 
 export type UserFinancialDataAction =
-  | {
-      type: "SET_USER_DATA";
+  | { type: "SET_USER_DATA";
       payload: { loans: Loan[]; lendPositions: LendPosition[] };
     }
   | { type: "CLEAR_USER_DATA" }
