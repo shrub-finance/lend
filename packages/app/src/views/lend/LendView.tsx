@@ -20,7 +20,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const format = (val: string) => val;
   const parse = (val: string) => val.replace(/^\$/, "");
 
-  const [lendAmount, setLendAmount] = useState("0");
+  const [lendAmount, setLendAmount] = useState("");
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [timestamp, setTimestamp] = useState(0);
