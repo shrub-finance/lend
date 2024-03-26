@@ -1,11 +1,13 @@
-import {FC, useEffect, useState} from "react";
+import {FC, useState} from "react";
 import {useAddress, useContract, useContractWrite, Web3Button} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
-import {fromEthDate, interestToLTV, toEthDate, truncateEthAddress} from "../../utils/ethMethods";
+import {fromEthDate, interestToLTV, truncateEthAddress} from "../../utils/ethMethods";
 import { ethers } from 'ethers'
 import {useRouter} from "next/router";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import {useFinancialData} from "../../components/FinancialDataContext";
+import Image from 'next/image'
+import { Loan } from '../../types/types'
 
 interface BorrowSummaryViewProps {
   requiredCollateral: string;
@@ -29,8 +31,8 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
 
-  const handleViewDash = () => {
-    router.push('/dashboard');
+  const handleViewDash = async () => {
+    await router.push('/dashboard');
   };
 
   const {state, dispatch} = useFinancialData();
@@ -103,7 +105,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   </p>
                   <div className="w-full text-xl font-semibold flex flex-row">
                     <span className="text-4xl  font-medium text-left w-[500px]">{amount} USDC</span>
-                    <img src="/usdc-logo.svg" className="w-10 inline align-baseline"/>
+                    <Image alt="usdc icon" src="/usdc-logo.svg" className="w-10 inline align-baseline" width="40" height="40"/>
                   </div>
                   <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">You
                     are borrowing <strong>{amount} USDC</strong> and
@@ -119,7 +121,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         Borrow Successful!
                       </p>
                       <p role="status" className="w-[250px] h-[250px] m-[108px] sm:self-center">
-                        <img src="/checkmark.svg" alt="Loading" className="w-full h-full" />
+                        <Image src="/checkmark.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
                         <span className="sr-only">Loading...</span>
                       </p>
                     </>
@@ -132,7 +134,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                           Borrow Unsuccessful
                         </p>
                         <p role="status" className="w-[250px] h-[250px] m-[108px] sm:self-center">
-                          <img src="/exclamation.svg" alt="Loading" className="w-full h-full" />
+                          <Image src="/exclamation.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
                           <span className="sr-only">Loading...</span>
                         </p>
                       </>
@@ -156,8 +158,8 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     <div className="flex flex-row  justify-between">
                       <span className="">Due Date</span>
                       <span>{endDate.toDateString()}
-                        <img src="/edit.svg" className="w-5 inline align-baseline ml-2"/>
-                                        </span>
+                        <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>
+                      </span>
                     </div>
                     <div className="flex flex-row  justify-between">
                       <span className="">Interest Rate ✨</span>
@@ -165,13 +167,15 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     </div>
                     <div className="flex flex-row  justify-between">
                       <span className="">Wallet</span>
-                      <span>{truncateEthAddress(walletAddress)}<img src="/copy.svg"
-                                                                    className="w-6 hidden md:inline align-baseline ml-2"/> </span>
+                      <span>{truncateEthAddress(walletAddress)}
+                        <Image alt="copy icon" src="/copy.svg" className="w-6 hidden md:inline align-baseline ml-2" width="24" height="24"/>
+                      </span>
                     </div>
                     <div className="flex flex-row  justify-between">
                       <span className="">Contract Address</span>
-                      <span>{truncateEthAddress(lendingPlatformAddress)}<img src="/copy.svg"
-                                                                             className="w-6 hidden md:inline align-baseline ml-2"/> </span>
+                      <span>{truncateEthAddress(lendingPlatformAddress)}
+                        <Image alt="copy icon" src="/copy.svg" className="w-6 hidden md:inline align-baseline ml-2" width="24" height="24"/>
+                      </span>
                     </div>
                   </div>
 
@@ -197,26 +201,24 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   ethers.utils.parseEther(requiredCollateral),
                                   interestToLTV[interestRate],
                                   timestamp, {
-                                        value: ethers.utils.parseEther(requiredCollateral)
-                                      })
+                                    value: ethers.utils.parseEther(requiredCollateral)
+                                  })
                               }}
 
                               onSuccess={async (tx) => {
                                 setLocalError('');
-                                const newLoan = {
+                                const newLoan:Loan = {
                                   id: tx.hash,
+                                  status: "pending",
                                   collateral: ethers.utils.parseEther(requiredCollateral),
                                   created: Math.floor(Date.now() / 1000),
-                                  createdBlock: tx.hash.blockNumber,
                                   ltv: interestToLTV[interestRate].toString(),
-                                  originalPrincipal: amount * 1000000,
+                                  originalPrincipal: (parseFloat(amount) * 1000000).toString(),
                                   paid: "0",
-                                  apy: interestRate * 1000000,
-                                  principal: amount * 1000000,
-                                  timestamp: timestamp,
+                                  apy: (parseFloat(interestRate) * 1000000).toString(),
+                                  principal: (parseFloat(amount) * 1000000).toString(),
+                                  timestamp: (timestamp).toString(),
                                   updated: Math.floor(Date.now() / 1000),
-                                  updatedBlock: tx.hash.blockNumber,
-                                  status: "pending",
                                   __typename: "Loan",
                                 };
                                 dispatch({

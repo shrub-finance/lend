@@ -3,14 +3,13 @@ import {useAddress, useBalance, useContract, useContractRead, useContractWrite, 
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts"
 import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods"
 import {BigNumber, ethers} from "ethers"
-import {router} from "next/client"
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages"
 import Image from "next/image";
 import {useRouter} from "next/router"
 import { useFinancialData } from '../../components/FinancialDataContext'
 import { useLazyQuery } from '@apollo/client'
 import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries'
-import { LendingPlatform } from '@shrub-lend/hardhat/typechain-types'
+import { LendPosition } from '../../types/types'
 
 
 interface LendSummaryViewProps {
@@ -24,8 +23,8 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
   const router = useRouter();
   const {state, dispatch} = useFinancialData();
-  const handleViewDash = () => {
-    router.push('/dashboard');
+  const handleViewDash = async () => {
+    await router.push('/dashboard');
   };
   const [
     getActiveLendingPools,
@@ -77,17 +76,17 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
   } = useContractRead(usdc, "allowance", [walletAddress, lendingPlatformAddress]);
 
 
-  // Calculate the end date by adding the number of months to the current date
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
 
   useEffect(() => {
-    // console.log("running walletAddress useEffect");
-    if (!walletAddress) {
-      return;
-    }
-    getActiveLendingPools();
-  }, [walletAddress]);
+    if (!walletAddress) return;
+
+    getActiveLendingPools().then().catch(error => {
+      console.error("Failed to fetch active lending pools:", error);
+    });
+  }, [walletAddress, getActiveLendingPools]);
+
 
   useEffect(() => {
     // console.log("running userPositionsDataLoading useEffect");
@@ -96,7 +95,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
     }
   }, [activeLendingPoolsLoading]);
 
-  const latestLendPosition = state?.lendPositions?.reduce((latest, current) =>
+  const latestLendPosition: LendPosition = state?.lendPositions?.reduce((latest, current) =>
     current.updated > latest.updated ? current : latest, state?.lendPositions[0] || {});
 
 
@@ -178,13 +177,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
                 {lendActionInitiated && (
                   <>
-                    {latestLendPosition?.status === "failed" && <p className="text-lg font-bold pb-2 text-left">
-                      Deposit Unsuccessful
-                    </p>}
-                    {latestLendPosition?.status === "confirmed" && <p className="text-lg font-bold pb-2 text-left">
-                      Deposit Successful
-                    </p>}
-
+                      {/*spinner */}
                       {/*{latestLendPosition?.status === "pending" && (*/}
                       {/*  <div class="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin">*/}
                       {/*    <div class="w-[205px] h-[205px] rounded-full bg-white"></div>*/}
@@ -192,21 +185,30 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                       {/*)}*/}
 
                       {latestLendPosition?.status === "confirmed" && (
+                        <>
+                          <p className="text-lg font-bold pb-2 text-left">
+                            Deposit Successful!
+                          </p>
                         <div className="p-20">
                           <div role="status" className="w-[250px] h-[250px] m-[20px]">
-                            <img src="/checkmark.svg" alt="Loading" className="w-full h-full" />
+                            <Image src="/checkmark.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
                             <span className="sr-only">Loading...</span>
                           </div>
                         </div>
-
+</>
                       )}
                       {latestLendPosition?.status === "failed" && (
+                        <>
+                        <p className="text-lg font-bold pb-2 text-left">
+                        Deposit Unsuccessful
+                        </p>
                         <div className="p-20">
                           <div role="status" className="w-[250px] h-[250px] m-[20px]">
-                            <img src="/exclamation.svg" alt="Loading" className="w-full h-full" />
+                            <Image src="/exclamation.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
                             <span className="sr-only">Loading...</span>
                           </div>
                         </div>
+                        </>
                       )}
                   </>
                 )}
@@ -340,81 +342,14 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                             <Web3Button
                               contractAddress={lendingPlatformAddress}
                               contractAbi = {lendingPlatformAbi}
+                              isDisabled={latestLendPosition?.status === "pending"}
                               className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
                               action={async (lendingPlatform) =>
                               {console.log(lendingPlatform)
                                 return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(lendAmount, 6))
-
-                                // mutateAsyncDeposit({
-                                //   args: [
-                                //     timestamp,
-                                //     ethers.utils.parseUnits(lendAmount, 6),
-                                //   ],
-                                // })
                               }}
-                              onSubmit={() => {
-                                setLocalError("");
-                                setLendActionInitiated(true);
-                                const filteredLendingPools =
-                                  activeLendingPoolsData.lendingPools.filter(
-                                    (pool) =>
-                                      pool.timestamp === timestamp.toString(),
-                                  );
-                                const matchedLendingPool =
-                                  filteredLendingPools.length > 0
-                                    ? filteredLendingPools[0]
-                                    : null;
-                                const newLendPosition = {
-                                  id: matchedLendingPool.id,
-                                  depositsUsdc: lendAmount * 1000000,
-                                  apy: estimatedAPY,
-                                  currentBalanceOverride: lendAmount,
-                                  interestEarnedOverride: "0",
-                                  lendingPool: {
-                                    id: matchedLendingPool.id,
-                                    timestamp: matchedLendingPool.timestamp,
-                                    tokenSupply: matchedLendingPool.tokenSupply,
-                                    totalEthYield:
-                                      matchedLendingPool.totalEthYield,
-                                    totalPrincipal:
-                                      matchedLendingPool.totalPrincipal,
-                                    totalUsdcInterest:
-                                      matchedLendingPool.totalUsdcInterest,
-                                    __typename: matchedLendingPool.__typename,
-                                  },
-                                  timestamp: timestamp,
-                                  updated: Math.floor(Date.now() / 1000),
-                                  status: "pending",
-                                };
-                                dispatch({
-                                  type: "ADD_LEND_POSITION",
-                                  payload: newLendPosition,
-                                });
-                              }}
-                              onSuccess={(result) => {
-                                console.log(result);
-                                const filteredLendingPools =
-                                  activeLendingPoolsData.lendingPools.filter(
-                                    (pool) =>
-                                      pool.timestamp === timestamp.toString(),
-                                  );
-                                const matchedLendingPool =
-                                  filteredLendingPools.length > 0
-                                    ? filteredLendingPools[0]
-                                    : null;
-                                dispatch({
-                                  type: "UPDATE_LEND_POSITION_STATUS",
-                                  payload: {
-                                    id: matchedLendingPool.id,
-                                    status: "confirmed",
-                                  },
-                                });
-                              }}
-                              onError={(e) => {
-
-                                if (e instanceof Error) {
-                                  console.log(e);
-                                  handleErrorMessages({ err: e });
+                              onSuccess={async (tx) => {
+                                  setLocalError("");
                                   const filteredLendingPools =
                                     activeLendingPoolsData.lendingPools.filter(
                                       (pool) =>
@@ -424,17 +359,64 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                     filteredLendingPools.length > 0
                                       ? filteredLendingPools[0]
                                       : null;
-                                  dispatch({
-                                    type: "UPDATE_LEND_POSITION_STATUS",
-                                    payload: {
+                                  const newLendPosition: LendPosition = {
+                                    id: matchedLendingPool.id,
+                                    status: "pending",
+                                    depositsUsdc: (parseFloat(lendAmount) * 1000000).toString(),
+                                    apy: estimatedAPY,
+                                    currentBalanceOverride: lendAmount,
+                                    interestEarnedOverride: "0",
+                                    lendingPool: {
                                       id: matchedLendingPool.id,
-                                      status: "failed",
+                                      timestamp: matchedLendingPool.timestamp,
+                                      tokenSupply: matchedLendingPool.tokenSupply,
+                                      totalEthYield:
+                                        matchedLendingPool.totalEthYield,
+                                      totalPrincipal:
+                                        matchedLendingPool.totalPrincipal,
+                                      totalUsdcInterest:
+                                        matchedLendingPool.totalUsdcInterest,
+                                      __typename: matchedLendingPool.__typename,
                                     },
+                                    timestamp: timestamp,
+                                    updated: Math.floor(Date.now() / 1000),
+                                  };
+                                  dispatch({
+                                    type: "ADD_LEND_POSITION",
+                                    payload: newLendPosition,
                                   });
+
+                                  try {
+                                    const receipt = await tx.wait();
+                                    if(!receipt.status) {
+                                      throw new Error("Transaction failed")
+                                    }
+                                      dispatch({
+                                        type: "UPDATE_LEND_POSITION_STATUS",
+                                        payload: {
+                                          id: matchedLendingPool.id,
+                                          status: "confirmed",
+                                        },
+                                      });
+                                  } catch (e) {
+                                    console.log("Transaction failed:", e);
+                                    dispatch({
+                                      type: "UPDATE_LEND_POSITION_STATUS",
+                                      payload: {
+                                        id: matchedLendingPool.id,
+                                        status: "failed",
+                                      },
+                                    });
+                                  }
+                                  setLendActionInitiated(true);
+                              }}
+                              onError={(e) => {
+                                if (e instanceof Error) {
+                                  handleErrorMessages({err: e});
                                 }
                               }}
                             >
-                              Initiate Deposit
+                              {latestLendPosition?.status === "pending"? "Deposit Order Submitted":"Initiate Deposit"}
                             </Web3Button>
                           )}
                       </>
@@ -443,48 +425,29 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 )}
 
 
-                {(lendActionInitiated && latestLendPosition?.status === "confirmed") && (
-                  <>
+                {(lendActionInitiated || latestLendPosition?.status === "pending") && (
                   <button
                     onClick={handleViewDash}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
-                  >
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
                     View in Dashboard
                   </button>
-                    <button
-                      onClick={onBackLend}
-                      className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4"
-                    >
-                      Lend More
-                    </button>
-                  </>
                   )}
 
-                {(lendActionInitiated && latestLendPosition?.status === "failed") && (
-                  <>
-                  <button
-                    onClick={handleViewDash}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
-                  >
-                    View in Dashboard
-                  </button>
-                  <button
-                    onClick={onBackLend}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4"
-                  >
-                    Try Again
-                  </button>
-                  </>
-                )}
+                {(lendActionInitiated || latestLendPosition?.status === "pending") &&  ( <button
+                  onClick={onBackLend}
+                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4">
+                  Lend More
+                </button>
+                  )}
 
-                {(!lendActionInitiated || latestLendPosition?.status === "pending") && (
+                {(!lendActionInitiated  && latestLendPosition?.status !== "pending") &&
                   <button
                     onClick={onBackLend}
                     className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
                   >
                     Cancel
                   </button>
-                )}
+                }
               </div>
             </div>
           </div>

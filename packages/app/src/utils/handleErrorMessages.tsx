@@ -1,3 +1,7 @@
+interface CustomError extends Error {
+  reason?: string;
+  data?:any;
+}
 export function handleErrorMessagesFactory(
   setter: React.Dispatch<React.SetStateAction<string>>
 ) {
@@ -7,21 +11,21 @@ export function handleErrorMessagesFactory(
   }) {
     const { err, customMessage } = errorOptions;
     if (err) {
-      // @ts-ignore
-      if (err.reason ) {
-        if(err.reason.includes('user rejected transaction')) {
+      const customError = err as CustomError; // Type assertion
+      if (customError.reason ) {
+        if(customError.reason.includes('user rejected transaction')) {
           setter("This transaction was cancelled. You can try again if you would like.")
         }
+        else if(customError.reason.includes('Error: VM Exception while processing transaction: reverted with reason string \'Insufficient liquidity across pools\'')){
+          setter("Not enough amount available to borrow. Please try borrowing a smaller amount or check back later")
+        }
         else {
-          // @ts-ignore
-          setter(err.reason);
+          setter(customError.reason);
         }
 
       }
-      // @ts-ignore
-      else if (err.data) {
-          // @ts-ignore
-          setter(err.data.message);
+      else if (customError.data) {
+          setter(customError.data.message);
       }
     } else if (customMessage) {
       setter(customMessage);

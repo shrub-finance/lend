@@ -1,11 +1,12 @@
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
-import {useBalance, useContract, useSDK, useSwitchChain} from "@thirdweb-dev/react";
+import {useBalance, useContract} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 import {interestToLTV} from "../../utils/ethMethods";
 import {BigNumber, ethers} from "ethers";
+import Image from 'next/image'
 
 interface BorrowViewProps {
   onBorrowViewChange: (collateral: string, interestRate, amount) => void;
@@ -22,7 +23,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
 
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
-;
+
 
   const [maxLoan, setMaxLoan] = useState(ethers.utils.parseEther('0'));
   const [requiredCollateral, setRequiredCollateral] = useState("0");
@@ -92,22 +93,22 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   };
 
   useEffect(() => {
+    const determineRequiredCollateral = async () => {
+      const ltv = interestToLTV[selectedInterestRate];
+      const usdcUnits = ethers.utils.parseUnits(borrowAmount, 6);
+      const coll: BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
+      return coll;
+    };
+
     if (selectedInterestRate !== "" && borrowAmount !== "0") {
-      // handleCollateralCalc();
       determineRequiredCollateral()
-          .then(c => {
-            // console.log(c);
-            // console.log(ethers.utils.formatEther(c));
-            setRequiredCollateral(ethers.utils.formatEther
-                (c
-                    .div(ethers.utils.parseUnits('1', 12))
-                    .mul(ethers.utils.parseUnits('1', 12))
-                )
-            );
-          })
-          .catch(e => console.error(e));
+        .then(c => {
+          setRequiredCollateral(ethers.utils.formatEther(c.div(ethers.utils.parseUnits('1', 12)).mul(ethers.utils.parseUnits('1', 12))));
+        })
+        .catch(e => console.error(e));
     }
-  }, [borrowAmount, selectedInterestRate]);
+  }, [borrowAmount, selectedInterestRate, lendingPlatform]);
+
 
   useEffect(() => {
     getMaxLoan()
@@ -128,24 +129,10 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
     return maxLoan;
   }
 
-  async function determineRequiredCollateral() {
-    const ltv = interestToLTV[selectedInterestRate];
-    const usdcUnits = ethers.utils.parseUnits(borrowAmount, 6)
-    const coll: BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
-    return coll;
-  }
 
   function handleCollateralCalc() {
     setIsContinuePressed(true);
-
-    // Calculate required collateral
-    const amount = Number(borrowAmount);
-    const interestRate = Number(selectedInterestRate) / 100;
-
     let requiredCollateralAmount;
-
-
-
     if (requiredCollateralAmount) {
       setRequiredCollateral(requiredCollateralAmount.toFixed(4));
     } else {
@@ -156,8 +143,6 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   const handleBorrowContinue = () => {
     onBorrowViewChange(requiredCollateral, selectedInterestRate, borrowAmount);
   };
-
-
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -194,7 +179,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                   <label className="label relative">
                     <span className="label-text text-shrub-blue text-md">Amount</span>
                     <span className="label-text-alt  text-xl font-semibold absolute right-4 top-[57px]">
-                      <img src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub"/>USDC</span>
+                      <Image alt="usdc logo" src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub" width="40" height="40"/>USDC</span>
                   </label>
                   <input type="text" placeholder="Enter amount" name="amount" id="amount"
                          className="input input-bordered w-full h-[70px] bg-white border-solid border border-gray-200 text-lg focus:shadow-shrub-thin focus:border-shrub-green-50"
@@ -226,7 +211,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                         <input type="radio" id="smallest-borrow" name="loan" value="smallest-borrow" className="hidden peer" onChange={() => setSelectedInterestRate("0")} required/>
                         <label htmlFor="smallest-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50
-                                peer-checked:border-shrub-green peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                                peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">0%</div>
                           </div>
@@ -236,7 +221,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                         <input type="radio" id="small-borrow" name="loan" value="small-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("1")}/>
                         <label htmlFor="small-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500
-                               peer-checked:border-shrub-green peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                                peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">1%</div>
                           </div>
@@ -245,7 +230,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                       <li className="mr-4">
                         <input type="radio" id="big-borrow" name="loan" value="big-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("5")} required/>
                         <label htmlFor="big-borrow"
-                               className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:border-shrub-green peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">5%</div>
                           </div>
@@ -255,7 +240,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                         <input type="radio" id="biggest-borrow" name="loan" value="biggest-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("8")} required/>
                         <label htmlFor="biggest-borrow"
                                className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50
-                               peer-checked:border-shrub-green peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                               peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
                           <div className="block">
                             <div className="w-full text-lg font-semibold">8%</div>
                           </div>
@@ -274,7 +259,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                   <div className="hero-content mb-2 flex-col gap-2 justify-between">
                     <div className="card w-full flex flex-row text-lg justify-between">
                       <span className="w-[360px]">Required collateral</span>
-                      <span className="hidden md:inline"><img src="/eth-logo.svg" className="w-4 inline align-middle"/> ETH</span>
+                      <span className="hidden md:inline"><Image alt="eth logo" src="/eth-logo.svg" className="w-4 inline align-middle" width="16" height="24"/> ETH</span>
                     </div>
                     <div className="card w-full bg-teal-50 border border-shrub-green p-10">
                       <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} ETH</span>
