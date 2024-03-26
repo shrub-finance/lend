@@ -92,7 +92,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
     event NewDeposit(uint256 timestamp, address poolShareTokenAddress, address depositor, uint256 amount, uint256 tokenAmount);
-    event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 principal, uint32 apy);
+    event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 principal, uint40 startDate, uint32 apy);
     event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
     event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
@@ -517,7 +517,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //        console.log(_amount);
 //        console.log(loan.APY);
 //        console.log("-------");
-        emit NewLoan(tokenId, _timestamp, beneficiary, _collateral, _principal, apy);
+        emit NewLoan(tokenId, _timestamp, beneficiary, _collateral, _principal, _startDate, apy);
 
     }
 
@@ -708,7 +708,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         console.log("extendLoan-before-take-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         aeth.transferFrom(msg.sender, address(this), newCollateral);
         console.log("3 - platform aETH balance: %s", aeth.balanceOf(address(this)));
-        takeLoanInternal(newPrincipal, newCollateral, _ltv, newTimestamp, lastSnapshotDate, msg.sender);
+        takeLoanInternal(newPrincipal, newCollateral, _ltv, newTimestamp, uint40(lastSnapshotDate), msg.sender);
         console.log("4 - platform aETH balance: %s", aeth.balanceOf(address(this)));
 //        takeLoan{value: newCollateral}(newPrincipal, newCollateral, _ltv, newTimestamp);
         console.log("extendLoan-before-repay-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));

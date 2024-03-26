@@ -21,6 +21,7 @@ export function getLoan(
     principal: BigInt,
     collateral: BigInt,
     timestamp: BigInt,
+    startDate: BigInt,
     block: ethereum.Block
 ): Loan {
     let id = tokenId.toString();
@@ -30,7 +31,7 @@ export function getLoan(
     if (loan !== null) {
         return loan;
     }
-    return createLoan(id, user, apy, principal, collateral, timestamp, block);
+    return createLoan(id, user, apy, principal, collateral, timestamp, startDate, block);
 }
 
 // Private Methods
@@ -41,6 +42,7 @@ function createLoan(
     principal: BigInt,
     collateral: BigInt,
     timestamp: BigInt,
+    startDate: BigInt,
     block: ethereum.Block
 ): Loan {
     let loan = Loan.load(id);
@@ -64,6 +66,7 @@ function createLoan(
     loan.paid = Zero;
     loan.collateral = collateral;
     loan.collateralReturned = Zero;
+    loan.startDate = startDate;
     loan.save();
     return loan;
 }

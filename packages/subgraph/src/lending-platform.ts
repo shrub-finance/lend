@@ -66,12 +66,13 @@ export function handleNewDeposit(event: NewDeposit): void {
 
 export function handleNewLoan(event: NewLoan): void {
     // event NewLoan(uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
-    log.info("NewLoan: tokenid: {}, timestamp: {}, borrower: {}, collateral: {}, principal: {}, apy: {}", [
+    log.info("NewLoan: tokenid: {}, timestamp: {}, borrower: {}, collateral: {}, principal: {}, startDate: {}, apy: {}", [
         event.params.tokenId.toString(),
         event.params.timestamp.toString(),
         event.params.borrower.toHexString(),
         event.params.collateral.toString(),
         event.params.principal.toString(),
+        event.params.startDate.toString(),
         event.params.apy.toString()
     ])
     // get the user for depositor
@@ -86,6 +87,7 @@ export function handleNewLoan(event: NewLoan): void {
         event.params.principal,
         event.params.collateral,
         event.params.timestamp,
+        event.params.startDate,
         event.block
     )
     // create a new loanposition

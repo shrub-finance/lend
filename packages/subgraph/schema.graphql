@@ -50,6 +50,7 @@ type Loan @entity {
     paid: BigInt!
     collateral: BigInt!
     collateralReturned: BigInt!
+    startDate: BigInt!
     ltv: BigInt!
     apy: BigInt!
     user: User
