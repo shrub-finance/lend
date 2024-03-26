@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface CustomError extends Error {
   reason?: string;
   data?:any;
@@ -18,7 +16,7 @@ export function handleErrorMessagesFactory(
         if(customError.reason.includes('user rejected transaction')) {
           setter("This transaction was cancelled. You can try again if you would like.")
         }
-        if(customError.reason.includes('Error: VM Exception while processing transaction: reverted with reason string \'Insufficient liquidity across pools\'')){
+        else if(customError.reason.includes('Error: VM Exception while processing transaction: reverted with reason string \'Insufficient liquidity across pools\'')){
           setter("Not enough amount available to borrow. Please try borrowing a smaller amount or check back later")
         }
         else {
