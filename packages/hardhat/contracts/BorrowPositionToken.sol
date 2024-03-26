@@ -125,9 +125,15 @@ contract BorrowPositionToken is ERC721, Ownable {
 //    }
 
     function burn(uint256 tokenId) external checkExists(tokenId) onlyOwner {
+        console.log("running burn for tokenId: %s", tokenId);
         // because most loans will be paid off at the end - we have intentionally decided to not clean up from
         // tokensByTimestamp on the burning of the bpt. Rather, this will be handled during the snapshot
         removedTokens[borrowDatas[tokenId].endDate].push(tokenId);
+        console.log("list of removedTokens for timestamp: %s", borrowDatas[tokenId].endDate);
+        for(uint i = 0; i < removedTokens[borrowDatas[tokenId].endDate].length; i++) {
+            console.log(removedTokens[borrowDatas[tokenId].endDate][i]);
+        }
+        console.log("end of list of removed tokens");
         // Cleanup the borrowData associated with this token
         delete borrowDatas[tokenId];
         _burn(tokenId);
@@ -135,15 +141,25 @@ contract BorrowPositionToken is ERC721, Ownable {
 
     function cleanUpByTimestamp(uint40 timestamp) external onlyOwner {
         // Cleanup tokensByTimestamp as this isn't done during the burn
+        console.log("running cleanUpByTimestamp for timestamp: %s", timestamp);
         for (uint i = 0; i < tokensByTimestamp[timestamp].length; i++) {
             for (uint j = 0; j < removedTokens[timestamp].length; j++) {
+                console.log("i: %s, j: %s", i, j);
+                console.log("tokenByTimestamp[i]: %s, removedTokens[j]: %s", tokensByTimestamp[timestamp][i], removedTokens[timestamp][j]);
                 if (tokensByTimestamp[timestamp][i] == removedTokens[timestamp][j]) {
+                    console.log("Match - removing");
                     // First remove from tokensByTimestamp
                     uint lastIndex = tokensByTimestamp[timestamp].length - 1;
+                    console.log("lastIndex: %s", lastIndex);
                     if (i != lastIndex) {
                         tokensByTimestamp[timestamp][i] = tokensByTimestamp[timestamp][lastIndex];
                     }
                     tokensByTimestamp[timestamp].pop();
+                    console.log("list of tokensByTimestamp for timestamp %s", timestamp);
+                    for(uint k = 0; k < tokensByTimestamp[timestamp].length; k++) {
+                        console.log(tokensByTimestamp[timestamp][k]);
+                    }
+                    console.log("end of list");
                     // If there is only 1 left, that means that we just got it and now we can return
                     if (removedTokens[timestamp].length == 1) {
                         delete removedTokens[timestamp];

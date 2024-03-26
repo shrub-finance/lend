@@ -303,6 +303,7 @@ task("repayLoan", "add USDC to a lending pool")
         console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${borrowerAccountAddress}`);
         if (usdcBalance < debt) {
             console.log('insufficient USDC balance in account - aborting');
+            throw new Error("insufficient USDC balance in account - aborting");
             return;
         }
         // Check approval of account to ensure that it is sufficient
@@ -526,21 +527,29 @@ task("getLoan", "get deatils of a loan")
         const tokenId = taskArgs.tokenid;
         const {ethers, deployments, getNamedAccounts} = env;
         const {lendingPlatform, bpt} = await getDeployedContracts(env);
-        const res = await bpt.getLoan(tokenId);
+        let res;
+        try {
+            res = await bpt.getLoan(tokenId);
+        } catch (e) {
+            console.log(`loan with tokenId: ${tokenId} does not exist`);
+            return;
+        }
         const interest = await bpt.getInterest(tokenId);
         const debt = await bpt.debt(tokenId);
-        console.log(res);
+        const owner = await bpt.ownerOf(tokenId);
+        // console.log(res);
         console.log(`
 Loan: ${tokenId}
 ============
+owner: ${owner}
 endDate: ${fromEthDate(Number(res.endDate)).toISOString()}
 startDate: ${fromEthDate(Number(res.startDate)).toISOString()}
 principal: ${ethers.formatUnits(res.principal, 6)} USDC
-interest: ${ethers.formatUnits(interest, 6)}
+interest: ${ethers.formatUnits(interest, 6)} USDC
 collateral: ${ethers.formatEther(res.collateral)} ETH
 apy: ${ethers.formatUnits(res.apy, 6)}%
 
-total debt: ${ethers.formatUnits(debt, 6)} ETH
+total debt: ${ethers.formatUnits(debt, 6)} USDC
 `)
     })
 

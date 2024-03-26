@@ -808,17 +808,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     function takeSnapshot() public onlyOwner {
         uint aETHBalance = aeth.balanceOf(address(this));
-//        console.log("running takeSnapshot, platformAEthBalance: %s, aEthSnapshotBalance: %s, claimedCollateralSinceSnapshot: %s, newCollateralSinceSnapshot: %s", aETHBalance, claimedCollateralSinceSnapshot, newCollateralSinceSnapshot, aEthSnapshotBalance);
         console.log("running takeSnapshot, platformAEthBalance: %s, aEthSnapshotBalance: %s, claimedCollateralSinceSnapshot: %s", aETHBalance, aEthSnapshotBalance, claimedCollateralSinceSnapshot);
         console.log("newCollateralSinceSnapshot: %s", newCollateralSinceSnapshot);
         console.log("lastSnaphot: %s, now: %s, elapsed: %s", lastSnapshotDate, block.timestamp, block.timestamp - lastSnapshotDate);
 //        Get the current balance of bpTotalPoolShares (it is local)
         // calculate the accumYield for all BP (current balance - snapshot balance)
-//        console.log(aeth.balanceOf(address(this)));
-//        console.log(claimedCollateralSinceSnapshot);
-//        console.log(newCollateralSinceSnapshot);
-//        console.log(aEthSnapshotBalance);
-//        console.log("---");
         uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) + claimedCollateralSinceSnapshot - newCollateralSinceSnapshot - aEthSnapshotBalance;
         console.log("aEthYieldSinceLastSnapshot: %s", aEthYieldSinceLastSnapshot);
 //        Calculate accumInterest for all BP
@@ -832,8 +826,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             uint accumInterestBP = 0;
 //            # Loop through the BPTs in order to calculate their accumInterest
             for (uint j = 0; j < bptsForPool.length; j++) {
-                console.log("in token loop - analyzing tokenId: %s", j);
-                accumInterestBP +=  bpt.interestSinceTimestamp(j, lastSnapshotDate);
+                console.log("in token loop - analyzing tokenId: %s", bptsForPool[j]);
+                accumInterestBP +=  bpt.interestSinceTimestamp(bptsForPool[j], lastSnapshotDate);
             }
             // Determine the amount of aETH to distribute from this borrowing pool
             if (borrowingPools[activePools[i]].poolShareAmount == 0) {
