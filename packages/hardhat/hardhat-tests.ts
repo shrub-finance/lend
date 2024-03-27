@@ -67,39 +67,16 @@ task("testLendingPlatform3", "Setup an environment for development")
         const { deployer, account1, account2, account3, account4 } = await getNamedAccounts();
 
         await partA();
-        console.log('partA done');
-        // await env.run('getAllPools');
         await partB();
-        console.log('partB done');
-        // await env.run('getAllPools');
         await partC();
-        console.log('partC done');
-        // await env.run('getAllPools');
         await partD();
-        console.log('partD done');
-        // await env.run('getAllPools');
         await partD2();
-        console.log('partD2 done');
-        // await env.run('getAllPools');
         await partD3();
-        console.log('partD3 done');
-        // await env.run('getAllPools');
         await partE();
-        console.log('partE done');
-        // await env.run('getAllPools');
         await partF();
-        console.log('partF done');
-        // await env.run('getAllPools');
         await partF2();
-        console.log('partF2 done');
-        // await env.run('getAllPools');
         await partG();
-        console.log('partG done');
-        // await env.run('getAllPools');
         await partH();
-        console.log('partH done');
-        // await env.run('getAllPools');
-
 
         async function partA() {
             // await env.run('createPlatformPools');

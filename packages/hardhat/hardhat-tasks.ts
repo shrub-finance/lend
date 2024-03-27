@@ -185,7 +185,7 @@ task("provideLiquidity", "add USDC to a lending pool")
 task("extendDeposit", "extend an existing deposit")
     .addParam("currentTimestamp", "End Date of the current lend position", undefined, types.int)
     .addParam("newTimestamp", "End Date of the new lend position", undefined, types.int)
-    .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
+    .addParam("account", "Address of account who made the deposit", undefined, types.string, true)
     .setAction(async (taskArgs, env) => {
         const currentTimestamp: number = taskArgs.currentTimestamp;
         const newTimestamp: number = taskArgs.newTimestamp;
