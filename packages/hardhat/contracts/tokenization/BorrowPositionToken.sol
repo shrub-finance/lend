@@ -7,17 +7,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "hardhat/console.sol";
+import {DataTypes} from '../libraries/types/DataTypes.sol';
+import {Constants} from '../libraries/configuration/Constants.sol';
 
-struct BorrowData {
-    uint40 startDate;  // Max Date with uint40 is 2106 (83 years from now)
-    uint40 endDate;
-    uint256 principal;
-    uint256 collateral;
-    uint32 apy;
-}
 
 interface IBorrowPositionToken is IERC721 {
-    function mint(address account, BorrowData calldata borrowData) external returns (uint);
+    function mint(address account, DataTypes.BorrowData calldata borrowData) external returns (uint);
     function debt(uint256 tokenId) external returns (uint);
 //    function interest(uint256 tokenId) external returns (uint256);
     function interestSinceTimestamp(uint256 tokenId, uint timestamp) external returns (uint256);
@@ -27,14 +22,12 @@ interface IBorrowPositionToken is IERC721 {
     function getStartDate(uint tokenId) external view returns (uint256);
     function burn(uint256 tokenId) external;
     function getTokensByTimestamp(uint40 _timestamp) external returns (uint[] calldata);
-    function getLoan(uint tokenId) external returns (BorrowData memory);
+    function getLoan(uint tokenId) external returns (DataTypes.BorrowData memory);
     function getInterest(uint tokenId) external view returns (uint256);
     function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint lastSnapshotDate, address sender) external returns(uint principalReduction);
     function cleanUpByTimestamp(uint40 timestamp) external;
 }
 
-uint256 constant SECONDS_IN_YEAR = 365 * 24 * 60 * 60;
-uint256 constant APY_DECIMALS = 10 ** 8; // APY is represented with 6 decimals - this is 8 to account for adjustment of percentage to decimal (APY of 5% would be represented with 5000000)
 
 
 
@@ -54,7 +47,7 @@ contract BorrowPositionToken is ERC721, Ownable {
 
     uint public currentIndex = 0;
 
-    mapping(uint256 => BorrowData) borrowDatas;
+    mapping(uint256 => DataTypes.BorrowData) borrowDatas;
     mapping(uint40 => uint256[]) public tokensByTimestamp;  // mapping of the timestamp to tokenIds with that endDate
     mapping(uint40 => uint256[]) public removedTokens; // Tracking of takens that have been burned (keyed by endDate) - this will be used during the snapshot to clean up
 
@@ -64,7 +57,7 @@ contract BorrowPositionToken is ERC721, Ownable {
         _;
     }
 
-    function mint(address account, BorrowData calldata borrowData) external onlyOwner returns (uint){
+    function mint(address account, DataTypes.BorrowData calldata borrowData) external onlyOwner returns (uint){
 //        borrowData.startDate = something from the transaction
         borrowDatas[currentIndex] = borrowData;
 //        if (!borrowData.startDate) {
@@ -100,7 +93,7 @@ contract BorrowPositionToken is ERC721, Ownable {
         return borrowDatas[tokenId].startDate;
     }
 
-    function getLoan(uint tokenId) external view checkExists(tokenId) returns (BorrowData memory) {
+    function getLoan(uint tokenId) external view checkExists(tokenId) returns (DataTypes.BorrowData memory) {
         return borrowDatas[tokenId];
     }
 
@@ -108,7 +101,7 @@ contract BorrowPositionToken is ERC721, Ownable {
     function debt(uint256 tokenId) public view checkExists(tokenId) returns (uint256) {
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         console.log("running bd.debt - (tokenId, bd.startDate, timestamp)");
-//        BorrowData memory bd = borrowDatas[tokenId];
+//        DataTypes.BorrowData memory bd = borrowDatas[tokenId];
         console.log(tokenId);
 //        console.log(bd.startDate);
 //        console.log(timestamp);
@@ -121,7 +114,7 @@ contract BorrowPositionToken is ERC721, Ownable {
     }
 
 //    function updateSnapshot(uint256 tokenId, uint newDebt) checkExists(tokenId) external onlyOwner {
-//        BorrowData storage bd = borrowDatas[tokenId];
+//        DataTypes.BorrowData storage bd = borrowDatas[tokenId];
 //        bd.snapshotDate = uint40(block.timestamp);
 //        bd.snapshotDebt = newDebt;
 //    }
@@ -179,32 +172,32 @@ contract BorrowPositionToken is ERC721, Ownable {
     }
 
     function interestSinceTimestampsUnchecked(uint256 tokenId, uint256 timestampStart, uint256 timestampEnd) internal view returns (uint256) {
-        BorrowData memory bd = borrowDatas[tokenId];
+        DataTypes.BorrowData memory bd = borrowDatas[tokenId];
         console.log("Running interestSinceTimestampUnchecked");
         console.log(tokenId);
         console.log(bd.startDate);
         console.log(bd.apy);
         console.log(bd.principal);
-        console.log(APY_DECIMALS);
-        console.log(SECONDS_IN_YEAR);
+        console.log(Constants.APY_DECIMALS);
+        console.log(Constants.SECONDS_IN_YEAR);
         console.log("---");
 
-        return bd.apy * bd.principal * (timestampEnd - timestampStart) / (APY_DECIMALS * SECONDS_IN_YEAR);
+        return bd.apy * bd.principal * (timestampEnd - timestampStart) / (Constants.APY_DECIMALS * Constants.SECONDS_IN_YEAR);
     }
 
     // Returns the usdc interest earned since the last adjustment (payment) to a BPT
     function interestSinceTimestamp(uint256 tokenId, uint timestamp) public view checkExists(tokenId) returns (uint256) {
         console.log("running interestSinceTimestamp");
 //        console.log("running interestSinceTimestamp - (tokenId, bd.startDate, timestamp, block.timestamp, apy, principal, apydecimals, secondsinyear)");
-        BorrowData memory bd = borrowDatas[tokenId];
+        DataTypes.BorrowData memory bd = borrowDatas[tokenId];
 //        console.log(tokenId);
 //        console.log(bd.startDate);
 //        console.log(timestamp);
 //        console.log(block.timestamp);
 //        console.log(bd.apy);
 //        console.log(bd.principal);
-//        console.log(APY_DECIMALS);
-//        console.log(SECONDS_IN_YEAR);
+//        console.log(Constants.APY_DECIMALS);
+//        console.log(Constants.SECONDS_IN_YEAR);
 
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         if (bd.apy == 0) {
@@ -212,11 +205,11 @@ contract BorrowPositionToken is ERC721, Ownable {
         }
         if (bd.startDate > timestamp) {
             console.log("bpt created after start date - using startDate in place of timestamp");
-            console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - bd.startDate) / (APY_DECIMALS * SECONDS_IN_YEAR));
-            return bd.apy * bd.principal * (block.timestamp - bd.startDate) / (APY_DECIMALS * SECONDS_IN_YEAR);
+            console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - bd.startDate) / (Constants.APY_DECIMALS * Constants.SECONDS_IN_YEAR));
+            return bd.apy * bd.principal * (block.timestamp - bd.startDate) / (Constants.APY_DECIMALS * Constants.SECONDS_IN_YEAR);
         }
-        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR));
-        return bd.apy * bd.principal * (block.timestamp - timestamp) / (APY_DECIMALS * SECONDS_IN_YEAR);
+        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - timestamp) / (Constants.APY_DECIMALS * Constants.SECONDS_IN_YEAR));
+        return bd.apy * bd.principal * (block.timestamp - timestamp) / (Constants.APY_DECIMALS * Constants.SECONDS_IN_YEAR);
     }
 
     function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint lastSnapshotDate, address sender) onlyOwner external returns(uint principalReduction) {
@@ -228,7 +221,7 @@ contract BorrowPositionToken is ERC721, Ownable {
         // Check that msg.sender owns the DPT
         require(ownerOf(tokenId) == sender, "msg.sender does not own specified BPT");
         // Check that repaymentAmount is less than the total debt;
-        BorrowData storage bd = borrowDatas[tokenId];
+        DataTypes.BorrowData storage bd = borrowDatas[tokenId];
         uint interest = interestSinceTimestampsUnchecked(tokenId, bd.startDate, lastSnapshotDate);
         require(repaymentAmount < bd.principal + interest, "partial repayment amount must be less than total debt");
         require(repaymentAmount >= interest, "repayment amount must be at least the accumulated interest");

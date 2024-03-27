@@ -8,77 +8,21 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-import "./PoolShareToken.sol";
-import "./BorrowPositionToken.sol";
-import "./MockAaveV3.sol";
-import "./AETH.sol";
+import "../tokenization/PoolShareToken.sol";
+import "../tokenization/BorrowPositionToken.sol";
+import "../dependencies/MockAaveV3.sol";
+import "../dependencies/AETH.sol";
+
+import {USDCoin} from "../dependencies/USDCoin.sol";
+import {DataTypes} from '../libraries/types/DataTypes.sol';
 
 import "hardhat/console.sol";
-import {USDCoin} from "./USDCoin.sol";
 
 contract LendingPlatform is Ownable, ReentrancyGuard {
-    // using SafeERC20 for IERC20;
     using Strings for uint256;
 
-    struct LendingPool {
-        // uint40 endDate
-        uint256 principal; // Total amount of USDC that has been contributed to the LP
-        uint256 accumInterest; // The amount of USDC interest earned
-        uint256 accumYield; // The amount of aETH earned through Aave
-        uint256 shrubInterest; // Interest allocated for Shrub Treasury
-        uint256 shrubYield; // Yield allocated for Shrub Treasury
-//        uint256 aaveInterestSnapshot;
-        PoolShareToken poolShareToken;
-        bool finalized; // If the pool is finalized and eligible for withdraws
-    }
-
-    struct BorrowingPool {
-        uint principal; // Total amount of USDC that has been borrowed in this buckets' loans
-        uint collateral; // The total amount of ETH collateral deposited for loans in this bucket
-        uint poolShareAmount; // Relative claim of the total platform aETH for this bucket. Used to calculate yield for lending pools
-        uint totalAccumInterest; // Tracking accumulator for use in case of loan default
-        uint totalAccumYield; // Tracking accumulator for use in case of loan default
-        uint totalRepaid; // Tracking accumulator for use in case of loan default - tracks USDC paid back
-    }
-
-    struct PoolDetails {
-        uint lendPrincipal;
-        uint lendAccumInterest;
-        uint lendAccumYield;
-        address lendPoolShareTokenAddress;
-        uint lendShrubInterest;
-        uint lendShrubYield;
-        uint borrowPrincipal;
-        uint borrowCollateral;
-        uint borrowPoolShareAmount;
-        uint borrowTotalAccumInterest;
-        uint borrowTotalAccumYield;
-        uint borrowTotalRepaid;
-    }
-
-//    struct Loan {
-//        uint principal; // The loan amount (6 decimals)
-//        uint collateral; // The collateral for the loan, presumably in ETH (18 decimals)
-//        uint32 LTV; // The Loan-to-Value ratio - (valid values: 20, 25, 33, 50)
-//        uint32 APY; // The Annual Percentage Yield (6 decimals)
-////        PoolContribution[] contributingPools; // Array of PoolContributions representing each contributing pool and its liquidity contribution.
-//    }
-
-    struct ChainlinkResponse {
-        uint80 roundId;
-        int256 answer;
-        uint256 startedAt;
-        uint256 updatedAt;
-        uint80 answeredInRound;
-    }
-
-    struct PoolContribution {
-        uint poolTimestamp; // The pools timestamp.
-        uint liquidityContribution; // The liquidity contribution from the pool at the time of the loan. Integer value as a proportion of 10 ** 8
-    }
-
-    mapping(uint256 => LendingPool) public lendingPools; // where the uint256 key is a timestamp
-    mapping(uint256 => BorrowingPool) public borrowingPools; // mapping of timestamp of loan endDate => BorrowingPool
+    mapping(uint256 => DataTypes.LendingPool) public lendingPools; // where the uint256 key is a timestamp
+    mapping(uint256 => DataTypes.BorrowingPool) public borrowingPools; // mapping of timestamp of loan endDate => BorrowingPool
     mapping(uint256 => uint256) public activePoolIndex; // mapping of timestamp => index of activePools
 
     uint256[] public activePools; // Sorted ascending list of timestamps of active pools
@@ -249,9 +193,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     function getPool(
         uint256 _timestamp
-    ) public view returns (PoolDetails memory) {
-        LendingPool memory lendingPool = lendingPools[_timestamp];
-        PoolDetails memory poolDetails;
+    ) public view returns (DataTypes.PoolDetails memory) {
+        DataTypes.LendingPool memory lendingPool = lendingPools[_timestamp];
+        DataTypes.PoolDetails memory poolDetails;
 
         poolDetails.lendPrincipal = lendingPool.principal;
         poolDetails.lendAccumInterest = lendingPools[_timestamp].accumInterest;
@@ -329,7 +273,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     function finalizeLendingPool(uint _timestamp) public onlyOwner {
-        LendingPool storage lendingPool = lendingPools[_timestamp];
+        DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
         require(lendingPool.poolShareToken != PoolShareToken(address(0)), "Pool does not exist");
         require(!lendingPool.finalized, "Pool already finalized");
         require(block.timestamp >= _timestamp + 6 * 60 * 60, "Must wait until six hours after endDate for finalization"); // Time must be greater than six hours since pool expiration
@@ -400,7 +344,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 _poolShareTokenAmount
     ) private returns (uint usdcWithdrawn, uint ethWithdrawn) {
         console.log("running withdrawUnchecked");
-        LendingPool storage lendingPool = lendingPools[_timestamp];
+        DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
 //        require(lendingPool.finalized, "Pool must be finalized before withdraw");
         require(
             _poolShareTokenAmount > 0,
@@ -476,7 +420,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         // Transfer the loan amount in USDC to the borrower
         usdc.transfer(beneficiary, _principal);
 
-        BorrowData memory bd;
+        DataTypes.BorrowData memory bd;
         bd.startDate = _startDate;
         bd.endDate = _timestamp;
         bd.principal = _principal;
@@ -567,7 +511,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //        uint newPrincipal = 0;
         uint principalReduction = bpt.partialRepayLoan(tokenId, repaymentAmount, lastSnapshotDate, msg.sender);
 
-        BorrowingPool storage borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
+        DataTypes.BorrowingPool storage borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
         borrowingPool.principal -= principalReduction;
 
         emit PartialRepayLoan(tokenId, repaymentAmount, principalReduction);
@@ -583,7 +527,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         console.log("ownerOf(tokenId): %s, repayer: %s", bpt.ownerOf(tokenId), repayer);
         require(bpt.ownerOf(tokenId) == repayer, "Only owner of loan may repay it");
         // Determine the principal, interest, and collateral of the debt
-        BorrowData memory bd = bpt.getLoan(tokenId);
+        DataTypes.BorrowData memory bd = bpt.getLoan(tokenId);
 //        bd.endDate = _timestamp;
 //        bd.principal = _principal;
 //        bd.collateral = _collateral;
@@ -678,7 +622,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         require(bpt.ownerOf(tokenId) == msg.sender, "extendLoan may only be called by owner of the loan");
         // Check that the user holds at least additionalCollateral of USDC
         require(usdc.balanceOf(msg.sender) >= additionalRepayment, "Insufficient USDC balance");
-        BorrowData memory bd = bpt.getLoan(tokenId);
+        DataTypes.BorrowData memory bd = bpt.getLoan(tokenId);
         // Check that the newTimestamp is after the endDate of the token
         require(newTimestamp > bd.endDate, "newTimestamp must be greater than endDate of the loan");
         // Check that the additionalRepayment is less than the current debt of the loan
