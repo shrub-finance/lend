@@ -19,6 +19,9 @@ export function handleErrorMessagesFactory(
         else if(customError.reason.includes('Error: VM Exception while processing transaction: reverted with reason string \'Insufficient liquidity across pools\'')){
           setter("Not enough amount available to borrow. Please try borrowing a smaller amount or check back later")
         }
+        else if(customError.reason.includes('Error: VM Exception while processing transaction: reverted with reason string \'Invalid pool\'')){
+          setter("Pool is not valid currently. Pleases try again later")
+        }
         else {
           setter(customError.reason);
         }
