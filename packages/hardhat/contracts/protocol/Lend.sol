@@ -12,13 +12,19 @@ import "../tokenization/PoolShareToken.sol";
 import "../tokenization/BorrowPositionToken.sol";
 import "../dependencies/MockAaveV3.sol";
 import "../dependencies/AETH.sol";
+import "../configuration/PlatformConfig.sol";
 
 import {USDCoin} from "../dependencies/USDCoin.sol";
 import {DataTypes} from '../libraries/types/DataTypes.sol';
+import {Configuration} from "../libraries/configuration/Configuration.sol";
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../interfaces/IBorrowPositionToken.sol";
+import "../interfaces/IMockAaveV3.sol";
 
 import "hardhat/console.sol";
 
-contract LendingPlatform is Ownable, ReentrancyGuard {
+contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     using Strings for uint256;
 
     mapping(uint256 => DataTypes.LendingPool) public lendingPools; // where the uint256 key is a timestamp
@@ -30,7 +36,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     uint aEthSnapshotBalance;
     uint newCollateralSinceSnapshot;
     uint claimedCollateralSinceSnapshot;
-    uint shrubFee = 10;
 
     address shrubTreasury;
 
@@ -45,15 +50,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
+    IERC20 public aeth;
     IBorrowPositionToken public bpt;
-    IAETH public aeth;
     IMockAaveV3 public wrappedTokenGateway;
     AggregatorV3Interface public chainlinkAggregator;  // Chainlink interface
 
     uint public bpTotalPoolShares;
 
-    // ETH price with 8 decimal places
-//    uint public ethPrice = 2000 * 10 ** 8;
     constructor(address[6] memory addresses) {
         usdc = IERC20(addresses[0]);
         bpt = IBorrowPositionToken(addresses[1]);
@@ -476,7 +479,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         require(msg.value == _collateral, "Wrong amount of Ether provided.");
 
         wrappedTokenGateway.depositETH{value: _collateral}(
-            0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2,  // This is the address of the Aave-v3 pool - it is not used
+            Constants.AAVE_AETH_POOL,  // This is the address of the Aave-v3 pool - it is not used
             address(this),
             0
         );
@@ -632,7 +635,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         if (additionalCollateral > 0) {
             // Convert additionalCollateral to aETH and move to platform
             wrappedTokenGateway.depositETH{value: additionalCollateral}(
-                0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2,  // This is the address of the Aave-v3 pool - it is not used
+                Constants.AAVE_AETH_POOL,  // This is the address of the Aave-v3 pool - it is not used
                 address(this),
                 0
             );
@@ -715,13 +718,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             console.log("contributionDenominator - %s", contributionDenominator);
             console.log("aEthYieldDistribution: %s", aEthYieldDistribution);
             console.log("accumInterestBP: %s", accumInterestBP);
-            console.log("shrubFee: %s", shrubFee);
+            console.log("shrubFee: %s", PlatformConfig.shrubFee);
             for (uint j = i; j < activePools.length; j++) {
                 console.log("in loop: lendingPool: %s, lendingPoolContribution: %s / %s", activePools[j], lendingPools[activePools[j]].principal, contributionDenominator);
-                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * (100 - shrubFee) / 100 / contributionDenominator;
-                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal * (100 - shrubFee) / 100 / contributionDenominator;
-                lendingPools[activePools[j]].shrubYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * shrubFee / 100 / contributionDenominator;
-                lendingPools[activePools[j]].shrubInterest += accumInterestBP * lendingPools[activePools[j]].principal * shrubFee / 100 / contributionDenominator;
+                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * (100 - PlatformConfig.shrubFee) / 100 / contributionDenominator;
+                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal * (100 - PlatformConfig.shrubFee) / 100 / contributionDenominator;
+                lendingPools[activePools[j]].shrubYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * PlatformConfig.shrubFee / 100 / contributionDenominator;
+                lendingPools[activePools[j]].shrubInterest += accumInterestBP * lendingPools[activePools[j]].principal * PlatformConfig.shrubFee / 100 / contributionDenominator;
                 console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
                 emit LendingPoolYield(
                     address(lendingPools[activePools[j]].poolShareToken),
