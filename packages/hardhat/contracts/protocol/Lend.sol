@@ -18,6 +18,9 @@ import {USDCoin} from "../dependencies/USDCoin.sol";
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {Configuration} from "../libraries/configuration/Configuration.sol";
 
+// Libraries with functions
+import {HelpersLogic} from "../libraries/logic/HelpersLogic.sol";
+
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBorrowPositionToken.sol";
 import "../interfaces/IMockAaveV3.sol";
@@ -218,20 +221,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     }
 
     // APY is returned with 6 decimals
-    function getAPYBasedOnLTV(uint32 _ltv) public pure returns (uint32) {
-        if (_ltv == 20) {
-            return 0;
-        } else if (_ltv == 25) {
-            return 1 * 10 ** 6;
-        } else if (_ltv == 33) {
-            return 5 * 10 ** 6;
-        } else if (_ltv == 50) {
-            return 8 * 10 ** 6;
-        } else {
-            revert("Invalid LTV");
-        }
-    }
-
     function validPool(uint256 _timestamp) internal view returns (bool) {
         // require that the timestamp be in the future
         // require that the pool has been created
@@ -410,7 +399,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         );
 
         // Ensure the ltv is valid and calculate the apy
-        uint32 apy = getAPYBasedOnLTV(_ltv);
+        uint32 apy = HelpersLogic.getAPYBasedOnLTV(_ltv);
 
         // Check if the loan amount is less than or equal to the liquidity across pools
         uint totalAvailableLiquidity = getAvailableForPeriod(_timestamp);
