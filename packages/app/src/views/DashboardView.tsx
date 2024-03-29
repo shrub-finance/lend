@@ -12,7 +12,7 @@ import {
 } from "@thirdweb-dev/react";
 import { getBlock, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
 
-import { toEthDate, fromEthDate } from "@shrub-lend/common";
+import { toEthDate, fromEthDate, calculateLockupPeriod, getPlatformDates } from '@shrub-lend/common'
 import {
   usdcAddress,
   lendingPlatformAddress,
@@ -26,13 +26,15 @@ import { secondsInDay} from "@shrub-lend/common";
 import { USER_POSITIONS_QUERY } from "../constants/queries";
 import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
+import Modal from "../components/Modal";
+import { handleErrorMessagesFactory } from '../utils/handleErrorMessages'
 
 const now = new Date();
 const oneYearFromNow = new Date(new Date(now).setFullYear(now.getFullYear() + 1));
 export const DashboardView: FC = ({}) => {
-
   const wallet = useConnectedWallet();
-  const { state, dispatch } = useFinancialData();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { store, dispatch } = useFinancialData();
   const { data: usdcBalance, isLoading: usdcBalanceIsLoading } = useBalance(usdcAddress);
   const { data: ethBalance, isLoading: ethBalanceIsLoading } = useBalance(NATIVE_TOKEN_ADDRESS);
   const walletAddress = useAddress();
@@ -66,9 +68,53 @@ export const DashboardView: FC = ({}) => {
       user: walletAddress && walletAddress.toLowerCase(),
     },
   });
+  const [localError, setLocalError] = useState("");
+  const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
+  const [lendAmount, setLendAmount] = useState("");
+  const [timestamp, setTimestamp] = useState(0);
+  const [showAPYSection, setShowAPYSection] = useState(false);
+  const [supplyButtonPressed, setSupplyButtonPressed] = useState(false);
+  const [estimatedAPY, setEstimatedAPY] = useState("0");
+  const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
+  const loanTerms = [
+    { id: 'smallest-loan', value: 'smallest-loan', duration: oneMonth },
+    { id: 'small-loan', value: 'small-loan', duration: threeMonth },
+    { id: 'big-loan', value: 'big-loan', duration: sixMonth },
+    { id: 'biggest-loan', value: 'biggest-loan', duration: twelveMonth },
+  ];
+  const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState("");
+  const [currentHovered, setCurrentHovered] = useState<number | null>(null);  const [selectedLendPositionTermDate, setSelectedLendPositionTermDate] = useState("");
+  const dummyEarningPools = "2";
 
-  const testVar = "2";
 
+  useEffect(() => {
+    const handleAPYCalc = () => {
+      setSupplyButtonPressed(true);
+
+      const apyGenerated = timestamp === oneMonth.getTime() / 1000 ? 7.56 :
+        timestamp === threeMonth.getTime() / 1000 ? 8.14 :
+          timestamp === sixMonth.getTime() / 1000 ? 9.04 :
+            timestamp === twelveMonth.getTime() / 1000 ? 10.37 : Math.random() * 5 + 7;
+
+      setEstimatedAPY(apyGenerated.toFixed(2).toString());
+    };
+
+    if (timestamp) {
+      handleAPYCalc();
+    }
+  }, [timestamp]); // Removed handleAPYCalc from dependencies
+
+
+
+
+  async function fillMax() {
+    if (!usdcBalanceIsLoading) {
+      setLendAmount(usdcBalance.displayValue);
+    } else {
+      handleErrorMessages({customMessage: "Wallet not connected. Please check."});
+      console.log('wallet not connected');
+    }
+  }
   useEffect(() => {
     // console.log("running contract useEffect");
     async function callContract() {
@@ -144,9 +190,12 @@ export const DashboardView: FC = ({}) => {
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
+  function handleExtendLoan() {
+
+  }
 
   /** might need this later **/
-  // let newlyAddedLendPosition = state.lendPositions.filter(item => item.hasOwnProperty('id'));
+  // let newlyAddedLendPosition = store.lendPositions.filter(item => item.hasOwnProperty('id'));
   // newlyAddedLendPosition = newlyAddedLendPosition[0];
   // let calculatedPoolShareTokenAmount = (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest + newlyAddedLendPosition?.lendingPool?.totalEthYield === 0) ?
   //   newlyAddedLendPosition?.depositsUsdc * 1e12 :
@@ -154,8 +203,8 @@ export const DashboardView: FC = ({}) => {
   //   (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest +
   //     (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
 
-   // console.log(state);
-
+   // console.log(store);
+console.log(selectedLendPositionTermDate);
   return (
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col ">
@@ -175,7 +224,7 @@ export const DashboardView: FC = ({}) => {
                       <Link href="/borrow" passHref>
                         <button
                           type="button"
-                          className="text-gray-900 mr-2 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+                          className="text-shrub-grey-900 mr-2 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700"
                         >
                           Borrow
                         </button>
@@ -183,13 +232,15 @@ export const DashboardView: FC = ({}) => {
                       <Link href="/lend" passHref>
                         <button
                           type="button"
-                          className="text-white bg-shrub-green-500 border border-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600  dark:focus:ring-gray-700"
+                          className="text-white bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600  dark:focus:ring-grey-700"
                         >
                           Lend
                         </button>
                       </Link>
                     </span>
                   </div>
+
+
                   <div className="card w-full py-4">
                     <span className="text-left">
                       <h3 className="font-normal  pb-5 text-shrub-grey">
@@ -202,48 +253,19 @@ export const DashboardView: FC = ({}) => {
                     <span>{fromEthDate(blockchainTime).toLocaleString()}</span>
                   </div>
                 </div>
-                <div className="flex flex-wrap -m-4">
-                  <a
-                    href="#"
-                    className="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 m-4"
-                  >
-                    <div className="flex flex-col justify-between p-4 leading-normal">
-                      <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Earn
-                      </h5>
-                      <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-                        $40206.26
-                      </p>
-                    </div>
-                  </a>
-
-                  <a
-                    href="#"
-                    className="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 m-4"
-                  >
-                    <div className="flex flex-col justify-between p-4 leading-normal">
-                      <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Borrow
-                      </h5>
-                      <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-                        $6,421.0
-                      </p>
-                    </div>
-                  </a>
-                </div>
                 <div className="form-control w-full mt-6">
                   <div>
                     <ul className="flex flex-col gap-4">
                       <li className="mr-4">
                         <div className="relative overflow-x-auto border rounded-2xl">
-                          <table className="w-full text-left text-shrub-grey  dark:text-gray-400">
-                            <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
+                          <table className="w-full text-left text-shrub-grey  dark:text-shrub-grey-400">
+                            <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white dark:text-white dark:bg-shub-grey-800">
                               Earn Account
                               <span className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
-                                Total of {testVar} Earning Pools
+                                Total of {dummyEarningPools} Earning Pools
                               </span>
                             </caption>
-                            <thead className="text-xs bg-shrub-grey-light dark:bg-gray-700 border border-shrub-grey-light2">
+                            <thead className="text-xs bg-shrub-grey-light dark:bg-shrub-grey-700 border border-shrub-grey-light2">
                               <tr>
                                 <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
                                   Amount Deposited
@@ -264,11 +286,11 @@ export const DashboardView: FC = ({}) => {
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {state?.lendPositions?.map(
+                              {store?.lendPositions?.map(
                                 (item, index) => (
                                   <tr
                                     key={`earnRow-${index}`}
-                                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+                                    className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700"
                                   >
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {wallet && !ethBalanceIsLoading ? (
@@ -323,23 +345,151 @@ export const DashboardView: FC = ({}) => {
                                       <div className="flex items-center justify-center space-x-2 h-full p-2">
                                         <button
                                           type="button"
-                                          className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-                                        >
-                                          Redeem
-                                        </button>
+                                          className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700"
+                                          disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()}
+                                          onClick={() => {
+                                          setIsModalOpen(true);
+                                          setSelectedLendPositionBalance(item.currentBalanceOverride ? item.currentBalanceOverride :
+                                            ethers.utils.formatUnits(
+                                              ethers.BigNumber.from(item.lendingPool.totalPrincipal)
+                                                .add(item.lendingPool.totalUsdcInterest)
+                                                .add(ethPrice
+                                                  .mul(item.lendingPool.totalEthYield)
+                                                  .div(ethers.utils.parseUnits("1", 20)))
+                                                .mul(item.amount)
+                                                .div(item.lendingPool.tokenSupply), 6));
+                                            setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)).toLocaleString())
+                                        }} >
+                                        Extend
+                                      </button>
+                                        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} >
+                                            <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-shrub-grey-600">
+                                              <h3 className="text-xl font-semibold text-shrub-grey-900 dark:text-white">
+                                                Extend Loan
+                                              </h3>
+                                              <button type="button" onClick={() => setIsModalOpen(false)}
+                                                      className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-shrub-grey-600 dark:hover:text-white">
+                                                <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg"
+                                                     fill="none" viewBox="0 0 14 14">
+                                                  <path stroke="currentColor" strokeLinecap="round"
+                                                        strokeLinejoin="round" strokeWidth="2"
+                                                        d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
+                                                </svg>
+                                                <span className="sr-only">Close modal</span>
+                                              </button>
+                                            </div>
+                                            <div className="relative group w-full">
+                                              {/*extend logic*/}
+                                              <div className="absolute border rounded-3xl"></div>
+                                              <div className="flex flex-col">
+                                                <div className="card w-full text-left">
+                                                  <div className="card-body ">
+                                                    {/*amount control*/}
+                                                    <div className="form-control w-full">
+                                                      <div>
+                                                        <label className="label">
+                                                          <span className="label-text text-shrub-blue">Loan Amount Being Extended</span>
+                                                        </label>
+                                                        <div className="w-full text-xl font-semibold flex flex-row">
+                                                          <span className="text-4xl font-medium text-left w-[500px]">
+                                                              {selectedLendPositionBalance} USDC
+                                                          </span>
+                                                          <Image
+                                                            src="/usdc-logo.svg"
+                                                            className="w-10 inline align-baseline"
+                                                            alt={"usdc logo"}
+                                                            width={10}
+                                                            height={10}
+                                                          />
+                                                        </div>
+                                                      </div>
+                                                    </div>
+
+                                                    {/*interest rate control*/}
+                                                    <div className="form-control w-full mt-4">
+                                                      <label className="label">
+                                                        <span className="label-text text-shrub-blue">New Lockup period</span>
+                                                      </label>
+
+                                                      <ul className="flex flex-row">
+                                                        {loanTerms.filter(option => option.duration > new Date(selectedLendPositionTermDate)).map((item) => (
+                                                          <li key={item.id} className="mr-4">
+                                                            <input
+                                                              type="radio"
+                                                              id={item.id}
+                                                              name="loan-extension"
+                                                              value={item.value}
+                                                              className="hidden peer"
+                                                              required
+                                                              onChange={() => setTimestamp(toEthDate(item.duration))}
+                                                            />
+                                                            <label
+                                                              htmlFor={item.id}
+                                                              className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700"
+                                                            >
+                                                              <div className="block">
+                                                                <div className="w-full text-lg font-semibold">
+                                                                  {calculateLockupPeriod(item.duration)}
+
+                                                                </div>
+                                                              </div>
+                                                            </label>
+                                                          </li>
+                                                        ))}
+                                                      </ul>
+
+                                                    </div>
+
+                                                    {/*divider*/}
+                                                    <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
+
+                                                    {/*display estimate apy*/}
+                                                    {supplyButtonPressed && showAPYSection && (<div className="hero-content flex-col mb-4">
+                                                        <p className="self-start text-lg">Estimated APY</p>
+                                                        <div className="card flex-shrink-0 w-full bg-teal-50 py-6 border-shrub-green border">
+                                                          <div className="text-center p-2">
+                                                            <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
+                                                            <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
+                                                          </div>
+
+                                                        </div>
+                                                      </div>
+                                                    )}
+
+                                                    {/*CTA*/}
+                                                    <button
+                                                      className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border"
+                                                      onClick={handleExtendLoan}
+                                                      disabled={Number(lendAmount) <= 0 || !timestamp}>
+                                                      Continue
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                        </Modal>
+
                                         <button
-                                          type="button"
-                                          className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
                                         >
-                                          <Image
+                                        </button>
+
+                                          <a onMouseOver={() => setCurrentHovered(index)} onMouseOut={() => setCurrentHovered(null)}
+                                             href="https://app.uniswap.org/" target="_blank"
+                                             type="button"
+                                             className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700">{currentHovered === index  ? <Image
+                                            src="/up-right-arrow-light.svg"
+                                            alt="down arrow"
+                                            width={20}
+                                            height={20}
+                                            className="mr-2"
+                                          /> : <Image
                                             src="/up-right-arrow.svg"
                                             alt="down arrow"
                                             width={20}
                                             height={20}
                                             className="mr-2"
-                                          />
-                                          Trade
-                                        </button>
+                                          />} Trade</a>
+
                                       </div>
                                     </td>
                                   </tr>
@@ -351,11 +501,11 @@ export const DashboardView: FC = ({}) => {
                       </li>
                       <li className="mr-4">
                         <div className="relative overflow-x-auto border rounded-2xl">
-                          <table className="w-full text-left text-shrub-grey  dark:text-gray-400">
-                            <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
+                          <table className="w-full text-left text-shrub-grey  dark:text-shrub-grey-400">
+                            <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white dark:text-white dark:bg-shrub-grey-800">
                               Borrow Account
                             </caption>
-                            <thead className="text-xs bg-shrub-grey-light dark:bg-gray-700 border border-shrub-grey-light2">
+                            <thead className="text-xs bg-shrub-grey-light dark:bg-shrub-grey-700 border border-shrub-grey-light2">
                               <tr>
                                 <th
                                   scope="col"
@@ -396,10 +546,10 @@ export const DashboardView: FC = ({}) => {
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {state?.loans?.map((item, index) => (
+                              {store?.loans?.map((item, index) => (
                                 <tr
                                   key={`borrowRow-${index}`}
-                                  className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+                                  className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700"
                                 >
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {wallet && !ethBalanceIsLoading ? (
@@ -476,7 +626,7 @@ export const DashboardView: FC = ({}) => {
                                   <td className="px-1 py-4 text-sm font-bold">
                                     <button
                                       type="button"
-                                      className="flex items-center justify-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+                                      className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700"
                                     >
                                       <Image
                                         src="/up-right-arrow.svg"
@@ -504,4 +654,4 @@ export const DashboardView: FC = ({}) => {
       </div>
     </div>
   );
-};
+}

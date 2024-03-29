@@ -22,7 +22,7 @@ interface LendSummaryViewProps {
 export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp, estimatedAPY, lendAmount}) => {
 
   const router = useRouter();
-  const {state, dispatch} = useFinancialData();
+  const {store, dispatch} = useFinancialData();
   const handleViewDash = async () => {
     await router.push('/dashboard');
   };
@@ -95,8 +95,8 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
     }
   }, [activeLendingPoolsLoading]);
 
-  const latestLendPosition: LendPosition = state?.lendPositions?.reduce((latest, current) =>
-    current.updated > latest.updated ? current : latest, state?.lendPositions[0] || {});
+  const latestLendPosition: LendPosition = store?.lendPositions?.reduce((latest, current) =>
+    current.updated > latest.updated ? current : latest, store?.lendPositions[0] || {});
 
 
   return (
@@ -105,7 +105,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
         <div className="mt-6 self-start">
           {localError && (
             <div
-              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 flex items-center"
+              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-shrub-grey-800 dark:text-red-400 flex items-center"
               role="alert"
             >
               <svg
@@ -129,7 +129,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
             <h1 className=" text-4xl font-medium ">
               <button
                 onClick={onBackLend}
-                className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600"
+                className="w-[56px] h-[40px] bg-shrub-grey-100 rounded-full dark:bg-shrub-grey-600"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -213,7 +213,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                   </>
                 )}
 
-                <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+                <div className="divider h-0.5 w-full bg-shrub-grey-100 my-8"></div>
                 {/*receipt start*/}
                 {(!lendActionInitiated || latestLendPosition?.status === "pending") &&
                   <div>
@@ -261,7 +261,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                         </span>
                       </div>
                     </div>
-                    <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+                    <div className="divider h-0.5 w-full bg-shrub-grey-100 my-8"></div>
                   </div>
                 }
 
@@ -428,14 +428,14 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 {(lendActionInitiated || latestLendPosition?.status === "pending") && (
                   <button
                     onClick={handleViewDash}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
                     View in Dashboard
                   </button>
                   )}
 
                 {(lendActionInitiated || latestLendPosition?.status === "pending") &&  ( <button
                   onClick={onBackLend}
-                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4">
+                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4">
                   Lend More
                 </button>
                   )}
@@ -443,7 +443,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 {(!lendActionInitiated  && latestLendPosition?.status !== "pending") &&
                   <button
                     onClick={onBackLend}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
                   >
                     Cancel
                   </button>

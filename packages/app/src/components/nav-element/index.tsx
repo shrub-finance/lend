@@ -5,6 +5,7 @@ import { cn } from '../../utils';
 import { useRouter } from 'next/router';
 import { useEffect, useRef } from 'react';
 
+
 type NavElementProps = {
     label: string;
     href: string;
@@ -34,7 +35,7 @@ const NavElement = ({
                 divRef.current.className = cn(
                   'transition-all duration-300 ease-out ',
                   isActive
-                    ? 'bg-gray-900 text-shrub-green rounded-btn font-semibold px-[12px] py-[8px]'
+                    ? 'bg-shrub-grey-900 text-shrub-green rounded-btn font-semibold px-[12px] py-[8px]'
                     : 'group-hover:bg-shrub-grey-900 hover:text-shrub-green rounded-btn px-[12px] py-[8px]',
                 );
             }

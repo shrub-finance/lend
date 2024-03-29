@@ -35,7 +35,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
     await router.push('/dashboard');
   };
 
-  const {state, dispatch} = useFinancialData();
+  const {store, dispatch} = useFinancialData();
 
   const [borrowActionInitiated, setBorrowActionInitiated] = useState(false);
 
@@ -61,8 +61,8 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const endDate = fromEthDate(timestamp);
 
 
-  const latestLoan = state?.loans?.reduce((latest, current) =>
-    current.updated > latest.updated ? current : latest, state?.loans[0] || {});
+  const latestLoan = store?.loans?.reduce((latest, current) =>
+    current.updated > latest.updated ? current : latest, store?.loans[0] || {});
 
 
   return (
@@ -71,7 +71,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
         <div className='mt-6 self-start'>
           {localError && (
             <div
-              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 flex items-center"
+              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-shrub-grey-900 dark:text-red-400 flex items-center"
               role="alert">
               <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 mr-2" fill="none"
                    viewBox="0 0 24 24">
@@ -83,7 +83,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
           )}
           <h1 className=" text-4xl font-medium ">
             <button
-              className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600" onClick={onBack}>
+              className="w-[56px] h-[40px] bg-shrub-grey-100 rounded-full dark:bg-shrub-grey-600" onClick={onBack}>
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
                    className="w-6 grow-0 order-0 flex-none ml-[16px] mt-[4px]">
                 <path d="M20 12H4M4 12L10 18M4 12L10 6" stroke="black" strokeWidth="2"
@@ -142,7 +142,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     )}
                   </>}
 
-                <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+                <div className="divider h-0.5 w-full bg-shrub-grey-100 my-8"></div>
 
                 {/*receipt start*/}
                 {(!borrowActionInitiated || latestLoan?.status === "pending" )&& <div>
@@ -179,7 +179,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+                  <div className="divider h-0.5 w-full bg-shrub-grey-100 my-8"></div>
                   {/*total*/}
                   <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row justify-between ">
@@ -265,12 +265,12 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 }
 
                 {(borrowActionInitiated || latestLoan?.status === "pending") && <button onClick={handleViewDash}
-                                          className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View
+                                          className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View
                   in Dashboard
                 </button>}
 
                 {!borrowActionInitiated && latestLoan?.status !== "pending" && <button onClick={onCancel}
-                                           className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel</button>}
+                                           className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel</button>}
               </div>
             </div>
           </div>
