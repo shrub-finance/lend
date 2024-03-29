@@ -22,7 +22,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     log: true,
     libraries: {
-        HelpersLogic: allDeployments.HelpersLogic.address
+        HelpersLogic: allDeployments.HelpersLogic.address,
+        AdminLogic: allDeployments.AdminLogic.address
     },
     args: [
         addresses

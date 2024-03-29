@@ -20,6 +20,7 @@ import {Configuration} from "../libraries/configuration/Configuration.sol";
 
 // Libraries with functions
 import {HelpersLogic} from "../libraries/logic/HelpersLogic.sol";
+import {AdminLogic} from "../libraries/logic/AdminLogic.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBorrowPositionToken.sol";
@@ -28,7 +29,7 @@ import "../interfaces/IMockAaveV3.sol";
 import "hardhat/console.sol";
 
 contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
-    using Strings for uint256;
+//    using Strings for uint256;
 
     mapping(uint256 => DataTypes.LendingPool) public lendingPools; // where the uint256 key is a timestamp
     mapping(uint256 => DataTypes.BorrowingPool) public borrowingPools; // mapping of timestamp of loan endDate => BorrowingPool
@@ -42,14 +43,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     address shrubTreasury;
 
-    event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
     event NewDeposit(uint256 timestamp, address poolShareTokenAddress, address depositor, uint256 amount, uint256 tokenAmount);
     event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 principal, uint40 startDate, uint32 apy);
     event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
-    event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
     event Withdraw(address user, address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcPrincipal, uint usdcInterest);
-    event FinalizeLendingPool(address poolShareTokenAddress, uint shrubInterest, uint shrubYield);
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
@@ -70,44 +68,110 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         shrubTreasury = addresses[5];
     }
 
-    function insertIntoSortedArr(uint[] storage arr, uint newValue) internal {
-        if (arr.length == 0) {
-            arr.push(newValue);
-            // No need to run indexActivePools as the index would be 0 (which it is by default)
-            return;
-        }
-        // First handle the last element of the array
-        if (arr[arr.length - 1] < newValue) {
-            arr.push(newValue);
-            indexActivePools(arr);
-            return;
-        } else {
-            arr.push(arr[arr.length - 1]);
-            if (arr.length == 2) {
-                arr[0] = newValue;
-                indexActivePools(arr);
-                return;
-            }
-        }
-        for(uint i = arr.length - 2; i > 0; i--) {
-            if (arr[i - 1] < newValue) {
-                arr[i] = newValue;
-                indexActivePools(arr);
-                return;
-            }
-            console.log(i);
-            arr[i] = arr[i - 1];
-        }
-        arr[0] = newValue;
-        indexActivePools(arr);
+    // --- Admin Functions ---
+    function createPool(uint256 _timestamp) public onlyOwner {
+        AdminLogic.executeCreatePool(lendingPools, activePoolIndex, activePools, _timestamp);
     }
 
-    function indexActivePools(uint[] memory arr) internal {
-        console.log("running indexActivePools");
-        for (uint i = 0; i < arr.length; i++) {
-            activePoolIndex[activePools[i]] = i;
-        }
+//    function finalizeLendingPool(uint _timestamp) public onlyOwner {
+//        AdminLogic.executeFinalizeLendingPool()
+//    }
+//
+//    function takeSnapshot() public onlyOwner {}
+//
+//    function setShrubTreasury(address _address) public onlyOwner {}
+//
+//    event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
+    event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
+    event FinalizeLendingPool(address poolShareTokenAddress, uint shrubInterest, uint shrubYield);
+
+    function finalizeLendingPool(uint _timestamp) public onlyOwner {
+        DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
+        require(lendingPool.poolShareToken != PoolShareToken(address(0)), "Pool does not exist");
+        require(!lendingPool.finalized, "Pool already finalized");
+        require(block.timestamp >= _timestamp + 6 * 60 * 60, "Must wait until six hours after endDate for finalization"); // Time must be greater than six hours since pool expiration
+        // TODO: Insert extra logic for ensuring everything is funded
+        lendingPool.finalized = true;
+        // Send funds to Shrub
+        aeth.transfer(shrubTreasury, lendingPool.shrubYield);
+        usdc.transfer(shrubTreasury, lendingPool.shrubInterest);
+        emit FinalizeLendingPool(address(lendingPool.poolShareToken), lendingPool.shrubInterest, lendingPool.shrubYield);
     }
+
+    function takeSnapshot() public onlyOwner {
+        uint aETHBalance = aeth.balanceOf(address(this));
+        console.log("running takeSnapshot, platformAEthBalance: %s, aEthSnapshotBalance: %s, claimedCollateralSinceSnapshot: %s", aETHBalance, aEthSnapshotBalance, claimedCollateralSinceSnapshot);
+        console.log("newCollateralSinceSnapshot: %s", newCollateralSinceSnapshot);
+        console.log("lastSnaphot: %s, now: %s, elapsed: %s", lastSnapshotDate, block.timestamp, block.timestamp - lastSnapshotDate);
+//        Get the current balance of bpTotalPoolShares (it is local)
+        // calculate the accumYield for all BP (current balance - snapshot balance)
+        uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) + claimedCollateralSinceSnapshot - newCollateralSinceSnapshot - aEthSnapshotBalance;
+        console.log("aEthYieldSinceLastSnapshot: %s", aEthYieldSinceLastSnapshot);
+//        Calculate accumInterest for all BP
+        for (uint i = 0; i < activePools.length; i++) {
+            // Cleanup paid off BPTs
+            bpt.cleanUpByTimestamp(uint40(activePools[i]));
+            console.log("finished running cleanUpByTimestamp for %s", uint40(activePools[i]));
+//            Find the BPTs related to these timestamps
+//            bptsForPool is an array of tokenIds
+            uint[] memory bptsForPool = bpt.getTokensByTimestamp(uint40(activePools[i]));
+            uint accumInterestBP = 0;
+//            # Loop through the BPTs in order to calculate their accumInterest
+            for (uint j = 0; j < bptsForPool.length; j++) {
+                console.log("in token loop - analyzing tokenId: %s", bptsForPool[j]);
+                accumInterestBP +=  bpt.interestSinceTimestamp(bptsForPool[j], lastSnapshotDate);
+            }
+            // Determine the amount of aETH to distribute from this borrowing pool
+            if (borrowingPools[activePools[i]].poolShareAmount == 0) {
+                console.log("poolShareAmount in borrowing pool is 0 - skipping - %s", activePools[i]);
+//                console.log("poolShareAmount in borrowing pool 0 - skipping");
+                continue;
+            }
+            console.log("bpTotalPoolShares - %s", bpTotalPoolShares);
+            console.log(borrowingPools[activePools[i]].poolShareAmount);
+            uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[activePools[i]].poolShareAmount / bpTotalPoolShares;
+            // Loop through this and future Lending Pools to determine the contribution denominator
+            uint contributionDenominator;
+            for (uint j = i; j < activePools.length; j++) {
+                contributionDenominator += lendingPools[activePools[j]].principal;
+            }
+            // distribute accumInterest and accumYield to LPs based on contribution principal
+            console.log("contributionDenominator - %s", contributionDenominator);
+            console.log("aEthYieldDistribution: %s", aEthYieldDistribution);
+            console.log("accumInterestBP: %s", accumInterestBP);
+            console.log("shrubFee: %s", PlatformConfig.shrubFee);
+            for (uint j = i; j < activePools.length; j++) {
+                console.log("in loop: lendingPool: %s, lendingPoolContribution: %s / %s", activePools[j], lendingPools[activePools[j]].principal, contributionDenominator);
+                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * (100 - PlatformConfig.shrubFee) / 100 / contributionDenominator;
+                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal * (100 - PlatformConfig.shrubFee) / 100 / contributionDenominator;
+                lendingPools[activePools[j]].shrubYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * PlatformConfig.shrubFee / 100 / contributionDenominator;
+                lendingPools[activePools[j]].shrubInterest += accumInterestBP * lendingPools[activePools[j]].principal * PlatformConfig.shrubFee / 100 / contributionDenominator;
+                console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
+                emit LendingPoolYield(
+                    address(lendingPools[activePools[j]].poolShareToken),
+                    lendingPools[activePools[j]].accumInterest,
+                    lendingPools[activePools[j]].accumYield
+                );
+            }
+        }
+        // set the last snapshot date to now
+        lastSnapshotDate = block.timestamp;
+        aEthSnapshotBalance = aeth.balanceOf(address(this));
+        console.log("aEthSnapshotBalance set to: %s", aEthSnapshotBalance);
+        console.log("lastSnapshotDate set to: %s", lastSnapshotDate);
+
+        // zero out the tracking globals;
+        newCollateralSinceSnapshot = 0;
+        claimedCollateralSinceSnapshot = 0;
+    }
+
+    function setShrubTreasury(address _address) public onlyOwner {
+        shrubTreasury = _address;
+    }
+
+
+    // ---
+
 
     function getEthPrice() public view returns (uint256) {
         // Returns an 8 decimal version of USDC / ETH
@@ -242,40 +306,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        require(borrowingPools[timestamp].loans[borrower].LTV != 0, "loan does not exist");
 //        return borrowingPools[timestamp].loans[borrower];
 //    }
-
-    function createPool(uint256 _timestamp) public onlyOwner {
-        require(
-            lendingPools[_timestamp].poolShareToken == PoolShareToken(address(0)),
-            "Pool already exists"
-        );
-        // console.log(_timestamp);
-        // console.log(block.timestamp);
-        require(
-            _timestamp > block.timestamp,
-            "_timestamp must be in the future"
-        );
-        lendingPools[_timestamp].poolShareToken = new PoolShareToken(
-            string(abi.encodePacked("PoolShareToken_", _timestamp.toString())),
-            string(abi.encodePacked("PST_", _timestamp.toString()))
-        );
-        lendingPools[_timestamp].finalized = false;
-        // Make sure to keep the pool sorted
-        insertIntoSortedArr(activePools, _timestamp);
-        emit PoolCreated(_timestamp, address(lendingPools[_timestamp].poolShareToken));
-    }
-
-    function finalizeLendingPool(uint _timestamp) public onlyOwner {
-        DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
-        require(lendingPool.poolShareToken != PoolShareToken(address(0)), "Pool does not exist");
-        require(!lendingPool.finalized, "Pool already finalized");
-        require(block.timestamp >= _timestamp + 6 * 60 * 60, "Must wait until six hours after endDate for finalization"); // Time must be greater than six hours since pool expiration
-        // TODO: Insert extra logic for ensuring everything is funded
-        lendingPool.finalized = true;
-        // Send funds to Shrub
-        aeth.transfer(shrubTreasury, lendingPool.shrubYield);
-        usdc.transfer(shrubTreasury, lendingPool.shrubInterest);
-        emit FinalizeLendingPool(address(lendingPool.poolShareToken), lendingPool.shrubInterest, lendingPool.shrubYield);
-    }
 
     function getUsdcAddress() public view returns (address) {
         return address(usdc);
@@ -664,77 +694,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             aeth.transferFrom(msg.sender, address(this), flashLoanAmount);
         }
         console.log("7 - platform aETH balance: %s", aeth.balanceOf(address(this)));
-    }
-
-    function takeSnapshot() public onlyOwner {
-        uint aETHBalance = aeth.balanceOf(address(this));
-        console.log("running takeSnapshot, platformAEthBalance: %s, aEthSnapshotBalance: %s, claimedCollateralSinceSnapshot: %s", aETHBalance, aEthSnapshotBalance, claimedCollateralSinceSnapshot);
-        console.log("newCollateralSinceSnapshot: %s", newCollateralSinceSnapshot);
-        console.log("lastSnaphot: %s, now: %s, elapsed: %s", lastSnapshotDate, block.timestamp, block.timestamp - lastSnapshotDate);
-//        Get the current balance of bpTotalPoolShares (it is local)
-        // calculate the accumYield for all BP (current balance - snapshot balance)
-        uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) + claimedCollateralSinceSnapshot - newCollateralSinceSnapshot - aEthSnapshotBalance;
-        console.log("aEthYieldSinceLastSnapshot: %s", aEthYieldSinceLastSnapshot);
-//        Calculate accumInterest for all BP
-        for (uint i = 0; i < activePools.length; i++) {
-            // Cleanup paid off BPTs
-            bpt.cleanUpByTimestamp(uint40(activePools[i]));
-            console.log("finished running cleanUpByTimestamp for %s", uint40(activePools[i]));
-//            Find the BPTs related to these timestamps
-//            bptsForPool is an array of tokenIds
-            uint[] memory bptsForPool = bpt.getTokensByTimestamp(uint40(activePools[i]));
-            uint accumInterestBP = 0;
-//            # Loop through the BPTs in order to calculate their accumInterest
-            for (uint j = 0; j < bptsForPool.length; j++) {
-                console.log("in token loop - analyzing tokenId: %s", bptsForPool[j]);
-                accumInterestBP +=  bpt.interestSinceTimestamp(bptsForPool[j], lastSnapshotDate);
-            }
-            // Determine the amount of aETH to distribute from this borrowing pool
-            if (borrowingPools[activePools[i]].poolShareAmount == 0) {
-                console.log("poolShareAmount in borrowing pool is 0 - skipping - %s", activePools[i]);
-//                console.log("poolShareAmount in borrowing pool 0 - skipping");
-                continue;
-            }
-            console.log("bpTotalPoolShares - %s", bpTotalPoolShares);
-            console.log(borrowingPools[activePools[i]].poolShareAmount);
-            uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[activePools[i]].poolShareAmount / bpTotalPoolShares;
-            // Loop through this and future Lending Pools to determine the contribution denominator
-            uint contributionDenominator;
-            for (uint j = i; j < activePools.length; j++) {
-                contributionDenominator += lendingPools[activePools[j]].principal;
-            }
-            // distribute accumInterest and accumYield to LPs based on contribution principal
-            console.log("contributionDenominator - %s", contributionDenominator);
-            console.log("aEthYieldDistribution: %s", aEthYieldDistribution);
-            console.log("accumInterestBP: %s", accumInterestBP);
-            console.log("shrubFee: %s", PlatformConfig.shrubFee);
-            for (uint j = i; j < activePools.length; j++) {
-                console.log("in loop: lendingPool: %s, lendingPoolContribution: %s / %s", activePools[j], lendingPools[activePools[j]].principal, contributionDenominator);
-                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * (100 - PlatformConfig.shrubFee) / 100 / contributionDenominator;
-                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal * (100 - PlatformConfig.shrubFee) / 100 / contributionDenominator;
-                lendingPools[activePools[j]].shrubYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * PlatformConfig.shrubFee / 100 / contributionDenominator;
-                lendingPools[activePools[j]].shrubInterest += accumInterestBP * lendingPools[activePools[j]].principal * PlatformConfig.shrubFee / 100 / contributionDenominator;
-                console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
-                emit LendingPoolYield(
-                    address(lendingPools[activePools[j]].poolShareToken),
-                    lendingPools[activePools[j]].accumInterest,
-                    lendingPools[activePools[j]].accumYield
-                );
-            }
-        }
-        // set the last snapshot date to now
-        lastSnapshotDate = block.timestamp;
-        aEthSnapshotBalance = aeth.balanceOf(address(this));
-        console.log("aEthSnapshotBalance set to: %s", aEthSnapshotBalance);
-        console.log("lastSnapshotDate set to: %s", lastSnapshotDate);
-
-        // zero out the tracking globals;
-        newCollateralSinceSnapshot = 0;
-        claimedCollateralSinceSnapshot = 0;
-    }
-
-    function setShrubTreasury(address _address) public onlyOwner {
-        shrubTreasury = _address;
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {
