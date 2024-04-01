@@ -42,11 +42,11 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
   const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
-  const loanTerms = [
-    { id: 'smallest-loan', value: 'smallest-loan', duration: oneMonth },
-    { id: 'small-loan', value: 'small-loan', duration: threeMonth },
-    { id: 'big-loan', value: 'big-loan', duration: sixMonth },
-    { id: 'biggest-loan', value: 'biggest-loan', duration: twelveMonth },
+  const depositTerms = [
+    { id: 'smallest-deposit', value: 'smallest-deposit', duration: oneMonth },
+    { id: 'small-deposit', value: 'small-deposit', duration: threeMonth },
+    { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
+    { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
   ];
   const [isValidationError, setIsValidationError] = useState(false);
 
@@ -167,15 +167,14 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   <label className="label">
                     <span className="label-text text-shrub-blue">Lockup period</span>
                   </label>
-
                   <ul className="flex flex-row">
-                    {loanTerms.map((item) => (
+                    {depositTerms.map((item) => (
 
                       <li key={item.id} className="mr-4">
                         <input
                           type="radio"
                           id={item.id}
-                          name="loan"
+                          name="deposit"
                           value={item.value}
                           className="hidden peer"
                           required
@@ -186,7 +185,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                         />
                         <label
                           htmlFor={item.id}
-                          className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700"
+                          className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500  dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 dark:hover:text-shrub-green select-none"
                         >
                           <div className="block">
                             <div className="w-full text-lg font-semibold">

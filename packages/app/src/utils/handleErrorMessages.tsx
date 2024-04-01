@@ -30,6 +30,9 @@ export function handleErrorMessagesFactory(
       else if (customError.data) {
           setter(customError.data.message);
       }
+      else if (customError.message) {
+        setter(customError.message);
+      }
     } else if (customMessage) {
       setter(customMessage);
     }

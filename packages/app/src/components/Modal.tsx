@@ -25,11 +25,11 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-shrub-grey-700 bg-opacity-30 z-50 flex justify-center items-center">
+    <div className="fixed inset-0 bg-shrub-grey-700 bg-opacity-80 z-50 flex justify-center items-center">
       <div ref={modalRef} className="modal-container bg-white rounded-3xl shadow-lg p-4">
         {children}
       </div>
-    </div>
+   </div>
   );
 };
 

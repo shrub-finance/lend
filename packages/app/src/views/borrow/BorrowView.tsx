@@ -193,8 +193,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                             setShowBorrowAPYSection(true)
                           }} required/>
                           <label htmlFor={id}
-                                 className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50
-                      peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-200 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700">
+                                 className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-200 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 select-none">
                             <div className="block">
                               <div className="w-full text-lg font-semibold">{rate}%</div>
                             </div>
@@ -218,7 +217,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                       </span>
                     </div>
                     <div className="card w-full bg-teal-50 border border-shrub-green p-10">
-                      { (Number(borrowAmount))? <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} ETH</span>:<span className="sm: text-medium text-shrub-green-500 font-bold text-center">Use amount section to see collateral</span>}
+                      { (Number(borrowAmount))? <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} ETH</span>:<span className="sm: text-medium text-shrub-green-500 font-bold text-center">Enter amount to see the required collateral</span>}
                     </div>
                   </div>
                 )}

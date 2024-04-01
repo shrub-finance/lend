@@ -129,7 +129,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
             <h1 className=" text-4xl font-medium ">
               <button
                 onClick={onBackLend}
-                className="w-[56px] h-[40px] bg-shrub-grey-100 rounded-full dark:bg-shrub-grey-600"
+                className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full dark:bg-shrub-grey-600"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -213,7 +213,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                   </>
                 )}
 
-                <div className="divider h-0.5 w-full bg-shrub-grey-100 my-8"></div>
+                <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
                 {/*receipt start*/}
                 {(!lendActionInitiated || latestLendPosition?.status === "pending") &&
                   <div>
@@ -261,7 +261,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                         </span>
                       </div>
                     </div>
-                    <div className="divider h-0.5 w-full bg-shrub-grey-100 my-8"></div>
+                    <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
                   </div>
                 }
 
@@ -344,9 +344,12 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               contractAbi = {lendingPlatformAbi}
                               isDisabled={latestLendPosition?.status === "pending"}
                               className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
-                              action={async (lendingPlatform) =>
-                              {console.log(lendingPlatform)
+                              action={
+                              async (lendingPlatform) =>
+                              {
+                                setLocalError("");
                                 return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(lendAmount, 6))
+
                               }}
                               onSuccess={async (tx) => {
                                   setLocalError("");
@@ -411,9 +414,8 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                   setLendActionInitiated(true);
                               }}
                               onError={(e) => {
-                                if (e instanceof Error) {
-                                  handleErrorMessages({err: e});
-                                }
+                                handleErrorMessages({err: e});
+
                               }}
                             >
                               {latestLendPosition?.status === "pending"? "Deposit Order Submitted":"Initiate Deposit"}
@@ -428,14 +430,14 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 {(lendActionInitiated || latestLendPosition?.status === "pending") && (
                   <button
                     onClick={handleViewDash}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
                     View in Dashboard
                   </button>
                   )}
 
                 {(lendActionInitiated || latestLendPosition?.status === "pending") &&  ( <button
                   onClick={onBackLend}
-                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4">
+                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4">
                   Lend More
                 </button>
                   )}
@@ -443,7 +445,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 {(!lendActionInitiated  && latestLendPosition?.status !== "pending") &&
                   <button
                     onClick={onBackLend}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
                   >
                     Cancel
                   </button>

@@ -73,14 +73,13 @@ export const DashboardView: FC = ({}) => {
   const [lendAmount, setLendAmount] = useState("");
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
-  const [supplyButtonPressed, setSupplyButtonPressed] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
   const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
-  const loanTerms = [
-    { id: 'smallest-loan', value: 'smallest-loan', duration: oneMonth },
-    { id: 'small-loan', value: 'small-loan', duration: threeMonth },
-    { id: 'big-loan', value: 'big-loan', duration: sixMonth },
-    { id: 'biggest-loan', value: 'biggest-loan', duration: twelveMonth },
+  const depositTerms = [
+    { id: 'smallest-deposit', value: 'smallest-deposit', duration: oneMonth },
+    { id: 'small-deposit', value: 'small-deposit', duration: threeMonth },
+    { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
+    { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
   ];
   const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState("");
   const [currentHovered, setCurrentHovered] = useState<number | null>(null);  const [selectedLendPositionTermDate, setSelectedLendPositionTermDate] = useState("");
@@ -89,8 +88,6 @@ export const DashboardView: FC = ({}) => {
 
   useEffect(() => {
     const handleAPYCalc = () => {
-      setSupplyButtonPressed(true);
-
       const apyGenerated = timestamp === oneMonth.getTime() / 1000 ? 7.56 :
         timestamp === threeMonth.getTime() / 1000 ? 8.14 :
           timestamp === sixMonth.getTime() / 1000 ? 9.04 :
@@ -102,9 +99,7 @@ export const DashboardView: FC = ({}) => {
     if (timestamp) {
       handleAPYCalc();
     }
-  }, [timestamp]); // Removed handleAPYCalc from dependencies
-
-
+  }, [timestamp]);
 
 
   async function fillMax() {
@@ -112,7 +107,7 @@ export const DashboardView: FC = ({}) => {
       setLendAmount(usdcBalance.displayValue);
     } else {
       handleErrorMessages({customMessage: "Wallet not connected. Please check."});
-      console.log('wallet not connected');
+      console.log('Wallet not connected');
     }
   }
   useEffect(() => {
@@ -190,9 +185,6 @@ export const DashboardView: FC = ({}) => {
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
-  function handleExtendLoan() {
-
-  }
 
   /** might need this later **/
   // let newlyAddedLendPosition = store.lendPositions.filter(item => item.hasOwnProperty('id'));
@@ -204,7 +196,7 @@ export const DashboardView: FC = ({}) => {
   //     (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
 
    // console.log(store);
-console.log(selectedLendPositionTermDate);
+
   return (
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col ">
@@ -239,7 +231,105 @@ console.log(selectedLendPositionTermDate);
                       </Link>
                     </span>
                   </div>
+                  <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} >
+                    <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-shrub-grey-600">
+                      <h3 className="text-xl font-semibold text-shrub-grey-900 dark:text-white">
+                        Extend Deposit
+                      </h3>
+                      <button type="button" onClick={() => setIsModalOpen(false)}
+                              className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-shrub-grey-600 dark:hover:text-white">
+                        <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg"
+                             fill="none" viewBox="0 0 14 14">
+                          <path stroke="currentColor" strokeLinecap="round"
+                                strokeLinejoin="round" strokeWidth="2"
+                                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
+                        </svg>
+                        <span className="sr-only">Close modal</span>
+                      </button>
+                    </div>
+                    {/*extend logic*/}
+                    <div className="relative group w-full">
+                      <div className="absolute border rounded-3xl"></div>
+                      <div className="flex flex-col">
+                        <div className="card w-full text-left">
+                          <div className="card-body ">
+                            {/*amount control*/}
+                            <div className="form-control w-full">
+                              <div>
+                                <label className="label">
+                                  <span className="label-text text-shrub-blue">Amount Being Extended</span>
+                                </label>
+                                <div className="w-full text-xl font-semibold flex flex-row">
+                                                            <span className="text-4xl font-medium text-left w-[500px]">
+                                                                {selectedLendPositionBalance} USDC
+                                                            </span>
+                                  <Image
+                                    src="/usdc-logo.svg"
+                                    className="w-10 inline align-baseline"
+                                    alt={"usdc logo"}
+                                    width={10}
+                                    height={10}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            {/*interest rate control*/}
+                            <div className="form-control w-full mt-4">
+                              <label className="label">
+                                <span className="label-text text-shrub-blue">New Lockup Period</span>
+                              </label>
+                              <ul className="flex flex-row">
+                                {depositTerms.filter(option => option.duration > new Date(selectedLendPositionTermDate)).map((item) => (
+                                  <li key={item.id} className="mr-4">
+                                    <input
+                                      type="radio"
+                                      id={item.id} name="deposit-extension"
+                                      value={item.value}
+                                      className="hidden peer"
+                                      required
+                                      onChange={() => {
+                                        setTimestamp(toEthDate(item.duration))
+                                        setShowAPYSection(true)
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={item.id}
+                                      className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 select-none">
+                                      <div className="block">
+                                        <div className="w-full text-lg font-semibold">{calculateLockupPeriod(item.duration)}
+                                        </div>
+                                      </div>
+                                    </label>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
 
+                            {/*divider*/}
+                            <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
+                            {/*display estimate apy*/}
+                            { showAPYSection && (<div className="hero-content flex-col mb-4">
+                                <p className="self-start text-lg">Estimated APY</p>
+                                <div className="card flex-shrink-0 w-full bg-teal-50 py-6 border-shrub-green border">
+                                  <div className="text-center p-2">
+                                    <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
+                                    <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
+                                  </div>
+
+                                </div>
+                              </div>
+                            )}
+                            {/*CTA*/}
+                            <button
+                              className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border"
+                              disabled={!timestamp}>
+                              Continue
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Modal>
 
                   <div className="card w-full py-4">
                     <span className="text-left">
@@ -343,11 +433,7 @@ console.log(selectedLendPositionTermDate);
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className="flex items-center justify-center space-x-2 h-full p-2">
-                                        <button
-                                          type="button"
-                                          className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700"
-                                          disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()}
-                                          onClick={() => {
+                                        <button type="button" className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()} onClick={() => {
                                           setIsModalOpen(true);
                                           setSelectedLendPositionBalance(item.currentBalanceOverride ? item.currentBalanceOverride :
                                             ethers.utils.formatUnits(
@@ -362,118 +448,7 @@ console.log(selectedLendPositionTermDate);
                                         }} >
                                         Extend
                                       </button>
-                                        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} >
-                                            <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-shrub-grey-600">
-                                              <h3 className="text-xl font-semibold text-shrub-grey-900 dark:text-white">
-                                                Extend Loan
-                                              </h3>
-                                              <button type="button" onClick={() => setIsModalOpen(false)}
-                                                      className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-shrub-grey-600 dark:hover:text-white">
-                                                <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg"
-                                                     fill="none" viewBox="0 0 14 14">
-                                                  <path stroke="currentColor" strokeLinecap="round"
-                                                        strokeLinejoin="round" strokeWidth="2"
-                                                        d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
-                                                </svg>
-                                                <span className="sr-only">Close modal</span>
-                                              </button>
-                                            </div>
-                                            <div className="relative group w-full">
-                                              {/*extend logic*/}
-                                              <div className="absolute border rounded-3xl"></div>
-                                              <div className="flex flex-col">
-                                                <div className="card w-full text-left">
-                                                  <div className="card-body ">
-                                                    {/*amount control*/}
-                                                    <div className="form-control w-full">
-                                                      <div>
-                                                        <label className="label">
-                                                          <span className="label-text text-shrub-blue">Loan Amount Being Extended</span>
-                                                        </label>
-                                                        <div className="w-full text-xl font-semibold flex flex-row">
-                                                          <span className="text-4xl font-medium text-left w-[500px]">
-                                                              {selectedLendPositionBalance} USDC
-                                                          </span>
-                                                          <Image
-                                                            src="/usdc-logo.svg"
-                                                            className="w-10 inline align-baseline"
-                                                            alt={"usdc logo"}
-                                                            width={10}
-                                                            height={10}
-                                                          />
-                                                        </div>
-                                                      </div>
-                                                    </div>
-
-                                                    {/*interest rate control*/}
-                                                    <div className="form-control w-full mt-4">
-                                                      <label className="label">
-                                                        <span className="label-text text-shrub-blue">New Lockup period</span>
-                                                      </label>
-
-                                                      <ul className="flex flex-row">
-                                                        {loanTerms.filter(option => option.duration > new Date(selectedLendPositionTermDate)).map((item) => (
-                                                          <li key={item.id} className="mr-4">
-                                                            <input
-                                                              type="radio"
-                                                              id={item.id}
-                                                              name="loan-extension"
-                                                              value={item.value}
-                                                              className="hidden peer"
-                                                              required
-                                                              onChange={() => setTimestamp(toEthDate(item.duration))}
-                                                            />
-                                                            <label
-                                                              htmlFor={item.id}
-                                                              className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700"
-                                                            >
-                                                              <div className="block">
-                                                                <div className="w-full text-lg font-semibold">
-                                                                  {calculateLockupPeriod(item.duration)}
-
-                                                                </div>
-                                                              </div>
-                                                            </label>
-                                                          </li>
-                                                        ))}
-                                                      </ul>
-
-                                                    </div>
-
-                                                    {/*divider*/}
-                                                    <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
-
-                                                    {/*display estimate apy*/}
-                                                    {supplyButtonPressed && showAPYSection && (<div className="hero-content flex-col mb-4">
-                                                        <p className="self-start text-lg">Estimated APY</p>
-                                                        <div className="card flex-shrink-0 w-full bg-teal-50 py-6 border-shrub-green border">
-                                                          <div className="text-center p-2">
-                                                            <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
-                                                            <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
-                                                          </div>
-
-                                                        </div>
-                                                      </div>
-                                                    )}
-
-                                                    {/*CTA*/}
-                                                    <button
-                                                      className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border"
-                                                      onClick={handleExtendLoan}
-                                                      disabled={Number(lendAmount) <= 0 || !timestamp}>
-                                                      Continue
-                                                    </button>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                        </Modal>
-
-                                        <button
-                                        >
-                                        </button>
-
-                                          <a onMouseOver={() => setCurrentHovered(index)} onMouseOut={() => setCurrentHovered(null)}
+                                        <a onMouseOver={() => setCurrentHovered(index)} onMouseOut={() => setCurrentHovered(null)}
                                              href="https://app.uniswap.org/" target="_blank"
                                              type="button"
                                              className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700">{currentHovered === index  ? <Image
