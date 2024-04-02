@@ -18,8 +18,7 @@ interface LendViewProps {
 
 export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
 
-  const [openModal, setOpenModal] = useState(false);
-  const w = useConnectedWallet();
+
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
 

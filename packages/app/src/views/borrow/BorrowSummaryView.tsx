@@ -83,7 +83,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
           )}
           <h1 className=" text-4xl font-medium ">
             <button
-              className="w-[56px] h-[40px] bg-shrub-grey-100 rounded-full dark:bg-shrub-grey-600" onClick={onBack}>
+              className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full dark:bg-shrub-grey-600" onClick={onBack}>
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
                    className="w-6 grow-0 order-0 flex-none ml-[16px] mt-[4px]">
                 <path d="M20 12H4M4 12L10 18M4 12L10 6" stroke="black" strokeWidth="2"
@@ -142,7 +142,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     )}
                   </>}
 
-                <div className="divider h-0.5 w-full bg-shrub-grey-100 my-8"></div>
+                <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
 
                 {/*receipt start*/}
                 {(!borrowActionInitiated || latestLoan?.status === "pending" )&& <div>
@@ -179,7 +179,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="divider h-0.5 w-full bg-shrub-grey-100 my-8"></div>
+                  <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
                   {/*total*/}
                   <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row justify-between ">

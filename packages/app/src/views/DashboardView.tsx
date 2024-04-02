@@ -12,7 +12,7 @@ import {
 } from "@thirdweb-dev/react";
 import { getBlock, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
 
-import { toEthDate, fromEthDate, calculateLockupPeriod, getPlatformDates } from '@shrub-lend/common'
+import { toEthDate, fromEthDate, getPlatformDates } from '@shrub-lend/common'
 import {
   usdcAddress,
   lendingPlatformAddress,
@@ -27,7 +27,7 @@ import { USER_POSITIONS_QUERY } from "../constants/queries";
 import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
-import { handleErrorMessagesFactory } from '../utils/handleErrorMessages'
+import ExtendView from './extend/ExtendView';
 
 const now = new Date();
 const oneYearFromNow = new Date(new Date(now).setFullYear(now.getFullYear() + 1));
@@ -68,9 +68,8 @@ export const DashboardView: FC = ({}) => {
       user: walletAddress && walletAddress.toLowerCase(),
     },
   });
-  const [localError, setLocalError] = useState("");
-  const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
-  const [lendAmount, setLendAmount] = useState("");
+
+  const [currentHovered, setCurrentHovered] = useState<number | null>(null);
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
@@ -82,7 +81,12 @@ export const DashboardView: FC = ({}) => {
     { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
   ];
   const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState("");
-  const [currentHovered, setCurrentHovered] = useState<number | null>(null);  const [selectedLendPositionTermDate, setSelectedLendPositionTermDate] = useState("");
+  const [selectedLendPositionTermDate, setSelectedLendPositionTermDate] = useState<Date | null>(null);
+  const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(0);
+  const [selectedTokenSupply, setSelectedTokenSupply] = useState(0);
+  const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(0);
+
+
   const dummyEarningPools = "2";
 
 
@@ -101,15 +105,6 @@ export const DashboardView: FC = ({}) => {
     }
   }, [timestamp]);
 
-
-  async function fillMax() {
-    if (!usdcBalanceIsLoading) {
-      setLendAmount(usdcBalance.displayValue);
-    } else {
-      handleErrorMessages({customMessage: "Wallet not connected. Please check."});
-      console.log('Wallet not connected');
-    }
-  }
   useEffect(() => {
     // console.log("running contract useEffect");
     async function callContract() {
@@ -195,7 +190,7 @@ export const DashboardView: FC = ({}) => {
   //   (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest +
   //     (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
 
-   // console.log(store);
+   console.log(store);
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -232,103 +227,20 @@ export const DashboardView: FC = ({}) => {
                     </span>
                   </div>
                   <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} >
-                    <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-shrub-grey-600">
-                      <h3 className="text-xl font-semibold text-shrub-grey-900 dark:text-white">
-                        Extend Deposit
-                      </h3>
-                      <button type="button" onClick={() => setIsModalOpen(false)}
-                              className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-shrub-grey-600 dark:hover:text-white">
-                        <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg"
-                             fill="none" viewBox="0 0 14 14">
-                          <path stroke="currentColor" strokeLinecap="round"
-                                strokeLinejoin="round" strokeWidth="2"
-                                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
-                        </svg>
-                        <span className="sr-only">Close modal</span>
-                      </button>
-                    </div>
-                    {/*extend logic*/}
-                    <div className="relative group w-full">
-                      <div className="absolute border rounded-3xl"></div>
-                      <div className="flex flex-col">
-                        <div className="card w-full text-left">
-                          <div className="card-body ">
-                            {/*amount control*/}
-                            <div className="form-control w-full">
-                              <div>
-                                <label className="label">
-                                  <span className="label-text text-shrub-blue">Amount Being Extended</span>
-                                </label>
-                                <div className="w-full text-xl font-semibold flex flex-row">
-                                                            <span className="text-4xl font-medium text-left w-[500px]">
-                                                                {selectedLendPositionBalance} USDC
-                                                            </span>
-                                  <Image
-                                    src="/usdc-logo.svg"
-                                    className="w-10 inline align-baseline"
-                                    alt={"usdc logo"}
-                                    width={10}
-                                    height={10}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                            {/*interest rate control*/}
-                            <div className="form-control w-full mt-4">
-                              <label className="label">
-                                <span className="label-text text-shrub-blue">New Lockup Period</span>
-                              </label>
-                              <ul className="flex flex-row">
-                                {depositTerms.filter(option => option.duration > new Date(selectedLendPositionTermDate)).map((item) => (
-                                  <li key={item.id} className="mr-4">
-                                    <input
-                                      type="radio"
-                                      id={item.id} name="deposit-extension"
-                                      value={item.value}
-                                      className="hidden peer"
-                                      required
-                                      onChange={() => {
-                                        setTimestamp(toEthDate(item.duration))
-                                        setShowAPYSection(true)
-                                      }}
-                                    />
-                                    <label
-                                      htmlFor={item.id}
-                                      className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 select-none">
-                                      <div className="block">
-                                        <div className="w-full text-lg font-semibold">{calculateLockupPeriod(item.duration)}
-                                        </div>
-                                      </div>
-                                    </label>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-
-                            {/*divider*/}
-                            <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
-                            {/*display estimate apy*/}
-                            { showAPYSection && (<div className="hero-content flex-col mb-4">
-                                <p className="self-start text-lg">Estimated APY</p>
-                                <div className="card flex-shrink-0 w-full bg-teal-50 py-6 border-shrub-green border">
-                                  <div className="text-center p-2">
-                                    <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
-                                    <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
-                                  </div>
-
-                                </div>
-                              </div>
-                            )}
-                            {/*CTA*/}
-                            <button
-                              className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border"
-                              disabled={!timestamp}>
-                              Continue
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <ExtendView
+                      depositTerms={depositTerms}
+                      timestamp={timestamp}
+                      selectedLendPositionBalance={selectedLendPositionBalance}
+                      setIsModalOpen={setIsModalOpen}
+                      setTimestamp={setTimestamp}
+                      showAPYSection={showAPYSection}
+                      estimatedAPY={estimatedAPY}
+                      setShowAPYSection={setShowAPYSection}
+                      selectedLendPositionTermDate={selectedLendPositionTermDate}
+                      selectedPoolShareTokenAmount={selectedPoolShareTokenAmount}
+                      selectedTotalEthYield={selectedTotalEthYield}
+                      selectedTokenSupply={selectedTokenSupply}
+                    />
                   </Modal>
 
                   <div className="card w-full py-4">
@@ -444,8 +356,12 @@ export const DashboardView: FC = ({}) => {
                                                   .div(ethers.utils.parseUnits("1", 20)))
                                                 .mul(item.amount)
                                                 .div(item.lendingPool.tokenSupply), 6));
-                                            setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)).toLocaleString())
+                                            setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
+                                          setSelectedPoolShareTokenAmount(item.amount)
+                                          setSelectedTokenSupply(item.lendingPool.tokenSupply)
+                                          setSelectedTotalEthYield(item.lendingPool.totalEthYield)
                                         }} >
+                                          {/*Corresponding modal at the top*/}
                                         Extend
                                       </button>
                                         <a onMouseOver={() => setCurrentHovered(index)} onMouseOut={() => setCurrentHovered(null)}
