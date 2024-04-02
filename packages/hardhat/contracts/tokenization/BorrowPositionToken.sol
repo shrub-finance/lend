@@ -158,10 +158,10 @@ contract BorrowPositionToken is ERC721, Ownable {
         console.log(bd.apy);
         console.log(bd.principal);
         console.log(Constants.APY_DECIMALS);
-        console.log(Constants.SECONDS_IN_YEAR);
+        console.log(Constants.YEAR);
         console.log("---");
 
-        return bd.apy * bd.principal * (timestampEnd - timestampStart) / (Constants.APY_DECIMALS * Constants.SECONDS_IN_YEAR);
+        return bd.apy * bd.principal * (timestampEnd - timestampStart) / (Constants.APY_DECIMALS * Constants.YEAR);
     }
 
     // Returns the usdc interest earned since the last adjustment (payment) to a BPT
@@ -184,11 +184,11 @@ contract BorrowPositionToken is ERC721, Ownable {
         }
         if (bd.startDate > timestamp) {
             console.log("bpt created after start date - using startDate in place of timestamp");
-            console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - bd.startDate) / (Constants.APY_DECIMALS * Constants.SECONDS_IN_YEAR));
-            return bd.apy * bd.principal * (block.timestamp - bd.startDate) / (Constants.APY_DECIMALS * Constants.SECONDS_IN_YEAR);
+            console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - bd.startDate) / (Constants.APY_DECIMALS * Constants.YEAR));
+            return bd.apy * bd.principal * (block.timestamp - bd.startDate) / (Constants.APY_DECIMALS * Constants.YEAR);
         }
-        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - timestamp) / (Constants.APY_DECIMALS * Constants.SECONDS_IN_YEAR));
-        return bd.apy * bd.principal * (block.timestamp - timestamp) / (Constants.APY_DECIMALS * Constants.SECONDS_IN_YEAR);
+        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR));
+        return bd.apy * bd.principal * (block.timestamp - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR);
     }
 
     function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint lastSnapshotDate, address sender) onlyOwner external returns(uint principalReduction) {
