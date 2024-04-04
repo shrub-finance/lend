@@ -34,7 +34,10 @@ export function handleErrorMessagesFactory(
         setter(customError.message);
       }
     } else if (customMessage) {
-      setter(customMessage);
+     if(customMessage.includes('deployment `shrub-lend` does not exist')){
+        setter("Unable to connect to Shrub's subgraph. Please check connection.")
+      }
+      else setter(customMessage);
     }
   };
 }

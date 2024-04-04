@@ -1,22 +1,100 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { truncateEthAddress } from '../../utils/ethMethods';
-import { lendingPlatformAddress } from '../../utils/contracts';
-import { ethers } from 'ethers';
+import { timestamps, toEthDate, truncateEthAddress } from '../../utils/ethMethods';
+import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
+import { BigNumber, ethers } from 'ethers';
+import {
+  useAddress,
+  useBalance,
+  useContract,
+  useContractRead,
+  useContractWrite,
+  Web3Button,
+} from '@thirdweb-dev/react';
+import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
+import { useLazyQuery } from '@apollo/client';
+import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
 
 interface ExtendSummaryProps {
-  amountBeingExtended: string;
+  lendAmountBeingExtended: string;
   estimatedAPY: string;
   oldTimestamp: Date;
   newTimestamp: Date;
   poolShareTokenAmount: number;
   totalEthYield: number;
   tokenSupply: number;
+  poolTokenId: string;
 }
 
-const ExtendSummaryView: React.FC<ExtendSummaryProps> = ({ amountBeingExtended, estimatedAPY, oldTimestamp, newTimestamp, poolShareTokenAmount, totalEthYield, tokenSupply}) =>
-
+const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
+  { lendAmountBeingExtended, estimatedAPY, oldTimestamp, newTimestamp, poolShareTokenAmount, totalEthYield, tokenSupply, poolTokenId}) =>
 {
+  const [
+    getActiveLendingPools,
+    {
+      loading: activeLendingPoolsLoading,
+      error: activeLendingPoolsError,
+      data: activeLendingPoolsData,
+      startPolling: activeLendingPoolsStartPolling,
+      stopPolling: activeLendingPoolsStopPolling,
+    },
+  ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
+
+  const [isApproved, setIsApproved] = useState(false);
+  const [tokenAllowanceSufficient, setTokenAllowanceSufficient] = useState(true);
+  const {data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading} = useBalance(usdcAddress);
+  const walletAddress = useAddress();
+  const {
+    contract: usdc,
+    isLoading: usdcIsLoading,
+    error: usdcError
+  } = useContract(usdcAddress, usdcAbi);
+  const {
+    contract: lendingPlatform,
+    isLoading: lendingPlatformIsLoading,
+    error: lendingPlatformError
+  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
+  const {
+    mutateAsync: mutateAsyncDeposit,
+    isLoading: isLoadingTakeDeposit,
+    error: errorDeposit
+  } = useContractWrite(
+    lendingPlatform,
+    "deposit",
+  );
+  const {
+    mutateAsync: mutateAsyncApprove,
+    isLoading: isLoadingApprove,
+    error: errorApprove
+  } = useContractWrite(
+    usdc,
+    "approve",
+  );
+  const [localError, setLocalError] = useState("");
+  const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
+  const {
+    data: allowance,
+    isLoading: isLoadingAllowance,
+    error: errorAllowance
+  } = useContractRead(usdc, "allowance", [walletAddress, lendingPlatformAddress]);
+
+
+  useEffect(() => {
+    if (!walletAddress) return;
+
+    getActiveLendingPools().then().catch(error => {
+      console.error("Failed to fetch active lending pools:", error);
+    });
+  }, [walletAddress, getActiveLendingPools]);
+
+
+  useEffect(() => {
+    // console.log("running userPositionsDataLoading useEffect");
+    if (activeLendingPoolsLoading) {
+      return;
+    }
+  }, [activeLendingPoolsLoading]);
+
   return (
 
     <div className="relative group mt-4 w-full min-w-[500px]">
@@ -28,11 +106,11 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = ({ amountBeingExtended, 
                 Extend Deposit
               </p>
               <div className="w-full text-xl font-semibold flex flex-row">
-                <span className="text-4xl  font-medium text-left w-[500px]">{amountBeingExtended} USDC</span>
+                <span className="text-4xl  font-medium text-left w-[500px]">{lendAmountBeingExtended} USDC</span>
                 <Image alt="usdc icon" src="/usdc-logo.svg" className="w-10 inline align-baseline" width="40" height="40"/>
               </div>
               <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">When you
-                extend this deposit, <span className="font-bold">{amountBeingExtended} USDC</span> will be moved from the old lending pool with end date<span className="font-bold"> {oldTimestamp.toLocaleString()}</span> to the new lending pool with the end date <span className="font-bold">{newTimestamp.toLocaleString()}</span>. You will collect earned ETH yield of <span className="font-bold">
+                extend this deposit, <span className="font-bold">{lendAmountBeingExtended} USDC</span> will be moved from the old lending pool ending<span className="font-bold"> {oldTimestamp?.toLocaleString()}</span> to the new lending pool ending <span className="font-bold">{newTimestamp?.toLocaleString()}</span>. You will collect earned ETH yield of <span className="font-bold">
                   {
                     ethers.utils.formatUnits(
                       ethers.BigNumber.from(poolShareTokenAmount).mul(totalEthYield).div(tokenSupply),
@@ -50,11 +128,11 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = ({ amountBeingExtended, 
               <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                 <div className="flex flex-row  justify-between">
                   <span className="">Previous End Date</span>
-                  <span>{oldTimestamp.toDateString()}</span>
+                  <span>{oldTimestamp?.toDateString()}</span>
                 </div>
                 <div className="flex flex-row  justify-between">
                   <span className="">New End Date</span>
-                  <span>{newTimestamp.toDateString()}
+                  <span>{newTimestamp?.toDateString()}
                     <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>
                       </span>
                 </div>
@@ -71,12 +149,114 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = ({ amountBeingExtended, 
               </div>
 
               <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
+             {/*approve and extend deposit*/}
+             {usdcBalanceDataIsLoading ? (
+               <p>Loading balance...</p>
+             ) : (
+               <>
+                 {/* Check if user has insufficient balance */}
+                 {usdcBalanceData &&
+                   BigNumber.from(usdcBalanceData.value).lt(
+                     ethers.utils.parseUnits(lendAmountBeingExtended, 6),
+                   ) && (
+                     <button
+                       disabled={true}
+                       className="btn btn-block border-0 normal-case text-xl mb-4 disabled:!text-shrub-grey-200 disabled:!bg-shrub-grey-50"
+                     >
+                       Insufficient Balance
+                     </button>
+                   )}
+                 {/* Approve if allowance is insufficient, and balance is enough */}
+                 {!allowance ||
+                 BigNumber.from(allowance).lt(
+                   ethers.utils.parseUnits(lendAmountBeingExtended, 6),
+                 )
+                   ? usdcBalanceData &&
+                   !BigNumber.from(usdcBalanceData.value).lt(
+                     ethers.utils.parseUnits(lendAmountBeingExtended, 6),
+                   ) && (
+                     <Web3Button
+                       contractAddress={lendingPlatformAddress}
+                       contractAbi={lendingPlatformAbi}
+                       className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
+                       action={() =>
+                         mutateAsyncApprove({
+                           args: [
+                             lendingPlatformAddress,
+                             ethers.constants.MaxUint256,
+                           ],
+                         })
+                       }
+                       onSuccess={() => setIsApproved(true)}
+                       onError={(e) => {
+                         if (e instanceof Error) {
+                           handleErrorMessages({ err: e });
+                         }
+                       }}
+                     >
+                       Approve
+                     </Web3Button>
+                   )
+                   : null}
 
-             {/*CTA*/}
-             <button
-               className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border">
-               Extend Loan
-             </button>
+                 {allowance &&
+                   !BigNumber.from(allowance).lt(
+                     ethers.utils.parseUnits(lendAmountBeingExtended, 6),
+                   ) &&
+                   !(
+                     usdcBalanceData &&
+                     BigNumber.from(usdcBalanceData.value).lt(
+                       ethers.utils.parseUnits(lendAmountBeingExtended, 6),
+                     )
+                   ) && (
+                     <Web3Button
+                       contractAddress={lendingPlatformAddress}
+                       contractAbi = {lendingPlatformAbi}
+                       className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
+                       action={
+                         async (lendingPlatform) =>
+                         {
+                           if (allowance.gte(ethers.BigNumber.from(poolShareTokenAmount))) {
+                             console.log("Allowance is sufficient.");
+                             return await lendingPlatform?.contractWrapper?.writeContract?.extendDeposit(
+                               toEthDate(oldTimestamp),
+                               toEthDate(newTimestamp),
+                               ethers.utils.formatUnits(poolShareTokenAmount, 0)
+                             );
+                           } else {
+                             console.log("Allowance is not sufficient.");
+                             setTokenAllowanceSufficient(false);
+                           }
+                         }
+                     }
+
+                       onSuccess={async (tx) => {
+
+                         try {
+                           const receipt = await tx.wait();
+                           if(!receipt.status) {
+                             throw new Error("Transaction failed")
+                           }
+
+
+                         } catch (e) {
+                           console.log("Transaction failed:", e);
+
+                         }
+
+                       }}
+                       onError={(e) => {
+                         handleErrorMessages({err: e});
+
+                       }}
+                     >
+                       {tokenAllowanceSufficient? 'Extend Deposit' : 'Approve Token Amount'}
+                     </Web3Button>
+                   )}
+               </>
+             )}
+
+
             </div>
           </div>
         </div>

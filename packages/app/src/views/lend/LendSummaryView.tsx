@@ -349,15 +349,19 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               {
                                 setLocalError("");
                                 return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(lendAmount, 6))
-
                               }}
                               onSuccess={async (tx) => {
                                   setLocalError("");
+                                  if(activeLendingPoolsError) {
+                                    handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
+                                    return
+                                  }
                                   const filteredLendingPools =
-                                    activeLendingPoolsData.lendingPools.filter(
-                                      (pool) =>
-                                        pool.timestamp === timestamp.toString(),
+                                    activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
+                                      (item) =>
+                                        item.timestamp === timestamp.toString(),
                                     );
+
                                   const matchedLendingPool =
                                     filteredLendingPools.length > 0
                                       ? filteredLendingPools[0]

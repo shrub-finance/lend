@@ -653,7 +653,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         console.log("running extendDeposit");
         // Check that user owns this amount on poolShareTokens
 
-        // Check that newTimestamp is after currentTimestamp
+        // Check that newTimestamp is after oldTimestamp
         require(newTimestamp > currentTimestamp, "newTimestamp must be greater than currentTimestamp");
         // essentially perform a withdraw - the poolShareTokens are burned - aETH is sent to user
         (uint usdcWithdrawn, uint ethWithdrawn) = withdrawUnchecked(currentTimestamp, tokenAmount);

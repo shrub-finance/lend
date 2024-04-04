@@ -17,6 +17,7 @@ interface ExtendViewProps {
   depositTerms: any[];
   estimatedAPY: string;
   setIsModalOpen: (isOpen: boolean) => void;
+  selectedPoolTokenId: string;
 }
 
 const ExtendView: React.FC<ExtendViewProps> = ({
@@ -32,10 +33,10 @@ const ExtendView: React.FC<ExtendViewProps> = ({
                                                  depositTerms,
                                                  estimatedAPY,
                                                  setIsModalOpen,
+                                                 selectedPoolTokenId
+
                                                }) => {
   const [showSummary, setShowSummary] = useState(false);
-
-
   return (
     <>
     <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-shrub-grey-600">
@@ -134,13 +135,14 @@ const ExtendView: React.FC<ExtendViewProps> = ({
   </div>:
     (
       <ExtendSummary
-        amountBeingExtended={selectedLendPositionBalance}
+        lendAmountBeingExtended={selectedLendPositionBalance}
         estimatedAPY={estimatedAPY}
         newTimestamp={fromEthDate(timestamp)}
         oldTimestamp={selectedLendPositionTermDate}
         poolShareTokenAmount={selectedPoolShareTokenAmount}
         totalEthYield={selectedTotalEthYield}
         tokenSupply={selectedTokenSupply}
+        poolTokenId={selectedPoolTokenId}
 
       />)}
     </>
