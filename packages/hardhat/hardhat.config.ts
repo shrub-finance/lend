@@ -12,12 +12,12 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
-      // chainId: 1337,
       chainId: 1337,
-      mining: {
-        auto: false,
-        interval: [3000, 3500] // Simulate mining time between 3 and 6 seconds
-      }
+      // chainId: 1337,
+      // mining: {
+      //   auto: false,
+      //   interval: [3000, 3500] // Simulate mining time between 3 and 6 seconds
+      // }
     }
   },
   namedAccounts: {
