@@ -1,3 +1,4 @@
+"use client";
 import {FC, useEffect, useState} from "react";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import {useBalance, useConnectedWallet, useContract} from "@thirdweb-dev/react";
@@ -8,12 +9,16 @@ import {toEthDate} from '@shrub-lend/common';
 import {calculateLockupPeriod, getPlatformDates} from "@shrub-lend/common";
 import Image from 'next/image'
 
+
+
+
 interface LendViewProps {
   onLendViewChange: (estimatedAPY: string, timestamp: number, lendAmount: string) => void;
 }
 
 export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
-  const w = useConnectedWallet();
+
+
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
 
@@ -25,8 +30,8 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [timestamp, setTimestamp] = useState(0);
-  const [showAPYSection, setShowAPYSection] = useState(false);
-  const [supplyButtonPressed, setSupplyButtonPressed] = useState(false);
+  const [showLendAPYSection, setShowLendAPYSection] = useState(false);
+  const [continueButtonEnabled, setContinueButtonEnabled] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
 
   const {
@@ -35,7 +40,15 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
-    const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
+  const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
+  const depositTerms = [
+    { id: 'smallest-deposit', value: 'smallest-deposit', duration: oneMonth },
+    { id: 'small-deposit', value: 'small-deposit', duration: threeMonth },
+    { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
+    { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
+  ];
+  const [isValidationError, setIsValidationError] = useState(false);
+
 
   async function fillMax() {
     if (!usdcBalanceIsLoading) {
@@ -47,21 +60,27 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   }
 
   const handleLendAmountChange = (event) => {
-    const inputValue = event.target.value;
-    setLendAmount(parse(inputValue));
-    const parsedValue = parseFloat(inputValue);
+    const inputValue = event.target.value.trim();
+    // Update the state with the current input value
+    setLendAmount(inputValue);
 
-    if (parsedValue !== 0 && !isNaN(parsedValue)) {
-      setShowAPYSection(true);
-    } else {
-      setShowAPYSection(false);
+    // Check if the input value is empty 
+    if (inputValue === '') {
+      setIsValidationError(false);
+      setShowLendAPYSection(false);
+      return;
     }
 
+    // Continue with validation for non-empty inputs
+    const isValidInput = /^[0-9]+(\.[0-9]*)?$/.test(inputValue);
+    const parsedValue = parseFloat(inputValue);
+    const isInvalidOrZero = !isValidInput || isNaN(parsedValue) || parsedValue === 0;
+    setIsValidationError(isInvalidOrZero);
   };
 
   useEffect(() => {
     const handleAPYCalc = () => {
-      setSupplyButtonPressed(true);
+      setContinueButtonEnabled(true);
 
       const apyGenerated = timestamp === oneMonth.getTime() / 1000 ? 7.56 :
         timestamp === threeMonth.getTime() / 1000 ? 8.14 :
@@ -115,15 +134,20 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                 <div className="form-control w-full">
                   <label className="label relative">
                     <span className="label-text text-shrub-blue text-md">Amount</span>
-                    <span className="label-text-alt  text-xl font-semibold absolute right-4 top-[57px]">
+                    <span className="label-text-alt text-xl font-semibold absolute right-4 top-[57px]">
                       <Image src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub" width="40" height="40" alt="usdc logo"/>USDC</span>
                   </label>
                   <input type="text" placeholder="Enter amount"
-                         className="input input-bordered w-full  h-[70px] bg-white border-solid border border-gray-200 text-lg
-                         focus:shadow-shrub-thin focus:border-shrub-green-50" onChange={handleLendAmountChange}
+                         className="input input-bordered w-full h-[70px] bg-white border-solid border border-shrub-grey-light2 text-lg
+                         focus:outline-none focus:shadow-shrub-thin focus:border-shrub-green-50" onChange={handleLendAmountChange}
                          value={format(lendAmount)}/>
+                  {isValidationError && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                      Amount must be a number
+                    </p>
+                  )}
                   <label className="label">
-                    <span className="label-text-alt text-gray-500 text-sm font-light">Wallet balance: {!usdcBalanceIsLoading &&
+                    <span className="label-text-alt text-shrub-grey-200 text-sm font-light">Wallet balance: {!usdcBalanceIsLoading &&
 
                       <span>
                           {usdcBalance.displayValue} USDC
@@ -142,61 +166,47 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   <label className="label">
                     <span className="label-text text-shrub-blue">Lockup period</span>
                   </label>
-                  <div>
+                  <ul className="flex flex-row">
+                    {depositTerms.map((item) => (
 
-                    <ul className="flex flex-row">
-                      <li className="mr-4">
-                        <input type="radio" id="smallest-loan" name="loan" value="smallest-loan" className="hidden peer"
-                               required onChange={() => setTimestamp(toEthDate(oneMonth))}/>
-                        <label htmlFor="smallest-loan"
-                               className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                      <li key={item.id} className="mr-4">
+                        <input
+                          type="radio"
+                          id={item.id}
+                          name="deposit"
+                          value={item.value}
+                          className="hidden peer"
+                          required
+                          onChange={() => {
+                            setTimestamp(toEthDate(item.duration))
+                            setShowLendAPYSection(true)
+                          }}
+                        />
+                        <label
+                          htmlFor={item.id}
+                          className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500  dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 dark:hover:text-shrub-green select-none"
+                        >
                           <div className="block">
-                            <div className="w-full text-lg font-semibold">{calculateLockupPeriod(oneMonth)}</div>
+                            <div className="w-full text-lg font-semibold">
+                              {calculateLockupPeriod(item.duration)}
+                            </div>
                           </div>
                         </label>
                       </li>
-                      <li className="mr-4">
-                        <input type="radio" id="small-loan" name="loan" value="small-loan" className="hidden peer"
-                               onChange={() => setTimestamp(toEthDate(threeMonth))}/>
-                        <label htmlFor="small-loan"
-                               className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                          <div className="block">
-                            <div className="w-full text-lg font-semibold">{calculateLockupPeriod(threeMonth)}</div>
-                          </div>
-                        </label>
-                      </li>
-                      <li className="mr-4">
-                        <input type="radio" id="big-loan" name="loan" value="big-loan" className="hidden peer"
-                               required onChange={() => setTimestamp(toEthDate(sixMonth))}/>
-                        <label htmlFor="big-loan"
-                               className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                          <div className="block">
-                            <div className="w-full text-lg font-semibold">{calculateLockupPeriod(sixMonth)}</div>
-                          </div>
-                        </label>
-                      </li>
-                      <li className="mr-4">
-                        <input type="radio" id="biggest-loan" name="loan" value="biggest-loan" className="hidden peer"
-                               required onChange={() => setTimestamp(toEthDate(twelveMonth))}/>
-                        <label htmlFor="biggest-loan"
-                               className="inline-flex items-center justify-center w-full px-4 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                          <div className="block">
-                            <div className="w-full text-lg font-semibold">{calculateLockupPeriod(twelveMonth)}</div>
-                          </div>
-                        </label>
-                      </li>
-                    </ul>
-                  </div>
+
+                    ))}
+                  </ul>
+
                 </div>
 
                 {/*divider*/}
-                <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+                <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
 
-                {/*spinner */}
+                {/*Simple spinner svg*/}
                 {/*<div className="hero-content flex-col mb-3">*/}
                 {/*  <div role="status">*/}
                 {/*    <svg aria-hidden="true"*/}
-                {/*         className="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-shrub-green-500"*/}
+                {/*         className="inline w-8 h-8 mr-2 text-shrub-grey-200 animate-spin dark:text-shrub-grey-600 fill-shrub-green-500"*/}
                 {/*         viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">*/}
                 {/*      <path*/}
                 {/*        d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"*/}
@@ -212,7 +222,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
 
 
                 {/*display estimate apy*/}
-                {supplyButtonPressed && showAPYSection && (<div className="hero-content flex-col mb-4">
+                {showLendAPYSection && continueButtonEnabled && (<div className="hero-content flex-col mb-4">
                     <p className="self-start text-lg">Estimated APY</p>
                     <div className="card flex-shrink-0 w-full bg-teal-50 py-6 border-shrub-green border">
                       <div className="text-center p-2">
@@ -230,10 +240,10 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                 <button
                   className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
-                  disabled:text-gray-50
+                  disabled:text-white
                   disabled:border"
                   onClick={handleLendContinue}
-                  disabled={Number(lendAmount) <= 0 || !timestamp}
+                  disabled={Number(lendAmount) <= 0 || !timestamp || isValidationError}
                 >Continue</button>
               </div>
             </div>

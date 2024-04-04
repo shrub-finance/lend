@@ -22,7 +22,7 @@ interface LendSummaryViewProps {
 export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp, estimatedAPY, lendAmount}) => {
 
   const router = useRouter();
-  const {state, dispatch} = useFinancialData();
+  const {store, dispatch} = useFinancialData();
   const handleViewDash = async () => {
     await router.push('/dashboard');
   };
@@ -95,8 +95,8 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
     }
   }, [activeLendingPoolsLoading]);
 
-  const latestLendPosition: LendPosition = state?.lendPositions?.reduce((latest, current) =>
-    current.updated > latest.updated ? current : latest, state?.lendPositions[0] || {});
+  const latestLendPosition: LendPosition = store?.lendPositions?.reduce((latest, current) =>
+    current.updated > latest.updated ? current : latest, store?.lendPositions[0] || {});
 
 
   return (
@@ -105,7 +105,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
         <div className="mt-6 self-start">
           {localError && (
             <div
-              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 flex items-center"
+              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-shrub-grey-800 dark:text-red-400 flex items-center"
               role="alert"
             >
               <svg
@@ -129,7 +129,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
             <h1 className=" text-4xl font-medium ">
               <button
                 onClick={onBackLend}
-                className="w-[56px] h-[40px] bg-gray-100 rounded-full dark:bg-gray-600"
+                className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full dark:bg-shrub-grey-600"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -213,7 +213,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                   </>
                 )}
 
-                <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+                <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
                 {/*receipt start*/}
                 {(!lendActionInitiated || latestLendPosition?.status === "pending") &&
                   <div>
@@ -261,7 +261,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                         </span>
                       </div>
                     </div>
-                    <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+                    <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
                   </div>
                 }
 
@@ -344,17 +344,24 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               contractAbi = {lendingPlatformAbi}
                               isDisabled={latestLendPosition?.status === "pending"}
                               className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
-                              action={async (lendingPlatform) =>
-                              {console.log(lendingPlatform)
+                              action={
+                              async (lendingPlatform) =>
+                              {
+                                setLocalError("");
                                 return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(lendAmount, 6))
                               }}
                               onSuccess={async (tx) => {
                                   setLocalError("");
+                                  if(activeLendingPoolsError) {
+                                    handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
+                                    return
+                                  }
                                   const filteredLendingPools =
-                                    activeLendingPoolsData.lendingPools.filter(
-                                      (pool) =>
-                                        pool.timestamp === timestamp.toString(),
+                                    activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
+                                      (item) =>
+                                        item.timestamp === timestamp.toString(),
                                     );
+
                                   const matchedLendingPool =
                                     filteredLendingPools.length > 0
                                       ? filteredLendingPools[0]
@@ -411,9 +418,8 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                   setLendActionInitiated(true);
                               }}
                               onError={(e) => {
-                                if (e instanceof Error) {
-                                  handleErrorMessages({err: e});
-                                }
+                                handleErrorMessages({err: e});
+
                               }}
                             >
                               {latestLendPosition?.status === "pending"? "Deposit Order Submitted":"Initiate Deposit"}
@@ -428,14 +434,14 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 {(lendActionInitiated || latestLendPosition?.status === "pending") && (
                   <button
                     onClick={handleViewDash}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
                     View in Dashboard
                   </button>
                   )}
 
                 {(lendActionInitiated || latestLendPosition?.status === "pending") &&  ( <button
                   onClick={onBackLend}
-                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4">
+                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4">
                   Lend More
                 </button>
                   )}
@@ -443,7 +449,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 {(!lendActionInitiated  && latestLendPosition?.status !== "pending") &&
                   <button
                     onClick={onBackLend}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-gray-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
                   >
                     Cancel
                   </button>
