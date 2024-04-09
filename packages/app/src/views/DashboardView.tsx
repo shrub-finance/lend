@@ -142,7 +142,7 @@ export const DashboardView: FC = ({}) => {
 
   useEffect(() => {
     // Once data is loaded, update the store
-    if (!userPositionsDataLoading && userPositionsData) {
+    if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
       const { loans, lendPositions } = userPositionsData.user;
       dispatch({
         type: "SET_USER_DATA",
