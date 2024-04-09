@@ -58,7 +58,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     uint public bpTotalPoolShares;
 
-    constructor(address[6] memory addresses) {
+    constructor(address[6] calldata addresses) {
         usdc = IERC20(addresses[0]);
         bpt = IBorrowPositionToken(addresses[1]);
         wrappedTokenGateway = IMockAaveV3(addresses[2]);
@@ -188,6 +188,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint maxLoanV = valueOfEth * ltv / 10 ** 22; // remove 20 decimals to get back to 6 decimals of USDC
         return maxLoanV;
     }
+
+    // returns a 8 decimal representation of ltv (i.e. 25% = 25000000)
+//    function calcLtv(uint usdcAmount, uint ethAmount, uint ethPrice) public pure returns (uint ltv) {
+//        // usdcAmount has 6 decimals
+//        // ethAmount has 18 decimals
+//        // ethPrice has 8 decimals
+//    }
 
     function requiredCollateral(uint ltv, uint usdcLoanValue) public view returns (uint256) {
         // returns collateral required in wei
@@ -686,16 +693,32 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log("7 - platform aETH balance: %s", aeth.balanceOf(address(this)));
     }
 
-//    function extendExpiredLoan(uint tokenId, uint claim) external {
-//        DataTypes.BorrowData memory loanDetails = bpt.getLoan(tokenId);
-//        require(claim > 0 && claim < 4, "invalid claim");
-//        uint availabilityTime = claim == 1 ? Configuration.FORCED_EXTENSION_1 :
-//            claim == 2 ? Configuration.FORCED_EXTENSION_2 :
-//            Configuration.FORCED_EXTENSION_3;
-//        require(block.timestamp > loanDetails.endDate + availabilityTime ,"loan is not eligible for extension");
-//        // The caller will be rewarded with some amount of the users' collateral. This will be based on the size of the debt to be refinanced
-//        bonus = bpt.debt(tokenId) * 0.01;
-//    }
+    function forceExtendBorrow(uint tokenId, uint claim) external {
+        DataTypes.BorrowData memory loanDetails = bpt.getLoan(tokenId);
+        require(claim > 0 && claim < 4, "invalid claim");
+        uint availabilityTime = claim == 1 ? Configuration.FORCED_EXTENSION_1 :
+            claim == 2 ? Configuration.FORCED_EXTENSION_2 :
+            Configuration.FORCED_EXTENSION_3;
+        require(block.timestamp > loanDetails.endDate + availabilityTime ,"loan is not eligible for extension");
+        // The caller will be rewarded with some amount of the users' collateral. This will be based on the size of the debt to be refinanced
+        // TODO: For now bonus is 1% of collatertal - update this later to be eth value of the appropriate percent of the debt
+        uint bonus = loanDetails.collateral / 100;
+        // flash loan if necessary for collateral
+        // take new loan on behalf of the holder - collateral is same as previous loan minus bonus
+        takeLoanInternal(DataTypes.TakeLoanInternalParams({
+            principal: loanDetails.principal,
+            collateral: loanDetails - bonus,
+        // TODO: ltv should be calculated to be the smallest valid
+            ltv: 50,
+            timestamp: newTimestamp,
+            startDate: uint40(lastSnapshotDate),
+            beneficiary: msg.sender,
+            loanHolder: msg.sender
+        }));
+        // repay previous loan and collect collateral
+    }
+
+    function getEarliestValidTimestamp()
 
     function bytesToString(bytes memory data) public pure returns(string memory) {
         bytes memory alphabet = "0123456789abcdef";
