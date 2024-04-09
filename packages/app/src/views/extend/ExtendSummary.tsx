@@ -40,9 +40,6 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
     },
   ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
 
-  const [isApproved, setIsApproved] = useState(false);
-  const [tokenAllowanceSufficient, setTokenAllowanceSufficient] = useState(true);
-  const {data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading} = useBalance(usdcAddress);
   const walletAddress = useAddress();
   const {
     contract: usdc,
@@ -55,14 +52,6 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
   const {
-    mutateAsync: mutateAsyncDeposit,
-    isLoading: isLoadingTakeDeposit,
-    error: errorDeposit
-  } = useContractWrite(
-    lendingPlatform,
-    "deposit",
-  );
-  const {
     mutateAsync: mutateAsyncApprove,
     isLoading: isLoadingApprove,
     error: errorApprove
@@ -74,7 +63,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const {
     data: allowance,
-    isLoading: isLoadingAllowance,
+    isLoading: allowanceIsLoading,
     error: errorAllowance
   } = useContractRead(usdc, "allowance", [walletAddress, lendingPlatformAddress]);
 
@@ -112,7 +101,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
               <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">When you
                 extend this deposit, <span className="font-bold">{lendAmountBeingExtended} USDC</span> will be moved from the old lending pool ending<span className="font-bold"> {oldTimestamp?.toLocaleString()}</span> to the new lending pool ending <span className="font-bold">{newTimestamp?.toLocaleString()}</span>. You will collect earned ETH yield of <span className="font-bold">
                   {
-                    ethers.utils.formatUnits(
+                    poolShareTokenAmount && ethers.utils.formatUnits(
                       ethers.BigNumber.from(poolShareTokenAmount).mul(totalEthYield).div(tokenSupply),
                       6
                     )
@@ -150,31 +139,16 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
 
               <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
              {/*approve and extend deposit*/}
-             {usdcBalanceDataIsLoading ? (
+             {(allowanceIsLoading) ? (
                <p>Loading balance...</p>
              ) : (
                <>
-                 {/* Check if user has insufficient balance */}
-                 {usdcBalanceData &&
-                   BigNumber.from(usdcBalanceData.value).lt(
-                     ethers.utils.parseUnits(lendAmountBeingExtended, 6),
-                   ) && (
-                     <button
-                       disabled={true}
-                       className="btn btn-block border-0 normal-case text-xl mb-4 disabled:!text-shrub-grey-200 disabled:!bg-shrub-grey-50"
-                     >
-                       Insufficient Balance
-                     </button>
-                   )}
                  {/* Approve if allowance is insufficient, and balance is enough */}
                  {!allowance ||
                  BigNumber.from(allowance).lt(
                    ethers.utils.parseUnits(lendAmountBeingExtended, 6),
                  )
-                   ? usdcBalanceData &&
-                   !BigNumber.from(usdcBalanceData.value).lt(
-                     ethers.utils.parseUnits(lendAmountBeingExtended, 6),
-                   ) && (
+                   && (
                      <Web3Button
                        contractAddress={lendingPlatformAddress}
                        contractAbi={lendingPlatformAbi}
@@ -187,27 +161,21 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
                            ],
                          })
                        }
-                       onSuccess={() => setIsApproved(true)}
+                       onSuccess={() => {}}
                        onError={(e) => {
                          if (e instanceof Error) {
                            handleErrorMessages({ err: e });
                          }
                        }}
                      >
-                       Approve
+                       Approve USDC
                      </Web3Button>
                    )
-                   : null}
+                   }
 
                  {allowance &&
                    !BigNumber.from(allowance).lt(
                      ethers.utils.parseUnits(lendAmountBeingExtended, 6),
-                   ) &&
-                   !(
-                     usdcBalanceData &&
-                     BigNumber.from(usdcBalanceData.value).lt(
-                       ethers.utils.parseUnits(lendAmountBeingExtended, 6),
-                     )
                    ) && (
                      <Web3Button
                        contractAddress={lendingPlatformAddress}
@@ -216,17 +184,11 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
                        action={
                          async (lendingPlatform) =>
                          {
-                           if (allowance.gte(ethers.BigNumber.from(poolShareTokenAmount))) {
-                             console.log("Allowance is sufficient.");
                              return await lendingPlatform?.contractWrapper?.writeContract?.extendDeposit(
                                toEthDate(oldTimestamp),
                                toEthDate(newTimestamp),
                                ethers.utils.formatUnits(poolShareTokenAmount, 0)
                              );
-                           } else {
-                             console.log("Allowance is not sufficient.");
-                             setTokenAllowanceSufficient(false);
-                           }
                          }
                      }
 
@@ -250,7 +212,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
 
                        }}
                      >
-                       {tokenAllowanceSufficient? 'Extend Deposit' : 'Approve Token Amount'}
+                       Extend Deposit
                      </Web3Button>
                    )}
                </>
