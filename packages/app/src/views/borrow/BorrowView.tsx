@@ -18,7 +18,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [isContinuePressed, setIsContinuePressed] = useState(false);
-  const [showSection, setShowSection] = useState(false);
+  const [showBorrowAPYSection, setShowBorrowAPYSection] = useState(false);
 
 
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
@@ -35,41 +35,17 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
-  // const balance = useUserSOLBalanceStore((s) => s.balance)
-  // const { getUserSOLBalance } = useUserSOLBalanceStore()
-
-  // const tokenBalance = useTokenBalance();
-
-  // const [ethBalance , setEthBalance] = useState('')
   const format = (val: string) => val;
-  const parse = (val: string) => val.replace(/^\$/, "");
+  const [isValidationError, setIsValidationError] = useState(false);
 
-
-
-
-  // useEffect(() => {
-  //   // if (wallet.publicKey) {
-  //   //   console.log(wallet.publicKey.toBase58())
-  //   //   getUserSOLBalance(wallet.publicKey, connection)
-  //   // }
-  //
-  //   async function getWalletBalance() {
-  //     const walletBalance = await sdk.wallet.balance();
-  //     setEthBalance(walletBalance.displayValue);
-  //   }
-  //
-  //   getWalletBalance().catch(console.error);
-  //
-  // }, [wallet.publicKey, connection, getUserSOLBalance, sdk, switchChain])
-
+  const interestRates = [
+    { id: "smallest-borrow", rate: "0" },
+    { id: "small-borrow", rate: "1" },
+    { id: "big-borrow", rate: "5" },
+    { id: "biggest-borrow", rate: "8" },
+  ];
 
   async function fillMax() {
-    // if (wallet.publicKey) {
-    //   setBorrowAmount(String(tokenBalance));}
-    // else{
-    //   handleErrorMessages({ customMessage: "Wallet not connected. Please check." });
-    //   console.log('wallet not connected');
-    // }
     if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading) {
       handleErrorMessages({customMessage: "Wallet not connected. Please check."});
       console.log('wallet not connected');
@@ -79,17 +55,19 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
     }
   }
 
+
   const handleAmountChange = (event) => {
-    const inputValue = event.target.value;
-    setBorrowAmount(parse(inputValue));
-    const parsedValue = parseFloat(inputValue);
-
-    if (parsedValue !== 0 && !isNaN(parsedValue)) {
-      setShowSection(true);
-    } else {
-      setShowSection(false);
+    const inputValue = event.target.value.trim();
+    setBorrowAmount(inputValue);
+    if (inputValue === '') {
+      setIsValidationError(false);
+      return;
     }
+    const isValidInput = /^[0-9]+(\.[0-9]*)?$/.test(inputValue);
+    const parsedValue = parseFloat(inputValue);
+    const isInvalidOrZero = !isValidInput || isNaN(parsedValue) || parsedValue === 0;
 
+    setIsValidationError(isInvalidOrZero);
   };
 
   useEffect(() => {
@@ -152,7 +130,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
         <div className='mt-6 self-start'>
 
           {localError && (
-            <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 flex items-center" role="alert">
+            <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-shrub-grey-900 dark:text-red-400 flex items-center" role="alert">
               <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -182,13 +160,15 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                       <Image alt="usdc logo" src="/usdc-logo.svg" className="w-[22px] mr-1 inline align-sub" width="40" height="40"/>USDC</span>
                   </label>
                   <input type="text" placeholder="Enter amount" name="amount" id="amount"
-                         className="input input-bordered w-full h-[70px] bg-white border-solid border border-gray-200 text-lg focus:shadow-shrub-thin focus:border-shrub-green-50"
+                         className="input input-bordered w-full h-[70px] bg-white border-solid border border-shrub-grey-50 text-lg focus:outline-none focus:shadow-shrub-thin focus:border-shrub-green-50"
                          onChange={handleAmountChange}
                          value={format(borrowAmount)}/>
-
+                  {isValidationError && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                      Amount must be a number
+                    </p>)}
                   <label className="label">
-                    <span className="label-text-alt text-gray-500 text-sm font-light">Wallet balance:  {!ethBalanceIsLoading &&
-
+                    <span className="label-text-alt text-shrub-grey-200 text-sm font-light">Wallet balance:  {!ethBalanceIsLoading &&
                         <span>
                           {( ethBalance.displayValue || 0)} ETH
                           {/*{(balance || 0).toLocaleString()} ETH*/}
@@ -205,64 +185,39 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                     <span className="label-text text-shrub-blue">Interest Rate</span>
                   </label>
                   <div>
-
                     <ul className="flex flex-row ">
-                      <li className="mr-4">
-                        <input type="radio" id="smallest-borrow" name="loan" value="smallest-borrow" className="hidden peer" onChange={() => setSelectedInterestRate("0")} required/>
-                        <label htmlFor="smallest-borrow"
-                               className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50
-                                peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                          <div className="block">
-                            <div className="w-full text-lg font-semibold">0%</div>
-                          </div>
-                        </label>
-                      </li>
-                      <li className="mr-4">
-                        <input type="radio" id="small-borrow" name="loan" value="small-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("1")}/>
-                        <label htmlFor="small-borrow"
-                               className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500
-                                peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                          <div className="block">
-                            <div className="w-full text-lg font-semibold">1%</div>
-                          </div>
-                        </label>
-                      </li>
-                      <li className="mr-4">
-                        <input type="radio" id="big-borrow" name="loan" value="big-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("5")} required/>
-                        <label htmlFor="big-borrow"
-                               className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                          <div className="block">
-                            <div className="w-full text-lg font-semibold">5%</div>
-                          </div>
-                        </label>
-                      </li>
-                      <li className="mr-4">
-                        <input type="radio" id="biggest-borrow" name="loan" value="biggest-borrow" className="hidden peer"  onChange={() => setSelectedInterestRate("8")} required/>
-                        <label htmlFor="biggest-borrow"
-                               className="inline-flex items-center justify-center w-full px-8 py-3  text-shrub-grey bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-gray-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50
-                               peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                          <div className="block">
-                            <div className="w-full text-lg font-semibold">8%</div>
-                          </div>
-                        </label>
-                      </li>
+                      {interestRates.map(({ id, rate }) => (
+                        <li className="mr-4" key={id}>
+                          <input type="radio" id={id} name="loan" value={id} className="hidden peer" onChange={() =>
+                          { setSelectedInterestRate(rate)
+                            setShowBorrowAPYSection(true)
+                          }} required/>
+                          <label htmlFor={id}
+                                 className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-200 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 select-none">
+                            <div className="block">
+                              <div className="w-full text-lg font-semibold">{rate}%</div>
+                            </div>
+                          </label>
+                        </li>
+                      ))}
                     </ul>
-
                   </div>
 
                 </div>
 
-                <div className="divider h-0.5 w-full bg-gray-100 my-8"></div>
+                <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
 
                 {/*display required collateral*/}
-                {showSection && (
+                {showBorrowAPYSection && (
                   <div className="hero-content mb-2 flex-col gap-2 justify-between">
                     <div className="card w-full flex flex-row text-lg justify-between">
                       <span className="w-[360px]">Required collateral</span>
-                      <span className="hidden md:inline"><Image alt="eth logo" src="/eth-logo.svg" className="w-4 inline align-middle" width="16" height="24"/> ETH</span>
+                      <span className="hidden md:inline">
+                        <Image alt="eth logo" src="/eth-logo.svg" className="w-4 inline align-middle" width="16" height="24"/> ETH
+                      </span>
                     </div>
                     <div className="card w-full bg-teal-50 border border-shrub-green p-10">
-                      <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} ETH</span>
+                      { (Number(borrowAmount))? <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} ETH</span>:<span className="sm: text-medium text-shrub-green-500 font-bold text-center">Enter amount to see the required collateral</span>}
                     </div>
                   </div>
                 )}
@@ -270,7 +225,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                 {/*cta*/}
                 <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl text-white disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
-                  disabled:text-gray-50
+                  disabled:text-white
                   disabled:border" disabled={Number(borrowAmount) <= 0|| selectedInterestRate === ""}
                   onClick={handleBorrowContinue}>Continue</button>
               </div>

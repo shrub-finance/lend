@@ -202,23 +202,13 @@ task("extendDeposit", "extend an existing deposit")
         const tokenAmount = await oldPoolShareToken.balanceOf(liquidityAccount.address);
         const tokenTotalSupply = await oldPoolShareToken.totalSupply();
 
-        // Check if oldPoolShareToken is already approved
-        const approved = await oldPoolShareToken.allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
-        console.log(`approval is currently ${ethers.formatUnits(approved, 18)} poolShareToken`);
-        // If approval is not sufficient then create an approval tx
-        if (approved < tokenAmount) {
-            const needToApprove = tokenAmount - approved;
-            console.log(`approving additional ${ethers.formatUnits(needToApprove, 18)} poolShareToken for deposit`);
-            await sendTransaction(oldPoolShareToken.connect(liquidityAccount).approve(lendingPlatform.getAddress(), needToApprove), "oldPoolShareToken Approval");
-        }
-        // Approve oldPoolShareToken for moving if not
         const usdcToDeposit = (lendingPool.lendPrincipal + lendingPool.lendAccumInterest) * tokenAmount / tokenTotalSupply;
         // // Check approval of account to ensure that it is sufficient
         const usdcApproved = await usdc.allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
         console.log(`approval is currently ${ethers.formatUnits(usdcApproved, 6)} USDC`);
         // If approval is not sufficient then create an approval tx
-        if (approved < usdcToDeposit) {
-            const needToApprove = usdcToDeposit - approved;
+        if (usdcApproved < usdcToDeposit) {
+            const needToApprove = usdcToDeposit - usdcApproved;
             console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
             await sendTransaction(usdc.connect(liquidityAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
         }
@@ -247,25 +237,46 @@ task("extendLoan", "extend an existing loan")
         const borrowerAccount = await ethers.getSigner(account);
         const parsedAdditionalCollateral = ethers.parseUnits(additionalCollateral.toString(),6);
         const parsedAdditionalRepayment = ethers.parseEther(additionalRepayment.toString());
+        const loanDebt = await bpt.debt(tokenId);
+        const loanDetails = await bpt.getLoan(tokenId);
+        const usdcAllowance = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
+        const aethAllowance = await aeth.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
+        const aethBalance = await aeth.balanceOf(borrowerAccount.getAddress());
+        const flashLoanAmount = loanDetails.collateral + parsedAdditionalCollateral - aethBalance > 0n ?
+            loanDetails.collateral + parsedAdditionalCollateral - aethBalance :
+            0n
+        const aethRequirement = loanDetails.collateral + parsedAdditionalCollateral + flashLoanAmount;
 
-        const usdcRequirement = await bpt.debt(tokenId) + parsedAdditionalRepayment;
+        // Adding 1% buffer to deal with possible small increase in debt between calculation and when extend is called
+        const usdcRequirement = loanDebt * 101n / 100n + parsedAdditionalRepayment;
         // Check approval of account to ensure that it is sufficient
-        const approved = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
-        console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
+        console.log(`approval is currently ${ethers.formatUnits(usdcAllowance, 6)} USDC`);
         // If approval is not sufficient then create an approval tx
-        if (approved < usdcRequirement) {
-            const needToApprove = usdcRequirement - approved;
+        if (usdcAllowance < usdcRequirement) {
+            const usdcNeedToApprove = usdcRequirement - usdcAllowance;
             console.log(`
-bpt.debt: ${await bpt.debt(tokenId)}
+bpt.debt: ${loanDebt}
 parsedAdditionalRequirement: ${parsedAdditionalRepayment}
-approved: ${approved}
-usdcRequirement: ${usdcRequirement}
-needToApprove: ${needToApprove}
+USDC Allowance: ${usdcAllowance}
+USDC Requirement: ${usdcRequirement}
+USDC needToApprove: ${usdcNeedToApprove}
 `)
-            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
-            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove * 3n), "USDC Approval");
+            console.log(`approving additional ${ethers.formatUnits(usdcNeedToApprove, 6)} USDC for deposit`);
+            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), usdcNeedToApprove), "USDC Approval");
         }
-        await sendTransaction(aeth.connect(borrowerAccount).approve(lendingPlatform.getAddress(), ethers.parseEther("100")), "aETH Approval");
+        if (aethAllowance < aethRequirement) {
+            const aethNeedToApprove = aethRequirement - aethAllowance;
+            console.log(`
+bpt.collateral: ${loanDetails.collateral}
+parsedAdditionalCollateral: ${parsedAdditionalCollateral}
+flashLoanAmount: ${flashLoanAmount}
+AETH Allowance: ${aethAllowance}
+AETH Requirement: ${aethRequirement}
+AETH needToApprove: ${aethNeedToApprove}
+`)
+            console.log(`approving additional ${ethers.formatUnits(aethNeedToApprove, 6)} AETH for deposit`);
+            await sendTransaction(aeth.connect(borrowerAccount).approve(lendingPlatform.getAddress(), aethNeedToApprove), "AETH Approval");
+        }
 
         await sendTransaction(
             lendingPlatform.connect(borrowerAccount).extendLoan(
@@ -311,7 +322,8 @@ task("repayLoan", "add USDC to a lending pool")
         console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
         // If approval is not sufficient then create an approval tx
         if (approved < debt) {
-            const needToApprove = debt - approved;
+            // Adding 1% buffer to deal with possible small increase in debt between calculation and when extend is called
+            const needToApprove = debt * 101n / 100n - approved;
             console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
             await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
         }
