@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const SYMBOL = "SBPT";
   const usdcAddress = usdCoinDeployment.address;
 
-  const deployResult = await deploy("BorrowPositionToken", {
+  await deploy("BorrowPositionToken", {
     from: deployer,
     log: true,
     args: [NAME, SYMBOL, usdcAddress]

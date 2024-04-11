@@ -8,77 +8,31 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-import "./PoolShareToken.sol";
-import "./BorrowPositionToken.sol";
-import "./MockAaveV3.sol";
-import "./AETH.sol";
+import "../tokenization/PoolShareToken.sol";
+import "../tokenization/BorrowPositionToken.sol";
+import "../dependencies/MockAaveV3.sol";
+import "../dependencies/AETH.sol";
+import "../configuration/PlatformConfig.sol";
+
+import {USDCoin} from "../dependencies/USDCoin.sol";
+import {DataTypes} from '../libraries/types/DataTypes.sol';
+import {Configuration} from "../libraries/configuration/Configuration.sol";
+
+// Libraries with functions
+import {HelpersLogic} from "../libraries/logic/HelpersLogic.sol";
+import {AdminLogic} from "../libraries/logic/AdminLogic.sol";
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../interfaces/IBorrowPositionToken.sol";
+import "../interfaces/IMockAaveV3.sol";
 
 import "hardhat/console.sol";
-import {USDCoin} from "./USDCoin.sol";
 
-contract LendingPlatform is Ownable, ReentrancyGuard {
-    // using SafeERC20 for IERC20;
-    using Strings for uint256;
+contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
+//    using Strings for uint256;
 
-    struct LendingPool {
-        // uint40 endDate
-        uint256 principal; // Total amount of USDC that has been contributed to the LP
-        uint256 accumInterest; // The amount of USDC interest earned
-        uint256 accumYield; // The amount of aETH earned through Aave
-        uint256 shrubInterest; // Interest allocated for Shrub Treasury
-        uint256 shrubYield; // Yield allocated for Shrub Treasury
-//        uint256 aaveInterestSnapshot;
-        PoolShareToken poolShareToken;
-        bool finalized; // If the pool is finalized and eligible for withdraws
-    }
-
-    struct BorrowingPool {
-        uint principal; // Total amount of USDC that has been borrowed in this buckets' loans
-        uint collateral; // The total amount of ETH collateral deposited for loans in this bucket
-        uint poolShareAmount; // Relative claim of the total platform aETH for this bucket. Used to calculate yield for lending pools
-        uint totalAccumInterest; // Tracking accumulator for use in case of loan default
-        uint totalAccumYield; // Tracking accumulator for use in case of loan default
-        uint totalRepaid; // Tracking accumulator for use in case of loan default - tracks USDC paid back
-    }
-
-    struct PoolDetails {
-        uint lendPrincipal;
-        uint lendAccumInterest;
-        uint lendAccumYield;
-        address lendPoolShareTokenAddress;
-        uint lendShrubInterest;
-        uint lendShrubYield;
-        uint borrowPrincipal;
-        uint borrowCollateral;
-        uint borrowPoolShareAmount;
-        uint borrowTotalAccumInterest;
-        uint borrowTotalAccumYield;
-        uint borrowTotalRepaid;
-    }
-
-//    struct Loan {
-//        uint principal; // The loan amount (6 decimals)
-//        uint collateral; // The collateral for the loan, presumably in ETH (18 decimals)
-//        uint32 LTV; // The Loan-to-Value ratio - (valid values: 20, 25, 33, 50)
-//        uint32 APY; // The Annual Percentage Yield (6 decimals)
-////        PoolContribution[] contributingPools; // Array of PoolContributions representing each contributing pool and its liquidity contribution.
-//    }
-
-    struct ChainlinkResponse {
-        uint80 roundId;
-        int256 answer;
-        uint256 startedAt;
-        uint256 updatedAt;
-        uint80 answeredInRound;
-    }
-
-    struct PoolContribution {
-        uint poolTimestamp; // The pools timestamp.
-        uint liquidityContribution; // The liquidity contribution from the pool at the time of the loan. Integer value as a proportion of 10 ** 8
-    }
-
-    mapping(uint256 => LendingPool) public lendingPools; // where the uint256 key is a timestamp
-    mapping(uint256 => BorrowingPool) public borrowingPools; // mapping of timestamp of loan endDate => BorrowingPool
+    mapping(uint256 => DataTypes.LendingPool) public lendingPools; // where the uint256 key is a timestamp
+    mapping(uint256 => DataTypes.BorrowingPool) public borrowingPools; // mapping of timestamp of loan endDate => BorrowingPool
     mapping(uint256 => uint256) public activePoolIndex; // mapping of timestamp => index of activePools
 
     uint256[] public activePools; // Sorted ascending list of timestamps of active pools
@@ -86,30 +40,27 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     uint aEthSnapshotBalance;
     uint newCollateralSinceSnapshot;
     uint claimedCollateralSinceSnapshot;
-    uint shrubFee = 10;
 
     address shrubTreasury;
 
-    event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
     event NewDeposit(uint256 timestamp, address poolShareTokenAddress, address depositor, uint256 amount, uint256 tokenAmount);
     event NewLoan(uint tokenId, uint timestamp, address borrower, uint256 collateral, uint256 principal, uint40 startDate, uint32 apy);
     event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
-    event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
     event Withdraw(address user, address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcPrincipal, uint usdcInterest);
+    event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
+    event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
     event FinalizeLendingPool(address poolShareTokenAddress, uint shrubInterest, uint shrubYield);
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
+    IERC20 public aeth;
     IBorrowPositionToken public bpt;
-    IAETH public aeth;
     IMockAaveV3 public wrappedTokenGateway;
     AggregatorV3Interface public chainlinkAggregator;  // Chainlink interface
 
     uint public bpTotalPoolShares;
 
-    // ETH price with 8 decimal places
-//    uint public ethPrice = 2000 * 10 ** 8;
     constructor(address[6] memory addresses) {
         usdc = IERC20(addresses[0]);
         bpt = IBorrowPositionToken(addresses[1]);
@@ -120,44 +71,99 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         shrubTreasury = addresses[5];
     }
 
-    function insertIntoSortedArr(uint[] storage arr, uint newValue) internal {
-        if (arr.length == 0) {
-            arr.push(newValue);
-            // No need to run indexActivePools as the index would be 0 (which it is by default)
-            return;
-        }
-        // First handle the last element of the array
-        if (arr[arr.length - 1] < newValue) {
-            arr.push(newValue);
-            indexActivePools(arr);
-            return;
-        } else {
-            arr.push(arr[arr.length - 1]);
-            if (arr.length == 2) {
-                arr[0] = newValue;
-                indexActivePools(arr);
-                return;
-            }
-        }
-        for(uint i = arr.length - 2; i > 0; i--) {
-            if (arr[i - 1] < newValue) {
-                arr[i] = newValue;
-                indexActivePools(arr);
-                return;
-            }
-            console.log(i);
-            arr[i] = arr[i - 1];
-        }
-        arr[0] = newValue;
-        indexActivePools(arr);
+    // --- Admin Functions ---
+    function createPool(uint256 _timestamp) public onlyOwner {
+        address poolShareTokenAddress = AdminLogic.executeCreatePool(lendingPools, activePoolIndex, activePools, _timestamp);
+        emit PoolCreated(_timestamp, poolShareTokenAddress);
     }
 
-    function indexActivePools(uint[] memory arr) internal {
-        console.log("running indexActivePools");
-        for (uint i = 0; i < arr.length; i++) {
-            activePoolIndex[activePools[i]] = i;
-        }
+    function finalizeLendingPool(uint _timestamp) public onlyOwner {
+        DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
+        require(lendingPool.poolShareToken != PoolShareToken(address(0)), "Pool does not exist");
+        require(!lendingPool.finalized, "Pool already finalized");
+        require(block.timestamp >= _timestamp + 6 * 60 * 60, "Must wait until six hours after endDate for finalization"); // Time must be greater than six hours since pool expiration
+        // TODO: Insert extra logic for ensuring everything is funded
+        lendingPool.finalized = true;
+        // Send funds to Shrub
+        aeth.transfer(shrubTreasury, lendingPool.shrubYield);
+        usdc.transfer(shrubTreasury, lendingPool.shrubInterest);
+        emit FinalizeLendingPool(address(lendingPool.poolShareToken), lendingPool.shrubInterest, lendingPool.shrubYield);
     }
+
+    function takeSnapshot() public onlyOwner {
+        uint aETHBalance = aeth.balanceOf(address(this));
+        console.log("running takeSnapshot, platformAEthBalance: %s, aEthSnapshotBalance: %s, claimedCollateralSinceSnapshot: %s", aETHBalance, aEthSnapshotBalance, claimedCollateralSinceSnapshot);
+        console.log("newCollateralSinceSnapshot: %s", newCollateralSinceSnapshot);
+        console.log("lastSnaphot: %s, now: %s, elapsed: %s", lastSnapshotDate, block.timestamp, block.timestamp - lastSnapshotDate);
+//        Get the current balance of bpTotalPoolShares (it is local)
+        // calculate the accumYield for all BP (current balance - snapshot balance)
+        uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) + claimedCollateralSinceSnapshot - newCollateralSinceSnapshot - aEthSnapshotBalance;
+        console.log("aEthYieldSinceLastSnapshot: %s", aEthYieldSinceLastSnapshot);
+//        Calculate accumInterest for all BP
+        for (uint i = 0; i < activePools.length; i++) {
+            // Cleanup paid off BPTs
+            bpt.cleanUpByTimestamp(uint40(activePools[i]));
+            console.log("finished running cleanUpByTimestamp for %s", uint40(activePools[i]));
+//            Find the BPTs related to these timestamps
+//            bptsForPool is an array of tokenIds
+            uint[] memory bptsForPool = bpt.getTokensByTimestamp(uint40(activePools[i]));
+            uint accumInterestBP = 0;
+//            # Loop through the BPTs in order to calculate their accumInterest
+            for (uint j = 0; j < bptsForPool.length; j++) {
+                console.log("in token loop - analyzing tokenId: %s", bptsForPool[j]);
+                accumInterestBP +=  bpt.interestSinceTimestamp(bptsForPool[j], lastSnapshotDate);
+            }
+            // Determine the amount of aETH to distribute from this borrowing pool
+            if (borrowingPools[activePools[i]].poolShareAmount == 0) {
+                console.log("poolShareAmount in borrowing pool is 0 - skipping - %s", activePools[i]);
+//                console.log("poolShareAmount in borrowing pool 0 - skipping");
+                continue;
+            }
+            console.log("bpTotalPoolShares - %s", bpTotalPoolShares);
+            console.log(borrowingPools[activePools[i]].poolShareAmount);
+            uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[activePools[i]].poolShareAmount / bpTotalPoolShares;
+            // Loop through this and future Lending Pools to determine the contribution denominator
+            uint contributionDenominator;
+            for (uint j = i; j < activePools.length; j++) {
+                contributionDenominator += lendingPools[activePools[j]].principal;
+            }
+            // distribute accumInterest and accumYield to LPs based on contribution principal
+            console.log("contributionDenominator - %s", contributionDenominator);
+            console.log("aEthYieldDistribution: %s", aEthYieldDistribution);
+            console.log("accumInterestBP: %s", accumInterestBP);
+            console.log("shrubFee: %s", PlatformConfig.shrubFee);
+            for (uint j = i; j < activePools.length; j++) {
+                console.log("in loop: lendingPool: %s, lendingPoolContribution: %s / %s", activePools[j], lendingPools[activePools[j]].principal, contributionDenominator);
+                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * (100 - PlatformConfig.shrubFee) / 100 / contributionDenominator;
+                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal * (100 - PlatformConfig.shrubFee) / 100 / contributionDenominator;
+                lendingPools[activePools[j]].shrubYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * PlatformConfig.shrubFee / 100 / contributionDenominator;
+                lendingPools[activePools[j]].shrubInterest += accumInterestBP * lendingPools[activePools[j]].principal * PlatformConfig.shrubFee / 100 / contributionDenominator;
+                console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
+                emit LendingPoolYield(
+                    address(lendingPools[activePools[j]].poolShareToken),
+                    lendingPools[activePools[j]].accumInterest,
+                    lendingPools[activePools[j]].accumYield
+                );
+            }
+        }
+        // set the last snapshot date to now
+        lastSnapshotDate = block.timestamp;
+        aEthSnapshotBalance = aeth.balanceOf(address(this));
+        console.log("aEthSnapshotBalance set to: %s", aEthSnapshotBalance);
+        console.log("lastSnapshotDate set to: %s", lastSnapshotDate);
+
+        // zero out the tracking globals;
+        newCollateralSinceSnapshot = 0;
+        claimedCollateralSinceSnapshot = 0;
+    }
+
+    function setShrubTreasury(address _address) public onlyOwner {
+        shrubTreasury = _address;
+    }
+
+
+    // ---
+
 
     function getEthPrice() public view returns (uint256) {
         // Returns an 8 decimal version of USDC / ETH
@@ -183,6 +189,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint maxLoanV = valueOfEth * ltv / 10 ** 22; // remove 20 decimals to get back to 6 decimals of USDC
         return maxLoanV;
     }
+
+    // returns a 8 decimal representation of ltv (i.e. 25% = 25000000)
+//    function calcLtv(uint usdcAmount, uint ethAmount, uint ethPrice) public pure returns (uint ltv) {
+//        // usdcAmount has 6 decimals
+//        // ethAmount has 18 decimals
+//        // ethPrice has 8 decimals
+//    }
 
     function requiredCollateral(uint ltv, uint usdcLoanValue) public view returns (uint256) {
         // returns collateral required in wei
@@ -249,9 +262,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 
     function getPool(
         uint256 _timestamp
-    ) public view returns (PoolDetails memory) {
-        LendingPool memory lendingPool = lendingPools[_timestamp];
-        PoolDetails memory poolDetails;
+    ) public view returns (DataTypes.PoolDetails memory) {
+        DataTypes.LendingPool memory lendingPool = lendingPools[_timestamp];
+        DataTypes.PoolDetails memory poolDetails;
 
         poolDetails.lendPrincipal = lendingPool.principal;
         poolDetails.lendAccumInterest = lendingPools[_timestamp].accumInterest;
@@ -271,20 +284,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     }
 
     // APY is returned with 6 decimals
-    function getAPYBasedOnLTV(uint32 _ltv) public pure returns (uint32) {
-        if (_ltv == 20) {
-            return 0;
-        } else if (_ltv == 25) {
-            return 1 * 10 ** 6;
-        } else if (_ltv == 33) {
-            return 5 * 10 ** 6;
-        } else if (_ltv == 50) {
-            return 8 * 10 ** 6;
-        } else {
-            revert("Invalid LTV");
-        }
-    }
-
     function validPool(uint256 _timestamp) internal view returns (bool) {
         // require that the timestamp be in the future
         // require that the pool has been created
@@ -295,50 +294,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             return false;
         }
         return true;
-    }
-
-    // NEW: I don't think that this is necessary - We can find all loans for a user via the BPT. We can maintain an ownership index there
-//    function getLoan(
-//        address borrower,
-//        uint256 timestamp
-//    ) public view returns (Loan memory) {
-//        // Use LTV == 0 as a proxy for the loan not existing
-//        require(borrowingPools[timestamp].loans[borrower].LTV != 0, "loan does not exist");
-//        return borrowingPools[timestamp].loans[borrower];
-//    }
-
-    function createPool(uint256 _timestamp) public onlyOwner {
-        require(
-            lendingPools[_timestamp].poolShareToken == PoolShareToken(address(0)),
-            "Pool already exists"
-        );
-        // console.log(_timestamp);
-        // console.log(block.timestamp);
-        require(
-            _timestamp > block.timestamp,
-            "_timestamp must be in the future"
-        );
-        lendingPools[_timestamp].poolShareToken = new PoolShareToken(
-            string(abi.encodePacked("PoolShareToken_", _timestamp.toString())),
-            string(abi.encodePacked("PST_", _timestamp.toString()))
-        );
-        lendingPools[_timestamp].finalized = false;
-        // Make sure to keep the pool sorted
-        insertIntoSortedArr(activePools, _timestamp);
-        emit PoolCreated(_timestamp, address(lendingPools[_timestamp].poolShareToken));
-    }
-
-    function finalizeLendingPool(uint _timestamp) public onlyOwner {
-        LendingPool storage lendingPool = lendingPools[_timestamp];
-        require(lendingPool.poolShareToken != PoolShareToken(address(0)), "Pool does not exist");
-        require(!lendingPool.finalized, "Pool already finalized");
-        require(block.timestamp >= _timestamp + 6 * 60 * 60, "Must wait until six hours after endDate for finalization"); // Time must be greater than six hours since pool expiration
-        // TODO: Insert extra logic for ensuring everything is funded
-        lendingPool.finalized = true;
-        // Send funds to Shrub
-        aeth.transfer(shrubTreasury, lendingPool.shrubYield);
-        usdc.transfer(shrubTreasury, lendingPool.shrubInterest);
-        emit FinalizeLendingPool(address(lendingPool.poolShareToken), lendingPool.shrubInterest, lendingPool.shrubYield);
     }
 
     function getUsdcAddress() public view returns (address) {
@@ -400,7 +355,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 _poolShareTokenAmount
     ) private returns (uint usdcWithdrawn, uint ethWithdrawn) {
         console.log("running withdrawUnchecked");
-        LendingPool storage lendingPool = lendingPools[_timestamp];
+        DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
 //        require(lendingPool.finalized, "Pool must be finalized before withdraw");
         require(
             _poolShareTokenAmount > 0,
@@ -444,70 +399,63 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         return (usdcInterestAmount + usdcPrincipalAmount, aethWithdrawalAmount);
     }
 
+    // This runs after the collateralProvider has sent aETH to Shrub
     function takeLoanInternal(
-        uint256 _principal, // Amount of USDC with 6 decimal places
-        uint256 _collateral, // Amount of ETH collateral with 18 decimal places
-        uint32 _ltv,
-        uint40 _timestamp,
-        uint40 _startDate,
-        address beneficiary
+        DataTypes.TakeLoanInternalParams memory params
     ) internal {
         console.log("running takeLoanInternal");
 
         // Ensure that it is a valid pool
-        require(validPool(_timestamp), "Invalid pool");
+        require(validPool(params.timestamp), "Invalid pool");
 
         require(
-            (_principal * 10 ** (18 + 8 - 6 + 2)) / (getEthPrice() * _collateral) <= _ltv, // ltvCalc
+            (params.principal * 10 ** (18 + 8 - 6 + 2)) / (getEthPrice() * params.collateral) <= params.ltv, // ltvCalc
             "Insufficient collateral provided for specified ltv"
         );
 
         // Ensure the ltv is valid and calculate the apy
-        uint32 apy = getAPYBasedOnLTV(_ltv);
+        uint32 apy = HelpersLogic.getAPYBasedOnLTV(params.ltv);
 
         // Check if the loan amount is less than or equal to the liquidity across pools
-        uint totalAvailableLiquidity = getAvailableForPeriod(_timestamp);
+        uint totalAvailableLiquidity = getAvailableForPeriod(params.timestamp);
 
         require(
-            _principal <= totalAvailableLiquidity,
+            params.principal <= totalAvailableLiquidity,
             "Insufficient liquidity across pools"
         );
 
         // Transfer the loan amount in USDC to the borrower
-        usdc.transfer(beneficiary, _principal);
+        usdc.transfer(params.beneficiary, params.principal);
 
-        BorrowData memory bd;
-        bd.startDate = _startDate;
-        bd.endDate = _timestamp;
-        bd.principal = _principal;
-        bd.collateral = _collateral;
+        DataTypes.BorrowData memory bd;
+        bd.startDate = params.startDate;
+        bd.endDate = params.timestamp;
+        bd.principal = params.principal;
+        bd.collateral = params.collateral;
         bd.apy = apy;
-        uint tokenId = bpt.mint(beneficiary, bd);
+        uint tokenId = bpt.mint(params.loanHolder, bd);
         console.log("bpt minted");
         console.log(tokenId);
 
         // Update borrowingPools
-        borrowingPools[_timestamp].principal += _principal;
-        borrowingPools[_timestamp].collateral += _collateral;
+        borrowingPools[params.timestamp].principal += params.principal;
+        borrowingPools[params.timestamp].collateral += params.collateral;
         uint deltaBpPoolShares;
 
         if (aEthSnapshotBalance == 0) {
-            deltaBpPoolShares = _collateral;
+            deltaBpPoolShares = params.collateral;
         } else {
-            deltaBpPoolShares = _collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
+            deltaBpPoolShares = params.collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
         }
 
-        console.log("calcparams");
-        console.log(_collateral);
-        console.log(bpTotalPoolShares);
-        console.log(aEthSnapshotBalance);
-        console.log(deltaBpPoolShares);
+        console.log("collateral: %s, bpTotalPoolShares: %s, aEthSnapshotBalance: %s", params.collateral, bpTotalPoolShares, aEthSnapshotBalance);
+        console.log("deltaBpPoolShares: %s", deltaBpPoolShares);
 
-        borrowingPools[_timestamp].poolShareAmount += deltaBpPoolShares;
-        console.log("poolShareAmount of borrowingPool with timestamp: %s incremented by %s, now %s", _timestamp, deltaBpPoolShares, borrowingPools[_timestamp].poolShareAmount);
+        borrowingPools[params.timestamp].poolShareAmount += deltaBpPoolShares;
+        console.log("poolShareAmount of borrowingPool with timestamp: %s incremented by %s, now %s", params.timestamp, deltaBpPoolShares, borrowingPools[params.timestamp].poolShareAmount);
         bpTotalPoolShares += deltaBpPoolShares;
 
-        newCollateralSinceSnapshot += _collateral;  // Keep track of the collateral since the last snapshot
+        newCollateralSinceSnapshot += params.collateral;  // Keep track of the collateral since the last snapshot
 
 //        console.log("-------");
 //        console.log(tokenId);
@@ -517,7 +465,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //        console.log(_amount);
 //        console.log(loan.APY);
 //        console.log("-------");
-        emit NewLoan(tokenId, _timestamp, beneficiary, _collateral, _principal, _startDate, apy);
+        emit NewLoan(tokenId, params.timestamp, params.beneficiary, params.collateral, params.principal, params.startDate, apy);
 
     }
 
@@ -532,17 +480,23 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         require(msg.value == _collateral, "Wrong amount of Ether provided.");
 
         wrappedTokenGateway.depositETH{value: _collateral}(
-            0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2,  // This is the address of the Aave-v3 pool - it is not used
+            Constants.AAVE_AETH_POOL,  // This is the address of the Aave-v3 pool - it is not used
             address(this),
             0
         );
 
-        takeLoanInternal(_principal, _collateral, _ltv, _timestamp, uint40(block.timestamp), msg.sender);
+        takeLoanInternal(DataTypes.TakeLoanInternalParams({
+            principal: _principal,
+            collateral: _collateral,
+            ltv: _ltv,
+            timestamp: _timestamp,
+            startDate: uint40(block.timestamp),
+            beneficiary: msg.sender,
+            loanHolder: msg.sender
+        }));
     }
 
-    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount) external {
-        // Check that msg.sender owns the DPT
-//        require(bpt.ownerOf(tokenId) == msg.sender, "msg.sender does not own specified BPT");
+    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount) external onlyBptOwner(tokenId) {
         // Check that the user has sufficient funds
         require(usdc.balanceOf(msg.sender) >= repaymentAmount, "insufficient balance");
         // Check that the funds are less than the owed balance
@@ -567,7 +521,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
 //        uint newPrincipal = 0;
         uint principalReduction = bpt.partialRepayLoan(tokenId, repaymentAmount, lastSnapshotDate, msg.sender);
 
-        BorrowingPool storage borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
+        DataTypes.BorrowingPool storage borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
         borrowingPool.principal -= principalReduction;
 
         emit PartialRepayLoan(tokenId, repaymentAmount, principalReduction);
@@ -580,10 +534,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     ) internal returns (uint freedCollateral) {
         console.log("Running repayLoanInternal");
         // Check that repayer owns the bpt
-        console.log("ownerOf(tokenId): %s, repayer: %s", bpt.ownerOf(tokenId), repayer);
-        require(bpt.ownerOf(tokenId) == repayer, "Only owner of loan may repay it");
+//        console.log("ownerOf(tokenId): %s, repayer: %s", bpt.ownerOf(tokenId), repayer);
         // Determine the principal, interest, and collateral of the debt
-        BorrowData memory bd = bpt.getLoan(tokenId);
+        DataTypes.BorrowData memory bd = bpt.getLoan(tokenId);
 //        bd.endDate = _timestamp;
 //        bd.principal = _principal;
 //        bd.collateral = _collateral;
@@ -631,7 +584,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     function repayLoan(
         uint tokenId,
         address beneficiary
-    ) public nonReentrant {
+    ) public onlyBptOwner(tokenId) nonReentrant {
         // Convert collateral amount of aETH to ETH and Transfer ETH to the beneficiary
         uint freedCollateral = repayLoanInternal(tokenId, msg.sender, beneficiary);
         wrappedTokenGateway.withdrawETH(address(0), freedCollateral, beneficiary);
@@ -641,7 +594,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
     function repayLoanAETH(
         uint tokenId,
         address beneficiary
-    ) public nonReentrant {
+    ) public onlyBptOwner(tokenId) nonReentrant {
         // Convert collateral amount of aETH to ETH and Transfer ETH to the beneficiary
         uint freedCollateral = repayLoanInternal(tokenId, msg.sender, beneficiary);
         aeth.transfer(beneficiary, freedCollateral);
@@ -670,15 +623,16 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         uint256 additionalCollateral, // Amount of new ETH collateral with - 18 decimals
         uint256 additionalRepayment, // Amount of new USDC to be used to repay the existing loan - 6 decimals
         uint32 _ltv
-    ) external payable {
+    ) external onlyBptOwner(tokenId) payable {
+//        TODO: extendLoan should allow LTV that is within health factor
+
+
         console.log("running extendLoan");
         // Check that the additionalCollateral specified is correct
         require(msg.value == additionalCollateral, "Wrong amount of Ether provided.");
-        // Check that the user owns the token
-        require(bpt.ownerOf(tokenId) == msg.sender, "extendLoan may only be called by owner of the loan");
         // Check that the user holds at least additionalCollateral of USDC
         require(usdc.balanceOf(msg.sender) >= additionalRepayment, "Insufficient USDC balance");
-        BorrowData memory bd = bpt.getLoan(tokenId);
+        DataTypes.BorrowData memory bd = bpt.getLoan(tokenId);
         // Check that the newTimestamp is after the endDate of the token
         require(newTimestamp > bd.endDate, "newTimestamp must be greater than endDate of the loan");
         // Check that the additionalRepayment is less than the current debt of the loan
@@ -688,19 +642,20 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         if (additionalCollateral > 0) {
             // Convert additionalCollateral to aETH and move to platform
             wrappedTokenGateway.depositETH{value: additionalCollateral}(
-                0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2,  // This is the address of the Aave-v3 pool - it is not used
+                Constants.AAVE_AETH_POOL,  // This is the address of the Aave-v3 pool - it is not used
                 address(this),
                 0
             );
         }
         uint newCollateral = bd.collateral + additionalCollateral;
         uint newPrincipal = bpt.debt(tokenId) - additionalRepayment;
+        uint flashLoanAmount = 0;
         // User Receives a flash loan for the aETH collateral required to take the new loan
-        uint flashLoanAmount = newCollateral - aeth.balanceOf(msg.sender);
-        console.log("flash loan amount: %s", flashLoanAmount);
         console.log("extendLoan-before-flash-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         console.log("1 - platform aETH balance: %s", aeth.balanceOf(address(this)));
-        if (flashLoanAmount > 0) {
+        console.log("flash loan amount: %s", flashLoanAmount);
+        if (newCollateral > aeth.balanceOf(msg.sender)) {
+            flashLoanAmount = newCollateral - aeth.balanceOf(msg.sender);
             // Transfer USDC from this contract to sender as a flash loan
             aeth.transfer(msg.sender, flashLoanAmount);
         }
@@ -708,7 +663,16 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         console.log("extendLoan-before-take-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         aeth.transferFrom(msg.sender, address(this), newCollateral);
         console.log("3 - platform aETH balance: %s", aeth.balanceOf(address(this)));
-        takeLoanInternal(newPrincipal, newCollateral, _ltv, newTimestamp, uint40(lastSnapshotDate), msg.sender);
+//        takeLoanInternal(newPrincipal, newCollateral, _ltv, newTimestamp, uint40(lastSnapshotDate), msg.sender, msg.sender);
+        takeLoanInternal(DataTypes.TakeLoanInternalParams({
+            principal: newPrincipal,
+            collateral: newCollateral,
+            ltv: _ltv,
+            timestamp: newTimestamp,
+            startDate: uint40(lastSnapshotDate),
+            beneficiary: msg.sender,
+            loanHolder: msg.sender
+        }));
         console.log("4 - platform aETH balance: %s", aeth.balanceOf(address(this)));
 //        takeLoan{value: newCollateral}(newPrincipal, newCollateral, _ltv, newTimestamp);
         console.log("extendLoan-before-repay-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
@@ -730,76 +694,32 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
         console.log("7 - platform aETH balance: %s", aeth.balanceOf(address(this)));
     }
 
-    function takeSnapshot() public onlyOwner {
-        uint aETHBalance = aeth.balanceOf(address(this));
-        console.log("running takeSnapshot, platformAEthBalance: %s, aEthSnapshotBalance: %s, claimedCollateralSinceSnapshot: %s", aETHBalance, aEthSnapshotBalance, claimedCollateralSinceSnapshot);
-        console.log("newCollateralSinceSnapshot: %s", newCollateralSinceSnapshot);
-        console.log("lastSnaphot: %s, now: %s, elapsed: %s", lastSnapshotDate, block.timestamp, block.timestamp - lastSnapshotDate);
-//        Get the current balance of bpTotalPoolShares (it is local)
-        // calculate the accumYield for all BP (current balance - snapshot balance)
-        uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) + claimedCollateralSinceSnapshot - newCollateralSinceSnapshot - aEthSnapshotBalance;
-        console.log("aEthYieldSinceLastSnapshot: %s", aEthYieldSinceLastSnapshot);
-//        Calculate accumInterest for all BP
-        for (uint i = 0; i < activePools.length; i++) {
-            // Cleanup paid off BPTs
-            bpt.cleanUpByTimestamp(uint40(activePools[i]));
-            console.log("finished running cleanUpByTimestamp for %s", uint40(activePools[i]));
-//            Find the BPTs related to these timestamps
-//            bptsForPool is an array of tokenIds
-            uint[] memory bptsForPool = bpt.getTokensByTimestamp(uint40(activePools[i]));
-            uint accumInterestBP = 0;
-//            # Loop through the BPTs in order to calculate their accumInterest
-            for (uint j = 0; j < bptsForPool.length; j++) {
-                console.log("in token loop - analyzing tokenId: %s", bptsForPool[j]);
-                accumInterestBP +=  bpt.interestSinceTimestamp(bptsForPool[j], lastSnapshotDate);
-            }
-            // Determine the amount of aETH to distribute from this borrowing pool
-            if (borrowingPools[activePools[i]].poolShareAmount == 0) {
-                console.log("poolShareAmount in borrowing pool is 0 - skipping - %s", activePools[i]);
-//                console.log("poolShareAmount in borrowing pool 0 - skipping");
-                continue;
-            }
-            console.log("bpTotalPoolShares - %s", bpTotalPoolShares);
-            console.log(borrowingPools[activePools[i]].poolShareAmount);
-            uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[activePools[i]].poolShareAmount / bpTotalPoolShares;
-            // Loop through this and future Lending Pools to determine the contribution denominator
-            uint contributionDenominator;
-            for (uint j = i; j < activePools.length; j++) {
-                contributionDenominator += lendingPools[activePools[j]].principal;
-            }
-            // distribute accumInterest and accumYield to LPs based on contribution principal
-            console.log("contributionDenominator - %s", contributionDenominator);
-            console.log("aEthYieldDistribution: %s", aEthYieldDistribution);
-            console.log("accumInterestBP: %s", accumInterestBP);
-            console.log("shrubFee: %s", shrubFee);
-            for (uint j = i; j < activePools.length; j++) {
-                console.log("in loop: lendingPool: %s, lendingPoolContribution: %s / %s", activePools[j], lendingPools[activePools[j]].principal, contributionDenominator);
-                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * (100 - shrubFee) / 100 / contributionDenominator;
-                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal * (100 - shrubFee) / 100 / contributionDenominator;
-                lendingPools[activePools[j]].shrubYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * shrubFee / 100 / contributionDenominator;
-                lendingPools[activePools[j]].shrubInterest += accumInterestBP * lendingPools[activePools[j]].principal * shrubFee / 100 / contributionDenominator;
-                console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
-                emit LendingPoolYield(
-                    address(lendingPools[activePools[j]].poolShareToken),
-                    lendingPools[activePools[j]].accumInterest,
-                    lendingPools[activePools[j]].accumYield
-                );
-            }
-        }
-        // set the last snapshot date to now
-        lastSnapshotDate = block.timestamp;
-        aEthSnapshotBalance = aeth.balanceOf(address(this));
-        console.log("aEthSnapshotBalance set to: %s", aEthSnapshotBalance);
-        console.log("lastSnapshotDate set to: %s", lastSnapshotDate);
+//    function forceExtendBorrow(uint tokenId, uint claim) external {
+//        DataTypes.BorrowData memory loanDetails = bpt.getLoan(tokenId);
+//        require(claim > 0 && claim < 4, "invalid claim");
+//        uint availabilityTime = claim == 1 ? Configuration.FORCED_EXTENSION_1 :
+//            claim == 2 ? Configuration.FORCED_EXTENSION_2 :
+//            Configuration.FORCED_EXTENSION_3;
+//        require(block.timestamp > loanDetails.endDate + availabilityTime ,"loan is not eligible for extension");
+//        // The caller will be rewarded with some amount of the users' collateral. This will be based on the size of the debt to be refinanced
+//        // TODO: For now bonus is 1% of collatertal - update this later to be eth value of the appropriate percent of the debt
+//        uint bonus = loanDetails.collateral / 100;
+//        // flash loan if necessary for collateral
+//        // take new loan on behalf of the holder - collateral is same as previous loan minus bonus
+//        takeLoanInternal(DataTypes.TakeLoanInternalParams({
+//            principal: loanDetails.principal,
+//            collateral: loanDetails - bonus,
+//        // TODO: ltv should be calculated to be the smallest valid
+//            ltv: 50,
+//            timestamp: newTimestamp,
+//            startDate: uint40(lastSnapshotDate),
+//            beneficiary: msg.sender,
+//            loanHolder: msg.sender
+//        }));
+//        // repay previous loan and collect collateral
+//    }
 
-        // zero out the tracking globals;
-        newCollateralSinceSnapshot = 0;
-        claimedCollateralSinceSnapshot = 0;
-    }
-
-    function setShrubTreasury(address _address) public onlyOwner {
-        shrubTreasury = _address;
-    }
+//    function getEarliestValidTimestamp()
 
     function bytesToString(bytes memory data) public pure returns(string memory) {
         bytes memory alphabet = "0123456789abcdef";
@@ -812,6 +732,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard {
             str[3+i*2] = alphabet[uint(uint8(data[i] & 0x0f))];
         }
         return string(str);
+    }
+
+    modifier onlyBptOwner(uint _tokenId) {
+        require(bpt.ownerOf(_tokenId) == msg.sender, "call may only be made by owner of bpt");
+        _;
     }
 
     modifier validTimestamp(uint _timestamp) { // Modifier
