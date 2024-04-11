@@ -12,14 +12,14 @@ import "hardhat/console.sol";
 library AdminLogic {
     using Strings for uint256;
 
-    event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
+//    event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
 
     function executeCreatePool(
         mapping(uint256 => DataTypes.LendingPool) storage _lendingPools,
         mapping(uint256 => uint256) storage _activePoolIndex,
         uint256[] storage _activePools,
         uint256 _timestamp
-    ) external {
+    ) external returns (address poolShareTokenAddress) {
         require(
             _lendingPools[_timestamp].poolShareToken == PoolShareToken(address(0)),
             "Pool already exists"
@@ -35,7 +35,8 @@ library AdminLogic {
         _lendingPools[_timestamp].finalized = false;
         // Make sure to keep the pool sorted
         insertIntoSortedArr(_activePoolIndex, _activePools, _timestamp);
-        emit PoolCreated(_timestamp, address(_lendingPools[_timestamp].poolShareToken));
+        poolShareTokenAddress = address(_lendingPools[_timestamp].poolShareToken);
+//        emit PoolCreated(_timestamp, poolShareTokenAddress);
     }
 
     function insertIntoSortedArr(

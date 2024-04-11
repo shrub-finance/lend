@@ -48,6 +48,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
     event Withdraw(address user, address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcPrincipal, uint usdcInterest);
+    event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
+    event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
+    event FinalizeLendingPool(address poolShareTokenAddress, uint shrubInterest, uint shrubYield);
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
@@ -70,11 +73,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     // --- Admin Functions ---
     function createPool(uint256 _timestamp) public onlyOwner {
-        AdminLogic.executeCreatePool(lendingPools, activePoolIndex, activePools, _timestamp);
+        address poolShareTokenAddress = AdminLogic.executeCreatePool(lendingPools, activePoolIndex, activePools, _timestamp);
+        emit PoolCreated(_timestamp, poolShareTokenAddress);
     }
-
-    event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
-    event FinalizeLendingPool(address poolShareTokenAddress, uint shrubInterest, uint shrubYield);
 
     function finalizeLendingPool(uint _timestamp) public onlyOwner {
         DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
