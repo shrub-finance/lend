@@ -12,6 +12,9 @@
     "local-initialize": "npx hardhat testLendingPlatform --network localhost"
   },
   "dependencies": {
+    "@aave/core-v3": "^1.19.3",
+    "@aave/deploy-v3": "^1.56.2",
+    "@aave/periphery-v3": "^2.5.2",
     "@chainlink/contracts": "^0.8.0",
     "@shrub-lend/common": "1.0.0"
   },
@@ -28,6 +31,9 @@
     "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.3.1",
+    "bluebird": "^3.7.2",
+    "dotenv": "^10.0.0",
+    "jsondiffpatch": "^0.4.1",
     "chai": "^4.3.7",
     "ethers": "6",
     "hardhat": "^2.18.3",

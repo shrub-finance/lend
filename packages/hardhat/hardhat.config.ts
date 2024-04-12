@@ -36,6 +36,14 @@ const config: HardhatUserConfig = {
         clear: true,
         flat: true,
         only: ["LendingPlatform", "USDCoin", "PoolShareToken"]
+    },
+    external: {
+      contracts: [
+          {
+              artifacts: '../../node_modules/@aave/deploy-v3/artifacts',
+              deploy: '../../node_modules/@aave/deploy-v3/dist/deploy',
+          }
+        ]
     }
 };
 
