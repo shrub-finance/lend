@@ -6,7 +6,7 @@ dataSources:
     name: Contract
     network: mainnet
     source:
-      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
+      address: "{{LENDING_PLATFORM_ADDRESS}}"
       abi: LendingPlatform
       startBlock: 1
     mapping:
