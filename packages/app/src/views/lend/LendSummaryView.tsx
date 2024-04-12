@@ -297,11 +297,8 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                   setLocalError("");
                                   try {
                                     const receipt = await tx.wait();
-                                    if(!receipt.status) {
-                                      throw new Error("Transaction failed")
-                                    }} catch (e) {
-                                    console.log("Transaction failed:", e)
-                                  }
+                                    if(!receipt.status) {throw new Error("Transaction failed")}
+                                  } catch (e) {console.log("Transaction failed:", e)}
                                   setApproveUSDCActionInitiated(true);
                                 }}
                                 onError={(e) => {
