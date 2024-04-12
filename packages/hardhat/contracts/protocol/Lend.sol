@@ -318,6 +318,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         usdc.transferFrom(msg.sender, address(this), _amount);
 
         uint256 poolShareTokenAmount;
+        uint256 amountWad = ShrubLendMath.usdcToWad(_amount);
 
         // Calculate total value of the pool in terms of USDC
         uint256 accumYieldValueInUsdc = WadRayMath.wadMul(
@@ -332,7 +333,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log(_amount);
         console.log(lendingPools[_timestamp].poolShareToken.totalSupply());
         if (totalPoolValue == 0) {
-            poolShareTokenAmount = ShrubLendMath.usdcToWad(_amount);
+            poolShareTokenAmount = amountWad;
             console.log("PATH 1 - NEW");
         } else {
             // If the pool exists and has liquidity, calculate poolShareTokens based on the proportion of deposit to total pool value
@@ -340,14 +341,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             poolShareTokenAmount =
                 WadRayMath.wadDiv(
                     WadRayMath.wadMul(
-                        ShrubLendMath.usdcToWad(_amount),
+                        amountWad,
                         lendingPools[_timestamp].poolShareToken.totalSupply()
                     ),
                     totalPoolValue
                 );
         }
         console.log(poolShareTokenAmount);
-        lendingPools[_timestamp].principal += _amount;
+        lendingPools[_timestamp].principal += amountWad;
         lendingPools[_timestamp].poolShareToken.mint(msg.sender, poolShareTokenAmount);
         emit NewDeposit(
             _timestamp,
@@ -389,23 +390,30 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        console.log(lendingPool.accumInterest);
 //        console.log(lendingPool.accumYield);
         // Calculate the proportion of the pool that the user is withdrawing (use 8 decimals)
-        uint256 withdrawalProportion = _poolShareTokenAmount * 10 ** 8 /
-                                lendingPool.poolShareToken.totalSupply();
+        uint256 withdrawalProportion = WadRayMath.wadDiv(
+            _poolShareTokenAmount,
+            lendingPool.poolShareToken.totalSupply()
+        );
+//        uint256 withdrawalProportion = _poolShareTokenAmount * 10 ** 8 /
+//                                lendingPool.poolShareToken.totalSupply();
         console.log("withdrawlPropotion: %s", withdrawalProportion);
 
         // Calculate the corresponding USDC amount to withdraw
-        uint256 usdcPrincipalAmount = withdrawalProportion * lendingPool.principal / 10 ** 8;
-        uint256 usdcInterestAmount = withdrawalProportion * lendingPool.accumInterest / 10 ** 8;
+//        uint256 usdcPrincipalAmount = withdrawalProportion * lendingPool.principal / 10 ** 8;
+//        uint256 usdcInterestAmount = withdrawalProportion * lendingPool.accumInterest / 10 ** 8;
+        uint256 usdcPrincipalAmount = ShrubLendMath.wadToUsdc(WadRayMath.wadMul(withdrawalProportion, lendingPool.principal));
+        uint256 usdcInterestAmount = ShrubLendMath.wadToUsdc(WadRayMath.wadMul(withdrawalProportion, lendingPool.accumInterest));
 
         // Calculate the corresponding aETH interest to withdraw
-        uint256 aethWithdrawalAmount = withdrawalProportion * lendingPool.accumYield / 10 ** 8;
+//        uint256 aethWithdrawalAmount = withdrawalProportion * lendingPool.accumYield / 10 ** 8;
+        uint256 aethWithdrawalAmount = WadRayMath.wadMul(withdrawalProportion, lendingPool.accumYield);
 
         // Burn the pool share tokens
         lendingPool.poolShareToken.burn(msg.sender, _poolShareTokenAmount);
 
         // Update the total liquidity in the pool
-        lendingPool.principal -= usdcPrincipalAmount;
-        lendingPool.accumInterest -= usdcInterestAmount;
+        lendingPool.principal -= ShrubLendMath.usdcToWad(usdcPrincipalAmount);
+        lendingPool.accumInterest -= ShrubLendMath.usdcToWad(usdcInterestAmount);
 
         // Transfer USDC and aETH to the user
         usdc.transfer(msg.sender, usdcInterestAmount + usdcPrincipalAmount);
