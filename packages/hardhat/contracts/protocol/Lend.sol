@@ -425,7 +425,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         require(validPool(params.timestamp), "Invalid pool");
 
         require(
-            (params.principal * 10 ** (18 + 8 - 6 + 2)) / (getEthPrice() * params.collateral) <= params.ltv, // ltvCalc
+            params.collateral >= requiredCollateral(params.ltv, params.principal),
             "Insufficient collateral provided for specified ltv"
         );
 
@@ -461,7 +461,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         if (aEthSnapshotBalance == 0) {
             deltaBpPoolShares = params.collateral;
         } else {
-            deltaBpPoolShares = params.collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
+//            deltaBpPoolShares = params.collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
+            deltaBpPoolShares = WadRayMath.wadDiv(
+                WadRayMath.wadMul(params.collateral, bpTotalPoolShares),
+                aEthSnapshotBalance + newCollateralSinceSnapshot + claimedCollateralSinceSnapshot
+            );
         }
 
         console.log("collateral: %s, bpTotalPoolShares: %s, aEthSnapshotBalance: %s", params.collateral, bpTotalPoolShares, aEthSnapshotBalance);

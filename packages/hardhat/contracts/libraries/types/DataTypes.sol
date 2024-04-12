@@ -50,7 +50,7 @@ library DataTypes {
     struct TakeLoanInternalParams {
         uint256 principal; // Amount of USDC with 6 decimal places
         uint256 collateral; // Amount of ETH collateral with 18 decimal places
-        uint32 ltv;
+        uint32 ltv; // ltv expressed as a percentage
         uint40 timestamp;
         uint40 startDate;
         address beneficiary;
