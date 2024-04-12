@@ -24,6 +24,7 @@ import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRay
 // Libraries with functions
 import {HelpersLogic} from "../libraries/logic/HelpersLogic.sol";
 import {AdminLogic} from "../libraries/logic/AdminLogic.sol";
+import {ShrubLendMath} from "../libraries/math/ShrubLendMath.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBorrowPositionToken.sol";
@@ -190,37 +191,27 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 /**
     * @notice Returns the USDC/ETH price as defined by chainlink
     * @dev Inverts the ETH/USDC returned from chainlink
-    * @param ltv The ltv as a 2 digit integer to calculate the maxLoan for
+    * @param ltv The ltv expressed as a percent (4 decimals - 10000 = 100%)
     * @param ethCollateral The amount of available ETH collateral (in Wad) to calculate the maxLoan for
-    * @return the maximum USDC loan (expressed with 6 decimals)
+    * @return maxLoanV the maximum USDC loan (expressed with 6 decimals)
 */
-    function maxLoan(uint ltv, uint ethCollateral) public view returns (uint256) {
-        // ethCollateral - 18 decimals
-        // getEthPrice - 8 decimals
-        require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
+    function maxLoan(uint ltv, uint ethCollateral) validateLtv(ltv) public view returns (uint256 maxLoanV) {
         /// @dev USDC value of ethCollateral (in Wad)
         uint valueOfEth = WadRayMath.wadMul(ethCollateral, getEthPrice());
-        uint maxLoanV = valueOfEth * ltv / 10 ** 22; // remove 20 decimals to get back to 6 decimals of USDC
-        return maxLoanV;
+        uint maxLoanWad = PercentageMath.percentMul(valueOfEth, ltv);
+        return maxLoanV = ShrubLendMath.wadToUsdc(maxLoanWad);
     }
 
-    // returns a 8 decimal representation of ltv (i.e. 25% = 25000000)
-//    function calcLtv(uint usdcAmount, uint ethAmount, uint ethPrice) public pure returns (uint ltv) {
-//        // usdcAmount has 6 decimals
-//        // ethAmount has 18 decimals
-//        // ethPrice has 8 decimals
-//    }
-
-    function requiredCollateral(uint ltv, uint usdcLoanValue) public view returns (uint256) {
-        // returns collateral required in wei
-        // usdcLoanValue 6 decimals
-        // suppliment by adding 22 (6 + 22 - 2 - 8 = 18)
-        // ltv 2 decimal
-        // getEthPrice 8 decimal
-        // return 18 decimals
-        require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
-        uint valueOfEthRequied = usdcLoanValue * 10 ** 22 / ltv; // time 10 ** 2 to convert to percentage and 10 ** 20 to convert to 26 decimals (needed because divide by 8 decimal value next step)
-        return valueOfEthRequied / getEthPrice();
+/**
+    * @notice Returns the ETH collateral required for a loan of specified amount and ltv
+    * @dev
+    * @param ltv The ltv expressed as a percent (4 decimals - 10000 = 100%)
+    * @param usdcAmount the requested loan amount expressed with 6 decimals
+    * @return collateralRequired the amount of ETH expressed in Wad required to colateralize this loan
+*/
+    function requiredCollateral(uint ltv, uint usdcAmount) validateLtv(ltv) public view returns (uint256 collateralRequired) {
+        uint valueOfEthRequired = PercentageMath.percentDiv(ShrubLendMath.usdcToWad(usdcAmount), ltv);
+        collateralRequired = WadRayMath.wadDiv(valueOfEthRequired, getEthPrice());
     }
 
     function getDeficitForPeriod(
@@ -416,7 +407,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     // This runs after the collateralProvider has sent aETH to Shrub
     function takeLoanInternal(
         DataTypes.TakeLoanInternalParams memory params
-    ) internal {
+    ) validateLtv(params.ltv) internal {
         console.log("running takeLoanInternal");
 
         // Ensure that it is a valid pool
@@ -488,7 +479,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint256 _collateral, // Amount of ETH collateral with 18 decimal places
         uint32 _ltv,
         uint40 _timestamp
-    ) public payable nonReentrant {
+    ) public payable validateLtv(_ltv) nonReentrant {
         console.log("running takeLoan");
         // Check that the sender has enough balance to send the amount
         require(msg.value == _collateral, "Wrong amount of Ether provided.");
@@ -637,7 +628,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint256 additionalCollateral, // Amount of new ETH collateral with - 18 decimals
         uint256 additionalRepayment, // Amount of new USDC to be used to repay the existing loan - 6 decimals
         uint32 _ltv
-    ) external onlyBptOwner(tokenId) payable {
+    ) external validateLtv(_ltv) onlyBptOwner(tokenId) payable {
 //        TODO: extendLoan should allow LTV that is within health factor
 
 
@@ -750,6 +741,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     modifier onlyBptOwner(uint _tokenId) {
         require(bpt.ownerOf(_tokenId) == msg.sender, "call may only be made by owner of bpt");
+        _;
+    }
+
+    modifier validateLtv(uint ltv) {
+        require(ltv == 2000 || ltv == 2500 || ltv == 3300 || ltv == 5000, "Invalid LTV");
         _;
     }
 
