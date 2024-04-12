@@ -18,6 +18,9 @@ import {USDCoin} from "../dependencies/USDCoin.sol";
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {Configuration} from "../libraries/configuration/Configuration.sol";
 
+import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
+import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
+
 // Libraries with functions
 import {HelpersLogic} from "../libraries/logic/HelpersLogic.sol";
 import {AdminLogic} from "../libraries/logic/AdminLogic.sol";
@@ -164,12 +167,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     // ---
 
-
+/**
+    * @notice Returns the USDC/ETH price as defined by chainlink
+    * @dev Inverts the ETH/USDC returned from chainlink
+    * @return USDC/ETH as a WAD
+*/
     function getEthPrice() public view returns (uint256) {
-        // Returns an 8 decimal version of USDC / ETH
-//        return 2000 * 10 ** 8;
-        // 8 decimals ($1852.11030001)
-//        return 185211030001;
         (
             uint80 roundId,
             int256 answer,
@@ -178,7 +181,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             uint80 answeredInRound
         ) = chainlinkAggregator.latestRoundData();
         require(answer > 0, "ETH Price out of range");
-        return uint256(10 ** 26 / answer);  // 18 decimals in answer - want 8 decimals remaining
+        // Cast answer to uint256
+        uint256 answerWad = uint256(answer);
+        // Invert the answer
+        return WadRayMath.wadDiv(WadRayMath.WAD, answerWad);
     }
 
     function maxLoan(uint ltv, uint ethCollateral) public view returns (uint256) {

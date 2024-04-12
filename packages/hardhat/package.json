@@ -4,6 +4,7 @@
   "version": "0.2.0",
   "scripts": {
     "compile": "npx hardhat compile",
+    "console": "npx hardhat console --network localhost",
     "test": "npx hardhat test",
     "hardhat": "npx hardhat",
     "deploy": "npx hardhat node --hostname 0.0.0.0 --export deployments/deployed-contracts.json",
@@ -16,6 +17,7 @@
     "@shrub-lend/common": "1.0.0"
   },
   "devDependencies": {
+    "@aave/core-v3": "^1.19.3",
     "@chainlink/contracts": "^0.8.0",
     "@nomicfoundation/hardhat-chai-matchers": "1",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
