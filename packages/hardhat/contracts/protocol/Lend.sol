@@ -301,10 +301,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         return true;
     }
 
-    function getUsdcAddress() public view returns (address) {
-        return address(usdc);
-    }
-
     function deposit(uint256 _timestamp, uint256 _amount) public nonReentrant {
         console.log("running deposit");
         require(_amount > 0, "Deposit amount must be greater than 0");
