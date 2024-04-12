@@ -411,9 +411,9 @@ task('takeLoan', 'take a loan')
         const timestamp: number = taskArgs.timestamp;
         const loanAmount: number = taskArgs.loanAmount;
         const collateralAmount = taskArgs.collateralAmount;
-        const ltv = taskArgs.ltv;
         const account = taskArgs.account;
         const {ethers, deployments, getNamedAccounts} = env;
+        const ltv = ethers.parseUnits(taskArgs.ltv.toString(), 2);
         const {lendingPlatform} = await getDeployedContracts(env);
         const namedAccounts = await getNamedAccounts();
         const loanAccount = namedAccounts[account] ?

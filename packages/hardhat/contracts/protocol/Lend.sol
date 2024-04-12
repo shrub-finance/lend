@@ -301,6 +301,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         return true;
     }
 
+/**
+    * @notice deposit funds into Shrub Lend platform
+    * @dev USDC funds are locked in the shrub platform until the specified timestamp.
+    * @dev depositor receives poolShareTokens representing their claim to the deposit pool (poolShareToken amounts are expressed in Wad)
+    * @dev These funds are made available for borrowers to borrow in exchange for interest payments from the borrowers and yield from the ETH collateral that the borrowers put up
+    * @param _timestamp the date until which the USDC deposit will be locked
+    * @param _amount the amount of USDC (expressed with 6 decimals) which will be locked until the timestamp
+*/
     function deposit(uint256 _timestamp, uint256 _amount) public nonReentrant {
         console.log("running deposit");
         require(_amount > 0, "Deposit amount must be greater than 0");
@@ -312,8 +320,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint256 poolShareTokenAmount;
 
         // Calculate total value of the pool in terms of USDC
-        uint256 accumYieldValueInUsdc = lendingPools[_timestamp].accumYield * getEthPrice();
-        uint256 totalPoolValue = lendingPools[_timestamp].principal + lendingPools[_timestamp].accumInterest + accumYieldValueInUsdc;
+        uint256 accumYieldValueInUsdc = WadRayMath.wadMul(
+            ShrubLendMath.usdcToWad(lendingPools[_timestamp].accumYield),
+            getEthPrice()
+        );  // expressed in USDC (Wad)
+        uint256 totalPoolValue = ShrubLendMath.usdcToWad(lendingPools[_timestamp].principal + lendingPools[_timestamp].accumInterest) + accumYieldValueInUsdc;  // expressed in USDC (Wad)
 
         // If the pool does not exist or totalLiquidity is 0, user gets 1:1 poolShareTokens
         console.log("totalPoolValue, _amount, lpt.totalSupply(), poolShareTokenAmount");
@@ -321,15 +332,19 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log(_amount);
         console.log(lendingPools[_timestamp].poolShareToken.totalSupply());
         if (totalPoolValue == 0) {
-            poolShareTokenAmount = _amount * 10 ** 12;
+            poolShareTokenAmount = ShrubLendMath.usdcToWad(_amount);
             console.log("PATH 1 - NEW");
         } else {
             // If the pool exists and has liquidity, calculate poolShareTokens based on the proportion of deposit to total pool value
             console.log("PATH 2 - ESTABLISHED");
             poolShareTokenAmount =
-                (_amount * lendingPools[_timestamp].poolShareToken.totalSupply()) /
-                totalPoolValue;
-            // Times 10 ** 12 to adjust the decimals of USDC 6 to 18 for the poolShareToken
+                WadRayMath.wadDiv(
+                    WadRayMath.wadMul(
+                        ShrubLendMath.usdcToWad(_amount),
+                        lendingPools[_timestamp].poolShareToken.totalSupply()
+                    ),
+                    totalPoolValue
+                );
         }
         console.log(poolShareTokenAmount);
         lendingPools[_timestamp].principal += _amount;
