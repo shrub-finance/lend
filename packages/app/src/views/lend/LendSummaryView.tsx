@@ -40,48 +40,27 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [lendActionInitiated, setLendActionInitiated] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
+  const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
   const {data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading} = useBalance(usdcAddress);
   const walletAddress = useAddress();
+  const currentDate = new Date();
+  const endDate = fromEthDate(timestamp);
+  const latestLendPosition: LendPosition = store?.lendPositions?.reduce((latest, current) =>
+    current.updated > latest.updated ? current : latest, store?.lendPositions[0] || {});
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
     error: usdcError
   } = useContract(usdcAddress, usdcAbi);
   const {
-    contract: lendingPlatform,
-    isLoading: lendingPlatformIsLoading,
-    error: lendingPlatformError
-  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
-  const {
-    mutateAsync: mutateAsyncDeposit,
-    isLoading: isLoadingTakeDeposit,
-    error: errorDeposit
-  } = useContractWrite(
-    lendingPlatform,
-    "deposit",
-  );
-  const {
-    mutateAsync: mutateAsyncApprove,
-    isLoading: isLoadingApprove,
-    error: errorApprove
-  } = useContractWrite(
-    usdc,
-    "approve",
-  );
-  const {
     data: allowance,
-    isLoading: isLoadingAllowance,
-    error: errorAllowance
+    isLoading: allowanceIsLoading,
+    error: allowanceError
   } = useContractRead(usdc, "allowance", [walletAddress, lendingPlatformAddress]);
 
 
-  const currentDate = new Date();
-  const endDate = fromEthDate(timestamp);
-
   useEffect(() => {
     if (!walletAddress) return;
-
     getActiveLendingPools().then().catch(error => {
       console.error("Failed to fetch active lending pools:", error);
     });
@@ -94,9 +73,6 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
       return;
     }
   }, [activeLendingPoolsLoading]);
-
-  const latestLendPosition: LendPosition = store?.lendPositions?.reduce((latest, current) =>
-    current.updated > latest.updated ? current : latest, store?.lendPositions[0] || {});
 
 
   return (
@@ -195,7 +171,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                             <span className="sr-only">Loading...</span>
                           </div>
                         </div>
-</>
+                        </>
                       )}
                       {latestLendPosition?.status === "failed" && (
                         <>
@@ -280,7 +256,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                     </div>
 
                     {/*approve and deposit*/}
-                    {usdcBalanceDataIsLoading ? (
+                    {(allowanceIsLoading) ? (
                       <p>Loading balance...</p>
                     ) : (
                       <>
@@ -306,25 +282,31 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               ethers.utils.parseUnits(lendAmount, 6),
                             ) && (
                               <Web3Button
-                                contractAddress={lendingPlatformAddress}
-                                contractAbi={lendingPlatformAbi}
+                                contractAddress={usdcAddress}
+                                contractAbi={usdcAbi}
+                                isDisabled={approveUSDCActionInitiated}
                                 className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
-                                action={() =>
-                                  mutateAsyncApprove({
-                                    args: [
-                                      lendingPlatformAddress,
-                                      ethers.constants.MaxUint256,
-                                    ],
-                                  })
-                                }
-                                onSuccess={() => setIsApproved(true)}
+                                action={
+                                  async (usdc) =>
+                                  {
+                                    setLocalError('');
+                                    return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
+                                  }}
+                                onSuccess={
+                                async (tx) => {
+                                  setLocalError("");
+                                  try {
+                                    const receipt = await tx.wait();
+                                    if(!receipt.status) {throw new Error("Transaction failed")}
+                                  } catch (e) {console.log("Transaction failed:", e)}
+                                  setApproveUSDCActionInitiated(true);
+                                }}
                                 onError={(e) => {
-                                  if (e instanceof Error) {
-                                    handleErrorMessages({ err: e });
-                                  }
+                                  console.log(e);
+                                  handleErrorMessages({err: e});
                                 }}
                               >
-                                Approve
+                                {!approveUSDCActionInitiated ?'Approve USDC': 'USDC Approval Submitted'}
                               </Web3Button>
                             )
                           : null}
@@ -347,11 +329,11 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               action={
                               async (lendingPlatform) =>
                               {
-                                setLocalError("");
+                                setLocalError('');
                                 return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(lendAmount, 6))
                               }}
                               onSuccess={async (tx) => {
-                                  setLocalError("");
+                                  setLocalError('');
                                   if(activeLendingPoolsError) {
                                     handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
                                     return
