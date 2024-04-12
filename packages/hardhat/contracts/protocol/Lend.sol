@@ -187,11 +187,19 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         return WadRayMath.wadDiv(WadRayMath.WAD, answerWad);
     }
 
+/**
+    * @notice Returns the USDC/ETH price as defined by chainlink
+    * @dev Inverts the ETH/USDC returned from chainlink
+    * @param ltv The ltv as a 2 digit integer to calculate the maxLoan for
+    * @param ethCollateral The amount of available ETH collateral (in Wad) to calculate the maxLoan for
+    * @return the maximum USDC loan (expressed with 6 decimals)
+*/
     function maxLoan(uint ltv, uint ethCollateral) public view returns (uint256) {
         // ethCollateral - 18 decimals
         // getEthPrice - 8 decimals
         require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
-        uint valueOfEth = ethCollateral * getEthPrice(); // value of eth in usd with 26 decimals
+        /// @dev USDC value of ethCollateral (in Wad)
+        uint valueOfEth = WadRayMath.wadMul(ethCollateral, getEthPrice());
         uint maxLoanV = valueOfEth * ltv / 10 ** 22; // remove 20 decimals to get back to 6 decimals of USDC
         return maxLoanV;
     }

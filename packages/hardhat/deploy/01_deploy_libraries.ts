@@ -14,6 +14,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await deploy("HelpersLogic", { from: deployer, log: true, args: [] });
     await deploy("LiquidationLogic", { from: deployer, log: true, args: [] });
     await deploy("SupplyLogic", { from: deployer, log: true, args: [] });
+    await deploy("ShrubLendMath", { from: deployer, log: true, args: [] });
 
     // External Libraries
     await deploy("PercentageMath", { from: deployer, log: true, args: [] });

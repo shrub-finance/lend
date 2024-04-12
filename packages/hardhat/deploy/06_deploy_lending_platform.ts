@@ -26,6 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         AdminLogic: allDeployments.AdminLogic.address,
         PercentageMath: allDeployments.PercentageMath.address,
         WadRayMath: allDeployments.WadRayMath.address,
+        ShrubLendMath: allDeployments.ShrubLendMath.address,
     },
     args: [
         addresses
