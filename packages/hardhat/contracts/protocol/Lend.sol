@@ -44,6 +44,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     uint aEthSnapshotBalance;
     uint newCollateralSinceSnapshot;
     uint claimedCollateralSinceSnapshot;
+    uint MAX_LTV_FOR_EXTEND = 8000;
+    uint LIQUIDATION_THRESHOLD = 8500;
 
     address shrubTreasury;
 
@@ -209,7 +211,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     * @param usdcAmount the requested loan amount expressed with 6 decimals
     * @return collateralRequired the amount of ETH expressed in Wad required to colateralize this loan
 */
-    function requiredCollateral(uint ltv, uint usdcAmount) validateLtv(ltv) public view returns (uint256 collateralRequired) {
+    function requiredCollateral(uint ltv, uint usdcAmount) validateExtendLtv(ltv) public view returns (uint256 collateralRequired) {
         uint valueOfEthRequired = PercentageMath.percentDiv(ShrubLendMath.usdcToWad(usdcAmount), ltv);
         collateralRequired = WadRayMath.wadDiv(valueOfEthRequired, getEthPrice());
     }
@@ -426,12 +428,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     // This runs after the collateralProvider has sent aETH to Shrub
     function takeLoanInternal(
         DataTypes.TakeLoanInternalParams memory params
-    ) validateLtv(params.ltv) internal {
+    ) internal {
         console.log("running takeLoanInternal");
 
         // Ensure that it is a valid pool
         require(validPool(params.timestamp), "Invalid pool");
 
+        console.log("params.collateral: %s, requiredCollateral: %s", params.collateral, requiredCollateral(params.ltv, params.principal));
+        console.log("params.ltv: %s, params.principal: %s", params.ltv, params.principal);
         require(
             params.collateral >= requiredCollateral(params.ltv, params.principal),
             "Insufficient collateral provided for specified ltv"
@@ -651,7 +655,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint256 additionalCollateral, // Amount of new ETH collateral with - 18 decimals
         uint256 additionalRepayment, // Amount of new USDC to be used to repay the existing loan - 6 decimals
         uint32 _ltv
-    ) external validateLtv(_ltv) onlyBptOwner(tokenId) payable {
+    ) external validateExtendLtv(_ltv) onlyBptOwner(tokenId) payable {
 //        TODO: extendLoan should allow LTV that is within health factor
 
 
@@ -768,7 +772,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     }
 
     modifier validateLtv(uint ltv) {
+        console.log("validateLtv: %s", ltv);
         require(ltv == 2000 || ltv == 2500 || ltv == 3300 || ltv == 5000, "Invalid LTV");
+        _;
+    }
+
+    modifier validateExtendLtv(uint ltv) {
+        console.log("validateExtendLtv: %s", ltv);
+        require(ltv == MAX_LTV_FOR_EXTEND || ltv == 2000 || ltv == 2500 || ltv == 3300 || ltv == 5000, "Invalid LTV");
         _;
     }
 

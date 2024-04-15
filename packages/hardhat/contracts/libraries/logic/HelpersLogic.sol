@@ -17,8 +17,10 @@ library HelpersLogic {
             apy = 0.05e4;
         } else if (_ltv == 5000) {
             apy = 0.08e4;
-        } else {
-            revert("Invalid LTV");
+        } else if (_ltv == 8000) {
+            apy = 0.08e4;
+        }else {
+            revert("getAPYBasedOnLTV - Invalid LTV");
         }
     }
 }

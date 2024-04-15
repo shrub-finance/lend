@@ -7,7 +7,6 @@ import {parseEther, parseUnits, TransactionResponse} from "ethers";
 import {fromEthDate, getPlatformDates, toEthDate} from "@shrub-lend/common"
 import {HardhatRuntimeEnvironment} from "hardhat/types";
 
-const x = async () => {}
 async function sendTransaction(sentTx: Promise<TransactionResponse>, description: string) {
     const tx = await sentTx;
     console.log(`${description} transaction broadcast with txid: ${tx.hash}`);
@@ -227,12 +226,13 @@ task("extendLoan", "extend an existing loan")
         const account = taskArgs.account;
         const tokenId = taskArgs.tokenId;
         const newTimestamp: number = taskArgs.newTimestamp;
-        const ltv = taskArgs.ltv;
         const additionalCollateral = taskArgs.additionalCollateral;
         const additionalRepayment = taskArgs.additionalRepayment;
 
         const {ethers, deployments, getNamedAccounts} = env;
         const {lendingPlatform, usdc, aeth, bpt} = await getDeployedContracts(env);
+
+        const ltv = ethers.parseUnits(taskArgs.ltv.toString(), 2);
 
         const borrowerAccount = await ethers.getSigner(account);
         const parsedAdditionalCollateral = ethers.parseUnits(additionalCollateral.toString(),6);

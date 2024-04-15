@@ -107,7 +107,7 @@ task("testLendingPlatform3", "Setup an environment for development")
 
         async function partD() {
             await env.run('partialRepayLoan', { account: account3, tokenId: 0, repaymentAmount: 50});
-            await env.run('extendLoan', {account: account4, tokenId: 1, newTimestamp: jan2027, ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
+            await env.run('extendLoan', {account: account4, tokenId: 1, newTimestamp: jan2027, ltv: 80, additionalCollateral: 0, additionalRepayment: 0})
             await env.run('setTime', {ethDate: apr2026});
             await env.run('takeSnapshot', { account: deployer });
             await env.run('getLoan', {tokenid: 0});
