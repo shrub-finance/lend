@@ -440,13 +440,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log("withdrawlPropotion: %s", withdrawalProportion);
 
         // Calculate the corresponding USDC amount to withdraw
-//        uint256 usdcPrincipalAmount = withdrawalProportion * lendingPool.principal / 10 ** 8;
-//        uint256 usdcInterestAmount = withdrawalProportion * lendingPool.accumInterest / 10 ** 8;
         uint256 usdcPrincipalAmount = ShrubLendMath.wadToUsdc(WadRayMath.wadMul(withdrawalProportion, lendingPool.principal));
         uint256 usdcInterestAmount = ShrubLendMath.wadToUsdc(WadRayMath.wadMul(withdrawalProportion, lendingPool.accumInterest));
 
         // Calculate the corresponding aETH interest to withdraw
-//        uint256 aethWithdrawalAmount = withdrawalProportion * lendingPool.accumYield / 10 ** 8;
         uint256 aethWithdrawalAmount = WadRayMath.wadMul(withdrawalProportion, lendingPool.accumYield);
 
         // Burn the pool share tokens
@@ -512,7 +509,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         if (aEthSnapshotBalance == 0) {
             deltaBpPoolShares = params.collateral;
         } else {
-//            deltaBpPoolShares = params.collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
             deltaBpPoolShares = WadRayMath.wadDiv(
                 WadRayMath.wadMul(params.collateral, bpTotalPoolShares),
                 aEthSnapshotBalance + newCollateralSinceSnapshot + claimedCollateralSinceSnapshot
@@ -608,6 +604,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        console.log("ownerOf(tokenId): %s, repayer: %s", bpt.ownerOf(tokenId), repayer);
         // Determine the principal, interest, and collateral of the debt
         DataTypes.BorrowData memory bd = bpt.getLoan(tokenId);
+        DataTypes.BorrowingPool memory tempBorrowingPool = borrowingPools[bd.endDate];
 //        bd.endDate = _timestamp;
 //        bd.principal = _principal;
 //        bd.collateral = _collateral;
@@ -629,25 +626,31 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log("about to burn tokenId: %s", tokenId);
         bpt.burn(tokenId);
         // Update Borrowing Pool principal, collateral
-        borrowingPools[bd.endDate].principal -= bd.principal;
-        borrowingPools[bd.endDate].collateral -= bd.collateral;
-        console.log("borrowingPool with endDate: %s updated to principal: %s, collateral: %s", bd.endDate, borrowingPools[bd.endDate].principal, borrowingPools[bd.endDate].collateral);
+        tempBorrowingPool.principal -= bd.principal;
+        tempBorrowingPool.collateral -= bd.collateral;
+        console.log("borrowingPool with endDate: %s updated to principal: %s, collateral: %s", bd.endDate, tempBorrowingPool.principal, tempBorrowingPool.collateral);
         // Update Borrowing Pool poolShareAmount
         console.log('aEthSnapshotBalance: %s', aEthSnapshotBalance);
         console.log("bd.collateral: %s, bpTotalPoolShares: %s, aEthSnapshotBalance: %s", bd.collateral, bpTotalPoolShares, aEthSnapshotBalance);
-        uint deltaBpPoolShares = bd.collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
+//        uint deltaBpPoolShares = bd.collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
+        uint deltaBpPoolShares = WadRayMath.wadDiv(
+            WadRayMath.wadMul(bd.collateral, bpTotalPoolShares),
+            aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot
+        );
         console.log('deltaBpPoolShares: %s', deltaBpPoolShares);
-        console.log('borrowing pool with endDate %s has poolShareAmount: %s', bd.endDate, borrowingPools[bd.endDate].poolShareAmount);
+        console.log('borrowing pool with endDate %s has poolShareAmount: %s', bd.endDate, tempBorrowingPool.poolShareAmount);
         console.log("about to decrement above pool...");
-        borrowingPools[bd.endDate].poolShareAmount -= deltaBpPoolShares;
-        console.log("poolShareAmount of borrowingPool with timestamp: %s decremented by %s, now %s", bd.endDate, deltaBpPoolShares, borrowingPools[bd.endDate].poolShareAmount);
-//        console.log("borrowingPool with endDate: %s updated to poolShareAmount: %s", bd.endDate, borrowingPools[bd.endDate].poolShareAmount);
+        tempBorrowingPool.poolShareAmount -= deltaBpPoolShares;
+        console.log("poolShareAmount of borrowingPool with timestamp: %s decremented by %s, now %s", bd.endDate, deltaBpPoolShares, tempBorrowingPool.poolShareAmount);
+//        console.log("borrowingPool with endDate: %s updated to poolShareAmount: %s", bd.endDate, tempBorrowingPool.poolShareAmount);
         // Update bpTotalPoolShares
         bpTotalPoolShares -= deltaBpPoolShares;
         console.log("bpTotalPoolShares updated to: %s", bpTotalPoolShares);
         claimedCollateralSinceSnapshot += bd.collateral;
         console.log("claimedCollateralSinceSnapshot updated to: %s", claimedCollateralSinceSnapshot);
         freedCollateral = bd.collateral;
+        // Write borrowing pool back to storage
+        borrowingPools[bd.endDate] = tempBorrowingPool;
         // Emit event for tracking/analytics/subgraph
         emit RepayLoan(tokenId, bd.principal + interest, freedCollateral, beneficiary);
     }
