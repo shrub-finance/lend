@@ -260,7 +260,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                       <p>Loading balance...</p>
                     ) : (
                       <>
-                        {/* Check if user has insufficient balance */}
+                        {/* Check for insufficient balance */}
                         {usdcBalanceData &&
                           BigNumber.from(usdcBalanceData.value).lt(
                             ethers.utils.parseUnits(lendAmount, 6),

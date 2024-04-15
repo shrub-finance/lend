@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import {BorrowView} from "../views/borrow/BorrowView";
-import {BorrowDurationView} from "../views/borrow/BorrowDuration";
+import {BorrowDurationView} from "../views/borrow/BorrowDurationView";
 import {BorrowSummaryView} from "../views/borrow/BorrowSummaryView";
 import {useState} from "react";
 
