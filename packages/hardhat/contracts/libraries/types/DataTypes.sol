@@ -57,6 +57,21 @@ library DataTypes {
         address loanHolder;
     }
 
+    struct calcLPIncreasesParams {
+        uint aEthYieldDistribution; // Amount of AETH yield since last snapshot allocated to a borrowing pool (Wad)
+        uint accumInterestBP; // Amount of accumulated USDC interest belonging to a borrowing pool (6 decimals)
+        uint lendingPoolPrincipal; // Amount of USDC principal in a lending pool (6 decimals)
+        uint contributionDenominator; // Sum of USDC principal of all lending pools eligible for a distribution from the borrowing pool
+    }
+
+    struct calcLPIncreasesResult {
+        uint deltaAccumYield; // New aETH yield to be distributed to this lending pool from this borrowing pool (Wad)
+        uint deltaShrubYield; // New aETH yield to be distributed as fees to the shrub treasury from this borrowing pool (Wad)
+        uint deltaAccumInterest; // New aETH yield to be distributed to this lending pool from this borrowing pool (Wad)
+        uint deltaShrubInterest; // New aETH yield to be distributed to this lending pool from this borrowing pool (Wad)
+    }
+
+
 //    struct ChainlinkResponse {
 //        uint80 roundId;
 //        int256 answer;
