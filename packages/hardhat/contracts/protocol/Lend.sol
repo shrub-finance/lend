@@ -110,7 +110,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         DataTypes.LendingPool[] memory lendingPoolsTemp = new DataTypes.LendingPool[](activePools.length);
         for (uint i = 0; i < activePools.length; i++) {
             // Make copy of lending pools into memory
-            lendingPoolsTemp[i] = lendingPools[i];
+            lendingPoolsTemp[i] = lendingPools[activePools[i]];
         }
 
 //        Calculate accumInterest for all BP
@@ -164,7 +164,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         }
         // Loop through lendingPoolsIncrement and write all of the deltas to lendingPools storage
         for (uint j = 0; j < activePools.length; j++) {
-            lendingPools[j] = lendingPoolsTemp[j];
+            console.log("lendingPoolsTemp[j] - j: %s, accumInterest: %s, accumYield: %s", j, lendingPoolsTemp[j].accumInterest, lendingPoolsTemp[j].accumYield);
+            console.log("lendingPools[activePools[j]] - j: %s, accumInterest: %s, accumYield: %s", j, lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
+            lendingPools[activePools[j]] = lendingPoolsTemp[j];
             console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
             emit LendingPoolYield(
                 address(lendingPools[activePools[j]].poolShareToken),
@@ -184,9 +186,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     }
 
     function calcLPIncreases(DataTypes.calcLPIncreasesParams memory params) internal returns (DataTypes.calcLPIncreasesResult memory) {
+        console.log("running calcLPIncreases");
         uint lendingPoolRatio = WadRayMath.wadDiv(params.lendingPoolPrincipal, params.contributionDenominator);
         uint LPaEthDistribution = WadRayMath.wadMul(params.aEthYieldDistribution, lendingPoolRatio);
         uint LPinterestDistribution = WadRayMath.wadMul(ShrubLendMath.usdcToWad(params.accumInterestBP), lendingPoolRatio);
+        console.log("lendingPoolRatio: %s, LPaEthDistribution: %s, LPinterestDistribution: %s", lendingPoolRatio, LPaEthDistribution, LPinterestDistribution);
 
         return DataTypes.calcLPIncreasesResult({
             deltaAccumYield : PercentageMath.percentMul(LPaEthDistribution, 10000 - PlatformConfig.shrubFee),
@@ -311,6 +315,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     ) public view returns (DataTypes.PoolDetails memory) {
         DataTypes.LendingPool memory lendingPool = lendingPools[_timestamp];
         DataTypes.PoolDetails memory poolDetails;
+
+        console.log("getPool - timestamp: %s, poolShareTokenAddress: %s, storage: %s",
+            _timestamp,
+            address(lendingPool.poolShareToken),
+            address(lendingPools[_timestamp].poolShareToken)
+        );
 
         poolDetails.lendPrincipal = lendingPool.principal;
         poolDetails.lendAccumInterest = lendingPools[_timestamp].accumInterest;

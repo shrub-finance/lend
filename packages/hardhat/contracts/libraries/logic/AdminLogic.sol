@@ -36,6 +36,7 @@ library AdminLogic {
         // Make sure to keep the pool sorted
         insertIntoSortedArr(_activePoolIndex, _activePools, _timestamp);
         poolShareTokenAddress = address(_lendingPools[_timestamp].poolShareToken);
+//        console.log("executeCreatePool - poolsShareTokenAddress: %s", poolShareTokenAddress);
 //        emit PoolCreated(_timestamp, poolShareTokenAddress);
     }
 

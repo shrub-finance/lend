@@ -516,10 +516,10 @@ task("getPool", "get deatils of a lending pool")
 Lending Pool: ${ethDate} - ${fromEthDate(ethDate).toISOString().split('T')[0]}
 ============
 poolShareTokenAddress: ${res.lendPoolShareTokenAddress}
-principal: ${ethers.formatUnits(res.lendPrincipal, 6)} USDC
-accumInterest: ${ethers.formatUnits(res.lendAccumInterest, 6)} USDC
+principal: ${ethers.formatUnits(res.lendPrincipal, 18)} USDC
+accumInterest: ${ethers.formatUnits(res.lendAccumInterest, 18)} USDC
 accumYield: ${ethers.formatEther(res.lendAccumYield)} ETH
-shrubInterest: ${ethers.formatUnits(res.lendShrubInterest, 6)} USDC
+shrubInterest: ${ethers.formatUnits(res.lendShrubInterest, 18)} USDC
 shrubYield: ${ethers.formatEther(res.lendShrubYield)} ETH
 
 Borrow Pool: ${ethDate} - ${fromEthDate(ethDate).toISOString().split('T')[0]}
@@ -527,9 +527,9 @@ Borrow Pool: ${ethDate} - ${fromEthDate(ethDate).toISOString().split('T')[0]}
 pool share amount: ${res.borrowPoolShareAmount} of ${bpTotalPoolShares} (${bpTotalPoolShares === 0n ? 0 : ethers.formatUnits(res.borrowPoolShareAmount * 10000n / bpTotalPoolShares, 2)}%)
 principal: ${ethers.formatUnits(res.borrowPrincipal, 6)} USDC
 collateral: ${ethers.formatEther(res.borrowCollateral)} ETH
-total accum interest: ${ethers.formatUnits(res.borrowTotalAccumInterest, 6)} USDC 
+total accum interest: ${ethers.formatUnits(res.borrowTotalAccumInterest, 18)} USDC 
 total accum yield: ${ethers.formatEther(res.borrowTotalAccumYield)} ETH
-total repaid: ${ethers.formatUnits(res.borrowTotalRepaid, 6)} USDC 
+total repaid: ${ethers.formatUnits(res.borrowTotalRepaid, 18)} USDC 
         `)
     })
 
@@ -559,7 +559,7 @@ startDate: ${fromEthDate(Number(res.startDate)).toISOString()}
 principal: ${ethers.formatUnits(res.principal, 6)} USDC
 interest: ${ethers.formatUnits(interest, 6)} USDC
 collateral: ${ethers.formatEther(res.collateral)} ETH
-apy: ${ethers.formatUnits(res.apy, 6)}%
+apy: ${ethers.formatUnits(res.apy, 2)}%
 
 total debt: ${ethers.formatUnits(debt, 6)} USDC
 `)
