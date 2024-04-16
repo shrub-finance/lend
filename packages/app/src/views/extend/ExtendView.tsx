@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Image from "next/image";
 import { calculateLockupPeriod, fromEthDate, toEthDate } from '@shrub-lend/common';
-import ExtendSummary from './ExtendSummary';
+import ExtendSummary from './ExtendSummaryView';
 
 interface ExtendViewProps {
   timestamp: number;
@@ -67,8 +67,7 @@ const ExtendView: React.FC<ExtendViewProps> = ({
                 <span className="label-text text-shrub-blue">Amount Being Extended</span>
               </label>
               <div className='w-full text-xl font-semibold flex flex-row'>
-                                                            <span className='text-4xl font-medium text-left w-[500px]'>
-                                                              {selectedLendPositionBalance} USDC
+                                                            <span className='text-4xl font-medium text-left w-[500px]'>{selectedLendPositionBalance} USDC
                                                             </span>
                 <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10}
                        height={10} />

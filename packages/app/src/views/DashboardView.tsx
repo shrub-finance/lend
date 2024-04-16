@@ -30,7 +30,7 @@ import Modal from "../components/Modal";
 import ExtendView from './extend/ExtendView';
 
 const now = new Date();
-const oneYearFromNow = new Date(new Date(now).setFullYear(now.getFullYear() + 1));
+new Date(new Date(now).setFullYear(now.getFullYear() + 1));
 export const DashboardView: FC = ({}) => {
   const wallet = useConnectedWallet();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -105,17 +105,6 @@ export const DashboardView: FC = ({}) => {
       handleAPYCalc();
     }
   }, [timestamp]);
-
-  useEffect(() => {
-    // console.log("running contract useEffect");
-    async function callContract() {
-      const APYvalue = await lendingPlatform.call("getAPYBasedOnLTV", [33]);
-    }
-
-    if (!lendingPlatformIsLoading && !lendingPlatformError) {
-      callContract().then().catch(console.log);
-    }
-  }, [lendingPlatformIsLoading, lendingPlatformError, lendingPlatform]);
 
   useEffect(() => {
     // console.log("running usdc useEffect");
