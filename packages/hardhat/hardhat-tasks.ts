@@ -516,6 +516,7 @@ task("getPool", "get deatils of a lending pool")
 Lending Pool: ${ethDate} - ${fromEthDate(ethDate).toISOString().split('T')[0]}
 ============
 poolShareTokenAddress: ${res.lendPoolShareTokenAddress}
+poolShareTokenTotalSupply: ${res.lendPoolShareTokenTotalSupply}
 principal: ${ethers.formatUnits(res.lendPrincipal, 18)} USDC
 accumInterest: ${ethers.formatUnits(res.lendAccumInterest, 18)} USDC
 accumYield: ${ethers.formatEther(res.lendAccumYield)} ETH
