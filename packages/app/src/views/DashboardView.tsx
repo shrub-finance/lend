@@ -107,17 +107,6 @@ export const DashboardView: FC = ({}) => {
   }, [timestamp]);
 
   useEffect(() => {
-    // console.log("running contract useEffect");
-    async function callContract() {
-      const APYvalue = await lendingPlatform.call("getAPYBasedOnLTV", [33]);
-    }
-
-    if (!lendingPlatformIsLoading && !lendingPlatformError) {
-      callContract().then().catch(console.log);
-    }
-  }, [lendingPlatformIsLoading, lendingPlatformError, lendingPlatform]);
-
-  useEffect(() => {
     // console.log("running usdc useEffect");
   }, [usdcBalanceIsLoading]);
 
