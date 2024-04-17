@@ -2,17 +2,25 @@
 pragma solidity ^0.8.18;
 
 library HelpersLogic {
-    function getAPYBasedOnLTV(uint32 _ltv) public pure returns (uint32) {
-        if (_ltv == 20) {
-            return 0;
-        } else if (_ltv == 25) {
-            return 1 * 10 ** 6;
-        } else if (_ltv == 33) {
-            return 5 * 10 ** 6;
-        } else if (_ltv == 50) {
-            return 8 * 10 ** 6;
-        } else {
-            revert("Invalid LTV");
+/**
+    * @notice Calculate APY from an LTV value
+    * @dev
+    * @param _ltv expressed as a percentage
+    * @return apy interest for a loan with a given ltv expressed as percentage
+*/
+    function getAPYBasedOnLTV(uint32 _ltv) public pure returns (uint32 apy) {
+        if (_ltv == 2000) {
+            apy = 0;
+        } else if (_ltv == 2500) {
+            apy = 0.01e4;
+        } else if (_ltv == 3300) {
+            apy = 0.05e4;
+        } else if (_ltv == 5000) {
+            apy = 0.08e4;
+        } else if (_ltv == 8000) {
+            apy = 0.08e4;
+        }else {
+            revert("getAPYBasedOnLTV - Invalid LTV");
         }
     }
 }

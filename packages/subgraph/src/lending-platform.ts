@@ -21,6 +21,7 @@ import {
 import {getLoan, getLoanByTokenId, partialRepayLoan, repayLoan} from "./entities/loan";
 import {PoolShareToken} from "../generated/templates";
 import {getLendPosition, incrementLendPosition, lendPostionWithdraw} from "./entities/lend-position";
+import {UsdcToWadRatio} from "./constants";
 
 
 export function handlePoolCreated(event: PoolCreated): void {
@@ -42,7 +43,7 @@ export function handleNewDeposit(event: NewDeposit): void {
         event.params.tokenAmount.toString()
     ]);
     let depositor = event.params.depositor;
-    let amount = event.params.amount;
+    let amount = event.params.amount.times(UsdcToWadRatio);
     let timestamp = event.params.timestamp;
     let poolShareTokenAddress = event.params.poolShareTokenAddress;
     let tokenAmount = event.params.tokenAmount;
@@ -84,7 +85,7 @@ export function handleNewLoan(event: NewLoan): void {
         event.params.tokenId,
         event.params.borrower,
         event.params.apy,
-        event.params.principal,
+        event.params.principal.times(UsdcToWadRatio),
         event.params.collateral,
         event.params.timestamp,
         event.params.startDate,
@@ -111,14 +112,14 @@ export function handleLendingPoolYield(event: LendingPoolYield): void {
 
 export function handlePartialRepayLoan(event: PartialRepayLoan): void {
     // event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
-    let tokenId = event.params.tokenId;
-    let repaymentAmount = event.params.repaymentAmount;
-    let principalReduction = event.params.principalReduction;
-    log.info("partialRepayLoan: tokenId: {}, repaymentAmount: {}, principalReduction: {}",[
-        tokenId.toString(),
-        repaymentAmount.toString(),
-        principalReduction.toString()
+    log.info("handlePartialRepayLoan: tokenId: {}, repaymentAmount: {}, principalReduction: {}",[
+        event.params.tokenId.toString(),
+        event.params.repaymentAmount.toString(),
+        event.params.principalReduction.toString()
     ]);
+    let tokenId = event.params.tokenId;
+    let repaymentAmount = event.params.repaymentAmount.times(UsdcToWadRatio);
+    let principalReduction = event.params.principalReduction.times(UsdcToWadRatio);
 
     let loan = getLoanByTokenId(tokenId);
     let borrowingPool = getBorrowingPool(loan.timestamp, event.block);
@@ -128,16 +129,16 @@ export function handlePartialRepayLoan(event: PartialRepayLoan): void {
 
 export function handleRepayLoan(event: RepayLoan): void {
     // event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
+    log.info("handleRepayLoan: tokenId: {}. repaymentAmount: {}, collateralReturned, beneficiary: {}", [
+        event.params.tokenId.toString(),
+        event.params.repaymentAmount.toString(),
+        event.params.collateralReturned.toString(),
+        event.params.beneficiary.toHexString()
+    ]);
     let tokenId = event.params.tokenId;
-    let repaymentAmount = event.params.repaymentAmount;
+    let repaymentAmount = event.params.repaymentAmount.times(UsdcToWadRatio);
     let collateralReturned = event.params.collateralReturned;
     let beneficiary = event.params.beneficiary;
-    log.info("handleRepayLoan: tokenId: {}. repaymentAmount: {}, collateralReturned, beneficiary: {}", [
-        tokenId.toString(),
-        repaymentAmount.toString(),
-        collateralReturned.toString(),
-        beneficiary.toHexString()
-    ]);
 
     let loan = getLoanByTokenId(tokenId);
     let borrowingPool = getBorrowingPool(loan.timestamp, event.block);
@@ -147,20 +148,20 @@ export function handleRepayLoan(event: RepayLoan): void {
 
 export function handleWithdraw(event: Withdraw): void {
 // #    event Withdraw(address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcAmount);
+    log.info("handleWithdraw: user: {}, poolShareTokenAddress: {}, tokenAmount: {}, ethAmount, usdcPrincipal: {}, usdcInterest: {}", [
+        event.params.user.toHexString(),
+        event.params.poolShareTokenAddress.toHexString(),
+        event.params.tokenAmount.toString(),
+        event.params.ethAmount.toString(),
+        event.params.usdcPrincipal.toString(),
+        event.params.usdcInterest.toString()
+    ]);
     let userAddress = event.params.user;
     let poolShareTokenAddress = event.params.poolShareTokenAddress;
     let tokenAmount = event.params.tokenAmount;
     let ethAmount = event.params.ethAmount;
-    let usdcPrincipal = event.params.usdcPrincipal;
-    let usdcInterest = event.params.usdcInterest;
-    log.info("handleRepayLoan: user: {}, poolShareTokenAddress: {}, tokenAmount: {}, ethAmount, usdcPrincipal: {}, usdcInterest: {}", [
-        userAddress.toHexString(),
-        poolShareTokenAddress.toHexString(),
-        tokenAmount.toString(),
-        ethAmount.toString(),
-        usdcPrincipal.toString(),
-        usdcInterest.toString()
-    ]);
+    let usdcPrincipal = event.params.usdcPrincipal.times(UsdcToWadRatio);
+    let usdcInterest = event.params.usdcInterest.times(UsdcToWadRatio);
 
     // Update Lending Pool
     let lendingPool = getLendingPool(poolShareTokenAddress);
@@ -173,14 +174,14 @@ export function handleWithdraw(event: Withdraw): void {
 
 export function handleFinalizeLendingPool(event: FinalizeLendingPool): void {
 // #    event FinalizeLendingPool(address poolShareTokenAddress, uint shrubInterest, uint shrubYield);
-    let poolShareTokenAddress = event.params.poolShareTokenAddress;
-    let shrubInterest = event.params.shrubInterest;
-    let shrubYield = event.params.shrubYield;
-    log.info("handleRepayLoan: poolShareTokenAddress: {}. shrubInterest: {}, shrubYield", [
-        poolShareTokenAddress.toHexString(),
-        shrubInterest.toString(),
-        shrubYield.toString()
+    log.info("handleFinalizeLendingPool: poolShareTokenAddress: {}. shrubInterest: {}, shrubYield", [
+        event.params.poolShareTokenAddress.toHexString(),
+        event.params.shrubInterest.toString(),
+        event.params.shrubYield.toString()
     ]);
+    let poolShareTokenAddress = event.params.poolShareTokenAddress;
+    let shrubInterest = event.params.shrubInterest.times(UsdcToWadRatio);
+    let shrubYield = event.params.shrubYield;
     let lendingPool = getLendingPool(poolShareTokenAddress);
     lendingPoolFinalize(lendingPool, shrubInterest, shrubYield);
 }
