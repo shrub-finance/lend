@@ -170,6 +170,13 @@ export const DashboardView: FC = ({}) => {
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
+    function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
+        const usdcInWadBN = ethers.BigNumber.from(usdcInWad);
+        const divisionFactor = ethers.BigNumber.from(10).pow(12)
+        const roundAmount = ethers.BigNumber.from(5).mul(divisionFactor).div(10);
+        return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
+    }
+
 
   /** might need this later **/
   // let newlyAddedLendPosition = store.lendPositions.filter(item => item.hasOwnProperty('id'));
@@ -288,7 +295,7 @@ export const DashboardView: FC = ({}) => {
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {wallet && !ethBalanceIsLoading ? (
                                         <p>{" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
-                                          {ethers.utils.formatUnits(item.depositsUsdc ?? "0", 6)}{" "} USDC
+                                          {formatLargeUsdc(item.depositsUsdc ?? "0")}{" "} USDC
                                           {item.status === 'pending' && (
                                             <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                           )}
@@ -304,7 +311,7 @@ export const DashboardView: FC = ({}) => {
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {item.interestEarnedOverride ? item.interestEarnedOverride :
-                                        ethers.utils.formatUnits(
+                                        formatLargeUsdc(
                                           ethers.BigNumber.from(item.lendingPool.totalPrincipal)
                                             .add(item.lendingPool.totalUsdcInterest)
                                             .add(ethPrice
@@ -312,18 +319,18 @@ export const DashboardView: FC = ({}) => {
                                               .div(ethers.utils.parseUnits("1", 20)))
                                             .mul(item.amount)
                                             .div(item.lendingPool.tokenSupply)
-                                            .sub(item.depositsUsdc), 6)}
+                                            .sub(item.depositsUsdc))}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {item.currentBalanceOverride ? item.currentBalanceOverride:
-                                        ethers.utils.formatUnits(
+                                        formatLargeUsdc(
                                           ethers.BigNumber.from(item.lendingPool.totalPrincipal)
                                             .add(item.lendingPool.totalUsdcInterest)
                                             .add(ethPrice
                                               .mul(item.lendingPool.totalEthYield)
                                               .div(ethers.utils.parseUnits("1", 20)))
                                             .mul(item.amount)
-                                            .div(item.lendingPool.tokenSupply), 6)}
+                                            .div(item.lendingPool.tokenSupply))}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
@@ -436,10 +443,7 @@ export const DashboardView: FC = ({}) => {
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {wallet && !ethBalanceIsLoading ? (
                                       <p>
-                                        {ethers.utils.formatUnits(
-                                          item.originalPrincipal ?? "0",
-                                          6,
-                                        )}
+                                        {formatLargeUsdc(item.originalPrincipal ?? "0")}
                                         {item.status === 'pending' && (
                                           <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                         )}
@@ -454,10 +458,7 @@ export const DashboardView: FC = ({}) => {
                                     )}
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
-                                    {ethers.utils.formatUnits(
-                                      item.paid ?? "0",
-                                      6,
-                                    )}
+                                    {formatLargeUsdc(item.paid ?? "0")}
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {daysFromNow(
@@ -467,11 +468,11 @@ export const DashboardView: FC = ({}) => {
                                   <td>
                                     <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${ethers.utils.formatUnits(
                                       item.apy ?? "0",
-                                      6,
+                                      2,
                                     )}%`}</span>
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
-                                    {ethers.utils.formatUnits(
+                                    {formatLargeUsdc(
                                       ethers.BigNumber.from(
                                         item.principal ?? "0",
                                       ).add(
@@ -496,8 +497,7 @@ export const DashboardView: FC = ({}) => {
                                             ),
                                           )
                                           .div(ethers.utils.parseUnits("1", 8)),
-                                      ),
-                                      6,
+                                      )
                                     )}
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
