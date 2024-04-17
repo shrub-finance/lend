@@ -20,6 +20,7 @@ library AdminLogic {
         uint256[] storage _activePools,
         uint256 _timestamp
     ) external returns (address poolShareTokenAddress) {
+        console.log("Running AdminLogic.executeCreatePool");
         require(
             _lendingPools[_timestamp].poolShareToken == PoolShareToken(address(0)),
             "Pool already exists"
@@ -45,6 +46,7 @@ library AdminLogic {
         uint256[] storage _activePools,
         uint newValue
     ) internal {
+        console.log("Running AdminLogic.insertIntoSortedArr");
         if (_activePools.length == 0) {
             _activePools.push(newValue);
             // No need to run indexActivePools as the index would be 0 (which it is by default)
@@ -80,7 +82,7 @@ library AdminLogic {
         mapping(uint256 => uint256) storage _activePoolIndex,
         uint256[] storage _activePools
     ) internal {
-        console.log("running indexActivePools");
+        console.log("Running AdminLogic.indexActivePools");
         for (uint i = 0; i < _activePools.length; i++) {
             _activePoolIndex[_activePools[i]] = i;
         }

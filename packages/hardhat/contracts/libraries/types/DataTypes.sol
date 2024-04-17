@@ -29,6 +29,7 @@ library DataTypes {
         uint lendAccumInterest;
         uint lendAccumYield;
         address lendPoolShareTokenAddress;
+        uint lendPoolShareTokenTotalSupply;
         uint lendShrubInterest;
         uint lendShrubYield;
         uint borrowPrincipal;

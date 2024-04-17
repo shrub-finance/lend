@@ -326,6 +326,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         poolDetails.lendAccumInterest = lendingPools[_timestamp].accumInterest;
         poolDetails.lendAccumYield = lendingPools[_timestamp].accumYield;
         poolDetails.lendPoolShareTokenAddress = address(lendingPool.poolShareToken);
+        poolDetails.lendPoolShareTokenTotalSupply = lendingPool.poolShareToken.totalSupply();
         poolDetails.lendShrubInterest = lendingPools[_timestamp].shrubInterest;
         poolDetails.lendShrubYield = lendingPools[_timestamp].shrubYield;
 
@@ -373,10 +374,16 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
         // Calculate total value of the pool in terms of USDC
         uint256 accumYieldValueInUsdc = WadRayMath.wadMul(
-            ShrubLendMath.usdcToWad(lendingPools[_timestamp].accumYield),
+            lendingPools[_timestamp].accumYield,
             getEthPrice()
         );  // expressed in USDC (Wad)
-        uint256 totalPoolValue = ShrubLendMath.usdcToWad(lendingPools[_timestamp].principal + lendingPools[_timestamp].accumInterest) + accumYieldValueInUsdc;  // expressed in USDC (Wad)
+        console.log(
+            "lendingPool before values - principal: %s, accumInterest: %s, accumYieldValueInUsdc: %s",
+            lendingPools[_timestamp].principal,
+            lendingPools[_timestamp].accumInterest,
+            accumYieldValueInUsdc
+        );
+        uint256 totalPoolValue = lendingPools[_timestamp].principal + lendingPools[_timestamp].accumInterest + accumYieldValueInUsdc;  // expressed in USDC (Wad)
 
         // If the pool does not exist or totalLiquidity is 0, user gets 1:1 poolShareTokens
         console.log("totalPoolValue, _amount, lpt.totalSupply(), poolShareTokenAmount");
