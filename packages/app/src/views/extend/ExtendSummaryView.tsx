@@ -5,10 +5,8 @@ import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from
 import { BigNumber, ethers } from 'ethers';
 import {
   useAddress,
-  useBalance,
   useContract,
   useContractRead,
-  useContractWrite,
   Web3Button,
 } from '@thirdweb-dev/react';
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
@@ -41,24 +39,13 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
   ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
 
   const walletAddress = useAddress();
+  const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
+  const [extendActionInitiated, setExtendActionInitiated] = useState(false);
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
     error: usdcError
   } = useContract(usdcAddress, usdcAbi);
-  const {
-    contract: lendingPlatform,
-    isLoading: lendingPlatformIsLoading,
-    error: lendingPlatformError
-  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
-  const {
-    mutateAsync: mutateAsyncApprove,
-    isLoading: isLoadingApprove,
-    error: errorApprove
-  } = useContractWrite(
-    usdc,
-    "approve",
-  );
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const {
@@ -83,7 +70,6 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
       return;
     }
   }, [activeLendingPoolsLoading]);
-
   return (
 
     <div className="relative group mt-4 w-full min-w-[500px]">
@@ -143,32 +129,38 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
                <p>Loading balance...</p>
              ) : (
                <>
-                 {/* Approve if allowance is insufficient, and balance is enough */}
+                 {/* Approve if allowance is insufficient */}
                  {!allowance ||
                  BigNumber.from(allowance).lt(
                    ethers.utils.parseUnits(lendAmountBeingExtended, 6),
                  )
                    && (
                      <Web3Button
-                       contractAddress={lendingPlatformAddress}
-                       contractAbi={lendingPlatformAbi}
+                       contractAddress={usdcAddress}
+                       contractAbi={usdcAbi}
+                       isDisabled={approveUSDCActionInitiated}
                        className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
-                       action={() =>
-                         mutateAsyncApprove({
-                           args: [
-                             lendingPlatformAddress,
-                             ethers.constants.MaxUint256,
-                           ],
-                         })
-                       }
-                       onSuccess={() => {}}
+                       action={
+                         async (usdc) =>
+                         {
+                           setLocalError('');
+                           return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
+                         }}
+                       onSuccess={
+                         async (tx) => {
+                           setLocalError("");
+                           try {
+                             const receipt = await tx.wait();
+                             if(!receipt.status) {throw new Error("Transaction failed")}
+                           } catch (e) {console.log("Transaction failed:", e)}
+                           setApproveUSDCActionInitiated(true);
+                         }}
                        onError={(e) => {
-                         if (e instanceof Error) {
-                           handleErrorMessages({ err: e });
-                         }
+                         console.log(e);
+                         handleErrorMessages({err: e});
                        }}
                      >
-                       Approve USDC
+                       {!extendActionInitiated && !approveUSDCActionInitiated  ?'Approve USDC': 'USDC Approval Submitted'}
                      </Web3Button>
                    )
                    }
@@ -180,8 +172,10 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
                      <Web3Button
                        contractAddress={lendingPlatformAddress}
                        contractAbi = {lendingPlatformAbi}
-                       className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
+                       isDisabled={extendActionInitiated}
+                       className="web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
                        action={
+
                          async (lendingPlatform) =>
                          {
                              return await lendingPlatform?.contractWrapper?.writeContract?.extendDeposit(
@@ -191,34 +185,27 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
                              );
                          }
                      }
-
-                       onSuccess={async (tx) => {
-
+                       onSuccess={
+                       async (tx) => {
                          try {
                            const receipt = await tx.wait();
                            if(!receipt.status) {
                              throw new Error("Transaction failed")
                            }
-
-
                          } catch (e) {
                            console.log("Transaction failed:", e);
-
                          }
-
+                         setExtendActionInitiated(true)
                        }}
                        onError={(e) => {
                          handleErrorMessages({err: e});
-
                        }}
                      >
-                       Extend Deposit
+                       {!extendActionInitiated ?'Initiate Extend': 'Extend Order Submitted'}
                      </Web3Button>
                    )}
                </>
              )}
-
-
             </div>
           </div>
         </div>

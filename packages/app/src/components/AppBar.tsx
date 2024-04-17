@@ -14,7 +14,6 @@ export const AppBar: React.FC = () => {
           <div className="sm:inline w-22 h-22 md:max-w-22">
             <NavElement
               chiplabel="isLogo"
-              // @ts-ignore
               label={<Image src="/shrub-logo.svg" alt="Shrub Logo" width="140" height="20"/>} href={"/"}
               navigationStarts={() =>setIsNavOpen(false)}
             />

@@ -1,15 +1,11 @@
 "use client";
 import {FC, useEffect, useState} from "react";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
-import {useBalance, useConnectedWallet, useContract} from "@thirdweb-dev/react";
-
-import {lendingPlatformAddress, lendingPlatformAbi, usdcAddress} from "../../utils/contracts";
-import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
+import {useBalance} from "@thirdweb-dev/react";
+import {usdcAddress} from "../../utils/contracts";
 import {toEthDate} from '@shrub-lend/common';
 import {calculateLockupPeriod, getPlatformDates} from "@shrub-lend/common";
 import Image from 'next/image'
-
-
 
 
 interface LendViewProps {
@@ -20,12 +16,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
 
 
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
-  const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
-
-
   const format = (val: string) => val;
-  const parse = (val: string) => val.replace(/^\$/, "");
-
   const [lendAmount, setLendAmount] = useState("");
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
@@ -33,12 +24,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const [showLendAPYSection, setShowLendAPYSection] = useState(false);
   const [continueButtonEnabled, setContinueButtonEnabled] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
-
-  const {
-    contract: lendingPlatform,
-    isLoading: lendingPlatformIsLoading,
-    error: lendingPlatformError
-  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
   const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
   const depositTerms = [
