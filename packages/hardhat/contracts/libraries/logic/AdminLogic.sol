@@ -15,7 +15,7 @@ library AdminLogic {
     function executeCreatePool(
         mapping(uint40 => DataTypes.LendingPool) storage _lendingPools,
         mapping(uint40 => uint256) storage _activePoolIndex,
-        uint256[] storage _activePools,
+        uint40[] storage _activePools,
         uint40 _timestamp
     ) external returns (address poolShareTokenAddress) {
         console.log("Running AdminLogic.executeCreatePool");
@@ -40,9 +40,9 @@ library AdminLogic {
     }
 
     function insertIntoSortedArr(
-        mapping(uint256 => uint256) storage _activePoolIndex,
-        uint256[] storage _activePools,
-        uint newValue
+        mapping(uint40 => uint256) storage _activePoolIndex,
+        uint40[] storage _activePools,
+        uint40 newValue
     ) internal {
         console.log("Running AdminLogic.insertIntoSortedArr");
         if (_activePools.length == 0) {
@@ -77,8 +77,8 @@ library AdminLogic {
     }
 
     function indexActivePools(
-        mapping(uint256 => uint256) storage _activePoolIndex,
-        uint256[] storage _activePools
+        mapping(uint40 => uint256) storage _activePoolIndex,
+        uint40[] storage _activePools
     ) internal {
         console.log("Running AdminLogic.indexActivePools");
         for (uint i = 0; i < _activePools.length; i++) {

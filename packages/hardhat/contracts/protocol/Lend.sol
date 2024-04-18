@@ -83,7 +83,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         emit PoolCreated(_timestamp, poolShareTokenAddress);
     }
 
-    function finalizeLendingPool(uint _timestamp) public onlyOwner {
+    function finalizeLendingPool(uint40 _timestamp) public onlyOwner {
         DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
         require(lendingPool.poolShareToken != PoolShareToken(address(0)), "Pool does not exist");
         require(!lendingPool.finalized, "Pool already finalized");
@@ -121,11 +121,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        Calculate accumInterest for all BP
         for (uint i = 0; i < activePools.length; i++) {
             // Cleanup paid off BPTs
-            bpt.cleanUpByTimestamp(uint40(activePools[i]));
-            console.log("finished running cleanUpByTimestamp for %s", uint40(activePools[i]));
+            bpt.cleanUpByTimestamp(activePools[i]);
+            console.log("finished running cleanUpByTimestamp for %s", activePools[i]);
 //            Find the BPTs related to these timestamps
 //            bptsForPool is an array of tokenIds
-            uint[] memory bptsForPool = bpt.getTokensByTimestamp(uint40(activePools[i]));
+            uint[] memory bptsForPool = bpt.getTokensByTimestamp(activePools[i]);
             uint accumInterestBP = 0;
 //            # Loop through the BPTs in order to calculate their accumInterest
             for (uint j = 0; j < bptsForPool.length; j++) {
@@ -265,7 +265,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     }
 
     function getDeficitForPeriod(
-        uint _timestamp
+        uint40 _timestamp
     ) public validTimestamp(_timestamp) view returns (uint256 deficit) {
         console.log("Running getDeficitForPeriod");
         // NOTE: it is critical that activePools is sorted
@@ -285,7 +285,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         }
     }
 
-    function getAvailableForPeriod(uint _timestamp) public validTimestamp(_timestamp) view returns (uint avail) {
+    function getAvailableForPeriod(uint40 _timestamp) public validTimestamp(_timestamp) view returns (uint avail) {
         // currentAndFutureLiquidity - Total amount of USDC provided to this pool and all future pools
         // currentAndFutureLoans - Total amount of outstanding USDC loans from this pool and all future pools
         // getDeficitForPeriod - Deficit in terms of loans in previous buckets being greater than the liquidity in those buckets (meaning it is not available for double use)
@@ -303,7 +303,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     }
 
     function getTotalLiquidity(
-        uint _timestamp
+        uint40 _timestamp
     ) public view returns (uint256 totalLiquidity) {
         console.log("Running getTotalLiquidity");
         for (uint i = 0; i < activePools.length; i++) {
@@ -316,7 +316,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     }
 
     function getPool(
-        uint256 _timestamp
+        uint40 _timestamp
     ) public view returns (DataTypes.PoolDetails memory) {
         DataTypes.LendingPool memory lendingPool = lendingPools[_timestamp];
         DataTypes.PoolDetails memory poolDetails;
@@ -345,8 +345,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         return poolDetails;
     }
 
-    // APY is returned with 6 decimals
-    function validPool(uint256 _timestamp) internal view returns (bool) {
+    function validPool(uint40 _timestamp) internal view returns (bool) {
         // require that the timestamp be in the future
         // require that the pool has been created
         if (lendingPools[_timestamp].poolShareToken == PoolShareToken(address(0))) {
@@ -366,7 +365,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     * @param _timestamp the date until which the USDC deposit will be locked
     * @param _amount the amount of USDC (expressed with 6 decimals) which will be locked until the timestamp
 */
-    function deposit(uint256 _timestamp, uint256 _amount) public nonReentrant {
+    function deposit(uint40 _timestamp, uint256 _amount) public nonReentrant {
         console.log("running deposit");
         require(_amount > 0, "Deposit amount must be greater than 0");
         require(validPool(_timestamp), "Invalid pool");
@@ -423,7 +422,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     }
 
     function withdraw(
-        uint256 _timestamp,
+        uint40 _timestamp,
         uint256 _poolShareTokenAmount
     ) external nonReentrant {
         require(lendingPools[_timestamp].finalized, "Pool must be finalized before withdraw");
@@ -431,7 +430,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     }
 
     function withdrawUnchecked(
-        uint256 _timestamp,
+        uint40 _timestamp,
         uint256 _poolShareTokenAmount
     ) private returns (uint usdcWithdrawn, uint ethWithdrawn) {
         console.log("running withdrawUnchecked");
@@ -698,8 +697,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     }
 
     function extendDeposit(
-        uint currentTimestamp,
-        uint newTimestamp,
+        uint40 currentTimestamp,
+        uint40 newTimestamp,
         uint tokenAmount
     ) external {
         console.log("running extendDeposit");
@@ -765,7 +764,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             collateral: newCollateral,
             ltv: _ltv,
             timestamp: newTimestamp,
-            startDate: uint40(lastSnapshotDate),
+            startDate: lastSnapshotDate,
             beneficiary: msg.sender,
             loanHolder: msg.sender
         }));
@@ -868,7 +867,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         _;
     }
 
-    modifier validTimestamp(uint _timestamp) { // Modifier
+    modifier validTimestamp(uint40 _timestamp) { // Modifier
         console.log("running validTimestamp modifier");
 //        console.log(_timestamp);
 //        console.log(activePoolIndex[_timestamp]);

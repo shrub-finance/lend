@@ -176,7 +176,7 @@ contract BorrowPositionToken is ERC721, Ownable {
     }
 
     // Returns the usdc interest earned since the last adjustment (payment) to a BPT
-    function interestSinceTimestamp(uint256 tokenId, uint timestamp) public view checkExists(tokenId) returns (uint256) {
+    function interestSinceTimestamp(uint256 tokenId, uint40 timestamp) public view checkExists(tokenId) returns (uint256) {
         console.log("running interestSinceTimestamp");
 //        console.log("running interestSinceTimestamp - (tokenId, bd.startDate, timestamp, block.timestamp, apy, principal, apydecimals, secondsinyear)");
         DataTypes.BorrowData memory bd = borrowDatas[tokenId];
@@ -193,17 +193,27 @@ contract BorrowPositionToken is ERC721, Ownable {
         if (bd.apy == 0) {
             return 0;
         }
+        uint durationRay;
         if (bd.startDate > timestamp) {
             console.log("bpt created after start date - using startDate in place of timestamp");
-            console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - bd.startDate) / (Constants.APY_DECIMALS * Constants.YEAR));
-
-            return bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - bd.startDate) / (Constants.APY_DECIMALS * Constants.YEAR);
+            durationRay = ShrubLendMath.durationToRay(HelpersLogic.currentTimestamp() - bd.startDate);
+//            return bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - bd.startDate) / (Constants.APY_DECIMALS * Constants.YEAR);
+        } else {
+            durationRay = ShrubLendMath.durationToRay(HelpersLogic.currentTimestamp() - timestamp);
+//        return bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR);
         }
-        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR));
-        return bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR);
+//        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR));
+        uint annualInterestRay = WadRayMath.wadToRay(PercentageMath.percentMul(bd.apy, bd.principal));
+        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, WadRayMath.rayToWad( WadRayMath.rayMul( durationRay, annualInterestRay ) ));
+        return WadRayMath.rayToWad(
+            WadRayMath.rayMul(
+                durationRay,
+                annualInterestRay
+            )
+        );
     }
 
-    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint lastSnapshotDate, address sender) onlyOwner external returns(uint principalReduction) {
+    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint40 lastSnapshotDate, address sender) onlyOwner external returns(uint principalReduction) {
         console.log("Running partialRepayLoan - tokenId, lastSnapshotDate, repaymentAmount, msg.sender");
         console.log(tokenId);
         console.log(lastSnapshotDate);
