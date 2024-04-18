@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
+import {Constants} from '../configuration/Constants.sol';
+
 /**
  * @title Math library
  * @author Shrub Finance
@@ -40,5 +43,19 @@ library ShrubLendMath {
                 b := add(b, 1)
             }
         }
+    }
+
+    /**
+    * @dev Converts a time duration (in seconds) to be expressed in Ray where 1 YEAR = 1 Ray
+   * @param duration uint40 duration in seconds
+   * @return b = duration converted to Ray
+   */
+    function durationToRay(uint40 duration) internal pure returns (uint256 b) {
+//        uint numerator = WadRayMath.RAY * uint(duration);
+//        unit denominator = WadRayMath.RAY * Constants.YEAR();
+        b = WadRayMath.rayDiv(
+            WadRayMath.RAY * uint(duration),
+            WadRayMath.RAY * Constants.YEAR
+        );
     }
 }

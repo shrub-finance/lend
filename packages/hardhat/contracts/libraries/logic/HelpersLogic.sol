@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 library HelpersLogic {
+
+    using Strings for uint256;
+
 /**
     * @notice Calculate APY from an LTV value
     * @dev
@@ -22,5 +27,18 @@ library HelpersLogic {
         }else {
             revert("getAPYBasedOnLTV - Invalid LTV");
         }
+    }
+
+/**
+    * @notice Returns current block timestamp
+    * @dev Returns the current block timestamp as a uint40 which is consistant with the typing of all timestamps in application
+    * @return timestamp - current timestamp expressed as a uint40
+*/
+    function currentTimestamp() public view returns (uint40 timestamp) {
+        return uint40(block.timestamp);
+    }
+
+    function timestampToString(uint40 timestamp) public view returns (string memory) {
+        return uint256(timestamp).toString();
     }
 }
