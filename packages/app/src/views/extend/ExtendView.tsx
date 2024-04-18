@@ -37,45 +37,38 @@ const ExtendView: React.FC<ExtendViewProps> = ({
 
                                                }) => {
   const [showSummary, setShowSummary] = useState(false);
+  const handleBackExtend = () => {
+    setShowSummary(false)
+  };
+
   return (
     <>
     <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-shrub-grey-600">
-      <h3 className="text-xl font-semibold text-shrub-grey-900 dark:text-white">
-        Extend Deposit
-      </h3>
-      <button type="button" onClick={() => setIsModalOpen(false)}
-              className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-shrub-grey-600 dark:hover:text-white">
-        <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg"
-             fill="none" viewBox="0 0 14 14">
-          <path stroke="currentColor" strokeLinecap="round"
-                strokeLinejoin="round" strokeWidth="2"
-                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
+      <h3 className="text-xl font-semibold text-shrub-grey-900 dark:text-white">Extend Deposit</h3>
+      <button type="button" onClick={() => setIsModalOpen(false)} className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-shrub-grey-600 dark:hover:text-white">
+        <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
         </svg>
         <span className="sr-only">Close modal</span>
       </button>
     </div>
       {!showSummary ?
-  <div className="relative group w-full">
+      <div className="relative group w-full">
     <div className="absolute border rounded-3xl"></div>
     <div className="flex flex-col">
       <div className="card w-full text-left">
         <div className="card-body ">
-          {/*amount control*/}
           <div className="form-control w-full">
             <div>
               <label className="label">
                 <span className="label-text text-shrub-blue">Amount Being Extended</span>
               </label>
               <div className='w-full text-xl font-semibold flex flex-row'>
-                                                            <span className='text-4xl font-medium text-left w-[500px]'>{selectedLendPositionBalance} USDC
-                                                            </span>
-                <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10}
-                       height={10} />
+                <span className='text-4xl font-medium text-left w-[500px]'>{selectedLendPositionBalance} USDC</span>
+                <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10} height={10} />
               </div>
             </div>
           </div>
-
-          {/*interest rate control*/}
           <div className="form-control w-full mt-4">
             <label className="label">
               <span className="label-text text-shrub-blue">New Lockup Period</span>
@@ -109,7 +102,6 @@ const ExtendView: React.FC<ExtendViewProps> = ({
 
           {/*divider*/}
           <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
-          {/*display estimate apy*/}
           { showAPYSection && (<div className="hero-content flex-col mb-4">
               <p className="self-start text-lg">Estimated APY</p>
               <div className="card flex-shrink-0 w-full bg-teal-50 py-6 border-shrub-green border">
@@ -131,8 +123,8 @@ const ExtendView: React.FC<ExtendViewProps> = ({
         </div>
       </div>
     </div>
-  </div>:
-    (
+  </div>
+        :
       <ExtendSummary
         lendAmountBeingExtended={selectedLendPositionBalance}
         estimatedAPY={estimatedAPY}
@@ -141,9 +133,9 @@ const ExtendView: React.FC<ExtendViewProps> = ({
         poolShareTokenAmount={selectedPoolShareTokenAmount}
         totalEthYield={selectedTotalEthYield}
         tokenSupply={selectedTokenSupply}
-        poolTokenId={selectedPoolTokenId}
-
-      />)}
+        onBackExtend={handleBackExtend}
+      />
+      }
     </>
   );
 };
