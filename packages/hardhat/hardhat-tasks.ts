@@ -7,7 +7,6 @@ import {parseEther, parseUnits, TransactionResponse} from "ethers";
 import {fromEthDate, getPlatformDates, toEthDate} from "@shrub-lend/common"
 import {HardhatRuntimeEnvironment} from "hardhat/types";
 
-const x = async () => {}
 async function sendTransaction(sentTx: Promise<TransactionResponse>, description: string) {
     const tx = await sentTx;
     console.log(`${description} transaction broadcast with txid: ${tx.hash}`);
@@ -227,12 +226,13 @@ task("extendLoan", "extend an existing loan")
         const account = taskArgs.account;
         const tokenId = taskArgs.tokenId;
         const newTimestamp: number = taskArgs.newTimestamp;
-        const ltv = taskArgs.ltv;
         const additionalCollateral = taskArgs.additionalCollateral;
         const additionalRepayment = taskArgs.additionalRepayment;
 
         const {ethers, deployments, getNamedAccounts} = env;
         const {lendingPlatform, usdc, aeth, bpt} = await getDeployedContracts(env);
+
+        const ltv = ethers.parseUnits(taskArgs.ltv.toString(), 2);
 
         const borrowerAccount = await ethers.getSigner(account);
         const parsedAdditionalCollateral = ethers.parseUnits(additionalCollateral.toString(),6);
@@ -411,9 +411,9 @@ task('takeLoan', 'take a loan')
         const timestamp: number = taskArgs.timestamp;
         const loanAmount: number = taskArgs.loanAmount;
         const collateralAmount = taskArgs.collateralAmount;
-        const ltv = taskArgs.ltv;
         const account = taskArgs.account;
         const {ethers, deployments, getNamedAccounts} = env;
+        const ltv = ethers.parseUnits(taskArgs.ltv.toString(), 2);
         const {lendingPlatform} = await getDeployedContracts(env);
         const namedAccounts = await getNamedAccounts();
         const loanAccount = namedAccounts[account] ?
@@ -516,10 +516,11 @@ task("getPool", "get deatils of a lending pool")
 Lending Pool: ${ethDate} - ${fromEthDate(ethDate).toISOString().split('T')[0]}
 ============
 poolShareTokenAddress: ${res.lendPoolShareTokenAddress}
-principal: ${ethers.formatUnits(res.lendPrincipal, 6)} USDC
-accumInterest: ${ethers.formatUnits(res.lendAccumInterest, 6)} USDC
+poolShareTokenTotalSupply: ${res.lendPoolShareTokenTotalSupply}
+principal: ${ethers.formatUnits(res.lendPrincipal, 18)} USDC
+accumInterest: ${ethers.formatUnits(res.lendAccumInterest, 18)} USDC
 accumYield: ${ethers.formatEther(res.lendAccumYield)} ETH
-shrubInterest: ${ethers.formatUnits(res.lendShrubInterest, 6)} USDC
+shrubInterest: ${ethers.formatUnits(res.lendShrubInterest, 18)} USDC
 shrubYield: ${ethers.formatEther(res.lendShrubYield)} ETH
 
 Borrow Pool: ${ethDate} - ${fromEthDate(ethDate).toISOString().split('T')[0]}
@@ -527,9 +528,9 @@ Borrow Pool: ${ethDate} - ${fromEthDate(ethDate).toISOString().split('T')[0]}
 pool share amount: ${res.borrowPoolShareAmount} of ${bpTotalPoolShares} (${bpTotalPoolShares === 0n ? 0 : ethers.formatUnits(res.borrowPoolShareAmount * 10000n / bpTotalPoolShares, 2)}%)
 principal: ${ethers.formatUnits(res.borrowPrincipal, 6)} USDC
 collateral: ${ethers.formatEther(res.borrowCollateral)} ETH
-total accum interest: ${ethers.formatUnits(res.borrowTotalAccumInterest, 6)} USDC 
+total accum interest: ${ethers.formatUnits(res.borrowTotalAccumInterest, 18)} USDC 
 total accum yield: ${ethers.formatEther(res.borrowTotalAccumYield)} ETH
-total repaid: ${ethers.formatUnits(res.borrowTotalRepaid, 6)} USDC 
+total repaid: ${ethers.formatUnits(res.borrowTotalRepaid, 18)} USDC 
         `)
     })
 
@@ -559,7 +560,7 @@ startDate: ${fromEthDate(Number(res.startDate)).toISOString()}
 principal: ${ethers.formatUnits(res.principal, 6)} USDC
 interest: ${ethers.formatUnits(interest, 6)} USDC
 collateral: ${ethers.formatEther(res.collateral)} ETH
-apy: ${ethers.formatUnits(res.apy, 6)}%
+apy: ${ethers.formatUnits(res.apy, 2)}%
 
 total debt: ${ethers.formatUnits(debt, 6)} USDC
 `)

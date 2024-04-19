@@ -18,9 +18,13 @@ import {USDCoin} from "../dependencies/USDCoin.sol";
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {Configuration} from "../libraries/configuration/Configuration.sol";
 
+import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
+import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
+
 // Libraries with functions
 import {HelpersLogic} from "../libraries/logic/HelpersLogic.sol";
 import {AdminLogic} from "../libraries/logic/AdminLogic.sol";
+import {ShrubLendMath} from "../libraries/math/ShrubLendMath.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBorrowPositionToken.sol";
@@ -40,6 +44,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     uint aEthSnapshotBalance;
     uint newCollateralSinceSnapshot;
     uint claimedCollateralSinceSnapshot;
+    uint MAX_LTV_FOR_EXTEND = 8000;
+    uint LIQUIDATION_THRESHOLD = 8500;
 
     address shrubTreasury;
 
@@ -59,7 +65,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     IMockAaveV3 public wrappedTokenGateway;
     AggregatorV3Interface public chainlinkAggregator;  // Chainlink interface
 
-    uint public bpTotalPoolShares;
+    uint public bpTotalPoolShares; // Wad
 
     constructor(address[6] memory addresses) {
         usdc = IERC20(addresses[0]);
@@ -99,6 +105,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // calculate the accumYield for all BP (current balance - snapshot balance)
         uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) + claimedCollateralSinceSnapshot - newCollateralSinceSnapshot - aEthSnapshotBalance;
         console.log("aEthYieldSinceLastSnapshot: %s", aEthYieldSinceLastSnapshot);
+        // An array of LendingPool to keep track of all of the increments in memory before a final write to the lending pool
+        // The element of the array maps to the activePools timestamp
+        DataTypes.LendingPool[] memory lendingPoolsTemp = new DataTypes.LendingPool[](activePools.length);
+        for (uint i = 0; i < activePools.length; i++) {
+            // Make copy of lending pools into memory
+            lendingPoolsTemp[i] = lendingPools[activePools[i]];
+        }
+
 //        Calculate accumInterest for all BP
         for (uint i = 0; i < activePools.length; i++) {
             // Cleanup paid off BPTs
@@ -116,12 +130,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             // Determine the amount of aETH to distribute from this borrowing pool
             if (borrowingPools[activePools[i]].poolShareAmount == 0) {
                 console.log("poolShareAmount in borrowing pool is 0 - skipping - %s", activePools[i]);
-//                console.log("poolShareAmount in borrowing pool 0 - skipping");
                 continue;
             }
             console.log("bpTotalPoolShares - %s", bpTotalPoolShares);
             console.log(borrowingPools[activePools[i]].poolShareAmount);
-            uint aEthYieldDistribution = aEthYieldSinceLastSnapshot * borrowingPools[activePools[i]].poolShareAmount / bpTotalPoolShares;
+            uint aEthYieldDistribution = WadRayMath.wadMul(
+                aEthYieldSinceLastSnapshot,
+                WadRayMath.wadDiv(borrowingPools[activePools[i]].poolShareAmount, bpTotalPoolShares)
+            );
             // Loop through this and future Lending Pools to determine the contribution denominator
             uint contributionDenominator;
             for (uint j = i; j < activePools.length; j++) {
@@ -134,17 +150,29 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             console.log("shrubFee: %s", PlatformConfig.shrubFee);
             for (uint j = i; j < activePools.length; j++) {
                 console.log("in loop: lendingPool: %s, lendingPoolContribution: %s / %s", activePools[j], lendingPools[activePools[j]].principal, contributionDenominator);
-                lendingPools[activePools[j]].accumYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * (100 - PlatformConfig.shrubFee) / 100 / contributionDenominator;
-                lendingPools[activePools[j]].accumInterest += accumInterestBP * lendingPools[activePools[j]].principal * (100 - PlatformConfig.shrubFee) / 100 / contributionDenominator;
-                lendingPools[activePools[j]].shrubYield += aEthYieldDistribution * lendingPools[activePools[j]].principal * PlatformConfig.shrubFee / 100 / contributionDenominator;
-                lendingPools[activePools[j]].shrubInterest += accumInterestBP * lendingPools[activePools[j]].principal * PlatformConfig.shrubFee / 100 / contributionDenominator;
-                console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
-                emit LendingPoolYield(
-                    address(lendingPools[activePools[j]].poolShareToken),
-                    lendingPools[activePools[j]].accumInterest,
-                    lendingPools[activePools[j]].accumYield
-                );
+                DataTypes.calcLPIncreasesResult memory res = calcLPIncreases(DataTypes.calcLPIncreasesParams({
+                    aEthYieldDistribution: aEthYieldDistribution,
+                    accumInterestBP: accumInterestBP,
+                    lendingPoolPrincipal: lendingPools[activePools[j]].principal,
+                    contributionDenominator: contributionDenominator
+                }));
+                lendingPoolsTemp[j].accumYield += res.deltaAccumYield;
+                lendingPoolsTemp[j].shrubYield += res.deltaShrubYield;
+                lendingPoolsTemp[j].accumInterest += res.deltaAccumInterest;
+                lendingPoolsTemp[j].shrubInterest += res.deltaShrubInterest;
             }
+        }
+        // Loop through lendingPoolsIncrement and write all of the deltas to lendingPools storage
+        for (uint j = 0; j < activePools.length; j++) {
+            console.log("lendingPoolsTemp[j] - j: %s, accumInterest: %s, accumYield: %s", j, lendingPoolsTemp[j].accumInterest, lendingPoolsTemp[j].accumYield);
+            console.log("lendingPools[activePools[j]] - j: %s, accumInterest: %s, accumYield: %s", j, lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
+            lendingPools[activePools[j]] = lendingPoolsTemp[j];
+            console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
+            emit LendingPoolYield(
+                address(lendingPools[activePools[j]].poolShareToken),
+                lendingPools[activePools[j]].accumInterest,
+                lendingPools[activePools[j]].accumYield
+            );
         }
         // set the last snapshot date to now
         lastSnapshotDate = block.timestamp;
@@ -157,6 +185,27 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         claimedCollateralSinceSnapshot = 0;
     }
 
+    function calcLPIncreases(DataTypes.calcLPIncreasesParams memory params) internal returns (DataTypes.calcLPIncreasesResult memory) {
+        console.log("running calcLPIncreases");
+        uint lendingPoolRatio = WadRayMath.wadDiv(params.lendingPoolPrincipal, params.contributionDenominator);
+        uint LPaEthDistribution = WadRayMath.wadMul(params.aEthYieldDistribution, lendingPoolRatio);
+        uint LPinterestDistribution = WadRayMath.wadMul(ShrubLendMath.usdcToWad(params.accumInterestBP), lendingPoolRatio);
+        console.log("lendingPoolRatio: %s, LPaEthDistribution: %s, LPinterestDistribution: %s", lendingPoolRatio, LPaEthDistribution, LPinterestDistribution);
+
+        return DataTypes.calcLPIncreasesResult({
+            deltaAccumYield : PercentageMath.percentMul(LPaEthDistribution, 10000 - PlatformConfig.shrubFee),
+            deltaShrubYield : PercentageMath.percentMul(LPaEthDistribution, PlatformConfig.shrubFee),
+            deltaAccumInterest : PercentageMath.percentMul(LPinterestDistribution, 10000 - PlatformConfig.shrubFee),
+            deltaShrubInterest : PercentageMath.percentMul(LPinterestDistribution, PlatformConfig.shrubFee)
+        });
+
+//        res.deltaAccumYield = PercentageMath.percentMul(LPaEthDistribution, 10000 - PlatformConfig.shrubFee);
+//        res.deltaShrubYield = PercentageMath.percentMul(LPaEthDistribution, PlatformConfig.shrubFee);
+//        res.deltaAccumInterest = PercentageMath.percentMul(LPinterestDistribution, 10000 - PlatformConfig.shrubFee);
+//        res.deltaShrubInterest = PercentageMath.percentMul(LPinterestDistribution, PlatformConfig.shrubFee);
+//        return res;
+    }
+
     function setShrubTreasury(address _address) public onlyOwner {
         shrubTreasury = _address;
     }
@@ -164,12 +213,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     // ---
 
-
+/**
+    * @notice Returns the USDC/ETH price as defined by chainlink
+    * @dev Inverts the ETH/USDC returned from chainlink
+    * @return USDC/ETH as a WAD
+*/
     function getEthPrice() public view returns (uint256) {
-        // Returns an 8 decimal version of USDC / ETH
-//        return 2000 * 10 ** 8;
-        // 8 decimals ($1852.11030001)
-//        return 185211030001;
         (
             uint80 roundId,
             int256 answer,
@@ -178,35 +227,36 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             uint80 answeredInRound
         ) = chainlinkAggregator.latestRoundData();
         require(answer > 0, "ETH Price out of range");
-        return uint256(10 ** 26 / answer);  // 18 decimals in answer - want 8 decimals remaining
+        // Cast answer to uint256
+        uint256 answerWad = uint256(answer);
+        // Invert the answer
+        return WadRayMath.wadDiv(WadRayMath.WAD, answerWad);
     }
 
-    function maxLoan(uint ltv, uint ethCollateral) public view returns (uint256) {
-        // ethCollateral - 18 decimals
-        // getEthPrice - 8 decimals
-        require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
-        uint valueOfEth = ethCollateral * getEthPrice(); // value of eth in usd with 26 decimals
-        uint maxLoanV = valueOfEth * ltv / 10 ** 22; // remove 20 decimals to get back to 6 decimals of USDC
-        return maxLoanV;
+/**
+    * @notice Returns the USDC/ETH price as defined by chainlink
+    * @dev Inverts the ETH/USDC returned from chainlink
+    * @param ltv The ltv expressed as a percent (4 decimals - 10000 = 100%)
+    * @param ethCollateral The amount of available ETH collateral (in Wad) to calculate the maxLoan for
+    * @return maxLoanV the maximum USDC loan (expressed with 6 decimals)
+*/
+    function maxLoan(uint ltv, uint ethCollateral) validateLtv(ltv) public view returns (uint256 maxLoanV) {
+        /// @dev USDC value of ethCollateral (in Wad)
+        uint valueOfEth = WadRayMath.wadMul(ethCollateral, getEthPrice());
+        uint maxLoanWad = PercentageMath.percentMul(valueOfEth, ltv);
+        return maxLoanV = ShrubLendMath.wadToUsdc(maxLoanWad);
     }
 
-    // returns a 8 decimal representation of ltv (i.e. 25% = 25000000)
-//    function calcLtv(uint usdcAmount, uint ethAmount, uint ethPrice) public pure returns (uint ltv) {
-//        // usdcAmount has 6 decimals
-//        // ethAmount has 18 decimals
-//        // ethPrice has 8 decimals
-//    }
-
-    function requiredCollateral(uint ltv, uint usdcLoanValue) public view returns (uint256) {
-        // returns collateral required in wei
-        // usdcLoanValue 6 decimals
-        // suppliment by adding 22 (6 + 22 - 2 - 8 = 18)
-        // ltv 2 decimal
-        // getEthPrice 8 decimal
-        // return 18 decimals
-        require(ltv == 20 || ltv == 25 || ltv == 33 || ltv == 50, "Invalid LTV");
-        uint valueOfEthRequied = usdcLoanValue * 10 ** 22 / ltv; // time 10 ** 2 to convert to percentage and 10 ** 20 to convert to 26 decimals (needed because divide by 8 decimal value next step)
-        return valueOfEthRequied / getEthPrice();
+/**
+    * @notice Returns the ETH collateral required for a loan of specified amount and ltv
+    * @dev
+    * @param ltv The ltv expressed as a percent (4 decimals - 10000 = 100%)
+    * @param usdcAmount the requested loan amount expressed with 6 decimals
+    * @return collateralRequired the amount of ETH expressed in Wad required to colateralize this loan
+*/
+    function requiredCollateral(uint ltv, uint usdcAmount) validateExtendLtv(ltv) public view returns (uint256 collateralRequired) {
+        uint valueOfEthRequired = PercentageMath.percentDiv(ShrubLendMath.usdcToWad(usdcAmount), ltv);
+        collateralRequired = WadRayMath.wadDiv(valueOfEthRequired, getEthPrice());
     }
 
     function getDeficitForPeriod(
@@ -266,10 +316,17 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         DataTypes.LendingPool memory lendingPool = lendingPools[_timestamp];
         DataTypes.PoolDetails memory poolDetails;
 
+        console.log("getPool - timestamp: %s, poolShareTokenAddress: %s, storage: %s",
+            _timestamp,
+            address(lendingPool.poolShareToken),
+            address(lendingPools[_timestamp].poolShareToken)
+        );
+
         poolDetails.lendPrincipal = lendingPool.principal;
         poolDetails.lendAccumInterest = lendingPools[_timestamp].accumInterest;
         poolDetails.lendAccumYield = lendingPools[_timestamp].accumYield;
         poolDetails.lendPoolShareTokenAddress = address(lendingPool.poolShareToken);
+        poolDetails.lendPoolShareTokenTotalSupply = lendingPool.poolShareToken.totalSupply();
         poolDetails.lendShrubInterest = lendingPools[_timestamp].shrubInterest;
         poolDetails.lendShrubYield = lendingPools[_timestamp].shrubYield;
 
@@ -296,10 +353,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         return true;
     }
 
-    function getUsdcAddress() public view returns (address) {
-        return address(usdc);
-    }
-
+/**
+    * @notice deposit funds into Shrub Lend platform
+    * @dev USDC funds are locked in the shrub platform until the specified timestamp.
+    * @dev depositor receives poolShareTokens representing their claim to the deposit pool (poolShareToken amounts are expressed in Wad)
+    * @dev These funds are made available for borrowers to borrow in exchange for interest payments from the borrowers and yield from the ETH collateral that the borrowers put up
+    * @param _timestamp the date until which the USDC deposit will be locked
+    * @param _amount the amount of USDC (expressed with 6 decimals) which will be locked until the timestamp
+*/
     function deposit(uint256 _timestamp, uint256 _amount) public nonReentrant {
         console.log("running deposit");
         require(_amount > 0, "Deposit amount must be greater than 0");
@@ -309,10 +370,20 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         usdc.transferFrom(msg.sender, address(this), _amount);
 
         uint256 poolShareTokenAmount;
+        uint256 amountWad = ShrubLendMath.usdcToWad(_amount);
 
         // Calculate total value of the pool in terms of USDC
-        uint256 accumYieldValueInUsdc = lendingPools[_timestamp].accumYield * getEthPrice();
-        uint256 totalPoolValue = lendingPools[_timestamp].principal + lendingPools[_timestamp].accumInterest + accumYieldValueInUsdc;
+        uint256 accumYieldValueInUsdc = WadRayMath.wadMul(
+            lendingPools[_timestamp].accumYield,
+            getEthPrice()
+        );  // expressed in USDC (Wad)
+        console.log(
+            "lendingPool before values - principal: %s, accumInterest: %s, accumYieldValueInUsdc: %s",
+            lendingPools[_timestamp].principal,
+            lendingPools[_timestamp].accumInterest,
+            accumYieldValueInUsdc
+        );
+        uint256 totalPoolValue = lendingPools[_timestamp].principal + lendingPools[_timestamp].accumInterest + accumYieldValueInUsdc;  // expressed in USDC (Wad)
 
         // If the pool does not exist or totalLiquidity is 0, user gets 1:1 poolShareTokens
         console.log("totalPoolValue, _amount, lpt.totalSupply(), poolShareTokenAmount");
@@ -320,18 +391,22 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log(_amount);
         console.log(lendingPools[_timestamp].poolShareToken.totalSupply());
         if (totalPoolValue == 0) {
-            poolShareTokenAmount = _amount * 10 ** 12;
+            poolShareTokenAmount = amountWad;
             console.log("PATH 1 - NEW");
         } else {
             // If the pool exists and has liquidity, calculate poolShareTokens based on the proportion of deposit to total pool value
             console.log("PATH 2 - ESTABLISHED");
             poolShareTokenAmount =
-                (_amount * lendingPools[_timestamp].poolShareToken.totalSupply()) /
-                totalPoolValue;
-            // Times 10 ** 12 to adjust the decimals of USDC 6 to 18 for the poolShareToken
+                WadRayMath.wadDiv(
+                    WadRayMath.wadMul(
+                        amountWad,
+                        lendingPools[_timestamp].poolShareToken.totalSupply()
+                    ),
+                    totalPoolValue
+                );
         }
         console.log(poolShareTokenAmount);
-        lendingPools[_timestamp].principal += _amount;
+        lendingPools[_timestamp].principal += amountWad;
         lendingPools[_timestamp].poolShareToken.mint(msg.sender, poolShareTokenAmount);
         emit NewDeposit(
             _timestamp,
@@ -373,23 +448,27 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        console.log(lendingPool.accumInterest);
 //        console.log(lendingPool.accumYield);
         // Calculate the proportion of the pool that the user is withdrawing (use 8 decimals)
-        uint256 withdrawalProportion = _poolShareTokenAmount * 10 ** 8 /
-                                lendingPool.poolShareToken.totalSupply();
+        uint256 withdrawalProportion = WadRayMath.wadDiv(
+            _poolShareTokenAmount,
+            lendingPool.poolShareToken.totalSupply()
+        );
+//        uint256 withdrawalProportion = _poolShareTokenAmount * 10 ** 8 /
+//                                lendingPool.poolShareToken.totalSupply();
         console.log("withdrawlPropotion: %s", withdrawalProportion);
 
         // Calculate the corresponding USDC amount to withdraw
-        uint256 usdcPrincipalAmount = withdrawalProportion * lendingPool.principal / 10 ** 8;
-        uint256 usdcInterestAmount = withdrawalProportion * lendingPool.accumInterest / 10 ** 8;
+        uint256 usdcPrincipalAmount = ShrubLendMath.wadToUsdc(WadRayMath.wadMul(withdrawalProportion, lendingPool.principal));
+        uint256 usdcInterestAmount = ShrubLendMath.wadToUsdc(WadRayMath.wadMul(withdrawalProportion, lendingPool.accumInterest));
 
         // Calculate the corresponding aETH interest to withdraw
-        uint256 aethWithdrawalAmount = withdrawalProportion * lendingPool.accumYield / 10 ** 8;
+        uint256 aethWithdrawalAmount = WadRayMath.wadMul(withdrawalProportion, lendingPool.accumYield);
 
         // Burn the pool share tokens
         lendingPool.poolShareToken.burn(msg.sender, _poolShareTokenAmount);
 
         // Update the total liquidity in the pool
-        lendingPool.principal -= usdcPrincipalAmount;
-        lendingPool.accumInterest -= usdcInterestAmount;
+        lendingPool.principal -= ShrubLendMath.usdcToWad(usdcPrincipalAmount);
+        lendingPool.accumInterest -= ShrubLendMath.usdcToWad(usdcInterestAmount);
 
         // Transfer USDC and aETH to the user
         usdc.transfer(msg.sender, usdcInterestAmount + usdcPrincipalAmount);
@@ -408,8 +487,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // Ensure that it is a valid pool
         require(validPool(params.timestamp), "Invalid pool");
 
+        console.log("params.collateral: %s, requiredCollateral: %s", params.collateral, requiredCollateral(params.ltv, params.principal));
+        console.log("params.ltv: %s, params.principal: %s", params.ltv, params.principal);
         require(
-            (params.principal * 10 ** (18 + 8 - 6 + 2)) / (getEthPrice() * params.collateral) <= params.ltv, // ltvCalc
+            params.collateral >= requiredCollateral(params.ltv, params.principal),
             "Insufficient collateral provided for specified ltv"
         );
 
@@ -445,7 +526,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         if (aEthSnapshotBalance == 0) {
             deltaBpPoolShares = params.collateral;
         } else {
-            deltaBpPoolShares = params.collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
+            deltaBpPoolShares = WadRayMath.wadDiv(
+                WadRayMath.wadMul(params.collateral, bpTotalPoolShares),
+                aEthSnapshotBalance + newCollateralSinceSnapshot + claimedCollateralSinceSnapshot
+            );
         }
 
         console.log("collateral: %s, bpTotalPoolShares: %s, aEthSnapshotBalance: %s", params.collateral, bpTotalPoolShares, aEthSnapshotBalance);
@@ -474,7 +558,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint256 _collateral, // Amount of ETH collateral with 18 decimal places
         uint32 _ltv,
         uint40 _timestamp
-    ) public payable nonReentrant {
+    ) public payable validateLtv(_ltv) nonReentrant {
         console.log("running takeLoan");
         // Check that the sender has enough balance to send the amount
         require(msg.value == _collateral, "Wrong amount of Ether provided.");
@@ -537,6 +621,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        console.log("ownerOf(tokenId): %s, repayer: %s", bpt.ownerOf(tokenId), repayer);
         // Determine the principal, interest, and collateral of the debt
         DataTypes.BorrowData memory bd = bpt.getLoan(tokenId);
+        DataTypes.BorrowingPool memory tempBorrowingPool = borrowingPools[bd.endDate];
 //        bd.endDate = _timestamp;
 //        bd.principal = _principal;
 //        bd.collateral = _collateral;
@@ -558,25 +643,31 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log("about to burn tokenId: %s", tokenId);
         bpt.burn(tokenId);
         // Update Borrowing Pool principal, collateral
-        borrowingPools[bd.endDate].principal -= bd.principal;
-        borrowingPools[bd.endDate].collateral -= bd.collateral;
-        console.log("borrowingPool with endDate: %s updated to principal: %s, collateral: %s", bd.endDate, borrowingPools[bd.endDate].principal, borrowingPools[bd.endDate].collateral);
+        tempBorrowingPool.principal -= bd.principal;
+        tempBorrowingPool.collateral -= bd.collateral;
+        console.log("borrowingPool with endDate: %s updated to principal: %s, collateral: %s", bd.endDate, tempBorrowingPool.principal, tempBorrowingPool.collateral);
         // Update Borrowing Pool poolShareAmount
         console.log('aEthSnapshotBalance: %s', aEthSnapshotBalance);
         console.log("bd.collateral: %s, bpTotalPoolShares: %s, aEthSnapshotBalance: %s", bd.collateral, bpTotalPoolShares, aEthSnapshotBalance);
-        uint deltaBpPoolShares = bd.collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
+//        uint deltaBpPoolShares = bd.collateral * bpTotalPoolShares / (aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot);
+        uint deltaBpPoolShares = WadRayMath.wadDiv(
+            WadRayMath.wadMul(bd.collateral, bpTotalPoolShares),
+            aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot
+        );
         console.log('deltaBpPoolShares: %s', deltaBpPoolShares);
-        console.log('borrowing pool with endDate %s has poolShareAmount: %s', bd.endDate, borrowingPools[bd.endDate].poolShareAmount);
+        console.log('borrowing pool with endDate %s has poolShareAmount: %s', bd.endDate, tempBorrowingPool.poolShareAmount);
         console.log("about to decrement above pool...");
-        borrowingPools[bd.endDate].poolShareAmount -= deltaBpPoolShares;
-        console.log("poolShareAmount of borrowingPool with timestamp: %s decremented by %s, now %s", bd.endDate, deltaBpPoolShares, borrowingPools[bd.endDate].poolShareAmount);
-//        console.log("borrowingPool with endDate: %s updated to poolShareAmount: %s", bd.endDate, borrowingPools[bd.endDate].poolShareAmount);
+        tempBorrowingPool.poolShareAmount -= deltaBpPoolShares;
+        console.log("poolShareAmount of borrowingPool with timestamp: %s decremented by %s, now %s", bd.endDate, deltaBpPoolShares, tempBorrowingPool.poolShareAmount);
+//        console.log("borrowingPool with endDate: %s updated to poolShareAmount: %s", bd.endDate, tempBorrowingPool.poolShareAmount);
         // Update bpTotalPoolShares
         bpTotalPoolShares -= deltaBpPoolShares;
         console.log("bpTotalPoolShares updated to: %s", bpTotalPoolShares);
         claimedCollateralSinceSnapshot += bd.collateral;
         console.log("claimedCollateralSinceSnapshot updated to: %s", claimedCollateralSinceSnapshot);
         freedCollateral = bd.collateral;
+        // Write borrowing pool back to storage
+        borrowingPools[bd.endDate] = tempBorrowingPool;
         // Emit event for tracking/analytics/subgraph
         emit RepayLoan(tokenId, bd.principal + interest, freedCollateral, beneficiary);
     }
@@ -623,7 +714,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint256 additionalCollateral, // Amount of new ETH collateral with - 18 decimals
         uint256 additionalRepayment, // Amount of new USDC to be used to repay the existing loan - 6 decimals
         uint32 _ltv
-    ) external onlyBptOwner(tokenId) payable {
+    ) external validateExtendLtv(_ltv) onlyBptOwner(tokenId) payable {
 //        TODO: extendLoan should allow LTV that is within health factor
 
 
@@ -736,6 +827,18 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     modifier onlyBptOwner(uint _tokenId) {
         require(bpt.ownerOf(_tokenId) == msg.sender, "call may only be made by owner of bpt");
+        _;
+    }
+
+    modifier validateLtv(uint ltv) {
+        console.log("validateLtv: %s", ltv);
+        require(ltv == 2000 || ltv == 2500 || ltv == 3300 || ltv == 5000, "Invalid LTV");
+        _;
+    }
+
+    modifier validateExtendLtv(uint ltv) {
+        console.log("validateExtendLtv: %s", ltv);
+        require(ltv == MAX_LTV_FOR_EXTEND || ltv == 2000 || ltv == 2500 || ltv == 3300 || ltv == 5000, "Invalid LTV");
         _;
     }
 

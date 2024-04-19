@@ -16,10 +16,10 @@ export function truncateEthAddress (address) {
 };
 
 export const interestToLTV = {
-    "0": 20,
-    "1": 25,
-    "5": 33,
-    "8": 50
+    "0": 2000,
+    "1": 2500,
+    "5": 3300,
+    "8": 5000
 }
 
 export const timestamps = {
