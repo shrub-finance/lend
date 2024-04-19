@@ -1,11 +1,10 @@
-"use client";
 import {FC, useEffect, useState} from "react";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import {useBalance} from "@thirdweb-dev/react";
 import {usdcAddress} from "../../utils/contracts";
 import {toEthDate} from '@shrub-lend/common';
 import {calculateLockupPeriod, getPlatformDates} from "@shrub-lend/common";
-import Image from 'next/image'
+import Image from 'next/image';
 
 
 interface LendViewProps {
@@ -13,7 +12,6 @@ interface LendViewProps {
 }
 
 export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
-
 
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const format = (val: string) => val;
@@ -24,7 +22,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const [showLendAPYSection, setShowLendAPYSection] = useState(false);
   const [continueButtonEnabled, setContinueButtonEnabled] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
-
   const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
   const depositTerms = [
     { id: 'smallest-deposit', value: 'smallest-deposit', duration: oneMonth },
@@ -33,7 +30,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
     { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
   ];
   const [isValidationError, setIsValidationError] = useState(false);
-
 
   async function fillMax() {
     if (!usdcBalanceIsLoading) {
@@ -133,15 +129,10 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   )}
                   <label className="label">
                     <span className="label-text-alt text-shrub-grey-200 text-sm font-light">Wallet balance: {!usdcBalanceIsLoading &&
-
-                      <span>
-                          {usdcBalance.displayValue} USDC
-                        </span>
-
-                    }</span>
-                    <button onClick={fillMax}
-                            className="label-text-alt btn-sm text-shrub-green bg-green-50 p-2 rounded-md cursor-pointer text-xs">ENTER
-                      MAX
+                      <span>{usdcBalance.displayValue} USDC</span>}
+                    </span>
+                    <button onClick={fillMax} className="label-text-alt btn-sm text-shrub-green bg-green-50 p-2 rounded-md cursor-pointer text-xs">
+                      ENTER MAX
                     </button>
                   </label>
                 </div>
@@ -153,7 +144,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   </label>
                   <ul className="flex flex-row">
                     {depositTerms.map((item) => (
-
                       <li key={item.id} className="mr-4">
                         <input
                           type="radio"
@@ -178,10 +168,8 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                           </div>
                         </label>
                       </li>
-
                     ))}
                   </ul>
-
                 </div>
 
                 {/*divider*/}
@@ -213,14 +201,10 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                       <div className="text-center p-2">
                         <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
                         <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
-                        {/*TODO: Make this bonus text dynamic for different periods*/}
-                        {/*<p className="font-thin pt-3 text-lg">3 month lending term includes 5% bonus</p>*/}
                       </div>
-
                     </div>
                   </div>
                 )}
-
                 {/*CTA*/}
                 <button
                   className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50
@@ -228,13 +212,13 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   disabled:text-white
                   disabled:border"
                   onClick={handleLendContinue}
-                  disabled={Number(lendAmount) <= 0 || !timestamp || isValidationError}
-                >Continue</button>
+                  disabled={Number(lendAmount) <= 0 || !timestamp || isValidationError}>
+                  Continue
+                </button>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
 

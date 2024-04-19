@@ -1,8 +1,5 @@
-// Next, React
 import {FC, useEffect, useState} from "react";
 import Link from "next/link";
-
-
 import {
   useConnectedWallet,
   useBalance,
@@ -11,12 +8,9 @@ import {
   useContractRead
 } from "@thirdweb-dev/react";
 import { getBlock, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
-
 import { toEthDate, fromEthDate, getPlatformDates } from '@shrub-lend/common'
 import {
   usdcAddress,
-  lendingPlatformAddress,
-  lendingPlatformAbi,
   chainlinkAggregatorAbi,
   chainlinkAggregatorAddress,
 } from "../utils/contracts";
@@ -32,6 +26,7 @@ import ExtendView from './extend/ExtendView';
 const now = new Date();
 new Date(new Date(now).setFullYear(now.getFullYear() + 1));
 export const DashboardView: FC = ({}) => {
+
   const wallet = useConnectedWallet();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { store, dispatch } = useFinancialData();
@@ -40,11 +35,6 @@ export const DashboardView: FC = ({}) => {
   const walletAddress = useAddress();
   const [ethPrice, setEthPrice] = useState(ethers.BigNumber.from(0));
   const [blockchainTime, setBlockchainTime] = useState(0);
-  const {
-    contract: lendingPlatform,
-    isLoading: lendingPlatformIsLoading,
-    error: lendingPlatformError,
-  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
   const {
     contract: chainLinkAggregator,
     isLoading: chainLinkAggregatorIsLoading,
@@ -63,12 +53,12 @@ export const DashboardView: FC = ({}) => {
       startPolling: userPositionsDataStartPolling,
       stopPolling: userPositionsDataStopPolling,
     },
+
   ] = useLazyQuery(USER_POSITIONS_QUERY, {
     variables: {
       user: walletAddress && walletAddress.toLowerCase(),
     },
   });
-
   const [currentHovered, setCurrentHovered] = useState<number | null>(null);
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
@@ -85,11 +75,8 @@ export const DashboardView: FC = ({}) => {
   const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(0);
   const [selectedTokenSupply, setSelectedTokenSupply] = useState(0);
   const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(0);
-  const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('');
-
-
+  const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('')
   const dummyEarningPools = "2";
-
 
   useEffect(() => {
     const handleAPYCalc = () => {
@@ -97,7 +84,6 @@ export const DashboardView: FC = ({}) => {
         timestamp === threeMonth.getTime() / 1000 ? 8.14 :
           timestamp === sixMonth.getTime() / 1000 ? 9.04 :
             timestamp === twelveMonth.getTime() / 1000 ? 10.37 : Math.random() * 5 + 7;
-
       setEstimatedAPY(apyGenerated.toFixed(2).toString());
     };
 
@@ -109,11 +95,9 @@ export const DashboardView: FC = ({}) => {
   useEffect(() => {
     // console.log("running usdc useEffect");
   }, [usdcBalanceIsLoading]);
-
   useEffect(() => {
     // console.log("running eth useEffect");
   }, [ethBalanceIsLoading]);
-
   useEffect(() => {
     // console.log("running walletAddress useEffect");
     if (!walletAddress) {
@@ -121,7 +105,6 @@ export const DashboardView: FC = ({}) => {
     }
     getUserPositions();
   }, [walletAddress, getUserPositions]);
-
   useEffect(() => {
     // console.log("running userPositionsDataLoading useEffect");
     if (userPositionsDataLoading) {
@@ -170,6 +153,13 @@ export const DashboardView: FC = ({}) => {
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
+  const [newUnlockDate, setNewUnlockDate] = useState(null);
+
+  const handleUnlockFromExtend = (date) => {
+    setIsModalOpen(false);
+    setNewUnlockDate(date);
+    console.log('New timestamp received from extend component:', date);
+  };
     function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
         const usdcInWadBN = ethers.BigNumber.from(usdcInWad);
         const divisionFactor = ethers.BigNumber.from(10).pow(12)
@@ -225,6 +215,7 @@ export const DashboardView: FC = ({}) => {
                   </div>
                   <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} >
                     <ExtendView
+                      onModalClose={handleUnlockFromExtend}
                       depositTerms={depositTerms}
                       timestamp={timestamp}
                       selectedLendPositionBalance={selectedLendPositionBalance}
@@ -302,6 +293,11 @@ export const DashboardView: FC = ({}) => {
                                           {item.status === 'failed' && (
                                             <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
                                           )}
+                                          {newUnlockDate && (
+                                            <span
+                                              className=' ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-amber-900 dark:text-amber-300'><span
+                                              className='w-2 h-2 me-1 bg-amber-500 rounded-full'></span>Extended</span>
+                                          )}
                                         </p>
                                       ) : (
                                         <p className="text-sm">
@@ -337,8 +333,11 @@ export const DashboardView: FC = ({}) => {
                                         {(item.apy)?item.apy :"X"}%
                                       </span>
                                     </td>
-                                    <td className="px-6 py-4 text-sm font-bold">
-                                      {fromEthDate(parseInt(item.lendingPool.timestamp)).toLocaleString()}
+                                    <td className='px-6 py-4 text-sm font-bold'>
+                                      {newUnlockDate && new Date(newUnlockDate) > new Date(fromEthDate(parseInt(item.lendingPool.timestamp)))
+                                        ? new Date(newUnlockDate).toLocaleString()
+                                        : fromEthDate(parseInt(item.lendingPool.timestamp)).toLocaleString()
+                                      }
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className="flex items-center justify-center space-x-2 h-full p-2">

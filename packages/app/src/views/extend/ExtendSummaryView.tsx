@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { timestamps, toEthDate, truncateEthAddress } from '../../utils/ethMethods';
+import { toEthDate, truncateEthAddress } from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
 import { BigNumber, ethers } from 'ethers';
 import {
   useAddress,
   useContract,
   useContractRead,
-  Web3Button,
+  Web3Button
 } from '@thirdweb-dev/react';
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
 import { useLazyQuery } from '@apollo/client';
@@ -21,11 +21,19 @@ interface ExtendSummaryProps {
   poolShareTokenAmount: number;
   totalEthYield: number;
   tokenSupply: number;
-  poolTokenId: string;
+  onBackExtend: () => void;
 }
 
-const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
-  { lendAmountBeingExtended, estimatedAPY, oldTimestamp, newTimestamp, poolShareTokenAmount, totalEthYield, tokenSupply, poolTokenId}) =>
+const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (initiated: boolean) => void }> = (
+  { lendAmountBeingExtended,
+    estimatedAPY,
+    oldTimestamp,
+    newTimestamp,
+    poolShareTokenAmount,
+    totalEthYield,
+    tokenSupply,
+    onBackExtend,
+    onExtendActionChange}) =>
 {
   const [
     getActiveLendingPools,
@@ -57,52 +65,60 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
 
   useEffect(() => {
     if (!walletAddress) return;
-
     getActiveLendingPools().then().catch(error => {
       console.error("Failed to fetch active lending pools:", error);
-    });
-  }, [walletAddress, getActiveLendingPools]);
+    })}, [walletAddress, getActiveLendingPools]);
 
 
   useEffect(() => {
-    // console.log("running userPositionsDataLoading useEffect");
     if (activeLendingPoolsLoading) {
       return;
-    }
-  }, [activeLendingPoolsLoading]);
+    }}, [activeLendingPoolsLoading]);
+
+
+  useEffect(() => {
+    onExtendActionChange(extendActionInitiated);
+  }, [extendActionInitiated, onExtendActionChange]);
+
   return (
-
     <div className="relative group mt-4 w-full min-w-[500px]">
-      <div className="flex flex-col ">
+      <div className="flex flex-col">
         <div className="card w-full">
-          <div className="card-body ">
-           <div>
-              <p className="text-lg font-bold pb-2 text-left">
-                Extend Deposit
-              </p>
-              <div className="w-full text-xl font-semibold flex flex-row">
-                <span className="text-4xl  font-medium text-left w-[500px]">{lendAmountBeingExtended} USDC</span>
-                <Image alt="usdc icon" src="/usdc-logo.svg" className="w-10 inline align-baseline" width="40" height="40"/>
-              </div>
-              <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">When you
-                extend this deposit, <span className="font-bold">{lendAmountBeingExtended} USDC</span> will be moved from the old lending pool ending<span className="font-bold"> {oldTimestamp?.toLocaleString()}</span> to the new lending pool ending <span className="font-bold">{newTimestamp?.toLocaleString()}</span>. You will collect earned ETH yield of <span className="font-bold">
-                  {
-                    poolShareTokenAmount && ethers.utils.formatUnits(
-                      ethers.BigNumber.from(poolShareTokenAmount).mul(totalEthYield).div(tokenSupply),
-                      6
-                    )
-                  }
+          <div className="card-body">
+            <div>
+              {!extendActionInitiated && (
+                <div className='flex items-center'>
+                  <button onClick={onBackExtend}>
+                    <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none' className='w-6 grow-0 order-0 flex-none mr-[16px] mb-[4px]'>
+                      <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='black' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' />
+                    </svg>
+                  </button>
+                  <p className='text-lg font-bold pb-2 text-left'>Back</p>
+                </div>
+              )}
 
+              <div className='w-full text-xl font-semibold flex flex-row'>
+                <span className='text-4xl  font-medium text-left w-[500px]'>{lendAmountBeingExtended} USDC</span>
+                <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
+              </div>
+              <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
+                When you extend this deposit, <span className='font-bold'>{lendAmountBeingExtended} USDC</span> will be
+                moved from the old lending pool ending<span
+                className='font-bold'> {oldTimestamp?.toLocaleString()}</span> to the new lending pool ending <span
+                className='font-bold'>{newTimestamp?.toLocaleString()}</span>. You will collect earned ETH yield of <span className='font-bold'>
+                  {
+                    poolShareTokenAmount && ethers.utils.formatUnits(ethers.BigNumber.from(poolShareTokenAmount).mul(totalEthYield).div(tokenSupply), 6)
+                  }
               </span>.</p>
             </div>
 
-            <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
+            <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
 
             {/*receipt start*/}
-           <div>
-              <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
-                <div className="flex flex-row  justify-between">
-                  <span className="">Previous End Date</span>
+            <div>
+              <div className='mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
+                <div className='flex flex-row  justify-between'>
+                  <span className=''>Previous End Date</span>
                   <span>{oldTimestamp?.toDateString()}</span>
                 </div>
                 <div className="flex flex-row  justify-between">
