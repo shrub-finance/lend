@@ -789,52 +789,62 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log("7 - platform aETH balance: %s", aeth.balanceOf(address(this)));
     }
 
-//    function forceExtendBorrow(uint tokenId, uint claim) external {
-//        DataTypes.BorrowData memory loanDetails = bpt.getLoan(tokenId);
-//        address borrower = bpt.ownerOf(tokenId);
-//        require(claim > 0 && claim < 4, "invalid claim");
-//        uint availabilityTime = claim == 1 ? Configuration.FORCED_EXTENSION_1 :
-//            claim == 2 ? Configuration.FORCED_EXTENSION_2 :
-//            Configuration.FORCED_EXTENSION_3;
-//        require(HelpersLogic.currentTimestamp() > loanDetails.endDate + availabilityTime ,"loan is not eligible for extension");
-//        // TODO: For now bonus is 1% of collatertal - update this later to be eth value of the appropriate percent of the debt
-//        uint bonusPecentage = 100;
-//        // The caller will be rewarded with some amount of the users' collateral. This will be based on the size of the debt to be refinanced
+/**
+    * @notice Called by liquidator to force the extension of an expired borrow.
+    * @dev Bonuses and durations for the liquidationPhase are specified in Configuration
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+    * @param liquidationPhase uint256 - liquidation phase. Must be between 1 and 3. Higher values have greater bonuses. increasing values become eligible as more time since the endDate elapses
+*/
+    function forceExtendBorrow(uint tokenId, uint liquidationPhase) external {
+        DataTypes.BorrowData memory loanDetails = bpt.getLoan(tokenId);
+        uint debt = bpt.debt(tokenId);
+        address borrower = bpt.ownerOf(tokenId);
+        require(liquidationPhase > 0 && liquidationPhase < 4, "invalid claim");
+        uint availabilityTime = liquidationPhase == 1 ? Configuration.FORCED_EXTENSION_1 :
+            liquidationPhase == 2 ? Configuration.FORCED_EXTENSION_2 :
+            Configuration.FORCED_EXTENSION_3;
+        require(HelpersLogic.currentTimestamp() > loanDetails.endDate + availabilityTime ,"loan is not eligible for extension");
+        // TODO: For now bonus is 1% of collatertal - update this later to be eth value of the appropriate percent of the debt
+        uint bonusPecentage = 100;
+        // The caller will be rewarded with some amount of the users' collateral. This will be based on the size of the debt to be refinanced
+        uint bonusUsdc = PercentageMath.percentMul(
+            debt,
+            bonusPecentage
+        );
+        // TODO: Need to calculate bonus which is the amount of aETH that the liquidator gets to collect
+        // TODO: This will be equal to the ETH equal to the usdc value of bonusUsdc
 //        uint bonus = PercentageMath.percentMul(loanDetails.collateral, bonusPecentage);
-//        // flash loan if necessary for collateral
-//        // take new loan on behalf of the holder - collateral is same as previous loan minus bonus
-//        takeLoanInternal(DataTypes.TakeLoanInternalParams({
-//            principal: loanDetails.principal,
-//            collateral: loanDetails.collateral - bonus,
-//        // TODO: ltv should be calculated to be the smallest valid
-//            ltv: 50,
-//            timestamp: getNextActivePool(loanDetails.endDate),
-//            startDate: uint40(lastSnapshotDate),
-//            beneficiary: msg.sender,
-//            loanHolder: borrower
-//        }));
-//        // repay previous loan and collect collateral
-//
-//        repayLoanInternal(
-////            uint tokenId,
-////            address repayer,
-////            address beneficiary
-//            tokenId,
-//            msg.sender,
-//            msg.sender
-//        );
-//    }
+        // flash loan if necessary for collateral
+        // take new loan on behalf of the holder - collateral is same as previous loan minus bonus
+        takeLoanInternal(DataTypes.TakeLoanInternalParams({
+            principal: debt,
+            collateral: loanDetails.collateral - bonus,
+        // TODO: ltv should be calculated to be the smallest valid
+            ltv: 5000,
+            timestamp: getNextActivePool(loanDetails.endDate),
+            startDate: lastSnapshotDate,
+            beneficiary: msg.sender,
+            loanHolder: borrower
+        }));
+        // repay previous loan and collect collateral
+
+        repayLoanInternal(
+            tokenId,
+            msg.sender,
+            msg.sender
+        );
+    }
 
 /**
     * @notice Returns the timestamp of the earliest lending pool after the given timestamp
     * @dev
-    * @param _timestamp uint256 - timestamp that the returned timestamp must be greater than
-    * @return timestamp of the earliest lending pool after given timestamp (expressed as uint256)
+    * @param _timestamp uint40 - timestamp that the returned timestamp must be greater than
+    * @return nextActivePoolTimestamp - timestamp of the earliest lending pool after given timestamp (expressed as uint40)
 */
-    function getNextActivePool(uint40 timestamp) validTimestamp(timestamp) internal returns (uint) {
+    function getNextActivePool(uint40 timestamp) validTimestamp(timestamp) internal returns (uint40 nextActivePoolTimestamp) {
         uint currentIndex = activePoolIndex[timestamp];
         require(currentIndex + 1 < activePools.length, "No next activePool");
-        return activePools[currentIndex + 1];
+        nextActivePoolTimestamp = activePools[currentIndex + 1];
     }
 
     function bytesToString(bytes memory data) public pure returns(string memory) {

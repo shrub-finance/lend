@@ -401,6 +401,19 @@ task('takeSnapshot', 'snapshot and update the accumInterest and accumYield')
         await sendTransaction(lendingPlatform.connect(signer).takeSnapshot(), "takeSnapshot");
     })
 
+task('forceExtendBorrow', 'Liquidator extends overdue loan for a reward')
+    .addParam("account", "Account to call takeSnapshot with", undefined, types.string, true)
+    .addParam("tokenid", "Account to call takeSnapshot with", undefined, types.string, true)
+    .addParam("claim", "Account to call takeSnapshot with", undefined, types.string, true)
+    .setAction(async (taskArgs, env) => {
+        const {ethers, deployments, getNamedAccounts} = env;
+        const { deployer } = await getNamedAccounts();
+        const {lendingPlatform} = await getDeployedContracts(env);
+
+        const signer = await ethers.getSigner(taskArgs.account || deployer);
+        await sendTransaction(lendingPlatform.connect(signer).takeSnapshot(), "takeSnapshot");
+    });
+
 task('takeLoan', 'take a loan')
     .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
     .addParam("loanAmount", "Amount of USDC to loan - in USD", undefined, types.float, false)
