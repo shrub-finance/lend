@@ -74,7 +74,7 @@ contract BorrowPositionToken is ERC721, Ownable {
         return interestSinceTimestamp(tokenId, borrowDatas[tokenId].startDate);
     }
 
-    function getStartDate(uint tokenId) external view checkExists(tokenId) returns (uint256) {
+    function getStartDate(uint tokenId) external view checkExists(tokenId) returns (uint40) {
         return borrowDatas[tokenId].startDate;
     }
 
