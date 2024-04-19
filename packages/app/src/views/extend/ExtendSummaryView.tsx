@@ -24,8 +24,16 @@ interface ExtendSummaryProps {
   onBackExtend: () => void;
 }
 
-const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
-  { lendAmountBeingExtended, estimatedAPY, oldTimestamp, newTimestamp, poolShareTokenAmount, totalEthYield, tokenSupply, onBackExtend}) =>
+const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (initiated: boolean) => void }> = (
+  { lendAmountBeingExtended,
+    estimatedAPY,
+    oldTimestamp,
+    newTimestamp,
+    poolShareTokenAmount,
+    totalEthYield,
+    tokenSupply,
+    onBackExtend,
+    onExtendActionChange}) =>
 {
   const [
     getActiveLendingPools,
@@ -57,21 +65,22 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps> = (
 
   useEffect(() => {
     if (!walletAddress) return;
-
     getActiveLendingPools().then().catch(error => {
       console.error("Failed to fetch active lending pools:", error);
-    });
-  }, [walletAddress, getActiveLendingPools]);
+    })}, [walletAddress, getActiveLendingPools]);
 
 
   useEffect(() => {
-    // console.log("running userPositionsDataLoading useEffect");
     if (activeLendingPoolsLoading) {
       return;
-    }
-  }, [activeLendingPoolsLoading]);
-  return (
+    }}, [activeLendingPoolsLoading]);
 
+
+  useEffect(() => {
+    onExtendActionChange(extendActionInitiated);
+  }, [extendActionInitiated, onExtendActionChange]);
+
+  return (
     <div className="relative group mt-4 w-full min-w-[500px]">
       <div className="flex flex-col">
         <div className="card w-full">

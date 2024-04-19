@@ -1,8 +1,7 @@
-// ExtendView.tsx
 import React, { useState } from 'react';
 import Image from "next/image";
 import { calculateLockupPeriod, fromEthDate, toEthDate } from '@shrub-lend/common';
-import ExtendSummary from './ExtendSummaryView';
+import ExtendSummaryView from './ExtendSummaryView';
 
 interface ExtendViewProps {
   timestamp: number;
@@ -20,7 +19,7 @@ interface ExtendViewProps {
   selectedPoolTokenId: string;
 }
 
-const ExtendView: React.FC<ExtendViewProps> = ({
+const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => void }> = ({
                                                  timestamp,
                                                  setTimestamp,
                                                  showAPYSection,
@@ -33,19 +32,31 @@ const ExtendView: React.FC<ExtendViewProps> = ({
                                                  depositTerms,
                                                  estimatedAPY,
                                                  setIsModalOpen,
-                                                 selectedPoolTokenId
-
+                                                 onModalClose
                                                }) => {
   const [showSummary, setShowSummary] = useState(false);
   const handleBackExtend = () => {
     setShowSummary(false)
+  };
+  const [extendActionInitiated, setExtendActionInitiated] = useState(false);
+
+
+  const handleExtendActionChange = (initiated) => {
+    setExtendActionInitiated(initiated);
+  };
+
+  const closeModalAndPassData = () => {
+    if (extendActionInitiated) {
+      onModalClose(fromEthDate(timestamp));
+    }
+    setIsModalOpen(false);
   };
 
   return (
     <>
     <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-shrub-grey-600">
       <h3 className="text-xl font-semibold text-shrub-grey-900 dark:text-white">Extend Deposit</h3>
-      <button type="button" onClick={() => setIsModalOpen(false)} className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-shrub-grey-600 dark:hover:text-white">
+      <button type="button" onClick={closeModalAndPassData} className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-shrub-grey-600 dark:hover:text-white">
         <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
           <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
         </svg>
@@ -125,7 +136,7 @@ const ExtendView: React.FC<ExtendViewProps> = ({
     </div>
   </div>
         :
-      <ExtendSummary
+      <ExtendSummaryView
         lendAmountBeingExtended={selectedLendPositionBalance}
         estimatedAPY={estimatedAPY}
         newTimestamp={fromEthDate(timestamp)}
@@ -134,6 +145,7 @@ const ExtendView: React.FC<ExtendViewProps> = ({
         totalEthYield={selectedTotalEthYield}
         tokenSupply={selectedTokenSupply}
         onBackExtend={handleBackExtend}
+        onExtendActionChange={handleExtendActionChange}
       />
       }
     </>
