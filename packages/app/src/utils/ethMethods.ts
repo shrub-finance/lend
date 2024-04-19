@@ -1,4 +1,5 @@
 import {toEthDate, fromEthDate, getPlatformDates} from "@shrub-lend/common"
+import { ethers } from 'ethers';
 
 export {toEthDate, fromEthDate};
 
@@ -13,7 +14,7 @@ export function truncateEthAddress (address) {
    else {
        return "-"
     }
-};
+}
 
 export const interestToLTV = {
     "0": 2000,
@@ -27,4 +28,11 @@ export const timestamps = {
     3: toEthDate(getPlatformDates().threeMonth),
     6: toEthDate(getPlatformDates().sixMonth),
     12: toEthDate(getPlatformDates().twelveMonth)
+}
+
+export function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
+    const usdcInWadBN = ethers.BigNumber.from(usdcInWad)
+    const divisionFactor = ethers.BigNumber.from(10).pow(12)
+    const roundAmount = ethers.BigNumber.from(5).mul(divisionFactor).div(10)
+    return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
 }

@@ -323,7 +323,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                   const newLendPosition: LendPosition = {
                                     id: matchedLendingPool.id,
                                     status: "pending",
-                                    depositsUsdc: (parseFloat(lendAmount) * 1000000).toString(),
+                                    depositsUsdc: (ethers.utils.parseEther(lendAmount)).toString(),
                                     apy: estimatedAPY,
                                     currentBalanceOverride: lendAmount,
                                     interestEarnedOverride: "0",

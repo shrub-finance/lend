@@ -14,7 +14,7 @@ import {
   chainlinkAggregatorAbi,
   chainlinkAggregatorAddress,
 } from "../utils/contracts";
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 import Image from "next/image";
 import { secondsInDay} from "@shrub-lend/common";
 import { USER_POSITIONS_QUERY } from "../constants/queries";
@@ -22,6 +22,7 @@ import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendView from './extend/ExtendView';
+import { formatLargeUsdc } from '../utils/ethMethods';
 
 const now = new Date();
 new Date(new Date(now).setFullYear(now.getFullYear() + 1));
@@ -70,7 +71,7 @@ export const DashboardView: FC = ({}) => {
     { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
     { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
   ];
-  const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState("");
+  const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState('');
   const [selectedLendPositionTermDate, setSelectedLendPositionTermDate] = useState<Date | null>(null);
   const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(0);
   const [selectedTokenSupply, setSelectedTokenSupply] = useState(0);
@@ -100,16 +101,12 @@ export const DashboardView: FC = ({}) => {
   }, [ethBalanceIsLoading]);
   useEffect(() => {
     // console.log("running walletAddress useEffect");
-    if (!walletAddress) {
-      return;
-    }
+    if (!walletAddress) {return}
     getUserPositions();
   }, [walletAddress, getUserPositions]);
   useEffect(() => {
     // console.log("running userPositionsDataLoading useEffect");
-    if (userPositionsDataLoading) {
-      return;
-    }
+    if (userPositionsDataLoading) {return}
   }, [userPositionsDataLoading]);
 
   useEffect(() => {
@@ -160,13 +157,6 @@ export const DashboardView: FC = ({}) => {
     setNewUnlockDate(date);
     console.log('New timestamp received from extend component:', date);
   };
-    function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
-        const usdcInWadBN = ethers.BigNumber.from(usdcInWad);
-        const divisionFactor = ethers.BigNumber.from(10).pow(12)
-        const roundAmount = ethers.BigNumber.from(5).mul(divisionFactor).div(10);
-        return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
-    }
-
 
   /** might need this later **/
   // let newlyAddedLendPosition = store.lendPositions.filter(item => item.hasOwnProperty('id'));
@@ -341,17 +331,18 @@ export const DashboardView: FC = ({}) => {
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className="flex items-center justify-center space-x-2 h-full p-2">
-                                        <button type="button" className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()} onClick={() => {
-                                          setIsModalOpen(true);
-                                          setSelectedLendPositionBalance(item.currentBalanceOverride ? item.currentBalanceOverride :
-                                            ethers.utils.formatUnits(
+
+                                          <button type="button" style={{ visibility: item.amount ? 'visible' : 'hidden' }} className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()  } onClick={() => {
+                                          setIsModalOpen(true)
+                                          setSelectedLendPositionBalance(
+                                           ethers.utils.formatUnits(
                                               ethers.BigNumber.from(item.lendingPool.totalPrincipal)
                                                 .add(item.lendingPool.totalUsdcInterest)
                                                 .add(ethPrice
                                                   .mul(item.lendingPool.totalEthYield)
                                                   .div(ethers.utils.parseUnits("1", 20)))
                                                 .mul(item.amount)
-                                                .div(item.lendingPool.tokenSupply), 6));
+                                                .div(item.lendingPool.tokenSupply), 6))
                                             setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
                                           setSelectedPoolShareTokenAmount(item.amount)
                                           setSelectedTokenSupply(item.lendingPool.tokenSupply)
