@@ -5,10 +5,12 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "hardhat/console.sol";
+
+// Libraries
 import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 
-import "hardhat/console.sol";
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {Constants} from '../libraries/configuration/Constants.sol';
 import {ShrubLendMath} from "../libraries/math/ShrubLendMath.sol";

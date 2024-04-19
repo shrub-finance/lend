@@ -35,7 +35,7 @@ library HelpersLogic {
     * @return timestamp - current timestamp expressed as a uint40
 */
     function currentTimestamp() public view returns (uint40 timestamp) {
-        return uint40(block.timestamp);
+        timestamp = uint40(block.timestamp);
     }
 
     function timestampToString(uint40 timestamp) public view returns (string memory) {
