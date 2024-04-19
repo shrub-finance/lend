@@ -264,6 +264,19 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         collateralRequired = WadRayMath.wadDiv(valueOfEthRequired, getEthPrice());
     }
 
+/**
+    * @notice Returns the amount of ETH that is worth a given amount of USDC
+    * @dev
+    * @param usdcAmount the amount of USDC to convert to an amount of ETH (expressed with 6 decimals)
+    * @return ethAmount the amount of ETH expressed in Wad
+*/
+    function usdcToEth(uint usdcAmount) private view returns (uint256 ethAmount) {
+        ethAmount = WadRayMath.wadDiv(
+            ShrubLendMath.usdcToWad(usdcAmount),
+            getEthPrice()
+        );
+    }
+
     function getDeficitForPeriod(
         uint40 _timestamp
     ) public validTimestamp(_timestamp) view returns (uint256 deficit) {
@@ -796,6 +809,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     * @param liquidationPhase uint256 - liquidation phase. Must be between 1 and 3. Higher values have greater bonuses. increasing values become eligible as more time since the endDate elapses
 */
     function forceExtendBorrow(uint tokenId, uint liquidationPhase) external {
+        console.log("Running forceExtendBorrow - tokenId: %s, liquidationPhase: %s", tokenId, liquidationPhase);
         DataTypes.BorrowData memory loanDetails = bpt.getLoan(tokenId);
         uint debt = bpt.debt(tokenId);
         address borrower = bpt.ownerOf(tokenId);
@@ -803,6 +817,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint availabilityTime = liquidationPhase == 1 ? Configuration.FORCED_EXTENSION_1 :
             liquidationPhase == 2 ? Configuration.FORCED_EXTENSION_2 :
             Configuration.FORCED_EXTENSION_3;
+        console.log(
+            "currentTimestamp: %s, loan endDate: %s, availabilityTime: %s",
+            HelpersLogic.currentTimestamp(),
+            loanDetails.endDate,
+            availabilityTime
+        );
         require(HelpersLogic.currentTimestamp() > loanDetails.endDate + availabilityTime ,"loan is not eligible for extension");
         // TODO: For now bonus is 1% of collatertal - update this later to be eth value of the appropriate percent of the debt
         uint bonusPecentage = 100;
@@ -811,8 +831,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             debt,
             bonusPecentage
         );
-        // TODO: Need to calculate bonus which is the amount of aETH that the liquidator gets to collect
-        // TODO: This will be equal to the ETH equal to the usdc value of bonusUsdc
+        uint bonus = usdcToEth(bonusUsdc);
 //        uint bonus = PercentageMath.percentMul(loanDetails.collateral, bonusPecentage);
         // flash loan if necessary for collateral
         // take new loan on behalf of the holder - collateral is same as previous loan minus bonus
@@ -827,6 +846,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             loanHolder: borrower
         }));
         // repay previous loan and collect collateral
+        // TODO: Platform is retaining the aETH - some should be flowing to the liquidator
 
         repayLoanInternal(
             tokenId,
