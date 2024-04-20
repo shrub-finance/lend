@@ -496,6 +496,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     }
 
     // This runs after the collateralProvider has sent aETH to Shrub
+/**
+    * @notice Internal function called to record all changes related to borrowing - run after sending collateral
+    * @dev The following checks are made: validPool, sufficientCollateral, availableLiquidity
+    * @dev USDC is transferred to the beneficiary in the amount of principal
+    * @param params DataTypes.TakeLoanInternalParams
+*/
     function takeLoanInternal(
         DataTypes.TakeLoanInternalParams memory params
     ) internal {
@@ -761,12 +767,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // User Receives a flash loan for the aETH collateral required to take the new loan
         console.log("extendLoan-before-flash-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         console.log("1 - platform aETH balance: %s", aeth.balanceOf(address(this)));
-        console.log("flash loan amount: %s", flashLoanAmount);
         if (newCollateral > aeth.balanceOf(msg.sender)) {
             flashLoanAmount = newCollateral - aeth.balanceOf(msg.sender);
-            // Transfer USDC from this contract to sender as a flash loan
+            // Transfer aETH from this contract to sender as a flash loan
             aeth.transfer(msg.sender, flashLoanAmount);
         }
+        console.log("flash loan amount: %s", flashLoanAmount);
         console.log("2 - platform aETH balance: %s", aeth.balanceOf(address(this)));
         console.log("extendLoan-before-take-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
         aeth.transferFrom(msg.sender, address(this), newCollateral);
@@ -835,9 +841,17 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        uint bonus = PercentageMath.percentMul(loanDetails.collateral, bonusPecentage);
         // flash loan if necessary for collateral
         // take new loan on behalf of the holder - collateral is same as previous loan minus bonus
+        uint newCollateral = loanDetails.collateral - bonus;
+        uint flashLoanAmount = 0;
+        if (newCollateral > aeth.balanceOf(msg.sender)) {
+            flashLoanAmount = newCollateral - aeth.balanceOf(msg.sender);
+            // Transfer aETH from this contract to sender as a flash loan
+            aeth.transfer(msg.sender, flashLoanAmount);
+        }
+        aeth.transferFrom(msg.sender, address(this), newCollateral);
         takeLoanInternal(DataTypes.TakeLoanInternalParams({
             principal: debt,
-            collateral: loanDetails.collateral - bonus,
+            collateral: newCollateral,
         // TODO: ltv should be calculated to be the smallest valid
             ltv: 5000,
             timestamp: getNextActivePool(loanDetails.endDate),
@@ -848,11 +862,17 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // repay previous loan and collect collateral
         // TODO: Platform is retaining the aETH - some should be flowing to the liquidator
 
-        repayLoanInternal(
+        uint freedCollateral = repayLoanInternal(
             tokenId,
             msg.sender,
             msg.sender
         );
+        aeth.transfer(msg.sender, freedCollateral);
+        if (flashLoanAmount > 0) {
+            // Transfer aETH from sender to Shrub to repay flash loan
+            console.log("about to send %s from %s with %s allowance", flashLoanAmount, msg.sender, aeth.allowance(msg.sender, address(this)));
+            aeth.transferFrom(msg.sender, address(this), flashLoanAmount);
+        }
     }
 
 /**

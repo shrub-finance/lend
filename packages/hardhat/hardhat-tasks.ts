@@ -383,13 +383,21 @@ task('forceExtendBorrow', 'Liquidator extends overdue loan for a reward')
         const { ethers } = env;
         const {lendingPlatform, bpt} = await getDeployedContracts(env);
         const signer = await signerFromFuzzyAccount(account, env);
-        const {usdc} = await getDeployedContracts(env);
+        const {usdc, aeth} = await getDeployedContracts(env);
         const debt = await bpt.debt(tokenid);
+        const loanDetails = await bpt.getLoan(tokenid);
         await env.run('approveErc20', {
             account: signer.address,
             tokenAddress: await usdc.getAddress(),
             spendAddress: await lendingPlatform.getAddress(),
             requiredAmount: ethers.formatUnits(debt * 101n / 100n, 6)
+        });
+        await env.run('approveErc20', {
+            account: signer.address,
+            tokenAddress: await aeth.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            // TODO: This could be reduced by the amount of the bonus... but don't want to think abou that right now
+            requiredAmount: ethers.formatUnits(loanDetails.collateral * 2n, 18)
         });
         await sendTransaction(lendingPlatform.connect(signer).forceExtendBorrow(tokenid, liquidationPhase), "forceExtendBorrow");
     });
@@ -626,11 +634,17 @@ task('approveErc20', 'checks if erc20 token has a sufficient allowance to be spe
         const approved = await erc20contract.connect(signer).allowance(signer.getAddress(), spendAddress);
         console.log(`approval is currently ${ethers.formatUnits(approved, decimals)} ${symbol}`);
 
+
         const parsedRequiredAmount = ethers.parseUnits(requiredAmount, decimals);
         // If approval is not sufficient then create an approval tx
         if (approved < parsedRequiredAmount) {
             const needToApprove = parsedRequiredAmount - approved;
             console.log(`approving additional ${ethers.formatUnits(needToApprove, decimals)} ${symbol} for deposit`);
+            console.log(`
+        APPROVAL:
+        approved: ${approved}
+        needToApprove: ${needToApprove}
+        `)
             await sendTransaction(erc20contract.connect(signer).approve(spendAddress, needToApprove + approved), `${symbol} Approval`);
         }
     });
