@@ -152,7 +152,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             console.log("contributionDenominator - %s", contributionDenominator);
             console.log("aEthYieldDistribution: %s", aEthYieldDistribution);
             console.log("accumInterestBP: %s", accumInterestBP);
-            console.log("shrubFee: %s", PlatformConfig.shrubFee);
+            console.log("shrubYieldFee: %s", PlatformConfig.config.SHRUB_YIELD_FEE);
+            console.log("shrubInterestFee: %s", PlatformConfig.config.SHRUB_INTEREST_FEE);
             for (uint j = i; j < activePools.length; j++) {
                 console.log("in loop: lendingPool: %s, lendingPoolContribution: %s / %s", activePools[j], lendingPools[activePools[j]].principal, contributionDenominator);
                 DataTypes.calcLPIncreasesResult memory res = calcLPIncreases(DataTypes.calcLPIncreasesParams({
@@ -198,17 +199,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log("lendingPoolRatio: %s, LPaEthDistribution: %s, LPinterestDistribution: %s", lendingPoolRatio, LPaEthDistribution, LPinterestDistribution);
 
         return DataTypes.calcLPIncreasesResult({
-            deltaAccumYield : PercentageMath.percentMul(LPaEthDistribution, 10000 - PlatformConfig.shrubFee),
-            deltaShrubYield : PercentageMath.percentMul(LPaEthDistribution, PlatformConfig.shrubFee),
-            deltaAccumInterest : PercentageMath.percentMul(LPinterestDistribution, 10000 - PlatformConfig.shrubFee),
-            deltaShrubInterest : PercentageMath.percentMul(LPinterestDistribution, PlatformConfig.shrubFee)
+            deltaAccumYield : PercentageMath.percentMul(LPaEthDistribution, 10000 - PlatformConfig.config.SHRUB_YIELD_FEE),
+            deltaShrubYield : PercentageMath.percentMul(LPaEthDistribution, PlatformConfig.config.SHRUB_YIELD_FEE),
+            deltaAccumInterest : PercentageMath.percentMul(LPinterestDistribution, 10000 - PlatformConfig.config.SHRUB_INTEREST_FEE),
+            deltaShrubInterest : PercentageMath.percentMul(LPinterestDistribution, PlatformConfig.config.SHRUB_INTEREST_FEE)
         });
-
-//        res.deltaAccumYield = PercentageMath.percentMul(LPaEthDistribution, 10000 - PlatformConfig.shrubFee);
-//        res.deltaShrubYield = PercentageMath.percentMul(LPaEthDistribution, PlatformConfig.shrubFee);
-//        res.deltaAccumInterest = PercentageMath.percentMul(LPinterestDistribution, 10000 - PlatformConfig.shrubFee);
-//        res.deltaShrubInterest = PercentageMath.percentMul(LPinterestDistribution, PlatformConfig.shrubFee);
-//        return res;
     }
 
     function setShrubTreasury(address _address) public onlyOwner {
@@ -908,13 +903,16 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     modifier validateLtv(uint ltv) {
         console.log("validateLtv: %s", ltv);
-        require(ltv == 2000 || ltv == 2500 || ltv == 3300 || ltv == 5000, "Invalid LTV");
+        require(PlatformConfig.config.LTV_TO_APY[ltv].isValid);
         _;
     }
 
     modifier validateExtendLtv(uint ltv) {
         console.log("validateExtendLtv: %s", ltv);
-        require(ltv == MAX_LTV_FOR_EXTEND || ltv == 2000 || ltv == 2500 || ltv == 3300 || ltv == 5000, "Invalid LTV");
+        require(
+            PlatformConfig.config.LTV_TO_APY[ltv].isValid ||
+            ltv == PlatformConfig.config.MAX_LTV_FOR_EXTEND
+        );
         _;
     }
 
