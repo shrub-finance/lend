@@ -364,6 +364,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         if (lendingPools[_timestamp].poolShareToken == PoolShareToken(address(0))) {
             return false;
         }
+        // TODO: This needs to incorportate an offset time before closing that is set in PlatformConfig
         if (_timestamp < HelpersLogic.currentTimestamp()) {
             return false;
         }
