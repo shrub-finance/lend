@@ -240,10 +240,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     * @param ethCollateral The amount of available ETH collateral (in Wad) to calculate the maxLoan for
     * @return maxLoanV the maximum USDC loan (expressed with 6 decimals)
 */
-    function maxLoan(uint ltv, uint ethCollateral) validateLtv(ltv) public view returns (uint256 maxLoanV) {
+    function maxLoan(uint16 ltv, uint ethCollateral) validateLtv(ltv) public view returns (uint256 maxLoanV) {
         /// @dev USDC value of ethCollateral (in Wad)
         uint valueOfEth = WadRayMath.wadMul(ethCollateral, getEthPrice());
-        uint maxLoanWad = PercentageMath.percentMul(valueOfEth, ltv);
+        uint maxLoanWad = PercentageMath.percentMul(valueOfEth, uint256(ltv));
         return maxLoanV = ShrubLendMath.wadToUsdc(maxLoanWad);
     }
 
@@ -254,8 +254,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     * @param usdcAmount the requested loan amount expressed with 6 decimals
     * @return collateralRequired the amount of ETH expressed in Wad required to colateralize this loan
 */
-    function requiredCollateral(uint ltv, uint usdcAmount) validateExtendLtv(ltv) public view returns (uint256 collateralRequired) {
-        uint valueOfEthRequired = PercentageMath.percentDiv(ShrubLendMath.usdcToWad(usdcAmount), ltv);
+    function requiredCollateral(uint16 ltv, uint usdcAmount) validateExtendLtv(ltv) public view returns (uint256 collateralRequired) {
+        uint valueOfEthRequired = PercentageMath.percentDiv(ShrubLendMath.usdcToWad(usdcAmount), uint256(ltv));
         collateralRequired = WadRayMath.wadDiv(valueOfEthRequired, getEthPrice());
     }
 
@@ -575,7 +575,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     function takeLoan(
         uint256 _principal, // Amount of USDC with 6 decimal places
         uint256 _collateral, // Amount of ETH collateral with 18 decimal places
-        uint32 _ltv,
+        uint16 _ltv,
         uint40 _timestamp
     ) public payable validateLtv(_ltv) nonReentrant {
         console.log("running takeLoan");
@@ -732,7 +732,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint40 newTimestamp,
         uint256 additionalCollateral, // Amount of new ETH collateral with - 18 decimals
         uint256 additionalRepayment, // Amount of new USDC to be used to repay the existing loan - 6 decimals
-        uint32 _ltv
+        uint16 _ltv
     ) external validateExtendLtv(_ltv) onlyBptOwner(tokenId) payable {
 //        TODO: extendLoan should allow LTV that is within health factor
 
@@ -901,13 +901,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         _;
     }
 
-    modifier validateLtv(uint ltv) {
+    modifier validateLtv(uint16 ltv) {
         console.log("validateLtv: %s", ltv);
         require(PlatformConfig.config.LTV_TO_APY[ltv].isValid);
         _;
     }
 
-    modifier validateExtendLtv(uint ltv) {
+    modifier validateExtendLtv(uint16 ltv) {
         console.log("validateExtendLtv: %s", ltv);
         require(
             PlatformConfig.config.LTV_TO_APY[ltv].isValid ||
