@@ -44,13 +44,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     uint aEthSnapshotBalance;
     uint newCollateralSinceSnapshot;
     uint claimedCollateralSinceSnapshot;
-    uint MAX_LTV_FOR_EXTEND = 8000;
-    uint LIQUIDATION_THRESHOLD = 8500;
 
     address shrubTreasury;
 
     event NewDeposit(uint40 timestamp, address poolShareTokenAddress, address depositor, uint256 amount, uint256 tokenAmount);
-    event NewLoan(uint tokenId, uint40 timestamp, address borrower, uint256 collateral, uint256 principal, uint40 startDate, uint32 apy);
+    event NewLoan(uint tokenId, uint40 timestamp, address borrower, uint256 collateral, uint256 principal, uint40 startDate, uint16 apy);
     event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
     event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
     event Withdraw(address user, address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcPrincipal, uint usdcInterest);
@@ -514,7 +512,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         );
 
         // Ensure the ltv is valid and calculate the apy
-        uint32 apy = HelpersLogic.getAPYBasedOnLTV(params.ltv);
+        uint16 apy = HelpersLogic.getAPYBasedOnLTV(params.ltv);
 
         // Check if the loan amount is less than or equal to the liquidity across pools
         uint totalAvailableLiquidity = getAvailableForPeriod(params.timestamp);

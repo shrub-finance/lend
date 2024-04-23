@@ -45,7 +45,7 @@ library DataTypes {
         uint40 endDate;
         uint256 principal;
         uint256 collateral;
-        uint32 apy;
+        uint16 apy;
     }
 
     struct TakeLoanInternalParams {

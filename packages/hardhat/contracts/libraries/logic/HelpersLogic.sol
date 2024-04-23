@@ -13,7 +13,7 @@ library HelpersLogic {
     * @param _ltv expressed as a percentage
     * @return apy interest for a loan with a given ltv expressed as percentage
 */
-    function getAPYBasedOnLTV(uint32 _ltv) public pure returns (uint32 apy) {
+    function getAPYBasedOnLTV(uint16 _ltv) public pure returns (uint16 apy) {
         if (_ltv == 2000) {
             apy = 0;
         } else if (_ltv == 2500) {
