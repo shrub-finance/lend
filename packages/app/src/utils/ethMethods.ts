@@ -36,3 +36,8 @@ export function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
     const roundAmount = ethers.BigNumber.from(5).mul(divisionFactor).div(10)
     return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
 }
+
+export function formatPercentage(percentage: ethers.BigNumberish) {
+    const percentageBN = ethers.BigNumber.from(percentage);
+    return ethers.utils.formatUnits(percentageBN, 2);
+}

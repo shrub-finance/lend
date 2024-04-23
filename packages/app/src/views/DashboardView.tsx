@@ -25,6 +25,7 @@ import ExtendView from './extend/ExtendView';
 import { formatLargeUsdc } from '../utils/ethMethods';
 
 const now = new Date();
+const Zero = ethers.constants.Zero;
 new Date(new Date(now).setFullYear(now.getFullYear() + 1));
 export const DashboardView: FC = ({}) => {
 
@@ -36,6 +37,7 @@ export const DashboardView: FC = ({}) => {
   const walletAddress = useAddress();
   const [ethPrice, setEthPrice] = useState(ethers.BigNumber.from(0));
   const [blockchainTime, setBlockchainTime] = useState(0);
+  // const [extendDepositProps, setExtendDepositProps] = useState({})
   const {
     contract: chainLinkAggregator,
     isLoading: chainLinkAggregatorIsLoading,
@@ -63,7 +65,7 @@ export const DashboardView: FC = ({}) => {
   const [currentHovered, setCurrentHovered] = useState<number | null>(null);
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
-  const [estimatedAPY, setEstimatedAPY] = useState("0");
+  const [estimatedAPY, setEstimatedAPY] = useState(Zero);
   const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
   const depositTerms = [
     { id: 'smallest-deposit', value: 'smallest-deposit', duration: oneMonth },
@@ -71,11 +73,11 @@ export const DashboardView: FC = ({}) => {
     { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
     { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
   ];
-  const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState('');
+  const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState(Zero);
   const [selectedLendPositionTermDate, setSelectedLendPositionTermDate] = useState<Date | null>(null);
-  const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(0);
-  const [selectedTokenSupply, setSelectedTokenSupply] = useState(0);
-  const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(0);
+  const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(Zero);
+  const [selectedTokenSupply, setSelectedTokenSupply] = useState(Zero);
+  const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(Zero);
   const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('')
   const dummyEarningPools = "2";
 
@@ -85,7 +87,8 @@ export const DashboardView: FC = ({}) => {
         timestamp === threeMonth.getTime() / 1000 ? 8.14 :
           timestamp === sixMonth.getTime() / 1000 ? 9.04 :
             timestamp === twelveMonth.getTime() / 1000 ? 10.37 : Math.random() * 5 + 7;
-      setEstimatedAPY(apyGenerated.toFixed(2).toString());
+      // setEstimatedAPY(apyGenerated.toFixed(2).toString());
+        setEstimatedAPY(ethers.utils.parseUnits(apyGenerated.toFixed(2),2));
     };
 
     if (timestamp) {
@@ -267,18 +270,18 @@ export const DashboardView: FC = ({}) => {
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {store?.lendPositions?.map(
+                              {store?.lendPositions?.sort((a,b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
                                 (item, index) => {
-                                    const depositsUsdcBN = ethers.BigNumber.from(item.depositsUsdc ? item.depositsUsdc : 0);
-                                    const withdrawsUsdcBN = ethers.BigNumber.from(item.withdrawsUsdc ? item.withdrawsUsdc : 0);
-                                    const lendingPoolPrincipalBN = ethers.BigNumber.from(item.lendingPool.totalPrincipal ? item.lendingPool.totalPrincipal : 0);
-                                    const lendingPoolUsdcInterestBN = ethers.BigNumber.from(item.lendingPool.totalUsdcInterest ? item.lendingPool.totalUsdcInterest : 0);
-                                    const lendingPoolEthYieldBN = ethers.BigNumber.from(item.lendingPool.totalEthYield ? item.lendingPool.totalEthYield : 0);
-                                    const tokenAmountBN = ethers.BigNumber.from(item.amount ? item.amount : 0);
-                                    const tokenSupplyBN = ethers.BigNumber.from(item.lendingPool.tokenSupply ? item.lendingPool.tokenSupply : 0);
+                                    const depositsUsdcBN = ethers.BigNumber.from(item.depositsUsdc ? item.depositsUsdc : Zero);
+                                    const withdrawsUsdcBN = ethers.BigNumber.from(item.withdrawsUsdc ? item.withdrawsUsdc : Zero);
+                                    const lendingPoolPrincipalBN = ethers.BigNumber.from(item.lendingPool.totalPrincipal ? item.lendingPool.totalPrincipal : Zero);
+                                    const lendingPoolUsdcInterestBN = ethers.BigNumber.from(item.lendingPool.totalUsdcInterest ? item.lendingPool.totalUsdcInterest : Zero);
+                                    const lendingPoolEthYieldBN = ethers.BigNumber.from(item.lendingPool.totalEthYield ? item.lendingPool.totalEthYield : Zero);
+                                    const tokenAmountBN = ethers.BigNumber.from(item.amount ? item.amount : Zero);
+                                    const tokenSupplyBN = ethers.BigNumber.from(item.lendingPool.tokenSupply ? item.lendingPool.tokenSupply : Zero);
 
                                     const netDeposits = depositsUsdcBN.sub(withdrawsUsdcBN);
-                                    const currentBalance = tokenSupplyBN === ethers.constants.Zero ? ethers.constants.Zero : (
+                                    const currentBalance = tokenSupplyBN.eq(Zero) ? Zero : (
                                         lendingPoolPrincipalBN
                                             .add(lendingPoolUsdcInterestBN)
                                             .add(
@@ -290,13 +293,6 @@ export const DashboardView: FC = ({}) => {
                                         .mul(tokenAmountBN)
                                         .div(tokenSupplyBN);
                                     const interestEarned = currentBalance.sub(netDeposits);
-                                    // ethers.BigNumber.from(item.lendingPool.totalPrincipal)
-                                    //     .add(item.lendingPool.totalUsdcInterest)
-                                    //     .add(ethPrice
-                                    //         .mul(item.lendingPool.totalEthYield)
-                                    //         .div(ethers.utils.parseUnits("1", 20)))
-                                    //     .mul(item.amount)
-                                    //     .div(item.lendingPool.tokenSupply))}
                                     return (
                                   <tr
                                     key={`earnRow-${index}`}
@@ -348,21 +344,11 @@ export const DashboardView: FC = ({}) => {
 
                                           <button type="button" style={{ visibility: item.amount ? 'visible' : 'hidden' }} className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()  } onClick={() => {
                                           setIsModalOpen(true)
-                                          setSelectedLendPositionBalance(
-                                           ethers.utils.formatUnits(
-                                              ethers.BigNumber.from(item.lendingPool.totalPrincipal)
-                                                .add(item.lendingPool.totalUsdcInterest)
-                                                .add(ethPrice
-                                                  .mul(item.lendingPool.totalEthYield)
-                                                  .div(ethers.utils.parseUnits("1", 20)))
-                                                .mul(item.amount)
-                                                .div(item.lendingPool.tokenSupply), 6))
-                                            setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
-                                          setSelectedPoolShareTokenAmount(item.amount)
-                                              // setSelectedTokenSupply(tokenSupplyBN.toNumber())
-                                              // setSelectedTotalEthYield(lendingPoolEthYieldBN.toNumber())
-                                          setSelectedTokenSupply(Number(ethers.utils.formatUnits(tokenSupplyBN, 0)))
-                                          setSelectedTotalEthYield(Number(ethers.utils.formatUnits(lendingPoolEthYieldBN, 0)))
+                                          setSelectedLendPositionBalance(currentBalance)
+                                          setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
+                                          setSelectedPoolShareTokenAmount(tokenAmountBN)
+                                          setSelectedTokenSupply(tokenSupplyBN)
+                                          setSelectedTotalEthYield(lendingPoolEthYieldBN)
                                           setSelectedPoolTokenId(item.lendingPool.id)
                                         }} >
                                           {/*Corresponding modal at the top*/}

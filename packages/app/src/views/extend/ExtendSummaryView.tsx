@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { toEthDate, truncateEthAddress } from '../../utils/ethMethods';
+import {formatLargeUsdc, formatPercentage, toEthDate, truncateEthAddress} from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
 import { BigNumber, ethers } from 'ethers';
 import {
@@ -14,13 +14,13 @@ import { useLazyQuery } from '@apollo/client';
 import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
 
 interface ExtendSummaryProps {
-  lendAmountBeingExtended: string;
-  estimatedAPY: string;
+  lendAmountBeingExtended: ethers.BigNumber;
+  estimatedAPY: ethers.BigNumber;
   oldTimestamp: Date;
   newTimestamp: Date;
-  poolShareTokenAmount: number;
-  totalEthYield: number;
-  tokenSupply: number;
+  poolShareTokenAmount: ethers.BigNumber;
+  totalEthYield: ethers.BigNumber;
+  tokenSupply: ethers.BigNumber;
   onBackExtend: () => void;
 }
 
@@ -98,11 +98,11 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
               )}
 
               <div className='w-full text-xl font-semibold flex flex-row'>
-                <span className='text-4xl  font-medium text-left w-[500px]'>{lendAmountBeingExtended} USDC</span>
+                <span className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(lendAmountBeingExtended)} USDC</span>
                 <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
               </div>
               <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-                When you extend this deposit, <span className='font-bold'>{lendAmountBeingExtended} USDC</span> will be
+                When you extend this deposit, <span className='font-bold'>{formatLargeUsdc(lendAmountBeingExtended)} USDC</span> will be
                 moved from the old lending pool ending<span
                 className='font-bold'> {oldTimestamp?.toLocaleString()}</span> to the new lending pool ending <span
                 className='font-bold'>{newTimestamp?.toLocaleString()}</span>. You will collect earned ETH yield of <span className='font-bold'>
@@ -129,7 +129,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                 </div>
                 <div className="flex flex-row  justify-between">
                   <span className="">Estimated Yield ✨</span>
-                  <span className="font-semibold text-shrub-green-500"> {estimatedAPY}%</span>
+                  <span className="font-semibold text-shrub-green-500"> {formatPercentage(estimatedAPY)}%</span>
                 </div>
                 <div className="flex flex-row  justify-between">
                   <span className="">Contract Address</span>
@@ -148,7 +148,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                  {/* Approve if allowance is insufficient */}
                  {!allowance ||
                  BigNumber.from(allowance).lt(
-                   ethers.utils.parseUnits(lendAmountBeingExtended, 6),
+                   ethers.utils.parseUnits(formatLargeUsdc(lendAmountBeingExtended), 6),
                  )
                    && (
                      <Web3Button
@@ -183,7 +183,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
 
                  {allowance &&
                    !BigNumber.from(allowance).lt(
-                     ethers.utils.parseUnits(lendAmountBeingExtended, 6),
+                     ethers.utils.parseUnits(formatLargeUsdc(lendAmountBeingExtended), 6),
                    ) && (
                      <Web3Button
                        contractAddress={lendingPlatformAddress}
