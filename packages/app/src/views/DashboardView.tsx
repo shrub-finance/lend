@@ -278,7 +278,7 @@ export const DashboardView: FC = ({}) => {
                                     const tokenSupplyBN = ethers.BigNumber.from(item.lendingPool.tokenSupply ? item.lendingPool.tokenSupply : 0);
 
                                     const netDeposits = depositsUsdcBN.sub(withdrawsUsdcBN);
-                                    const currentBalance = (
+                                    const currentBalance = tokenSupplyBN === ethers.constants.Zero ? ethers.constants.Zero : (
                                         lendingPoolPrincipalBN
                                             .add(lendingPoolUsdcInterestBN)
                                             .add(
@@ -359,8 +359,10 @@ export const DashboardView: FC = ({}) => {
                                                 .div(item.lendingPool.tokenSupply), 6))
                                             setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
                                           setSelectedPoolShareTokenAmount(item.amount)
-                                          setSelectedTokenSupply(item.lendingPool.tokenSupply)
-                                          setSelectedTotalEthYield(item.lendingPool.totalEthYield)
+                                              // setSelectedTokenSupply(tokenSupplyBN.toNumber())
+                                              // setSelectedTotalEthYield(lendingPoolEthYieldBN.toNumber())
+                                          setSelectedTokenSupply(Number(ethers.utils.formatUnits(tokenSupplyBN, 0)))
+                                          setSelectedTotalEthYield(Number(ethers.utils.formatUnits(lendingPoolEthYieldBN, 0)))
                                           setSelectedPoolTokenId(item.lendingPool.id)
                                         }} >
                                           {/*Corresponding modal at the top*/}
