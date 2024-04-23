@@ -249,7 +249,7 @@ export const DashboardView: FC = ({}) => {
                             <thead className="text-xs bg-shrub-grey-light dark:bg-shrub-grey-700 border border-shrub-grey-light2">
                               <tr>
                                 <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
-                                  Amount Deposited
+                                  Net Deposited
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
                                   Interest Earned
@@ -268,7 +268,36 @@ export const DashboardView: FC = ({}) => {
                             </thead>
                             <tbody className="text-lg">
                               {store?.lendPositions?.map(
-                                (item, index) => (
+                                (item, index) => {
+                                    const depositsUsdcBN = ethers.BigNumber.from(item.depositsUsdc ? item.depositsUsdc : 0);
+                                    const withdrawsUsdcBN = ethers.BigNumber.from(item.withdrawsUsdc ? item.withdrawsUsdc : 0);
+                                    const lendingPoolPrincipalBN = ethers.BigNumber.from(item.lendingPool.totalPrincipal ? item.lendingPool.totalPrincipal : 0);
+                                    const lendingPoolUsdcInterestBN = ethers.BigNumber.from(item.lendingPool.totalUsdcInterest ? item.lendingPool.totalUsdcInterest : 0);
+                                    const lendingPoolEthYieldBN = ethers.BigNumber.from(item.lendingPool.totalEthYield ? item.lendingPool.totalEthYield : 0);
+                                    const tokenAmountBN = ethers.BigNumber.from(item.amount ? item.amount : 0);
+                                    const tokenSupplyBN = ethers.BigNumber.from(item.lendingPool.tokenSupply ? item.lendingPool.tokenSupply : 0);
+
+                                    const netDeposits = depositsUsdcBN.sub(withdrawsUsdcBN);
+                                    const currentBalance = (
+                                        lendingPoolPrincipalBN
+                                            .add(lendingPoolUsdcInterestBN)
+                                            .add(
+                                                ethPrice
+                                                    .mul(lendingPoolEthYieldBN)
+                                                    .div(ethers.utils.parseUnits("1", 20))
+                                            )
+                                    )
+                                        .mul(tokenAmountBN)
+                                        .div(tokenSupplyBN);
+                                    const interestEarned = currentBalance.sub(netDeposits);
+                                    // ethers.BigNumber.from(item.lendingPool.totalPrincipal)
+                                    //     .add(item.lendingPool.totalUsdcInterest)
+                                    //     .add(ethPrice
+                                    //         .mul(item.lendingPool.totalEthYield)
+                                    //         .div(ethers.utils.parseUnits("1", 20)))
+                                    //     .mul(item.amount)
+                                    //     .div(item.lendingPool.tokenSupply))}
+                                    return (
                                   <tr
                                     key={`earnRow-${index}`}
                                     className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700"
@@ -276,7 +305,7 @@ export const DashboardView: FC = ({}) => {
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {wallet && !ethBalanceIsLoading ? (
                                         <p>{" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
-                                          {formatLargeUsdc(item.depositsUsdc ?? "0")}{" "} USDC
+                                          {formatLargeUsdc(netDeposits)}{" "} USDC
                                           {item.status === 'pending' && (
                                             <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                           )}
@@ -297,26 +326,11 @@ export const DashboardView: FC = ({}) => {
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {item.interestEarnedOverride ? item.interestEarnedOverride :
-                                        formatLargeUsdc(
-                                          ethers.BigNumber.from(item.lendingPool.totalPrincipal)
-                                            .add(item.lendingPool.totalUsdcInterest)
-                                            .add(ethPrice
-                                              .mul(item.lendingPool.totalEthYield)
-                                              .div(ethers.utils.parseUnits("1", 20)))
-                                            .mul(item.amount)
-                                            .div(item.lendingPool.tokenSupply)
-                                            .sub(item.depositsUsdc))}
+                                        formatLargeUsdc(interestEarned)}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {item.currentBalanceOverride ? item.currentBalanceOverride:
-                                        formatLargeUsdc(
-                                          ethers.BigNumber.from(item.lendingPool.totalPrincipal)
-                                            .add(item.lendingPool.totalUsdcInterest)
-                                            .add(ethPrice
-                                              .mul(item.lendingPool.totalEthYield)
-                                              .div(ethers.utils.parseUnits("1", 20)))
-                                            .mul(item.amount)
-                                            .div(item.lendingPool.tokenSupply))}
+                                        formatLargeUsdc(currentBalance)}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
@@ -372,7 +386,7 @@ export const DashboardView: FC = ({}) => {
                                       </div>
                                     </td>
                                   </tr>
-                                )
+                                )}
                               )}
                             </tbody>
                           </table>

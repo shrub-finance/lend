@@ -22,10 +22,10 @@ export type Loan = {
 type LendingPool = {
   id: string;
   timestamp: string;
-  tokenSupply: number;
-  totalEthYield: number;
-  totalPrincipal: number;
-  totalUsdcInterest: number;
+  tokenSupply: string;
+  totalEthYield: string;
+  totalPrincipal: string;
+  totalUsdcInterest: string;
   __typename: string;
 };
 
@@ -33,6 +33,7 @@ type LendingPool = {
     id?: string;
     status?: PendingStatuses;
     depositsUsdc?: string;
+    withdrawsUsdc?: string;
     apy?: string;
     currentBalanceOverride?: string;
     interestEarnedOverride?: string;
