@@ -12,6 +12,8 @@ import {
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
 import { useLazyQuery } from '@apollo/client';
 import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
+import {LendPosition} from "../../types/types";
+import {useFinancialData} from "../../components/FinancialDataContext";
 
 interface ExtendSummaryProps {
   lendAmountBeingExtended: ethers.BigNumber;
@@ -46,6 +48,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
     },
   ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
 
+    const {store, dispatch} = useFinancialData();
   const walletAddress = useAddress();
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
   const [extendActionInitiated, setExtendActionInitiated] = useState(false);
@@ -72,7 +75,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
 
   useEffect(() => {
     if (activeLendingPoolsLoading) {
-      return;
+        return;
     }}, [activeLendingPoolsLoading]);
 
 
@@ -203,15 +206,74 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                      }
                        onSuccess={
                        async (tx) => {
-                         try {
-                           const receipt = await tx.wait();
-                           if(!receipt.status) {
-                             throw new Error("Transaction failed")
+                           setLocalError('');
+                           if(activeLendingPoolsError) {
+                               handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
+                               return
                            }
-                         } catch (e) {
-                           console.log("Transaction failed:", e);
-                         }
-                         setExtendActionInitiated(true)
+                           const filteredLendingPools =
+                               activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
+                                   item => item.timestamp === toEthDate(oldTimestamp).toString(),
+                               );
+                           console.log(filteredLendingPools);
+
+                           const matchedLendingPool =
+                               filteredLendingPools.length > 0
+                                   ? filteredLendingPools[0]
+                                   : null;
+                           const newLendPosition: LendPosition = {
+                               id: matchedLendingPool.id,
+                               status: "pending",
+                               depositsUsdc: lendAmountBeingExtended.mul(-1).toString(),
+                               apy: formatPercentage(estimatedAPY),
+                               currentBalanceOverride: lendAmountBeingExtended.mul(-1).toString(),
+                               interestEarnedOverride: "0",
+                               lendingPool: {
+                                   id: matchedLendingPool.id,
+                                   timestamp: matchedLendingPool.timestamp,
+                                   tokenSupply: matchedLendingPool.tokenSupply,
+                                   totalEthYield:
+                                   matchedLendingPool.totalEthYield,
+                                   totalPrincipal:
+                                   matchedLendingPool.totalPrincipal,
+                                   totalUsdcInterest:
+                                   matchedLendingPool.totalUsdcInterest,
+                                   __typename: matchedLendingPool.__typename,
+                               },
+                               timestamp: toEthDate(oldTimestamp),
+                               updated: Math.floor(Date.now() / 1000),
+                           };
+                           dispatch({
+                               type: "ADD_LEND_POSITION",
+                               payload: newLendPosition,
+                           });
+
+                           try {
+                               const receipt = await tx.wait();
+                               if(!receipt.status) {
+                                   throw new Error("Transaction failed")
+                               }
+                               dispatch({
+                                   type: "UPDATE_LEND_POSITION_STATUS",
+                                   payload: {
+                                       id: matchedLendingPool.id,
+                                       status: "confirmed",
+                                   },
+                               });
+                           } catch (e) {
+                               console.log("Transaction failed:", e);
+                               dispatch({
+                                   type: "UPDATE_LEND_POSITION_STATUS",
+                                   payload: {
+                                       id: matchedLendingPool.id,
+                                       status: "failed",
+                                   },
+                               });
+                           }
+
+                           setExtendActionInitiated(true)
+
+
                        }}
                        onError={(e) => {
                          handleErrorMessages({err: e});

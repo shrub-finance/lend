@@ -308,11 +308,11 @@ export const DashboardView: FC = ({}) => {
                                           {item.status === 'failed' && (
                                             <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
                                           )}
-                                          {newUnlockDate && (
-                                            <span
-                                              className=' ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-amber-900 dark:text-amber-300'><span
-                                              className='w-2 h-2 me-1 bg-amber-500 rounded-full'></span>Extended</span>
-                                          )}
+                                          {/*{newUnlockDate && (*/}
+                                          {/*  <span*/}
+                                          {/*    className=' ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-amber-900 dark:text-amber-300'><span*/}
+                                          {/*    className='w-2 h-2 me-1 bg-amber-500 rounded-full'></span>Extended</span>*/}
+                                          {/*)}*/}
                                         </p>
                                       ) : (
                                         <p className="text-sm">

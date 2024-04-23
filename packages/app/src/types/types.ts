@@ -50,9 +50,7 @@ export type UserFinancialDataState = {
 };
 
 export type UserFinancialDataAction =
-  | { type: "SET_USER_DATA";
-      payload: { loans: Loan[]; lendPositions: LendPosition[] };
-    }
+  | { type: "SET_USER_DATA"; payload: { loans: Loan[]; lendPositions: LendPosition[] }; }
   | { type: "CLEAR_USER_DATA" }
   | { type: "ADD_LOAN"; payload: Loan }
   | { type: "ADD_LEND_POSITION"; payload: LendPosition }
