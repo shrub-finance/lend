@@ -23,7 +23,7 @@ import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendView from './extend/ExtendView';
 import { formatLargeUsdc } from '../utils/ethMethods';
-import {LendPosition} from "../types/types";
+import {Deposit} from "../types/types";
 
 const now = new Date();
 const Zero = ethers.constants.Zero;
@@ -74,8 +74,8 @@ export const DashboardView: FC = ({}) => {
     { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
     { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
   ];
-  const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState(Zero);
-  const [selectedLendPositionTermDate, setSelectedLendPositionTermDate] = useState<Date | null>(null);
+  const [selectedDepositBalance, setSelectedDepositBalance] = useState(Zero);
+  const [selectedDepositTermDate, setSelectedDepositTermDate] = useState<Date | null>(null);
   const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(Zero);
   const [selectedTokenSupply, setSelectedTokenSupply] = useState(Zero);
   const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(Zero);
@@ -116,18 +116,18 @@ export const DashboardView: FC = ({}) => {
   useEffect(() => {
     // Once data is loaded, update the store
     if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
-      const { borrows, lendPositions } = userPositionsData.user;
-      const tempLendPositions: LendPosition[] = lendPositions.map((lendPosition) => {
+      const { borrows, deposits } = userPositionsData.user;
+      const tempDeposits: Deposit[] = deposits.map((deposit) => {
           return {
-              ...lendPosition,
-              id: lendPosition.lendingPool.id
+              ...deposit,
+              id: deposit.lendingPool.id
           }
       });
       dispatch({
         type: "SET_USER_DATA",
         payload: {
           borrows,
-          lendPositions: tempLendPositions,
+          deposits: tempDeposits,
         },
       });
     }
@@ -165,13 +165,13 @@ export const DashboardView: FC = ({}) => {
   };
 
   /** might need this later **/
-  // let newlyAddedLendPosition = store.lendPositions.filter(item => item.hasOwnProperty('id'));
-  // newlyAddedLendPosition = newlyAddedLendPosition[0];
-  // let calculatedPoolShareTokenAmount = (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest + newlyAddedLendPosition?.lendingPool?.totalEthYield === 0) ?
-  //   newlyAddedLendPosition?.depositsUsdc * 1e12 :
-  //   (newlyAddedLendPosition?.depositsUsdc * newlyAddedLendPosition?.lendingPool?.tokenSupply) /
-  //   (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest +
-  //     (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
+  // let newlyAddedDeposit = store.deposits.filter(item => item.hasOwnProperty('id'));
+  // newlyAddedDeposit = newlyAddedDeposit[0];
+  // let calculatedPoolShareTokenAmount = (newlyAddedDeposit?.lendingPool?.totalPrincipal + newlyAddedDeposit?.lendingPool?.totalUsdcInterest + newlyAddedDeposit?.lendingPool?.totalEthYield === 0) ?
+  //   newlyAddedDeposit?.depositsUsdc * 1e12 :
+  //   (newlyAddedDeposit?.depositsUsdc * newlyAddedDeposit?.lendingPool?.tokenSupply) /
+  //   (newlyAddedDeposit?.lendingPool?.totalPrincipal + newlyAddedDeposit?.lendingPool?.totalUsdcInterest +
+  //     (newlyAddedDeposit?.lendingPool?.totalEthYield * ethPrice));
 
 console.log(store);
 
@@ -214,13 +214,13 @@ console.log(store);
                       onModalClose={handleUnlockFromExtend}
                       depositTerms={depositTerms}
                       timestamp={timestamp}
-                      selectedLendPositionBalance={selectedLendPositionBalance}
+                      selectedDepositBalance={selectedDepositBalance}
                       setIsModalOpen={setIsModalOpen}
                       setTimestamp={setTimestamp}
                       showAPYSection={showAPYSection}
                       estimatedAPY={estimatedAPY}
                       setShowAPYSection={setShowAPYSection}
-                      selectedLendPositionTermDate={selectedLendPositionTermDate}
+                      selectedDepositTermDate={selectedDepositTermDate}
                       selectedPoolShareTokenAmount={selectedPoolShareTokenAmount}
                       selectedTotalEthYield={selectedTotalEthYield}
                       selectedTokenSupply={selectedTokenSupply}
@@ -273,7 +273,7 @@ console.log(store);
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {store?.lendPositions?.sort((a,b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
+                              {store?.deposits?.sort((a,b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
                                 (item, index) => {
                                     const depositsUsdcBN = ethers.BigNumber.from(item.depositsUsdc ? item.depositsUsdc : Zero);
                                     const withdrawsUsdcBN = ethers.BigNumber.from(item.withdrawsUsdc ? item.withdrawsUsdc : Zero);
@@ -354,8 +354,8 @@ console.log(store);
 
                                           <button type="button" style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }} className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()  } onClick={() => {
                                           setIsModalOpen(true)
-                                          setSelectedLendPositionBalance(currentBalance)
-                                          setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
+                                          setSelectedDepositBalance(currentBalance)
+                                          setSelectedDepositTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
                                           setSelectedPoolShareTokenAmount(tokenAmountBN)
                                           setSelectedTokenSupply(tokenSupplyBN)
                                           setSelectedTotalEthYield(lendingPoolEthYieldBN)

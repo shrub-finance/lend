@@ -1,10 +1,10 @@
 // FinancialDataContext.tsx
 import React, {createContext, useReducer, useContext, ReactNode, useEffect} from 'react'
-import { UserFinancialDataState, UserFinancialDataAction, Borrow, LendPosition } from '../types/types'
+import { UserFinancialDataState, UserFinancialDataAction, Borrow, Deposit } from '../types/types'
 
 const initialState: UserFinancialDataState = {
   borrows: [],
-  lendPositions: [],
+  deposits: [],
 };
 
 const FinancialDataContext = createContext<{ store: UserFinancialDataState; dispatch: React.Dispatch<UserFinancialDataAction>; }>({ store: initialState, dispatch: () => null });
@@ -18,15 +18,15 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         !store.borrows.some((existingBorrow) => existingBorrow.id === newBorrow.id));
       // Place new borrows at the beginning
       const mergedBorrows = [...newBorrows, ...store.borrows];
-      const newLendPositions = action.payload.lendPositions.filter((newPosition) =>
-        !store.lendPositions.some((existingPosition) => existingPosition.id === newPosition.id));
+      const newDeposits = action.payload.deposits.filter((newPosition) =>
+        !store.deposits.some((existingPosition) => existingPosition.id === newPosition.id));
       // Place new lend positions at the beginning
-      const mergedLendPositions = [...newLendPositions, ...store.lendPositions];
+      const mergedDeposits = [...newDeposits, ...store.deposits];
 
       return {
         ...store,
         borrows: mergedBorrows,
-        lendPositions: mergedLendPositions,
+        deposits: mergedDeposits,
       };
     case "CLEAR_USER_DATA":
       return { ...initialState };
@@ -34,13 +34,13 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
       const updatedBorrow = { ...store, borrows: [action.payload, ...store.borrows] };
       return updatedBorrow;
     case "ADD_LEND_POSITION":
-      const updatedLendPositions: { borrows: Borrow[]; lendPositions: (LendPosition | LendPosition)[] } = { ...store, lendPositions: [action.payload, ...store.lendPositions] };
-      return updatedLendPositions;
+      const updatedDeposits: { borrows: Borrow[]; deposits: (Deposit | Deposit)[] } = { ...store, deposits: [action.payload, ...store.deposits] };
+      return updatedDeposits;
     case "UPDATE_LEND_POSITION_STATUS":
       // console.log("Updating lend position status", action.payload); // Log the action payload before the update
       const updatedState = {
         ...store,
-        lendPositions: store.lendPositions.map(position => {
+        deposits: store.deposits.map(position => {
           if (position.id === action.payload.id) {
             // console.log("Found position to update", position); // Log the position being updated
             return { ...position, status: action.payload.status };
@@ -48,7 +48,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
           return position;
         }),
       };
-      // console.log("Updated lend positions", updatedState.lendPositions); // Log the updated lend positions array
+      // console.log("Updated lend positions", updatedState.deposits); // Log the updated lend positions array
       return updatedState;
     case "UPDATE_LOAN_STATUS":
       const updatedBorrowState = {
@@ -72,8 +72,8 @@ export const FinancialDataProvider: React.FC<{children: ReactNode; userData: Use
 
   // Initialize the store with user data
 useEffect(() => {
-  // Only initialize the store with userData if borrows and lendPositions are empty
-  if (store.borrows.length === 0 && store.lendPositions.length === 0) {
+  // Only initialize the store with userData if borrows and deposits are empty
+  if (store.borrows.length === 0 && store.deposits.length === 0) {
     dispatch({ type: "SET_USER_DATA", payload: userData });
   }
   }, [userData]);

@@ -29,7 +29,7 @@ type LendingPool = {
   __typename: string;
 };
 
-  export type LendPosition = {
+  export type Deposit = {
     id?: string;
     status?: PendingStatuses;
     depositsUsdc?: string;
@@ -46,15 +46,15 @@ type LendingPool = {
 
 export type UserFinancialDataState = {
   borrows: Borrow[];
-  lendPositions: LendPosition[];
+  deposits: Deposit[];
 };
 
 export type UserFinancialDataAction =
-  | { type: "SET_USER_DATA"; payload: { borrows: Borrow[]; lendPositions: LendPosition[] }; }
+  | { type: "SET_USER_DATA"; payload: { borrows: Borrow[]; deposits: Deposit[] }; }
   | { type: "CLEAR_USER_DATA" }
   | { type: "ADD_LOAN"; payload: Borrow }
-  | { type: "ADD_LEND_POSITION"; payload: LendPosition }
-  | { type: "UPDATE_LEND_POSITION_STATUS"; payload: LendPosition }
+  | { type: "ADD_LEND_POSITION"; payload: Deposit }
+  | { type: "UPDATE_LEND_POSITION_STATUS"; payload: Deposit }
   | { type: "UPDATE_LOAN_STATUS"; payload: Borrow };
 
 

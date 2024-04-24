@@ -10,8 +10,8 @@ interface ExtendViewProps {
   setTimestamp: (timestamp: number) => void;
   showAPYSection: boolean;
   setShowAPYSection: (show: boolean) => void;
-  selectedLendPositionBalance: ethers.BigNumber;
-  selectedLendPositionTermDate: Date;
+  selectedDepositBalance: ethers.BigNumber;
+  selectedDepositTermDate: Date;
   selectedPoolShareTokenAmount: ethers.BigNumber;
   selectedTokenSupply: ethers.BigNumber;
   selectedTotalEthYield: ethers.BigNumber;
@@ -26,8 +26,8 @@ const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => voi
                                                  setTimestamp,
                                                  showAPYSection,
                                                  setShowAPYSection,
-                                                 selectedLendPositionBalance,
-                                                 selectedLendPositionTermDate,
+                                                 selectedDepositBalance,
+                                                 selectedDepositTermDate,
                                                  selectedPoolShareTokenAmount,
                                                  selectedTokenSupply,
                                                  selectedTotalEthYield,
@@ -77,7 +77,7 @@ const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => voi
                 <span className="label-text text-shrub-blue">Amount Being Extended</span>
               </label>
               <div className='w-full text-xl font-semibold flex flex-row'>
-                <span className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(selectedLendPositionBalance)} USDC</span>
+                <span className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(selectedDepositBalance)} USDC</span>
                 <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10} height={10} />
               </div>
             </div>
@@ -87,7 +87,7 @@ const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => voi
               <span className="label-text text-shrub-blue">New Lockup Period</span>
             </label>
             <ul className="flex flex-row">
-              {depositTerms.filter(option => option.duration > new Date(selectedLendPositionTermDate)).map((item) => (
+              {depositTerms.filter(option => option.duration > new Date(selectedDepositTermDate)).map((item) => (
                 <li key={item.id} className="mr-4">
                   <input
                     type="radio"
@@ -139,10 +139,10 @@ const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => voi
   </div>
         :
       <ExtendSummaryView
-        lendAmountBeingExtended={selectedLendPositionBalance}
+        lendAmountBeingExtended={selectedDepositBalance}
         estimatedAPY={estimatedAPY}
         newTimestamp={fromEthDate(timestamp)}
-        oldTimestamp={selectedLendPositionTermDate}
+        oldTimestamp={selectedDepositTermDate}
         poolShareTokenAmount={selectedPoolShareTokenAmount}
         totalEthYield={selectedTotalEthYield}
         tokenSupply={selectedTokenSupply}

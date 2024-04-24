@@ -1,7 +1,7 @@
 type User @entity(immutable: true) {
     "address"
     id: ID!
-    lendPositions: [LendPosition!]! @derivedFrom(field: "user")
+    deposits: [Deposit!]! @derivedFrom(field: "user")
     borrows: [Borrow!]! @derivedFrom(field: "user")
 #    optionPositions: [OptionPosition!]! @derivedFrom(field: "userOption")
 }
@@ -57,7 +57,7 @@ type Borrow @entity {
     beneficiary: User
 }
 
-type LendPosition @entity {
+type Deposit @entity {
     "user-address"
     id: ID!
     lendingPool: LendingPool

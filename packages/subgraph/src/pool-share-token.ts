@@ -13,7 +13,7 @@ import {getUser} from "./entities/user";
 import {addBorrowToPool, getBorrowingPool} from "./entities/borrowing-pool";
 import {getBorrow} from "./entities/borrow";
 import {Approval, OwnershipTransferred, Transfer} from "../generated/templates/PoolShareToken/PoolShareToken";
-import {getLendPosition, incrementLendPosition} from "./entities/lend-position";
+import {getDeposit, incrementDeposit} from "./entities/deposit";
 
 
 export function handleTransfer(event: Transfer): void {
@@ -31,8 +31,8 @@ export function handleTransfer(event: Transfer): void {
         // let lendingPool = getLendingPool(poolShareTokenAddress);
         // lendingPoolIncrementTokenSupply(lendingPool, value);
         // // Increment the number of tokens for the to
-        // let lendPosition = getLendPosition(to, lendingPool);
-        // incrementLendPosition(lendPosition, value);
+        // let deposit = getDeposit(to, lendingPool);
+        // incrementDeposit(deposit, value);
 
         return;
     } if (to == Address.zero()) {

@@ -20,7 +20,7 @@ import {
 } from "./entities/borrowing-pool";
 import {getBorrow, getBorrowByTokenId, partialRepayBorrow, repayBorrow} from "./entities/borrow";
 import {PoolShareToken} from "../generated/templates";
-import {getLendPosition, incrementLendPosition, lendPostionWithdraw} from "./entities/lend-position";
+import {getDeposit, incrementDeposit, lendPostionWithdraw} from "./entities/deposit";
 import {UsdcToWadRatio} from "./constants";
 
 
@@ -57,12 +57,12 @@ export function handleNewDeposit(event: NewDeposit): void {
     let lendingPool = getLendingPool(poolShareTokenAddress);
     lendingPoolDeposit(lendingPool, amount);
 
-    // Logic for handling the lendPosition part
+    // Logic for handling the deposit part
     // Increment the totalSupply of tokens for the lendingPool
     lendingPoolIncrementTokenSupply(lendingPool, tokenAmount);
     // // Increment the number of tokens for the to
-    let lendPosition = getLendPosition(depositor, lendingPool);
-    incrementLendPosition(lendPosition, amount, tokenAmount);
+    let deposit = getDeposit(depositor, lendingPool);
+    incrementDeposit(deposit, amount, tokenAmount);
 }
 
 export function handleNewBorrow(event: NewBorrow): void {
@@ -167,9 +167,9 @@ export function handleWithdraw(event: Withdraw): void {
     let lendingPool = getLendingPool(poolShareTokenAddress);
     lendingPool = lendingPoolWithdraw(lendingPool, usdcPrincipal, usdcInterest, ethAmount, tokenAmount);
     // Update Lend Position
-    let lendPosition = getLendPosition(userAddress, lendingPool);
+    let deposit = getDeposit(userAddress, lendingPool);
     let withdrawsUsdc = usdcPrincipal.plus(usdcInterest);
-    lendPostionWithdraw(lendPosition, withdrawsUsdc, ethAmount, tokenAmount);
+    lendPostionWithdraw(deposit, withdrawsUsdc, ethAmount, tokenAmount);
 }
 
 export function handleFinalizeLendingPool(event: FinalizeLendingPool): void {
