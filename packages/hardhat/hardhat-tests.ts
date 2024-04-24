@@ -18,8 +18,8 @@ task("testLendingPlatform", "Setup an environment for development")
     await env.run('createPool', { timestamp: toEthDate(twelveMonth)});  // 12 month
     await env.run('approveUsdc', { account: account1 });
     await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(twelveMonth), account: account1});  // 12 month
-    await env.run('takeLoan', { account: account2, timestamp: toEthDate(twelveMonth), loanAmount: 100, collateralAmount: 1, ltv: 20})
-    await env.run('takeLoan', { account: account3, timestamp: toEthDate(threeMonth), loanAmount: 22, collateralAmount: 0.1, ltv: 33})
+    await env.run('borrow', { account: account2, timestamp: toEthDate(twelveMonth), borrowAmount: 100, collateralAmount: 1, ltv: 20})
+    await env.run('borrow', { account: account3, timestamp: toEthDate(threeMonth), borrowAmount: 22, collateralAmount: 0.1, ltv: 33})
   })
 
 task("testLendingPlatform2", "Setup an environment for development")
@@ -32,22 +32,22 @@ task("testLendingPlatform2", "Setup an environment for development")
 
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer, account1, account2, account3 } = await getNamedAccounts();
-        await env.run('createPlatformPools');
-        await env.run('distributeUsdc', { to: account1, amount: 10000 });
-        await env.run('distributeUsdc', { to: account2, amount: 10000 });
-        await env.run('createPool', { timestamp: feb2025});  // 1 month
-        await env.run('createPool', { timestamp: may2025});  // 3 month
-        await env.run('createPool', { timestamp: aug2025});  // 6 month
-        await env.run('createPool', { timestamp: jan2026});  // 12 month
-        await env.run('approveUsdc', { account: account1 });
-        await env.run('setTime', {ethDate: jan2025});
-        await env.run('setEthPrice', {ethPrice: '2000'});
-        await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2026, account: account1});  // 12 month
-        await env.run('provideLiquidity', { usdcAmount: 325.123456, timestamp: may2025, account: account1});  // 12 month
-        await env.run('takeLoan', { account: account2, timestamp: jan2026, loanAmount: 100, collateralAmount: 1, ltv: 20})
-        await env.run('takeLoan', { account: account3, timestamp: jan2026, loanAmount: 22, collateralAmount: 0.1, ltv: 33})
-        await env.run('takeLoan', { account: account1, timestamp: feb2025, loanAmount: 5.23, collateralAmount: 0.1, ltv: 25})
-        await env.run('takeLoan', { account: account1, timestamp: aug2025, loanAmount: 111.123456, collateralAmount: 0.52345, ltv: 33})
+        // await env.run('createPlatformPools');
+        // await env.run('distributeUsdc', { to: account1, amount: 10000 });
+        // await env.run('distributeUsdc', { to: account2, amount: 10000 });
+        // await env.run('createPool', { timestamp: feb2025});  // 1 month
+        // await env.run('createPool', { timestamp: may2025});  // 3 month
+        // await env.run('createPool', { timestamp: aug2025});  // 6 month
+        // await env.run('createPool', { timestamp: jan2026});  // 12 month
+        // await env.run('approveUsdc', { account: account1 });
+        // await env.run('setTime', {ethDate: jan2025});
+        // await env.run('setEthPrice', {ethPrice: '2000'});
+        // await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2026, account: account1});  // 12 month
+        // await env.run('provideLiquidity', { usdcAmount: 325.123456, timestamp: may2025, account: account1});  // 12 month
+        await env.run('borrow', { account: account2, timestamp: jan2026, borrowAmount: 100, collateralAmount: 1, ltv: 20})
+        await env.run('borrow', { account: account3, timestamp: jan2026, borrowAmount: 22, collateralAmount: 0.1, ltv: 33})
+        await env.run('borrow', { account: account1, timestamp: feb2025, borrowAmount: 5.23, collateralAmount: 0.1, ltv: 25})
+        await env.run('borrow', { account: account1, timestamp: aug2025, borrowAmount: 111.123456, collateralAmount: 0.52345, ltv: 33})
         await env.run('setTime', {ethDate: feb2025});
         await env.run('takeSnapshot', { account: deployer });
         await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2026, account: account2});
@@ -94,10 +94,10 @@ task("testLendingPlatform3", "Setup an environment for development")
             await env.run('setEthPrice', {ethPrice: '2000'});
             await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2027, account: account1});  // 12 month
             await env.run('provideLiquidity', { usdcAmount: 500, timestamp: may2026, account: account2});  // 4 month
-            await env.run('takeLoan', { account: account3, timestamp: may2026, loanAmount: 100, collateralAmount: 0.1, ltv: 50})
-            await env.run('takeLoan', { account: account4, timestamp: may2026, loanAmount: 100, collateralAmount: 0.1, ltv: 50})
-            await env.run('getLoan', {tokenid: 0});
-            await env.run('getLoan', {tokenid: 1});
+            await env.run('borrow', { account: account3, timestamp: may2026, borrowAmount: 100, collateralAmount: 0.1, ltv: 50})
+            await env.run('borrow', { account: account4, timestamp: may2026, borrowAmount: 100, collateralAmount: 0.1, ltv: 50})
+            await env.run('getBorrow', {tokenid: 0});
+            await env.run('getBorrow', {tokenid: 1});
         }
         async function partC() {
             await env.run('setTime', {ethDate: feb2026});
@@ -106,13 +106,13 @@ task("testLendingPlatform3", "Setup an environment for development")
         }
 
         async function partD() {
-            await env.run('partialRepayLoan', { account: account3, tokenId: 0, repaymentAmount: 50});
-            await env.run('extendLoan', {account: account4, tokenId: 1, newTimestamp: jan2027, ltv: 80, additionalCollateral: 0, additionalRepayment: 0})
+            await env.run('partialRepayBorrow', { account: account3, tokenId: 0, repaymentAmount: 50});
+            await env.run('extendBorrow', {account: account4, tokenId: 1, newTimestamp: jan2027, ltv: 80, additionalCollateral: 0, additionalRepayment: 0})
             await env.run('setTime', {ethDate: apr2026});
             await env.run('takeSnapshot', { account: deployer });
-            await env.run('getLoan', {tokenid: 0});
-            await env.run('getLoan', {tokenid: 1});
-            await env.run('getLoan', {tokenid: 2});
+            await env.run('getBorrow', {tokenid: 0});
+            await env.run('getBorrow', {tokenid: 1});
+            await env.run('getBorrow', {tokenid: 2});
         }
 
         async function partD2() {
@@ -121,22 +121,22 @@ task("testLendingPlatform3", "Setup an environment for development")
         }
 
         async function partD3() {
-            await env.run('extendLoan', {account: account3, tokenId: 0, newTimestamp: aug2026, ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
+            await env.run('extendBorrow', {account: account3, tokenId: 0, newTimestamp: aug2026, ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
             await env.run('setTime', {ethDate: may2026});
-            await env.run('getLoan', {tokenid: 0});
-            await env.run('getLoan', {tokenid: 1});
-            await env.run('getLoan', {tokenid: 2});
-            await env.run('getLoan', {tokenid: 3});
+            await env.run('getBorrow', {tokenid: 0});
+            await env.run('getBorrow', {tokenid: 1});
+            await env.run('getBorrow', {tokenid: 2});
+            await env.run('getBorrow', {tokenid: 3});
         }
 
         async function partE() {
             await env.run('distributeUsdc', { to: account4, amount: 3 });
-            await env.run('repayLoan', { account: account4, tokenId: 2 })
+            await env.run('repayBorrow', { account: account4, tokenId: 2 })
             await env.run('takeSnapshot', { account: deployer });
-            await env.run('getLoan', {tokenid: 0});
-            await env.run('getLoan', {tokenid: 1});
-            await env.run('getLoan', {tokenid: 2});
-            await env.run('getLoan', {tokenid: 3});
+            await env.run('getBorrow', {tokenid: 0});
+            await env.run('getBorrow', {tokenid: 1});
+            await env.run('getBorrow', {tokenid: 2});
+            await env.run('getBorrow', {tokenid: 3});
         }
 
         async function partF() {
@@ -147,12 +147,12 @@ task("testLendingPlatform3", "Setup an environment for development")
         }
 
         async function partF2() {
-            await env.run('getLoan', {tokenid: 0});
-            await env.run('getLoan', {tokenid: 1});
-            await env.run('getLoan', {tokenid: 2});
-            await env.run('getLoan', {tokenid: 3});
+            await env.run('getBorrow', {tokenid: 0});
+            await env.run('getBorrow', {tokenid: 1});
+            await env.run('getBorrow', {tokenid: 2});
+            await env.run('getBorrow', {tokenid: 3});
             await env.run('distributeUsdc', { to: account3, amount: 3 });
-            await env.run('repayLoan', { account: account3, tokenId: 3 });
+            await env.run('repayBorrow', { account: account3, tokenId: 3 });
             await env.run('setTime', {ethDate: aug2026 + 6 * 60 * 60});
             await env.run('takeSnapshot', { account: deployer });
             await env.run('finalizeLendingPool', {timestamp: aug2026});

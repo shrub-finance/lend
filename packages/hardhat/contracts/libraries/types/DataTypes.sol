@@ -16,12 +16,12 @@ library DataTypes {
     }
 
     struct BorrowingPool {
-        uint principal; // Total amount of USDC that has been borrowed in this buckets' loans
-        uint collateral; // The total amount of ETH collateral deposited for loans in this bucket
+        uint principal; // Total amount of USDC that has been borrowed in this buckets' borrows
+        uint collateral; // The total amount of ETH collateral deposited for borrows in this bucket
         uint poolShareAmount; // Relative claim of the total platform aETH for this bucket. Used to calculate yield for lending pools
-        uint totalAccumInterest; // Tracking accumulator for use in case of loan default
-        uint totalAccumYield; // Tracking accumulator for use in case of loan default
-        uint totalRepaid; // Tracking accumulator for use in case of loan default - tracks USDC paid back
+        uint totalAccumInterest; // Tracking accumulator for use in case of borrow default
+        uint totalAccumYield; // Tracking accumulator for use in case of borrow default
+        uint totalRepaid; // Tracking accumulator for use in case of borrow default - tracks USDC paid back
     }
 
     struct PoolDetails {
@@ -48,14 +48,14 @@ library DataTypes {
         uint32 apy;
     }
 
-    struct TakeLoanInternalParams {
+    struct BorrowInternalParams {
         uint256 principal; // Amount of USDC with 6 decimal places
         uint256 collateral; // Amount of ETH collateral with 18 decimal places
         uint32 ltv; // ltv expressed as a percentage
         uint40 timestamp;
         uint40 startDate;
         address beneficiary;
-        address loanHolder;
+        address borrower;
     }
 
     struct calcLPIncreasesParams {
