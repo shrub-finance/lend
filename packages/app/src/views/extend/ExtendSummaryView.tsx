@@ -84,8 +84,6 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
   }, [extendActionInitiated, onExtendActionChange]);
 
 
-  console.log(`lendAmountBeingExtended: ${lendAmountBeingExtended}`);
-
   return (
     <div className="relative group mt-4 w-full min-w-[500px]">
       <div className="flex flex-col">
@@ -225,7 +223,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                                    ? filteredLendingPools[0]
                                    : null;
                            const newLendPositionWithdraw: LendPosition = {
-                               id: matchedLendingPool.id,
+                               id: `${matchedLendingPool.id}-withdraw`,
                                status: "pending",
                                depositsUsdc: lendAmountBeingExtended.mul(-1).toString(),
                                apy: formatPercentage(estimatedAPY),
@@ -245,6 +243,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                            };
                            const newLendPositionDeposit = {
                                ...newLendPositionWithdraw,
+                               id: `${matchedLendingPool.id}-deposit`,
                                depositsUsdc: lendAmountBeingExtended.toString(),
                                currentBalanceOverride: lendAmountBeingExtended.toString(),
                                lendingPool: {
@@ -260,6 +259,13 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                                type: "ADD_LEND_POSITION",
                                payload: newLendPositionDeposit,
                            });
+                           dispatch({
+                               type: "UPDATE_LEND_POSITION_STATUS",
+                               payload: {
+                                   id: matchedLendingPool.id,
+                                   status: "extending"
+                               },
+                           });
 
                            try {
                                const receipt = await tx.wait();
@@ -269,8 +275,22 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
-                                       id: matchedLendingPool.id,
+                                       id: `${matchedLendingPool.id}-deposit`,
                                        status: "confirmed",
+                                   },
+                               });
+                               dispatch({
+                                   type: "UPDATE_LEND_POSITION_STATUS",
+                                   payload: {
+                                       id: `${matchedLendingPool.id}-withdraw`,
+                                       status: "confirmed",
+                                   },
+                               });
+                               dispatch({
+                                   type: "UPDATE_LEND_POSITION_STATUS",
+                                   payload: {
+                                       id: matchedLendingPool.id,
+                                       status: "extended",
                                    },
                                });
                            } catch (e) {
@@ -278,7 +298,14 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
-                                       id: matchedLendingPool.id,
+                                       id: `${matchedLendingPool.id}-deposit`,
+                                       status: "failed",
+                                   },
+                               });
+                               dispatch({
+                                   type: "UPDATE_LEND_POSITION_STATUS",
+                                   payload: {
+                                       id: `${matchedLendingPool.id}-withdraw`,
                                        status: "failed",
                                    },
                                });

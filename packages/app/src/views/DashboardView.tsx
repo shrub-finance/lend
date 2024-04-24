@@ -23,6 +23,7 @@ import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendView from './extend/ExtendView';
 import { formatLargeUsdc } from '../utils/ethMethods';
+import {LendPosition} from "../types/types";
 
 const now = new Date();
 const Zero = ethers.constants.Zero;
@@ -116,11 +117,17 @@ export const DashboardView: FC = ({}) => {
     // Once data is loaded, update the store
     if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
       const { loans, lendPositions } = userPositionsData.user;
+      const tempLendPositions: LendPosition[] = lendPositions.map((lendPosition) => {
+          return {
+              ...lendPosition,
+              id: lendPosition.lendingPool.id
+          }
+      });
       dispatch({
         type: "SET_USER_DATA",
         payload: {
           loans,
-          lendPositions,
+          lendPositions: tempLendPositions,
         },
       });
     }
@@ -166,7 +173,7 @@ export const DashboardView: FC = ({}) => {
   //   (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest +
   //     (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
 
-// console.log(store);
+console.log(store);
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -304,6 +311,15 @@ export const DashboardView: FC = ({}) => {
                                           {item.status === 'failed' && (
                                             <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
                                           )}
+                                            {item.status === 'confirmed' && (
+                                                <span className=" ml-2 inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300"><span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>Confirmed</span>
+                                            )}
+                                            {item.status === 'extending' && (
+                                                <span className=" ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-amber-900 dark:text-amber-300"><span className="w-2 h-2 me-1 bg-amber-500 rounded-full"></span>Extending</span>
+                                            )}
+                                            {item.status === 'extended' && (
+                                                <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300"><span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>Extended</span>
+                                            )}
                                         </p>
                                       ) : (
                                         <p className="text-sm">
@@ -336,7 +352,7 @@ export const DashboardView: FC = ({}) => {
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className="flex items-center justify-center space-x-2 h-full p-2">
 
-                                          <button type="button" style={{ visibility: item.amount ? 'visible' : 'hidden' }} className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()  } onClick={() => {
+                                          <button type="button" style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }} className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()  } onClick={() => {
                                           setIsModalOpen(true)
                                           setSelectedLendPositionBalance(currentBalance)
                                           setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))

@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 
 
-export type PendingStatuses = "pending" | "confirmed" | "failed";
+export type PendingStatuses = "pending" | "confirmed" | "failed" | "extending" | "extended";
 
 export type Loan = {
   id?: string,
