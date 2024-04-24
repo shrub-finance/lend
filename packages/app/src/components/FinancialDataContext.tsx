@@ -13,7 +13,6 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
   // console.log('Dispatching action:', action.type);
   switch (action.type) {
     case "SET_USER_DATA":
-        console.log(action.payload);
       const newBorrows = action.payload.borrows.filter((newBorrow) =>
         !store.borrows.some((existingBorrow) => existingBorrow.id === newBorrow.id));
       // Place new borrows at the beginning
