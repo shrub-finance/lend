@@ -153,12 +153,8 @@ export const DashboardView: FC = ({}) => {
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
-  const [newUnlockDate, setNewUnlockDate] = useState(null);
-
-  const handleUnlockFromExtend = (date) => {
+  const handleUnlockFromExtend = () => {
     setIsModalOpen(false);
-    setNewUnlockDate(date);
-    console.log('New timestamp received from extend component:', date);
   };
 
   /** might need this later **/
@@ -308,11 +304,6 @@ export const DashboardView: FC = ({}) => {
                                           {item.status === 'failed' && (
                                             <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
                                           )}
-                                          {/*{newUnlockDate && (*/}
-                                          {/*  <span*/}
-                                          {/*    className=' ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-amber-900 dark:text-amber-300'><span*/}
-                                          {/*    className='w-2 h-2 me-1 bg-amber-500 rounded-full'></span>Extended</span>*/}
-                                          {/*)}*/}
                                         </p>
                                       ) : (
                                         <p className="text-sm">
@@ -321,12 +312,18 @@ export const DashboardView: FC = ({}) => {
                                       )}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {item.interestEarnedOverride ? item.interestEarnedOverride :
-                                        formatLargeUsdc(interestEarned)}
+                                      {
+                                          item.interestEarnedOverride ?
+                                              formatLargeUsdc(item.interestEarnedOverride) :
+                                              formatLargeUsdc(interestEarned)
+                                      }
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {item.currentBalanceOverride ? item.currentBalanceOverride:
-                                        formatLargeUsdc(currentBalance)}
+                                      {
+                                          item.currentBalanceOverride ?
+                                              formatLargeUsdc(item.currentBalanceOverride) :
+                                              formatLargeUsdc(currentBalance)
+                                      }
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
@@ -334,10 +331,7 @@ export const DashboardView: FC = ({}) => {
                                       </span>
                                     </td>
                                     <td className='px-6 py-4 text-sm font-bold'>
-                                      {newUnlockDate && new Date(newUnlockDate) > new Date(fromEthDate(parseInt(item.lendingPool.timestamp)))
-                                        ? new Date(newUnlockDate).toLocaleString()
-                                        : fromEthDate(parseInt(item.lendingPool.timestamp)).toLocaleString()
-                                      }
+                                      {fromEthDate(parseInt(item.lendingPool.timestamp)).toLocaleString()}
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className="flex items-center justify-center space-x-2 h-full p-2">
@@ -465,6 +459,7 @@ export const DashboardView: FC = ({}) => {
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {formatLargeUsdc(
+                                        // TODO: Move this up and assign to a variable
                                       ethers.BigNumber.from(
                                         item.principal ?? "0",
                                       ).add(

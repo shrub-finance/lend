@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import {formatLargeUsdc, formatPercentage, toEthDate, truncateEthAddress} from '../../utils/ethMethods';
+import {formatLargeUsdc, formatPercentage, fromEthDate, toEthDate, truncateEthAddress} from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
 import { BigNumber, ethers } from 'ethers';
 import {
@@ -82,6 +82,9 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
   useEffect(() => {
     onExtendActionChange(extendActionInitiated);
   }, [extendActionInitiated, onExtendActionChange]);
+
+
+  console.log(`lendAmountBeingExtended: ${lendAmountBeingExtended}`);
 
   return (
     <div className="relative group mt-4 w-full min-w-[500px]">
@@ -221,7 +224,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                                filteredLendingPools.length > 0
                                    ? filteredLendingPools[0]
                                    : null;
-                           const newLendPosition: LendPosition = {
+                           const newLendPositionWithdraw: LendPosition = {
                                id: matchedLendingPool.id,
                                status: "pending",
                                depositsUsdc: lendAmountBeingExtended.mul(-1).toString(),
@@ -232,20 +235,30 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                                    id: matchedLendingPool.id,
                                    timestamp: matchedLendingPool.timestamp,
                                    tokenSupply: matchedLendingPool.tokenSupply,
-                                   totalEthYield:
-                                   matchedLendingPool.totalEthYield,
-                                   totalPrincipal:
-                                   matchedLendingPool.totalPrincipal,
-                                   totalUsdcInterest:
-                                   matchedLendingPool.totalUsdcInterest,
+                                   totalEthYield: matchedLendingPool.totalEthYield,
+                                   totalPrincipal: matchedLendingPool.totalPrincipal,
+                                   totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
                                    __typename: matchedLendingPool.__typename,
                                },
                                timestamp: toEthDate(oldTimestamp),
                                updated: Math.floor(Date.now() / 1000),
                            };
+                           const newLendPositionDeposit = {
+                               ...newLendPositionWithdraw,
+                               depositsUsdc: lendAmountBeingExtended.toString(),
+                               currentBalanceOverride: lendAmountBeingExtended.toString(),
+                               lendingPool: {
+                                   ...newLendPositionWithdraw.lendingPool,
+                                   timestamp: toEthDate(newTimestamp).toString()
+                               }
+                           };
                            dispatch({
                                type: "ADD_LEND_POSITION",
-                               payload: newLendPosition,
+                               payload: newLendPositionWithdraw,
+                           });
+                           dispatch({
+                               type: "ADD_LEND_POSITION",
+                               payload: newLendPositionDeposit,
                            });
 
                            try {

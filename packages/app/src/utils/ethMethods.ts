@@ -30,10 +30,18 @@ export const timestamps = {
     12: toEthDate(getPlatformDates().twelveMonth)
 }
 
+/**
+ * @notice converts USDC value in Wad to a string
+ * @dev Wad means 18 decimal
+ * @dev rounds up for positive numbers and down for negative numbers
+ * @return USDC as a formatted string
+ */
 export function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
     const usdcInWadBN = ethers.BigNumber.from(usdcInWad)
     const divisionFactor = ethers.BigNumber.from(10).pow(12)
-    const roundAmount = ethers.BigNumber.from(5).mul(divisionFactor).div(10)
+    const roundAmount = usdcInWadBN.gte(ethers.constants.Zero) ?
+        ethers.BigNumber.from(5).mul(divisionFactor).div(10) :
+        ethers.BigNumber.from(5).mul(divisionFactor).div(10).mul(-1);
     return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
 }
 

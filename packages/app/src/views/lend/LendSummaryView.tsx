@@ -325,18 +325,15 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                     status: "pending",
                                     depositsUsdc: (ethers.utils.parseEther(lendAmount)).toString(),
                                     apy: estimatedAPY,
-                                    currentBalanceOverride: lendAmount,
+                                    currentBalanceOverride: (ethers.utils.parseEther(lendAmount)).toString(),
                                     interestEarnedOverride: "0",
                                     lendingPool: {
                                       id: matchedLendingPool.id,
                                       timestamp: matchedLendingPool.timestamp,
                                       tokenSupply: matchedLendingPool.tokenSupply,
-                                      totalEthYield:
-                                        matchedLendingPool.totalEthYield,
-                                      totalPrincipal:
-                                        matchedLendingPool.totalPrincipal,
-                                      totalUsdcInterest:
-                                        matchedLendingPool.totalUsdcInterest,
+                                      totalEthYield: matchedLendingPool.totalEthYield,
+                                      totalPrincipal: matchedLendingPool.totalPrincipal,
+                                      totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
                                       __typename: matchedLendingPool.__typename,
                                     },
                                     timestamp: timestamp,
