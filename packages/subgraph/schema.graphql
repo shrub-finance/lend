@@ -2,7 +2,7 @@ type User @entity(immutable: true) {
     "address"
     id: ID!
     lendPositions: [LendPosition!]! @derivedFrom(field: "user")
-    loans: [Loan!]! @derivedFrom(field: "user")
+    borrows: [Borrow!]! @derivedFrom(field: "user")
 #    optionPositions: [OptionPosition!]! @derivedFrom(field: "userOption")
 }
 
@@ -34,7 +34,7 @@ type BorrowingPool @entity {
     totalBorrowedUsdc: BigInt!
 }
 
-type Loan @entity {
+type Borrow @entity {
     "ERC-721 tokenId"
     id: ID!
     active: Boolean

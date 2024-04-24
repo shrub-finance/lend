@@ -1,8 +1,8 @@
 import {
     FinalizeLendingPool,
     LendingPoolYield,
-    NewDeposit, NewLoan, PartialRepayLoan,
-    PoolCreated, RepayLoan, Withdraw
+    NewDeposit, NewBorrow, PartialRepayBorrow,
+    PoolCreated, RepayBorrow, Withdraw
 } from "../generated/Contract/LendingPlatform"
 import { log } from '@graphprotocol/graph-ts'
 import {
@@ -13,12 +13,12 @@ import {
 } from "./entities/lending-pool";
 import {getUser} from "./entities/user";
 import {
-    addLoanToPool,
+    addBorrowToPool,
     getBorrowingPool,
     partialRepayBorrowingPool,
-    removeLoanFromPool
+    removeBorrowFromPool
 } from "./entities/borrowing-pool";
-import {getLoan, getLoanByTokenId, partialRepayLoan, repayLoan} from "./entities/loan";
+import {getBorrow, getBorrowByTokenId, partialRepayBorrow, repayBorrow} from "./entities/borrow";
 import {PoolShareToken} from "../generated/templates";
 import {getLendPosition, incrementLendPosition, lendPostionWithdraw} from "./entities/lend-position";
 import {UsdcToWadRatio} from "./constants";
@@ -65,9 +65,9 @@ export function handleNewDeposit(event: NewDeposit): void {
     incrementLendPosition(lendPosition, amount, tokenAmount);
 }
 
-export function handleNewLoan(event: NewLoan): void {
-    // event NewLoan(uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
-    log.info("NewLoan: tokenid: {}, timestamp: {}, borrower: {}, collateral: {}, principal: {}, startDate: {}, apy: {}", [
+export function handleNewBorrow(event: NewBorrow): void {
+    // event NewBorrow(uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
+    log.info("NewBorrow: tokenid: {}, timestamp: {}, borrower: {}, collateral: {}, principal: {}, startDate: {}, apy: {}", [
         event.params.tokenId.toString(),
         event.params.timestamp.toString(),
         event.params.borrower.toHexString(),
@@ -80,8 +80,8 @@ export function handleNewLoan(event: NewLoan): void {
     getUser(event.params.borrower);
     // get/create the borrowing pool
     let borrowingPool = getBorrowingPool(event.params.timestamp, event.block);
-    // create a new loan
-    let loan = getLoan(
+    // create a new borrow
+    let borrow = getBorrow(
         event.params.tokenId,
         event.params.borrower,
         event.params.apy,
@@ -91,10 +91,10 @@ export function handleNewLoan(event: NewLoan): void {
         event.params.startDate,
         event.block
     )
-    // create a new loanposition
-    // TODO: What was the point of loan-position again?
-    // update the borrowing pool with the loan
-    addLoanToPool(borrowingPool, loan);
+    // create a new borrowposition
+    // TODO: What was the point of borrow-position again?
+    // update the borrowing pool with the borrow
+    addBorrowToPool(borrowingPool, borrow);
 }
 
 export function handleLendingPoolYield(event: LendingPoolYield): void {
@@ -110,9 +110,9 @@ export function handleLendingPoolYield(event: LendingPoolYield): void {
     lendingPoolUpdateYield(lendingPool, accumInterest, accumYield)
 }
 
-export function handlePartialRepayLoan(event: PartialRepayLoan): void {
-    // event PartialRepayLoan(uint tokenId, uint repaymentAmount, uint principalReduction);
-    log.info("handlePartialRepayLoan: tokenId: {}, repaymentAmount: {}, principalReduction: {}",[
+export function handlePartialRepayBorrow(event: PartialRepayBorrow): void {
+    // event PartialRepayBorrow(uint tokenId, uint repaymentAmount, uint principalReduction);
+    log.info("handlePartialRepayBorrow: tokenId: {}, repaymentAmount: {}, principalReduction: {}",[
         event.params.tokenId.toString(),
         event.params.repaymentAmount.toString(),
         event.params.principalReduction.toString()
@@ -121,15 +121,15 @@ export function handlePartialRepayLoan(event: PartialRepayLoan): void {
     let repaymentAmount = event.params.repaymentAmount.times(UsdcToWadRatio);
     let principalReduction = event.params.principalReduction.times(UsdcToWadRatio);
 
-    let loan = getLoanByTokenId(tokenId);
-    let borrowingPool = getBorrowingPool(loan.timestamp, event.block);
+    let borrow = getBorrowByTokenId(tokenId);
+    let borrowingPool = getBorrowingPool(borrow.timestamp, event.block);
     partialRepayBorrowingPool(borrowingPool, principalReduction);
-    partialRepayLoan(tokenId, repaymentAmount, principalReduction, event.block);
+    partialRepayBorrow(tokenId, repaymentAmount, principalReduction, event.block);
 }
 
-export function handleRepayLoan(event: RepayLoan): void {
-    // event RepayLoan(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
-    log.info("handleRepayLoan: tokenId: {}. repaymentAmount: {}, collateralReturned, beneficiary: {}", [
+export function handleRepayBorrow(event: RepayBorrow): void {
+    // event RepayBorrow(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
+    log.info("handleRepayBorrow: tokenId: {}. repaymentAmount: {}, collateralReturned, beneficiary: {}", [
         event.params.tokenId.toString(),
         event.params.repaymentAmount.toString(),
         event.params.collateralReturned.toString(),
@@ -140,10 +140,10 @@ export function handleRepayLoan(event: RepayLoan): void {
     let collateralReturned = event.params.collateralReturned;
     let beneficiary = event.params.beneficiary;
 
-    let loan = getLoanByTokenId(tokenId);
-    let borrowingPool = getBorrowingPool(loan.timestamp, event.block);
-    removeLoanFromPool(borrowingPool, loan);
-    repayLoan(tokenId, repaymentAmount, collateralReturned, beneficiary, event.block);
+    let borrow = getBorrowByTokenId(tokenId);
+    let borrowingPool = getBorrowingPool(borrow.timestamp, event.block);
+    removeBorrowFromPool(borrowingPool, borrow);
+    repayBorrow(tokenId, repaymentAmount, collateralReturned, beneficiary, event.block);
 }
 
 export function handleWithdraw(event: Withdraw): void {

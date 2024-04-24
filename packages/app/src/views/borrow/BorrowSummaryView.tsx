@@ -7,7 +7,7 @@ import {useRouter} from "next/router";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import {useFinancialData} from "../../components/FinancialDataContext";
 import Image from 'next/image'
-import { Loan } from '../../types/types'
+import { Borrow } from '../../types/types'
 
 interface BorrowSummaryViewProps {
   requiredCollateral: string;
@@ -46,23 +46,14 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
     isLoading: lendingPlatformIsLoading,
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
-  const {
-    mutateAsync: mutateAsyncTakeLoan,
-    isLoading: isLoadingTakeLoan,
-    error: errorTakeLoan
-  } = useContractWrite(
-    lendingPlatform,
-    "takeLoan",
-  );
-
 
   // Calculate the end date by adding the number of months to the current date
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
 
 
-  const latestLoan = store?.loans?.reduce((latest, current) =>
-    current.updated > latest.updated ? current : latest, store?.loans[0] || {});
+  const latestBorrow = store?.borrows?.reduce((latest, current) =>
+    current.updated > latest.updated ? current : latest, store?.borrows[0] || {});
 
 
   return (
@@ -110,12 +101,12 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">You
                     are borrowing <strong>{amount} USDC</strong> and
                     giving <strong>{requiredCollateral} ETH</strong> as collateral. The collateral will be locked until
-                    the loan is fully paid, and then returned to
+                    the borrow is fully paid, and then returned to
                     you.</p>
                 </div>}
                 {borrowActionInitiated &&
                   <>
-                  {latestLoan?.status === "confirmed" && (
+                  {latestBorrow?.status === "confirmed" && (
                     <>
                       <p className="text-lg font-bold pb-2 text-left">
                         Borrow Successful!
@@ -128,7 +119,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
 
                     )}
 
-                    {latestLoan?.status === "failed" && (
+                    {latestBorrow?.status === "failed" && (
                       <>
                         <p className="text-lg font-bold pb-2 text-left">
                           Borrow Unsuccessful
@@ -145,7 +136,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
 
                 {/*receipt start*/}
-                {(!borrowActionInitiated || latestLoan?.status === "pending" )&& <div>
+                {(!borrowActionInitiated || latestBorrow?.status === "pending" )&& <div>
                   <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row  justify-between">
                       <span className="">Required Collateral</span>
@@ -192,12 +183,12 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     </div>
                   </div>
                   <Web3Button contractAddress={lendingPlatformAddress}
-                              isDisabled={latestLoan?.status === "pending"}
+                              isDisabled={latestBorrow?.status === "pending"}
                               contractAbi={lendingPlatformAbi}
                               className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl !text-white hover:!bg-shrub-green-500 !mb-4 web3button"
                               action={async (lendingPlatform) => {
                                 setLocalError('');
-                                return await lendingPlatform?.contractWrapper?.writeContract.takeLoan(ethers.utils.parseUnits(amount, 6),
+                                return await lendingPlatform?.contractWrapper?.writeContract.borrow(ethers.utils.parseUnits(amount, 6),
                                   ethers.utils.parseEther(requiredCollateral),
                                   interestToLTV[interestRate],
                                   timestamp, {
@@ -207,7 +198,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
 
                               onSuccess={async (tx) => {
                                 setLocalError('');
-                                const newLoan:Loan = {
+                                const newBorrow:Borrow = {
                                   id: tx.hash,
                                   status: "pending",
                                   collateral: ethers.utils.parseEther(requiredCollateral),
@@ -219,11 +210,11 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   principal: (ethers.utils.parseEther(amount)).toString(),
                                   timestamp: (timestamp).toString(),
                                   updated: Math.floor(Date.now() / 1000),
-                                  __typename: "Loan",
+                                  __typename: "Borrow",
                                 };
                                 dispatch({
                                   type: "ADD_LOAN",
-                                  payload: newLoan,
+                                  payload: newBorrow,
                                 });
 
 
@@ -258,18 +249,18 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                 }
                               }}
                   >
-                    {latestLoan?.status === "pending"? "Borrow Order Submitted":"Initiate Borrow"}
+                    {latestBorrow?.status === "pending"? "Borrow Order Submitted":"Initiate Borrow"}
                   </Web3Button>
 
                 </div>
                 }
 
-                {(borrowActionInitiated || latestLoan?.status === "pending") && <button onClick={handleViewDash}
+                {(borrowActionInitiated || latestBorrow?.status === "pending") && <button onClick={handleViewDash}
                                           className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View
                   in Dashboard
                 </button>}
 
-                {!borrowActionInitiated && latestLoan?.status !== "pending" && <button onClick={onCancel}
+                {!borrowActionInitiated && latestBorrow?.status !== "pending" && <button onClick={onCancel}
                                            className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel</button>}
               </div>
             </div>

@@ -1,5 +1,5 @@
 import {
-    NewDeposit, NewLoan,
+    NewDeposit, NewBorrow,
     PoolCreated
 } from "../generated/Contract/LendingPlatform"
 import {Address, log} from '@graphprotocol/graph-ts'
@@ -10,8 +10,8 @@ import {
     lendingPoolIncrementTokenSupply
 } from "./entities/lending-pool";
 import {getUser} from "./entities/user";
-import {addLoanToPool, getBorrowingPool} from "./entities/borrowing-pool";
-import {getLoan} from "./entities/loan";
+import {addBorrowToPool, getBorrowingPool} from "./entities/borrowing-pool";
+import {getBorrow} from "./entities/borrow";
 import {Approval, OwnershipTransferred, Transfer} from "../generated/templates/PoolShareToken/PoolShareToken";
 import {getLendPosition, incrementLendPosition} from "./entities/lend-position";
 

@@ -215,13 +215,13 @@ task("extendDeposit", "extend an existing deposit")
         await sendTransaction(lendingPlatform.connect(liquidityAccount).extendDeposit(currentTimestamp, newTimestamp, tokenAmount), "Extend Deposit");
     });
 
-task("extendLoan", "extend an existing loan")
-    .addParam("account", "Address of account to extend loan with (must be the holder of the loan)", undefined, types.string, true)
-    .addParam("tokenId", "tokenId of the loan position token ERC-721", undefined, types.int)
-    .addParam("newTimestamp", "End Date of the new loan", undefined, types.int)
-    .addParam("ltv", "Specified LTV of the new loan", undefined, types.int, false)
-    .addParam("additionalCollateral", "Additional ETH collateral to provide for the new loan", 0, types.float)
-    .addParam("additionalRepayment", "Additional USDC payment to make to the previous loan", 0, types.float)
+task("extendBorrow", "extend an existing borrow")
+    .addParam("account", "Address of account to extend borrow with (must be the holder of the borrow)", undefined, types.string, true)
+    .addParam("tokenId", "tokenId of the borrow position token ERC-721", undefined, types.int)
+    .addParam("newTimestamp", "End Date of the new borrow", undefined, types.int)
+    .addParam("ltv", "Specified LTV of the new borrow", undefined, types.int, false)
+    .addParam("additionalCollateral", "Additional ETH collateral to provide for the new borrow", 0, types.float)
+    .addParam("additionalRepayment", "Additional USDC payment to make to the previous borrow", 0, types.float)
     .setAction(async (taskArgs, env) => {
         const account = taskArgs.account;
         const tokenId = taskArgs.tokenId;
@@ -237,25 +237,25 @@ task("extendLoan", "extend an existing loan")
         const borrowerAccount = await ethers.getSigner(account);
         const parsedAdditionalCollateral = ethers.parseUnits(additionalCollateral.toString(),6);
         const parsedAdditionalRepayment = ethers.parseEther(additionalRepayment.toString());
-        const loanDebt = await bpt.debt(tokenId);
-        const loanDetails = await bpt.getLoan(tokenId);
+        const borrowDebt = await bpt.debt(tokenId);
+        const borrowDetails = await bpt.getBorrow(tokenId);
         const usdcAllowance = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
         const aethAllowance = await aeth.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
         const aethBalance = await aeth.balanceOf(borrowerAccount.getAddress());
-        const flashLoanAmount = loanDetails.collateral + parsedAdditionalCollateral - aethBalance > 0n ?
-            loanDetails.collateral + parsedAdditionalCollateral - aethBalance :
+        const flashLoanAmount = borrowDetails.collateral + parsedAdditionalCollateral - aethBalance > 0n ?
+            borrowDetails.collateral + parsedAdditionalCollateral - aethBalance :
             0n
-        const aethRequirement = loanDetails.collateral + parsedAdditionalCollateral + flashLoanAmount;
+        const aethRequirement = borrowDetails.collateral + parsedAdditionalCollateral + flashLoanAmount;
 
         // Adding 1% buffer to deal with possible small increase in debt between calculation and when extend is called
-        const usdcRequirement = loanDebt * 101n / 100n + parsedAdditionalRepayment;
+        const usdcRequirement = borrowDebt * 101n / 100n + parsedAdditionalRepayment;
         // Check approval of account to ensure that it is sufficient
         console.log(`approval is currently ${ethers.formatUnits(usdcAllowance, 6)} USDC`);
         // If approval is not sufficient then create an approval tx
         if (usdcAllowance < usdcRequirement) {
             const usdcNeedToApprove = usdcRequirement - usdcAllowance;
             console.log(`
-bpt.debt: ${loanDebt}
+bpt.debt: ${borrowDebt}
 parsedAdditionalRequirement: ${parsedAdditionalRepayment}
 USDC Allowance: ${usdcAllowance}
 USDC Requirement: ${usdcRequirement}
@@ -267,7 +267,7 @@ USDC needToApprove: ${usdcNeedToApprove}
         if (aethAllowance < aethRequirement) {
             const aethNeedToApprove = aethRequirement - aethAllowance;
             console.log(`
-bpt.collateral: ${loanDetails.collateral}
+bpt.collateral: ${borrowDetails.collateral}
 parsedAdditionalCollateral: ${parsedAdditionalCollateral}
 flashLoanAmount: ${flashLoanAmount}
 AETH Allowance: ${aethAllowance}
@@ -279,20 +279,20 @@ AETH needToApprove: ${aethNeedToApprove}
         }
 
         await sendTransaction(
-            lendingPlatform.connect(borrowerAccount).extendLoan(
+            lendingPlatform.connect(borrowerAccount).extendBorrow(
                 tokenId,
                 newTimestamp,
                 parsedAdditionalCollateral,
                 parsedAdditionalRepayment,
                 ltv
             ),
-            "Extending loan"
+            "Extending borrow"
         );
     });
 
-task("repayLoan", "add USDC to a lending pool")
-    .addParam("tokenId", "tokenId of the loan", undefined, types.int, false)
-    .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
+task("repayBorrow", "add USDC to a lending pool")
+    .addParam("tokenId", "tokenId of the borrow", undefined, types.int, false)
+    .addParam("account", "Address of account to partially repay borrow with (must be the holder of the borrow)", undefined, types.string, true)
     .addParam("beneficiary", "Address of account to receive the collateral", undefined, types.string, true)
     .setAction(async (taskArgs, env) => {
         const tokenId: number = taskArgs.tokenId;
@@ -328,13 +328,13 @@ task("repayLoan", "add USDC to a lending pool")
             await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
         }
         // Send the deposit tx
-        await sendTransaction(lendingPlatform.connect(borrowerAccount).repayLoan(tokenId, beneficiary), `Fully Repay Loan`);
+        await sendTransaction(lendingPlatform.connect(borrowerAccount).repayBorrow(tokenId, beneficiary), `Fully Repay Borrow`);
     })
 
-task("partialRepayLoan", "add USDC to a lending pool")
-    .addParam("tokenId", "tokenId of the loan", undefined, types.int, false)
+task("partialRepayBorrow", "add USDC to a lending pool")
+    .addParam("tokenId", "tokenId of the borrow", undefined, types.int, false)
     .addParam("repaymentAmount", "Amount of USDC - in USD to repay", undefined, types.float, false)
-    .addParam("account", "Address of account to partially repay loan with (must be the holder of the loan)", undefined, types.string, true)
+    .addParam("account", "Address of account to partially repay borrow with (must be the holder of the borrow)", undefined, types.string, true)
     .setAction(async (taskArgs, env) => {
         const tokenId: number = taskArgs.tokenId;
         const repaymentAmount: number = taskArgs.repaymentAmount;
@@ -365,7 +365,7 @@ task("partialRepayLoan", "add USDC to a lending pool")
             await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
         }
         // Send the deposit tx
-        await sendTransaction(lendingPlatform.connect(borrowerAccount).partialRepayLoan(tokenId, parsedUsdc), `Partial Repay Loan`);
+        await sendTransaction(lendingPlatform.connect(borrowerAccount).partialRepayBorrow(tokenId, parsedUsdc), `Partial Repay Borrow`);
     })
 
 task("approveUsdc", "Approve USDC to the lending platform")
@@ -401,39 +401,39 @@ task('takeSnapshot', 'snapshot and update the accumInterest and accumYield')
         await sendTransaction(lendingPlatform.connect(signer).takeSnapshot(), "takeSnapshot");
     })
 
-task('takeLoan', 'take a loan')
+task('borrow', 'take a borrow')
     .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
-    .addParam("loanAmount", "Amount of USDC to loan - in USD", undefined, types.float, false)
+    .addParam("borrowAmount", "Amount of USDC to borrow - in USD", undefined, types.float, false)
     .addParam("collateralAmount", "Amount of collateral to provide - in ETH", undefined, types.float, false)
-    .addParam("ltv", "Specified LTV of the loan", undefined, types.int, false)
-    .addParam("account", "Address of account to take loan with (or named account)", undefined, types.string, false)
+    .addParam("ltv", "Specified LTV of the borrow", undefined, types.int, false)
+    .addParam("account", "Address of account to take borrow with (or named account)", undefined, types.string, false)
     .setAction(async (taskArgs, env) => {
         const timestamp: number = taskArgs.timestamp;
-        const loanAmount: number = taskArgs.loanAmount;
+        const borrowAmount: number = taskArgs.borrowAmount;
         const collateralAmount = taskArgs.collateralAmount;
         const account = taskArgs.account;
         const {ethers, deployments, getNamedAccounts} = env;
         const ltv = ethers.parseUnits(taskArgs.ltv.toString(), 2);
         const {lendingPlatform} = await getDeployedContracts(env);
         const namedAccounts = await getNamedAccounts();
-        const loanAccount = namedAccounts[account] ?
+        const borrowAccount = namedAccounts[account] ?
             await ethers.getSigner(namedAccounts[account]) :
             await ethers.getSigner(account);
-        const loanAmountBigInt = parseUnits(loanAmount.toString(), 6);
+        const borrowAmountBigInt = parseUnits(borrowAmount.toString(), 6);
         const collateralAmountBigInt = parseEther(collateralAmount.toString());
 
-        await sendTransaction(lendingPlatform.connect(loanAccount).takeLoan(
-            loanAmountBigInt,
+        await sendTransaction(lendingPlatform.connect(borrowAccount).borrow(
+            borrowAmountBigInt,
             collateralAmountBigInt,
             ltv,
             timestamp,
             {value: collateralAmountBigInt}
-        ), `Loan USDC`);
+        ), `Borrow USDC`);
     });
 
-task('withdraw', 'take a loan')
+task('withdraw', 'withdraw deposited funds after term')
     .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
-    .addParam("account", "Address of account to take loan with (or named account)", undefined, types.string, false)
+    .addParam("account", "account which holds the deposit (named account or address)", undefined, types.string, false)
     .setAction(async (taskArgs, env) => {
         const timestamp: number = taskArgs.timestamp;
         const account = taskArgs.account;
@@ -534,17 +534,17 @@ total repaid: ${ethers.formatUnits(res.borrowTotalRepaid, 18)} USDC
         `)
     })
 
-task("getLoan", "get deatils of a loan")
-    .addParam('tokenid', 'tokenId of the loan', "", types.int)
+task("getBorrow", "get deatils of a borrow")
+    .addParam('tokenid', 'tokenId of the borrow', "", types.int)
     .setAction(async (taskArgs, env) => {
         const tokenId = taskArgs.tokenid;
         const {ethers, deployments, getNamedAccounts} = env;
         const {lendingPlatform, bpt} = await getDeployedContracts(env);
         let res;
         try {
-            res = await bpt.getLoan(tokenId);
+            res = await bpt.getBorrow(tokenId);
         } catch (e) {
-            console.log(`loan with tokenId: ${tokenId} does not exist`);
+            console.log(`borrow with tokenId: ${tokenId} does not exist`);
             return;
         }
         const interest = await bpt.getInterest(tokenId);
@@ -552,7 +552,7 @@ task("getLoan", "get deatils of a loan")
         const owner = await bpt.ownerOf(tokenId);
         // console.log(res);
         console.log(`
-Loan: ${tokenId}
+Borrow: ${tokenId}
 ============
 owner: ${owner}
 endDate: ${fromEthDate(Number(res.endDate)).toISOString()}

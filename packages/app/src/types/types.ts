@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 
 export type PendingStatuses = "pending" | "confirmed" | "failed" | "extending" | "extended";
 
-export type Loan = {
+export type Borrow = {
   id?: string,
   status?: PendingStatuses,
   collateral?: ethers.BigNumber,
@@ -45,16 +45,16 @@ type LendingPool = {
 
 
 export type UserFinancialDataState = {
-  loans: Loan[];
+  borrows: Borrow[];
   lendPositions: LendPosition[];
 };
 
 export type UserFinancialDataAction =
-  | { type: "SET_USER_DATA"; payload: { loans: Loan[]; lendPositions: LendPosition[] }; }
+  | { type: "SET_USER_DATA"; payload: { borrows: Borrow[]; lendPositions: LendPosition[] }; }
   | { type: "CLEAR_USER_DATA" }
-  | { type: "ADD_LOAN"; payload: Loan }
+  | { type: "ADD_LOAN"; payload: Borrow }
   | { type: "ADD_LEND_POSITION"; payload: LendPosition }
   | { type: "UPDATE_LEND_POSITION_STATUS"; payload: LendPosition }
-  | { type: "UPDATE_LOAN_STATUS"; payload: Loan };
+  | { type: "UPDATE_LOAN_STATUS"; payload: Borrow };
 
 

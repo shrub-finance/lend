@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import {Constants} from './Constants.sol';
 
 library Configuration {
-    // Times after the endDate of a loan that the following actions are available
+    // Times after the endDate of a borrow that the following actions are available
     uint public constant FORCED_EXTENSION_1 = 0;
     uint public constant FORCED_EXTENSION_2 = 45 * Constants.MINUTE;
     uint public constant FORCED_EXTENSION_3 = 1 * Constants.HOUR + 30 * Constants.MINUTE;

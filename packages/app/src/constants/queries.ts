@@ -30,7 +30,7 @@ export const USER_POSITIONS_QUERY = gql`
                 depositsUsdc
                 withdrawsUsdc
             }
-            loans(where:{active:true}){
+            borrows(where:{active:true}){
                 id
                 timestamp
                 principal

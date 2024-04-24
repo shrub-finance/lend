@@ -116,7 +116,7 @@ export const DashboardView: FC = ({}) => {
   useEffect(() => {
     // Once data is loaded, update the store
     if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
-      const { loans, lendPositions } = userPositionsData.user;
+      const { borrows, lendPositions } = userPositionsData.user;
       const tempLendPositions: LendPosition[] = lendPositions.map((lendPosition) => {
           return {
               ...lendPosition,
@@ -126,7 +126,7 @@ export const DashboardView: FC = ({}) => {
       dispatch({
         type: "SET_USER_DATA",
         payload: {
-          loans,
+          borrows,
           lendPositions: tempLendPositions,
         },
       });
@@ -437,7 +437,7 @@ console.log(store);
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {store?.loans?.map((item, index) => (
+                              {store?.borrows?.map((item, index) => (
                                 <tr
                                   key={`borrowRow-${index}`}
                                   className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700"
