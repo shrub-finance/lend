@@ -445,7 +445,8 @@ console.log(store);
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {wallet && !ethBalanceIsLoading ? (
                                       <p>
-                                        {formatLargeUsdc(item.originalPrincipal ?? "0")}
+                                        {" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
+                                        {formatLargeUsdc(item.originalPrincipal ?? "0")}{" "}USDC
                                         {item.status === 'pending' && (
                                           <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                         )}
