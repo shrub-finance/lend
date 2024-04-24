@@ -91,8 +91,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // TODO: Insert extra logic for ensuring everything is funded
         lendingPool.finalized = true;
         // Send funds to Shrub
+        console.log("timestamp: %s, shrubYield: %s, shrubInterest: %s", _timestamp, lendingPool.shrubYield, lendingPool.shrubInterest);
         aeth.transfer(shrubTreasury, lendingPool.shrubYield);
-        usdc.transfer(shrubTreasury, lendingPool.shrubInterest);
+        usdc.transfer(shrubTreasury, ShrubLendMath.wadToUsdc(lendingPool.shrubInterest));
         emit FinalizeLendingPool(address(lendingPool.poolShareToken), lendingPool.shrubInterest, lendingPool.shrubYield);
     }
 
@@ -453,10 +454,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
         // Calculate the corresponding USDC amount to withdraw
         uint256 usdcPrincipalAmount = ShrubLendMath.wadToUsdc(WadRayMath.wadMul(withdrawalProportion, lendingPool.principal));
+        console.log("usdcPrincipalAmount: %s", usdcPrincipalAmount);
         uint256 usdcInterestAmount = ShrubLendMath.wadToUsdc(WadRayMath.wadMul(withdrawalProportion, lendingPool.accumInterest));
+        console.log("usdcInterestAmount: %s", usdcInterestAmount);
 
         // Calculate the corresponding aETH interest to withdraw
         uint256 aethWithdrawalAmount = WadRayMath.wadMul(withdrawalProportion, lendingPool.accumYield);
+        console.log("aethWithdrawalAmount: %s", aethWithdrawalAmount);
 
         // Burn the pool share tokens
         lendingPool.poolShareToken.burn(msg.sender, _poolShareTokenAmount);
