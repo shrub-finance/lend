@@ -53,7 +53,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
     }
 
     // Continue with validation for non-empty inputs
-    const isValidInput = /^[0-9]+(\.[0-9]*)?$/.test(inputValue);
+    const isValidInput = /^([0-9]+(\.[0-9]{1,6})?|\.[0-9]{1,6})$/.test(inputValue);
     const parsedValue = parseFloat(inputValue);
     const isInvalidOrZero = !isValidInput || isNaN(parsedValue) || parsedValue === 0;
     setIsValidationError(isInvalidOrZero);
@@ -124,7 +124,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                          value={format(lendAmount)}/>
                   {isValidationError && (
                     <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                      Amount must be a number
+                      Invalid USDC amount (numeric and maximum 6 decimals)
                     </p>
                   )}
                   <label className="label">

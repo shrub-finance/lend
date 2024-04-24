@@ -2,19 +2,21 @@ import React, { useState } from 'react';
 import Image from "next/image";
 import { calculateLockupPeriod, fromEthDate, toEthDate } from '@shrub-lend/common';
 import ExtendSummaryView from './ExtendSummaryView';
+import {ethers} from "ethers";
+import {formatLargeUsdc, formatPercentage} from "../../utils/ethMethods";
 
 interface ExtendViewProps {
   timestamp: number;
   setTimestamp: (timestamp: number) => void;
   showAPYSection: boolean;
   setShowAPYSection: (show: boolean) => void;
-  selectedLendPositionBalance: string;
+  selectedLendPositionBalance: ethers.BigNumber;
   selectedLendPositionTermDate: Date;
-  selectedPoolShareTokenAmount: number;
-  selectedTokenSupply: number;
-  selectedTotalEthYield: number;
+  selectedPoolShareTokenAmount: ethers.BigNumber;
+  selectedTokenSupply: ethers.BigNumber;
+  selectedTotalEthYield: ethers.BigNumber;
   depositTerms: any[];
-  estimatedAPY: string;
+  estimatedAPY: ethers.BigNumber;
   setIsModalOpen: (isOpen: boolean) => void;
   selectedPoolTokenId: string;
 }
@@ -75,7 +77,7 @@ const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => voi
                 <span className="label-text text-shrub-blue">Amount Being Extended</span>
               </label>
               <div className='w-full text-xl font-semibold flex flex-row'>
-                <span className='text-4xl font-medium text-left w-[500px]'>{selectedLendPositionBalance} USDC</span>
+                <span className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(selectedLendPositionBalance)} USDC</span>
                 <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10} height={10} />
               </div>
             </div>
@@ -117,7 +119,7 @@ const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => voi
               <p className="self-start text-lg">Estimated APY</p>
               <div className="card flex-shrink-0 w-full bg-teal-50 py-6 border-shrub-green border">
                 <div className="text-center p-2">
-                  <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{estimatedAPY}%</span>
+                  <span className="sm: text-5xl md:text-6xl text-shrub-green-500 font-bold">{formatPercentage(estimatedAPY)}%</span>
                   <span className=" pl-3 text-2xl font-thin text-shrub-green-500">APY</span>
                 </div>
 

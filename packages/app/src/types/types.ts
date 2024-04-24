@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 
 
-export type PendingStatuses = "pending" | "confirmed" | "failed";
+export type PendingStatuses = "pending" | "confirmed" | "failed" | "extending" | "extended";
 
 export type Loan = {
   id?: string,
@@ -22,10 +22,10 @@ export type Loan = {
 type LendingPool = {
   id: string;
   timestamp: string;
-  tokenSupply: number;
-  totalEthYield: number;
-  totalPrincipal: number;
-  totalUsdcInterest: number;
+  tokenSupply: string;
+  totalEthYield: string;
+  totalPrincipal: string;
+  totalUsdcInterest: string;
   __typename: string;
 };
 
@@ -33,6 +33,7 @@ type LendingPool = {
     id?: string;
     status?: PendingStatuses;
     depositsUsdc?: string;
+    withdrawsUsdc?: string;
     apy?: string;
     currentBalanceOverride?: string;
     interestEarnedOverride?: string;
@@ -49,9 +50,7 @@ export type UserFinancialDataState = {
 };
 
 export type UserFinancialDataAction =
-  | { type: "SET_USER_DATA";
-      payload: { loans: Loan[]; lendPositions: LendPosition[] };
-    }
+  | { type: "SET_USER_DATA"; payload: { loans: Loan[]; lendPositions: LendPosition[] }; }
   | { type: "CLEAR_USER_DATA" }
   | { type: "ADD_LOAN"; payload: Loan }
   | { type: "ADD_LEND_POSITION"; payload: LendPosition }
