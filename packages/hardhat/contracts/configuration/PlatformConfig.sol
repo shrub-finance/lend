@@ -66,23 +66,23 @@ contract PlatformConfig is Ownable {
         config.END_OF_LOAN_PHASES[6] = EndOfLoanParams({bonus: 600, liquidationEligible: true, duration: 5 * Constants.HOUR});
     }
 
-    function calculateSmallestValidLtv(uint16 ltv, bool isExtend) internal view returns (uint16) {
+    function calculateSmallestValidLtv(uint16 ltv, bool isExtend) external view returns (uint16) {
 
         uint16 smallestValid = 0; // Initialize to 0 or a suitable default value
         bool found = false;
 
         // Iterate through the array to find the smallest value >= value
         for (uint i = 0; i < config.REVERSE_SORTED_VALID_LTV.length; i++) {
-            if (config.REVERSE_SORTED_VALID_LTV[i] >= ltv) {
-                smallestValid = config.REVERSE_SORTED_VALID_LTV[i];
-                found = true;
-            } else {
-                require(found || isExtend && ltv <= config.MAX_LTV_FOR_EXTEND, "Invalid ltv");
-                if (found) {
-                    return smallestValid;
-                }
-                return config.MAX_LTV_FOR_EXTEND;
+            if (config.REVERSE_SORTED_VALID_LTV[i] < ltv) {
+                continue;
             }
+            smallestValid = config.REVERSE_SORTED_VALID_LTV[i];
+            found = true;
         }
+        require(found || isExtend && ltv <= config.MAX_LTV_FOR_EXTEND, "Invalid ltv");
+        if (found) {
+            return smallestValid;
+        }
+        return config.MAX_LTV_FOR_EXTEND;
     }
 }

@@ -814,9 +814,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint debt = bpt.debt(tokenId);
         address borrower = bpt.ownerOf(tokenId);
         require(liquidationPhase > 0 && liquidationPhase < 4, "invalid claim");
-        uint availabilityTime = liquidationPhase == 1 ? Configuration.FORCED_EXTENSION_1 :
-            liquidationPhase == 2 ? Configuration.FORCED_EXTENSION_2 :
-            Configuration.FORCED_EXTENSION_3;
+//        uint availabilityTime = liquidationPhase == 1 ? Configuration.FORCED_EXTENSION_1 :
+//            liquidationPhase == 2 ? Configuration.FORCED_EXTENSION_2 :
+//            Configuration.FORCED_EXTENSION_3;
+        uint availabilityTime = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].duration;
         console.log(
             "currentTimestamp: %s, loan endDate: %s, availabilityTime: %s",
             HelpersLogic.currentTimestamp(),
@@ -824,8 +825,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             availabilityTime
         );
         require(HelpersLogic.currentTimestamp() > loanDetails.endDate + availabilityTime ,"loan is not eligible for extension");
-        // TODO: For now bonus is 1% of collatertal - update this later to be eth value of the appropriate percent of the debt
-        uint bonusPecentage = 100;
+        uint bonusPecentage = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].bonus;
         // The caller will be rewarded with some amount of the users' collateral. This will be based on the size of the debt to be refinanced
         uint bonusUsdc = PercentageMath.percentMul(
             debt,
@@ -847,7 +847,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             principal: debt,
             collateral: newCollateral,
         // TODO: ltv should be calculated to be the smallest valid
-            ltv: 5000,
+        // TODO: the LTV to be provided to this method needs to be calculated - probably by a reusable method
+            ltv: PlatformConfig.calculateSmallestValidLtv(),
             timestamp: getNextActivePool(loanDetails.endDate),
             startDate: lastSnapshotDate,
             beneficiary: msg.sender,
