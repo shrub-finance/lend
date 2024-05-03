@@ -1,8 +1,5 @@
-// Next, React
 import {FC, useEffect, useState} from "react";
 import Link from "next/link";
-
-
 import {
   useConnectedWallet,
   useBalance,
@@ -11,16 +8,13 @@ import {
   useContractRead
 } from "@thirdweb-dev/react";
 import { getBlock, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
-
 import { toEthDate, fromEthDate, getPlatformDates } from '@shrub-lend/common'
 import {
   usdcAddress,
-  lendingPlatformAddress,
-  lendingPlatformAbi,
   chainlinkAggregatorAbi,
   chainlinkAggregatorAddress,
 } from "../utils/contracts";
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 import Image from "next/image";
 import { secondsInDay} from "@shrub-lend/common";
 import { USER_POSITIONS_QUERY } from "../constants/queries";
@@ -28,10 +22,14 @@ import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendView from './extend/ExtendView';
+import { formatLargeUsdc } from '../utils/ethMethods';
+import {Deposit} from "../types/types";
 
 const now = new Date();
+const Zero = ethers.constants.Zero;
 new Date(new Date(now).setFullYear(now.getFullYear() + 1));
 export const DashboardView: FC = ({}) => {
+
   const wallet = useConnectedWallet();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { store, dispatch } = useFinancialData();
@@ -40,11 +38,7 @@ export const DashboardView: FC = ({}) => {
   const walletAddress = useAddress();
   const [ethPrice, setEthPrice] = useState(ethers.BigNumber.from(0));
   const [blockchainTime, setBlockchainTime] = useState(0);
-  const {
-    contract: lendingPlatform,
-    isLoading: lendingPlatformIsLoading,
-    error: lendingPlatformError,
-  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
+  // const [extendDepositProps, setExtendDepositProps] = useState({})
   const {
     contract: chainLinkAggregator,
     isLoading: chainLinkAggregatorIsLoading,
@@ -63,16 +57,16 @@ export const DashboardView: FC = ({}) => {
       startPolling: userPositionsDataStartPolling,
       stopPolling: userPositionsDataStopPolling,
     },
+
   ] = useLazyQuery(USER_POSITIONS_QUERY, {
     variables: {
       user: walletAddress && walletAddress.toLowerCase(),
     },
   });
-
   const [currentHovered, setCurrentHovered] = useState<number | null>(null);
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
-  const [estimatedAPY, setEstimatedAPY] = useState("0");
+  const [estimatedAPY, setEstimatedAPY] = useState(Zero);
   const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
   const depositTerms = [
     { id: 'smallest-deposit', value: 'smallest-deposit', duration: oneMonth },
@@ -80,16 +74,13 @@ export const DashboardView: FC = ({}) => {
     { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
     { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
   ];
-  const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState("");
-  const [selectedLendPositionTermDate, setSelectedLendPositionTermDate] = useState<Date | null>(null);
-  const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(0);
-  const [selectedTokenSupply, setSelectedTokenSupply] = useState(0);
-  const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(0);
-  const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('');
-
-
+  const [selectedDepositBalance, setSelectedDepositBalance] = useState(Zero);
+  const [selectedDepositTermDate, setSelectedDepositTermDate] = useState<Date | null>(null);
+  const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(Zero);
+  const [selectedTokenSupply, setSelectedTokenSupply] = useState(Zero);
+  const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(Zero);
+  const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('')
   const dummyEarningPools = "2";
-
 
   useEffect(() => {
     const handleAPYCalc = () => {
@@ -97,8 +88,8 @@ export const DashboardView: FC = ({}) => {
         timestamp === threeMonth.getTime() / 1000 ? 8.14 :
           timestamp === sixMonth.getTime() / 1000 ? 9.04 :
             timestamp === twelveMonth.getTime() / 1000 ? 10.37 : Math.random() * 5 + 7;
-
-      setEstimatedAPY(apyGenerated.toFixed(2).toString());
+      // setEstimatedAPY(apyGenerated.toFixed(2).toString());
+        setEstimatedAPY(ethers.utils.parseUnits(apyGenerated.toFixed(2),2));
     };
 
     if (timestamp) {
@@ -109,35 +100,34 @@ export const DashboardView: FC = ({}) => {
   useEffect(() => {
     // console.log("running usdc useEffect");
   }, [usdcBalanceIsLoading]);
-
   useEffect(() => {
     // console.log("running eth useEffect");
   }, [ethBalanceIsLoading]);
-
   useEffect(() => {
     // console.log("running walletAddress useEffect");
-    if (!walletAddress) {
-      return;
-    }
+    if (!walletAddress) {return}
     getUserPositions();
   }, [walletAddress, getUserPositions]);
-
   useEffect(() => {
     // console.log("running userPositionsDataLoading useEffect");
-    if (userPositionsDataLoading) {
-      return;
-    }
+    if (userPositionsDataLoading) {return}
   }, [userPositionsDataLoading]);
 
   useEffect(() => {
     // Once data is loaded, update the store
     if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
-      const { loans, lendPositions } = userPositionsData.user;
+      const { borrows, deposits } = userPositionsData.user;
+      const tempDeposits: Deposit[] = deposits.map((deposit) => {
+          return {
+              ...deposit,
+              id: deposit.lendingPool.id
+          }
+      });
       dispatch({
         type: "SET_USER_DATA",
         payload: {
-          loans,
-          lendPositions,
+          borrows,
+          deposits: tempDeposits,
         },
       });
     }
@@ -170,24 +160,20 @@ export const DashboardView: FC = ({}) => {
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
-    function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
-        const usdcInWadBN = ethers.BigNumber.from(usdcInWad);
-        const divisionFactor = ethers.BigNumber.from(10).pow(12)
-        const roundAmount = ethers.BigNumber.from(5).mul(divisionFactor).div(10);
-        return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
-    }
-
+  const handleUnlockFromExtend = () => {
+    setIsModalOpen(false);
+  };
 
   /** might need this later **/
-  // let newlyAddedLendPosition = store.lendPositions.filter(item => item.hasOwnProperty('id'));
-  // newlyAddedLendPosition = newlyAddedLendPosition[0];
-  // let calculatedPoolShareTokenAmount = (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest + newlyAddedLendPosition?.lendingPool?.totalEthYield === 0) ?
-  //   newlyAddedLendPosition?.depositsUsdc * 1e12 :
-  //   (newlyAddedLendPosition?.depositsUsdc * newlyAddedLendPosition?.lendingPool?.tokenSupply) /
-  //   (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest +
-  //     (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
+  // let newlyAddedDeposit = store.deposits.filter(item => item.hasOwnProperty('id'));
+  // newlyAddedDeposit = newlyAddedDeposit[0];
+  // let calculatedPoolShareTokenAmount = (newlyAddedDeposit?.lendingPool?.totalPrincipal + newlyAddedDeposit?.lendingPool?.totalUsdcInterest + newlyAddedDeposit?.lendingPool?.totalEthYield === 0) ?
+  //   newlyAddedDeposit?.depositsUsdc * 1e12 :
+  //   (newlyAddedDeposit?.depositsUsdc * newlyAddedDeposit?.lendingPool?.tokenSupply) /
+  //   (newlyAddedDeposit?.lendingPool?.totalPrincipal + newlyAddedDeposit?.lendingPool?.totalUsdcInterest +
+  //     (newlyAddedDeposit?.lendingPool?.totalEthYield * ethPrice));
 
-// console.log(store);
+console.log(store);
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -225,15 +211,16 @@ export const DashboardView: FC = ({}) => {
                   </div>
                   <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} >
                     <ExtendView
+                      onModalClose={handleUnlockFromExtend}
                       depositTerms={depositTerms}
                       timestamp={timestamp}
-                      selectedLendPositionBalance={selectedLendPositionBalance}
+                      selectedDepositBalance={selectedDepositBalance}
                       setIsModalOpen={setIsModalOpen}
                       setTimestamp={setTimestamp}
                       showAPYSection={showAPYSection}
                       estimatedAPY={estimatedAPY}
                       setShowAPYSection={setShowAPYSection}
-                      selectedLendPositionTermDate={selectedLendPositionTermDate}
+                      selectedDepositTermDate={selectedDepositTermDate}
                       selectedPoolShareTokenAmount={selectedPoolShareTokenAmount}
                       selectedTotalEthYield={selectedTotalEthYield}
                       selectedTokenSupply={selectedTokenSupply}
@@ -268,7 +255,7 @@ export const DashboardView: FC = ({}) => {
                             <thead className="text-xs bg-shrub-grey-light dark:bg-shrub-grey-700 border border-shrub-grey-light2">
                               <tr>
                                 <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
-                                  Amount Deposited
+                                  Net Deposited
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-shrub-grey font-medium">
                                   Interest Earned
@@ -286,8 +273,30 @@ export const DashboardView: FC = ({}) => {
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {store?.lendPositions?.map(
-                                (item, index) => (
+                              {store?.deposits?.sort((a,b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
+                                (item, index) => {
+                                    const depositsUsdcBN = ethers.BigNumber.from(item.depositsUsdc ? item.depositsUsdc : Zero);
+                                    const withdrawsUsdcBN = ethers.BigNumber.from(item.withdrawsUsdc ? item.withdrawsUsdc : Zero);
+                                    const lendingPoolPrincipalBN = ethers.BigNumber.from(item.lendingPool.totalPrincipal ? item.lendingPool.totalPrincipal : Zero);
+                                    const lendingPoolUsdcInterestBN = ethers.BigNumber.from(item.lendingPool.totalUsdcInterest ? item.lendingPool.totalUsdcInterest : Zero);
+                                    const lendingPoolEthYieldBN = ethers.BigNumber.from(item.lendingPool.totalEthYield ? item.lendingPool.totalEthYield : Zero);
+                                    const tokenAmountBN = ethers.BigNumber.from(item.amount ? item.amount : Zero);
+                                    const tokenSupplyBN = ethers.BigNumber.from(item.lendingPool.tokenSupply ? item.lendingPool.tokenSupply : Zero);
+
+                                    const netDeposits = depositsUsdcBN.sub(withdrawsUsdcBN);
+                                    const currentBalance = tokenSupplyBN.eq(Zero) ? Zero : (
+                                        lendingPoolPrincipalBN
+                                            .add(lendingPoolUsdcInterestBN)
+                                            .add(
+                                                ethPrice
+                                                    .mul(lendingPoolEthYieldBN)
+                                                    .div(ethers.utils.parseUnits("1", 20))
+                                            )
+                                    )
+                                        .mul(tokenAmountBN)
+                                        .div(tokenSupplyBN);
+                                    const interestEarned = currentBalance.sub(netDeposits);
+                                    return (
                                   <tr
                                     key={`earnRow-${index}`}
                                     className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700"
@@ -295,13 +304,22 @@ export const DashboardView: FC = ({}) => {
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {wallet && !ethBalanceIsLoading ? (
                                         <p>{" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
-                                          {formatLargeUsdc(item.depositsUsdc ?? "0")}{" "} USDC
+                                          {formatLargeUsdc(netDeposits)}{" "} USDC
                                           {item.status === 'pending' && (
                                             <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                           )}
                                           {item.status === 'failed' && (
                                             <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
                                           )}
+                                            {item.status === 'confirmed' && (
+                                                <span className=" ml-2 inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300"><span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>Confirmed</span>
+                                            )}
+                                            {item.status === 'extending' && (
+                                                <span className=" ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-amber-900 dark:text-amber-300"><span className="w-2 h-2 me-1 bg-amber-500 rounded-full"></span>Extending</span>
+                                            )}
+                                            {item.status === 'extended' && (
+                                                <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300"><span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>Extended</span>
+                                            )}
                                         </p>
                                       ) : (
                                         <p className="text-sm">
@@ -310,53 +328,37 @@ export const DashboardView: FC = ({}) => {
                                       )}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {item.interestEarnedOverride ? item.interestEarnedOverride :
-                                        formatLargeUsdc(
-                                          ethers.BigNumber.from(item.lendingPool.totalPrincipal)
-                                            .add(item.lendingPool.totalUsdcInterest)
-                                            .add(ethPrice
-                                              .mul(item.lendingPool.totalEthYield)
-                                              .div(ethers.utils.parseUnits("1", 20)))
-                                            .mul(item.amount)
-                                            .div(item.lendingPool.tokenSupply)
-                                            .sub(item.depositsUsdc))}
+                                      {
+                                          item.interestEarnedOverride ?
+                                              formatLargeUsdc(item.interestEarnedOverride) :
+                                              formatLargeUsdc(interestEarned)
+                                      }
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {item.currentBalanceOverride ? item.currentBalanceOverride:
-                                        formatLargeUsdc(
-                                          ethers.BigNumber.from(item.lendingPool.totalPrincipal)
-                                            .add(item.lendingPool.totalUsdcInterest)
-                                            .add(ethPrice
-                                              .mul(item.lendingPool.totalEthYield)
-                                              .div(ethers.utils.parseUnits("1", 20)))
-                                            .mul(item.amount)
-                                            .div(item.lendingPool.tokenSupply))}
+                                      {
+                                          item.currentBalanceOverride ?
+                                              formatLargeUsdc(item.currentBalanceOverride) :
+                                              formatLargeUsdc(currentBalance)
+                                      }
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
                                         {(item.apy)?item.apy :"X"}%
                                       </span>
                                     </td>
-                                    <td className="px-6 py-4 text-sm font-bold">
+                                    <td className='px-6 py-4 text-sm font-bold'>
                                       {fromEthDate(parseInt(item.lendingPool.timestamp)).toLocaleString()}
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className="flex items-center justify-center space-x-2 h-full p-2">
-                                        <button type="button" className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()} onClick={() => {
-                                          setIsModalOpen(true);
-                                          setSelectedLendPositionBalance(item.currentBalanceOverride ? item.currentBalanceOverride :
-                                            ethers.utils.formatUnits(
-                                              ethers.BigNumber.from(item.lendingPool.totalPrincipal)
-                                                .add(item.lendingPool.totalUsdcInterest)
-                                                .add(ethPrice
-                                                  .mul(item.lendingPool.totalEthYield)
-                                                  .div(ethers.utils.parseUnits("1", 20)))
-                                                .mul(item.amount)
-                                                .div(item.lendingPool.tokenSupply), 6));
-                                            setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
-                                          setSelectedPoolShareTokenAmount(item.amount)
-                                          setSelectedTokenSupply(item.lendingPool.tokenSupply)
-                                          setSelectedTotalEthYield(item.lendingPool.totalEthYield)
+
+                                          <button type="button" style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }} className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()  } onClick={() => {
+                                          setIsModalOpen(true)
+                                          setSelectedDepositBalance(currentBalance)
+                                          setSelectedDepositTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
+                                          setSelectedPoolShareTokenAmount(tokenAmountBN)
+                                          setSelectedTokenSupply(tokenSupplyBN)
+                                          setSelectedTotalEthYield(lendingPoolEthYieldBN)
                                           setSelectedPoolTokenId(item.lendingPool.id)
                                         }} >
                                           {/*Corresponding modal at the top*/}
@@ -382,7 +384,7 @@ export const DashboardView: FC = ({}) => {
                                       </div>
                                     </td>
                                   </tr>
-                                )
+                                )}
                               )}
                             </tbody>
                           </table>
@@ -435,7 +437,7 @@ export const DashboardView: FC = ({}) => {
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {store?.loans?.map((item, index) => (
+                              {store?.borrows?.map((item, index) => (
                                 <tr
                                   key={`borrowRow-${index}`}
                                   className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700"
@@ -473,6 +475,7 @@ export const DashboardView: FC = ({}) => {
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {formatLargeUsdc(
+                                        // TODO: Move this up and assign to a variable
                                       ethers.BigNumber.from(
                                         item.principal ?? "0",
                                       ).add(

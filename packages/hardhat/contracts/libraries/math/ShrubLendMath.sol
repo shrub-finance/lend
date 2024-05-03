@@ -34,15 +34,11 @@ library ShrubLendMath {
    * @dev Casts wad down to 6 decimal (USDC)
    * @dev assembly optimized for improved gas savings, see https://twitter.com/transmissions11/status/1451131036377571328
    * @param a Wad
-   * @return b = a converted to 6 decimals, rounded half up to the nearest unit
+   * @return b = a converted to 6 decimals, rounded down
    */
     function wadToUsdc(uint256 a) internal pure returns (uint256 b) {
         assembly {
             b := div(a, USDC_WAD_RATIO)
-            let remainder := mod(a, USDC_WAD_RATIO)
-            if iszero(lt(remainder, div(USDC_WAD_RATIO, 2))) {
-                b := add(b, 1)
-            }
         }
     }
 

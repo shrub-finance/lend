@@ -16,7 +16,7 @@ import {Constants} from '../libraries/configuration/Constants.sol';
 import {ShrubLendMath} from "../libraries/math/ShrubLendMath.sol";
 import {HelpersLogic} from '../libraries/logic/HelpersLogic.sol';
 
-// TODO: Index BPT by endDate so that we can find all of the loans for a timestamp
+// TODO: Index BPT by endDate so that we can find all of the borrows for a timestamp
 // NOTE: BPTs will not be indexed by owner as we can rely on external services to find this and we don't need this functionality in the smart contract itself
 
 contract BorrowPositionToken is ERC721, Ownable {
@@ -78,11 +78,11 @@ contract BorrowPositionToken is ERC721, Ownable {
         return borrowDatas[tokenId].startDate;
     }
 
-    function getLoan(uint tokenId) external view checkExists(tokenId) returns (DataTypes.BorrowData memory) {
+    function getBorrow(uint tokenId) external view checkExists(tokenId) returns (DataTypes.BorrowData memory) {
         return borrowDatas[tokenId];
     }
 
-    // Returns the total owed on a loan
+    // Returns the total owed on a borrow
     function debt(uint256 tokenId) public view checkExists(tokenId) returns (uint256) {
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         console.log("running bd.debt - (tokenId, bd.startDate, timestamp)");
@@ -106,7 +106,7 @@ contract BorrowPositionToken is ERC721, Ownable {
 
     function burn(uint256 tokenId) external checkExists(tokenId) onlyOwner {
         console.log("running burn for tokenId: %s", tokenId);
-        // because most loans will be paid off at the end - we have intentionally decided to not clean up from
+        // because most borrows will be paid off at the end - we have intentionally decided to not clean up from
         // tokensByTimestamp on the burning of the bpt. Rather, this will be handled during the snapshot
         removedTokens[borrowDatas[tokenId].endDate].push(tokenId);
         console.log("list of removedTokens for timestamp: %s", borrowDatas[tokenId].endDate);
@@ -215,8 +215,8 @@ contract BorrowPositionToken is ERC721, Ownable {
         );
     }
 
-    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint40 lastSnapshotDate, address sender) onlyOwner external returns(uint principalReduction) {
-        console.log("Running partialRepayLoan - tokenId, lastSnapshotDate, repaymentAmount, msg.sender");
+    function partialRepayBorrow(uint256 tokenId, uint256 repaymentAmount, uint40 lastSnapshotDate, address sender) onlyOwner external returns(uint principalReduction) {
+        console.log("Running partialRepayBorrow - tokenId, lastSnapshotDate, repaymentAmount, msg.sender");
         console.log(tokenId);
         console.log(lastSnapshotDate);
         console.log(repaymentAmount);
@@ -237,8 +237,8 @@ contract BorrowPositionToken is ERC721, Ownable {
         bd.principal -= principalReduction;
     }
 
-    function repayLoan(uint256 tokenId, address sender) onlyOwner external returns (uint, uint) {
-        console.log("Running repayLoan");
+    function repayBorrow(uint256 tokenId, address sender) onlyOwner external returns (uint, uint) {
+        console.log("Running repayBorrow");
         // Check that msg.sender owns the DPT
         require(ownerOf(tokenId) == sender, "msg.sender does not own specified BPT");
         // burn the token

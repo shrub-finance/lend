@@ -25,7 +25,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
 
 
-  const [maxLoan, setMaxLoan] = useState(ethers.utils.parseEther('0'));
+  const [maxBorrow, setMaxBorrow] = useState(ethers.utils.parseEther('0'));
   const [requiredCollateral, setRequiredCollateral] = useState("0");
   const [borrowAmount, setBorrowAmount] = useState('');
   const [selectedInterestRate, setSelectedInterestRate] = useState("");
@@ -50,8 +50,8 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
       handleErrorMessages({customMessage: "Wallet not connected. Please check."});
       console.log('wallet not connected');
     } else {
-      console.log(ethers.utils.formatUnits(maxLoan, 6))
-      setBorrowAmount(ethers.utils.formatUnits(maxLoan, 6));
+      console.log(ethers.utils.formatUnits(maxBorrow, 6))
+      setBorrowAmount(ethers.utils.formatUnits(maxBorrow, 6));
     }
   }
 
@@ -89,22 +89,22 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
 
 
   useEffect(() => {
-    getMaxLoan()
+    getMaxBorrow()
         .then(m => {
-          setMaxLoan(m);
+          setMaxBorrow(m);
         })
         .catch(e => console.error(e))
   }, [selectedInterestRate]);
 
-  async function getMaxLoan() {
+  async function getMaxBorrow() {
     if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading || !selectedInterestRate || !ethBalance.value) {
       return ethers.utils.parseEther('0');
     }
     // console.log(lendingPlatform);
     // console.log(selectedInterestRate);
     // console.log([interestToLTV[selectedInterestRate], ethBalance.value])
-    const maxLoan: BigNumber = await lendingPlatform.call('maxLoan', [interestToLTV[selectedInterestRate], ethBalance.value])
-    return maxLoan;
+    const maxBorrow: BigNumber = await lendingPlatform.call('maxBorrow', [interestToLTV[selectedInterestRate], ethBalance.value])
+    return maxBorrow;
   }
 
 
@@ -188,7 +188,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                     <ul className="flex flex-row ">
                       {interestRates.map(({ id, rate }) => (
                         <li className="mr-4" key={id}>
-                          <input type="radio" id={id} name="loan" value={id} className="hidden peer" onChange={() =>
+                          <input type="radio" id={id} name="borrow" value={id} className="hidden peer" onChange={() =>
                           { setSelectedInterestRate(rate)
                             setShowBorrowAPYSection(true)
                           }} required/>

@@ -16,7 +16,7 @@ export const USER_POSITIONS_QUERY = gql`
     query GetUserPositions($user: ID!) {
         user(id: $user) {
             id
-            lendPositions(where:{amount_gt:0}){
+            deposits(where:{amount_gt:0}){
                 lendingPool{
                     id
                     timestamp
@@ -30,7 +30,7 @@ export const USER_POSITIONS_QUERY = gql`
                 depositsUsdc
                 withdrawsUsdc
             }
-            loans(where:{active:true}){
+            borrows(where:{active:true}){
                 id
                 timestamp
                 principal

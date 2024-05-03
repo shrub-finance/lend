@@ -15,8 +15,8 @@ interface IBorrowPositionToken is IERC721 {
     function getStartDate(uint tokenId) external view returns (uint40);
     function burn(uint256 tokenId) external;
     function getTokensByTimestamp(uint40 _timestamp) external returns (uint[] calldata);
-    function getLoan(uint tokenId) external view returns (DataTypes.BorrowData memory);
+    function getBorrow(uint tokenId) external view returns (DataTypes.BorrowData memory);
     function getInterest(uint tokenId) external view returns (uint256);
-    function partialRepayLoan(uint256 tokenId, uint256 repaymentAmount, uint40 lastSnapshotDate, address sender) external returns(uint principalReduction);
+    function partialRepayBorrow(uint256 tokenId, uint256 repaymentAmount, uint40 lastSnapshotDate, address sender) external returns(uint principalReduction);
     function cleanUpByTimestamp(uint40 timestamp) external;
 }

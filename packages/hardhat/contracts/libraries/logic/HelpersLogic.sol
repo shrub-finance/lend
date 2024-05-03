@@ -11,7 +11,7 @@ library HelpersLogic {
     * @notice Calculate APY from an LTV value
     * @dev
     * @param _ltv expressed as a percentage
-    * @return apy interest for a loan with a given ltv expressed as percentage
+    * @return apy interest for a borrow with a given ltv expressed as percentage
 */
     function getAPYBasedOnLTV(uint16 _ltv) public pure returns (uint16 apy) {
         if (_ltv == 2000) {
