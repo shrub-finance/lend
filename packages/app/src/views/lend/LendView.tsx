@@ -3,8 +3,9 @@ import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import {useBalance} from "@thirdweb-dev/react";
 import {usdcAddress} from "../../utils/contracts";
 import {toEthDate} from '@shrub-lend/common';
-import {calculateLockupPeriod, getPlatformDates} from "@shrub-lend/common";
+import {calculateLockupPeriod} from "@shrub-lend/common";
 import Image from 'next/image';
+import { depositTerms, oneMonth, sixMonth, threeMonth, twelveMonth } from '../../constants';
 
 
 interface LendViewProps {
@@ -22,13 +23,6 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const [showLendAPYSection, setShowLendAPYSection] = useState(false);
   const [continueButtonEnabled, setContinueButtonEnabled] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
-  const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
-  const depositTerms = [
-    { id: 'smallest-deposit', value: 'smallest-deposit', duration: oneMonth },
-    { id: 'small-deposit', value: 'small-deposit', duration: threeMonth },
-    { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
-    { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
-  ];
   const [isValidationError, setIsValidationError] = useState(false);
 
   async function fillMax() {

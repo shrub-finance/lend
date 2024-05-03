@@ -7,6 +7,7 @@ import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 import {interestToLTV} from "../../utils/ethMethods";
 import {BigNumber, ethers} from "ethers";
 import Image from 'next/image'
+import { interestRates } from '../../constants';
 
 interface BorrowViewProps {
   onBorrowViewChange: (collateral: string, interestRate, amount) => void;
@@ -38,12 +39,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   const format = (val: string) => val;
   const [isValidationError, setIsValidationError] = useState(false);
 
-  const interestRates = [
-    { id: "smallest-borrow", rate: "0" },
-    { id: "small-borrow", rate: "1" },
-    { id: "big-borrow", rate: "5" },
-    { id: "biggest-borrow", rate: "8" },
-  ];
+
 
   async function fillMax() {
     if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading) {
@@ -100,9 +96,6 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
     if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading || !selectedInterestRate || !ethBalance.value) {
       return ethers.utils.parseEther('0');
     }
-    // console.log(lendingPlatform);
-    // console.log(selectedInterestRate);
-    // console.log([interestToLTV[selectedInterestRate], ethBalance.value])
     const maxLoan: BigNumber = await lendingPlatform.call('maxLoan', [interestToLTV[selectedInterestRate], ethBalance.value])
     return maxLoan;
   }
@@ -171,7 +164,6 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                     <span className="label-text-alt text-shrub-grey-200 text-sm font-light">Wallet balance:  {!ethBalanceIsLoading &&
                         <span>
                           {( ethBalance.displayValue || 0)} ETH
-                          {/*{(balance || 0).toLocaleString()} ETH*/}
                         </span>
 
                     }</span>
@@ -217,7 +209,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                       </span>
                     </div>
                     <div className="card w-full bg-teal-50 border border-shrub-green p-10">
-                      { (Number(borrowAmount))? <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} ETH</span>:<span className="sm: text-medium text-shrub-green-500 font-bold text-center">Enter amount to see the required collateral</span>}
+                      { (Number(borrowAmount))? <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} ETH</span>:<span className="sm: text-medium text-shrub-green-500 font-bold text-center">Amount must be filled to calculate required collateral</span>}
                     </div>
                   </div>
                 )}

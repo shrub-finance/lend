@@ -1,4 +1,4 @@
-import {FC, useState} from "react";
+import { FC, useEffect, useState } from 'react';
 import {useAddress, useContract, useContractWrite, Web3Button} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
 import {fromEthDate, interestToLTV, truncateEthAddress} from "../../utils/ethMethods";
@@ -63,6 +63,13 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
 
   const latestLoan = store?.loans?.reduce((latest, current) =>
     current.updated > latest.updated ? current : latest, store?.loans[0] || {});
+
+  useEffect(() => {
+    if (localError) {
+      const element = document.querySelector('.md\\:hero');
+      if (element) element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [localError]);
 
 
   return (

@@ -8,7 +8,7 @@ import {
   useContractRead
 } from "@thirdweb-dev/react";
 import { getBlock, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
-import { toEthDate, fromEthDate, getPlatformDates } from '@shrub-lend/common'
+import { toEthDate, fromEthDate } from '@shrub-lend/common'
 import {
   usdcAddress,
   chainlinkAggregatorAbi,
@@ -21,9 +21,11 @@ import { USER_POSITIONS_QUERY } from "../constants/queries";
 import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
-import ExtendView from './extend/ExtendView';
+import ExtendDepositView from './extend/ExtendDepositView';
 import { formatLargeUsdc } from '../utils/ethMethods';
 import {LendPosition} from "../types/types";
+import ExtendBorrowView from './extend/ExtendBorrowView';
+import { depositTerms, oneMonth, sixMonth, threeMonth, twelveMonth } from '../constants';
 
 const now = new Date();
 const Zero = ethers.constants.Zero;
@@ -67,13 +69,6 @@ export const DashboardView: FC = ({}) => {
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState(Zero);
-  const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
-  const depositTerms = [
-    { id: 'smallest-deposit', value: 'smallest-deposit', duration: oneMonth },
-    { id: 'small-deposit', value: 'small-deposit', duration: threeMonth },
-    { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
-    { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
-  ];
   const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState(Zero);
   const [selectedLendPositionTermDate, setSelectedLendPositionTermDate] = useState<Date | null>(null);
   const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(Zero);
@@ -176,7 +171,10 @@ export const DashboardView: FC = ({}) => {
 console.log(store);
 
   return (
+
     <div className="md:hero mx-auto p-4">
+
+
       <div className="md:hero-content flex flex-col ">
         <div className="relative group mt-4 w-full bg-shrub-grey-light">
           <div className="flex flex-col">
@@ -208,9 +206,29 @@ console.log(store);
                         </button>
                       </Link>
                     </span>
+
                   </div>
+
                   <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} >
-                    <ExtendView
+                    <ExtendDepositView
+                      onModalClose={handleUnlockFromExtend}
+                      depositTerms={depositTerms}
+                      timestamp={timestamp}
+                      selectedLendPositionBalance={selectedLendPositionBalance}
+                      setIsModalOpen={setIsModalOpen}
+                      setTimestamp={setTimestamp}
+                      showAPYSection={showAPYSection}
+                      estimatedAPY={estimatedAPY}
+                      setShowAPYSection={setShowAPYSection}
+                      selectedLendPositionTermDate={selectedLendPositionTermDate}
+                      selectedPoolShareTokenAmount={selectedPoolShareTokenAmount}
+                      selectedTotalEthYield={selectedTotalEthYield}
+                      selectedTokenSupply={selectedTokenSupply}
+                      selectedPoolTokenId={selectedPoolTokenId}
+                    />
+                  </Modal>
+                  <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} >
+                    <ExtendBorrowView
                       onModalClose={handleUnlockFromExtend}
                       depositTerms={depositTerms}
                       timestamp={timestamp}
@@ -234,7 +252,7 @@ console.log(store);
                         {" "}
                         Welcome back, ryan.eth!
                       </h3>
-                      Eth Price:{" "}
+                      ETH Price:{" "}
                       {ethers.utils.formatUnits(ethPrice, 8)} USDC
                     </span>
                     <span>{fromEthDate(blockchainTime).toLocaleString()}</span>
@@ -351,7 +369,6 @@ console.log(store);
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className="flex items-center justify-center space-x-2 h-full p-2">
-
                                           <button type="button" style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }} className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()  } onClick={() => {
                                           setIsModalOpen(true)
                                           setSelectedLendPositionBalance(currentBalance)
@@ -469,39 +486,18 @@ console.log(store);
                                     )}
                                   </td>
                                   <td>
-                                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${ethers.utils.formatUnits(
-                                      item.apy ?? "0",
-                                      2,
-                                    )}%`}</span>
+                                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${ethers.utils.formatUnits(item.apy ?? "0",2,)}%`}</span>
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {formatLargeUsdc(
                                         // TODO: Move this up and assign to a variable
-                                      ethers.BigNumber.from(
-                                        item.principal ?? "0",
-                                      ).add(
-                                        ethers.BigNumber.from(item.apy ?? "0")
-                                          .mul(
-                                            ethers.BigNumber.from(
-                                              item.principal ?? "0",
-                                            ),
-                                          )
-                                          .mul(
-                                            ethers.BigNumber.from(
-                                              blockchainTime,
-                                            ).sub(
-                                              ethers.BigNumber.from(
-                                                item.updated ?? "0",
-                                              ),
-                                            ),
-                                          )
-                                          .div(
-                                            ethers.BigNumber.from(
-                                              60 * 60 * 24 * 365,
-                                            ),
-                                          )
-                                          .div(ethers.utils.parseUnits("1", 8)),
-                                      )
+                                      ethers.BigNumber.from(item.principal ?? "0",)
+                                        .add(ethers.BigNumber.from(item.apy ?? "0")
+                                        .mul(ethers.BigNumber.from(item.principal ?? "0",),)
+                                        .mul(ethers.BigNumber.from(blockchainTime,)
+                                        .sub(ethers.BigNumber.from(item.updated ?? "0",),),)
+                                        .div(ethers.BigNumber.from(60 * 60 * 24 * 365,),)
+                                        .div(ethers.utils.parseUnits("1", 8)),)
                                     )}
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
@@ -510,22 +506,23 @@ console.log(store);
                                     ).toLocaleString()}
                                   </td>
                                   <td className="px-1 py-4 text-sm font-bold">
-                                    <button
-                                      type="button"
-                                      className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700"
-                                    >
-                                      <Image
-                                        src="/up-right-arrow.svg"
-                                        alt="down arrow"
-                                        width={20}
-                                        height={20}
-                                        className="mr-2"
-                                      />
-                                      Pay
-                                    </button>
+                                    <div className="flex items-center justify-center space-x-2 h-full p-2">
+                                      <button type="button"
+                                              className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700"
+                                              onClick={() => {
+                                                setIsModalOpen(true)
+                                              }}>
+                                        {/*Corresponding modal at the top*/}
+                                        Extend
+                                      </button>
+                                      <button type="button"
+                                              className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700">
+                                        Repay
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
-                              ))}
+                                ))}
                             </tbody>
                           </table>
                         </div>
@@ -533,11 +530,12 @@ console.log(store);
                     </ul>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+);
 }
