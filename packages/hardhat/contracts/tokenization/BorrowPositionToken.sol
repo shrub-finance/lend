@@ -5,10 +5,16 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 import "hardhat/console.sol";
+
+// Libraries
+import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
+import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
+
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {Constants} from '../libraries/configuration/Constants.sol';
+import {ShrubLendMath} from "../libraries/math/ShrubLendMath.sol";
+import {HelpersLogic} from '../libraries/logic/HelpersLogic.sol';
 
 // TODO: Index BPT by endDate so that we can find all of the borrows for a timestamp
 // NOTE: BPTs will not be indexed by owner as we can rely on external services to find this and we don't need this functionality in the smart contract itself
@@ -40,7 +46,7 @@ contract BorrowPositionToken is ERC721, Ownable {
 //        borrowData.startDate = something from the transaction
         borrowDatas[currentIndex] = borrowData;
 //        if (!borrowData.startDate) {
-//            borrowDatas[currentIndex].startDate = uint40(block.timestamp);
+//            borrowDatas[currentIndex].startDate = HelpersLogic.currentTimestamp();
 //        }
         _mint(account, currentIndex);
         tokensByTimestamp[borrowData.endDate].push(currentIndex);
@@ -68,7 +74,7 @@ contract BorrowPositionToken is ERC721, Ownable {
         return interestSinceTimestamp(tokenId, borrowDatas[tokenId].startDate);
     }
 
-    function getStartDate(uint tokenId) external view checkExists(tokenId) returns (uint256) {
+    function getStartDate(uint tokenId) external view checkExists(tokenId) returns (uint40) {
         return borrowDatas[tokenId].startDate;
     }
 
@@ -150,7 +156,7 @@ contract BorrowPositionToken is ERC721, Ownable {
         }
     }
 
-    function interestSinceTimestampsUnchecked(uint256 tokenId, uint256 timestampStart, uint256 timestampEnd) internal view returns (uint256) {
+    function interestSinceTimestampsUnchecked(uint256 tokenId, uint40 timestampStart, uint40 timestampEnd) internal view returns (uint) {
         DataTypes.BorrowData memory bd = borrowDatas[tokenId];
         console.log("Running interestSinceTimestampUnchecked");
         console.log(tokenId);
@@ -161,11 +167,18 @@ contract BorrowPositionToken is ERC721, Ownable {
         console.log(Constants.YEAR);
         console.log("---");
 
-        return bd.apy * bd.principal * (timestampEnd - timestampStart) / (Constants.APY_DECIMALS * Constants.YEAR);
+        uint durationRay = ShrubLendMath.durationToRay(timestampEnd - timestampStart);
+        uint annualInterestRay = WadRayMath.wadToRay(PercentageMath.percentMul(bd.apy, bd.principal));
+        return WadRayMath.rayToWad(
+            WadRayMath.rayMul(
+                durationRay,
+                annualInterestRay
+            )
+        );
     }
 
     // Returns the usdc interest earned since the last adjustment (payment) to a BPT
-    function interestSinceTimestamp(uint256 tokenId, uint timestamp) public view checkExists(tokenId) returns (uint256) {
+    function interestSinceTimestamp(uint256 tokenId, uint40 timestamp) public view checkExists(tokenId) returns (uint256) {
         console.log("running interestSinceTimestamp");
 //        console.log("running interestSinceTimestamp - (tokenId, bd.startDate, timestamp, block.timestamp, apy, principal, apydecimals, secondsinyear)");
         DataTypes.BorrowData memory bd = borrowDatas[tokenId];
@@ -182,16 +195,27 @@ contract BorrowPositionToken is ERC721, Ownable {
         if (bd.apy == 0) {
             return 0;
         }
+        uint durationRay;
         if (bd.startDate > timestamp) {
             console.log("bpt created after start date - using startDate in place of timestamp");
-            console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - bd.startDate) / (Constants.APY_DECIMALS * Constants.YEAR));
-            return bd.apy * bd.principal * (block.timestamp - bd.startDate) / (Constants.APY_DECIMALS * Constants.YEAR);
+            durationRay = ShrubLendMath.durationToRay(HelpersLogic.currentTimestamp() - bd.startDate);
+//            return bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - bd.startDate) / (Constants.APY_DECIMALS * Constants.YEAR);
+        } else {
+            durationRay = ShrubLendMath.durationToRay(HelpersLogic.currentTimestamp() - timestamp);
+//        return bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR);
         }
-        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (block.timestamp - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR));
-        return bd.apy * bd.principal * (block.timestamp - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR);
+//        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR));
+        uint annualInterestRay = WadRayMath.wadToRay(PercentageMath.percentMul(bd.apy, bd.principal));
+        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, WadRayMath.rayToWad( WadRayMath.rayMul( durationRay, annualInterestRay ) ));
+        return WadRayMath.rayToWad(
+            WadRayMath.rayMul(
+                durationRay,
+                annualInterestRay
+            )
+        );
     }
 
-    function partialRepayBorrow(uint256 tokenId, uint256 repaymentAmount, uint lastSnapshotDate, address sender) onlyOwner external returns(uint principalReduction) {
+    function partialRepayBorrow(uint256 tokenId, uint256 repaymentAmount, uint40 lastSnapshotDate, address sender) onlyOwner external returns(uint principalReduction) {
         console.log("Running partialRepayBorrow - tokenId, lastSnapshotDate, repaymentAmount, msg.sender");
         console.log(tokenId);
         console.log(lastSnapshotDate);
@@ -209,7 +233,7 @@ contract BorrowPositionToken is ERC721, Ownable {
         principalReduction = repaymentAmount - interest;
 
         // Make updates to BorrowPositionToken
-        bd.startDate = uint40(block.timestamp);
+        bd.startDate = HelpersLogic.currentTimestamp();
         bd.principal -= principalReduction;
     }
 

@@ -70,13 +70,14 @@ task("testLendingPlatform3", "Setup an environment for development")
         await partB();
         await partC();
         await partD();
-        await partD2();
-        await partD3();
-        await partE();
-        await partF();
-        await partF2();
-        await partG();
-        await partH();
+        await partD4();
+        // await partD2();
+        // await partD3();
+        // await partE();
+        // await partF();
+        // await partF2();
+        // await partG();
+        // await partH();
 
         async function partA() {
             // await env.run('createPlatformPools');
@@ -127,6 +128,12 @@ task("testLendingPlatform3", "Setup an environment for development")
             await env.run('getBorrow', {tokenid: 1});
             await env.run('getBorrow', {tokenid: 2});
             await env.run('getBorrow', {tokenid: 3});
+        }
+
+        async function partD4() {
+            await env.run('setTime', {ethDate: may2026});
+            await env.run('takeSnapshot', { account: deployer });
+            await env.run('getBorrow', {tokenid: 0});
         }
 
         async function partE() {

@@ -7,16 +7,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
-  const usdCoinDeployment = await deployments.get('USDCoin');
+  const allDeployments = await deployments.all();
 
   const NAME = "Shrub Borrow Position Token";
   const SYMBOL = "SBPT";
-  const usdcAddress = usdCoinDeployment.address;
+  const usdcAddress = allDeployments.USDCoin.address;
 
   await deploy("BorrowPositionToken", {
     from: deployer,
     log: true,
-    args: [NAME, SYMBOL, usdcAddress]
+    args: [NAME, SYMBOL, usdcAddress],
+      libraries: {
+        PercentageMath: allDeployments.PercentageMath.address,
+        WadRayMath: allDeployments.WadRayMath.address,
+        ShrubLendMath: allDeployments.ShrubLendMath.address,
+        HelpersLogic: allDeployments.HelpersLogic.address,
+      }
   });
 
 };

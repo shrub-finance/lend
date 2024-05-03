@@ -26,6 +26,14 @@ async function getDeployedContracts(env: HardhatRuntimeEnvironment) {
     }
 }
 
+async function signerFromFuzzyAccount(account: string, env: HardhatRuntimeEnvironment) {
+    const { ethers, getNamedAccounts } = env;
+    const namedAccounts = await getNamedAccounts();
+    return namedAccounts[account] ?
+        ethers.getSigner(namedAccounts[account]) :
+        ethers.getSigner(account);
+}
+
 // Tasks
 task("accounts", "Prints the list of accounts", async (taskArgs, env) => {
   const { ethers } = env;
@@ -53,13 +61,11 @@ task("getBalances", "Prints the ETH and USDC balance in all named accounts", asy
 task("getBalance", "Prints the ETH and USDC balance in specified account")
     .addParam("account", "either namedAccount name or address")
     .setAction(async (taskArgs, env) => {
-    const { ethers, getNamedAccounts, deployments } = env;
+    const { ethers, getNamedAccounts} = env;
     const account = taskArgs.account;
     const {usdc, aeth} = await getDeployedContracts(env);
     const namedAccounts = await getNamedAccounts();
-    const signer = namedAccounts[account] ?
-        await ethers.getSigner(namedAccounts[account]) :
-        await ethers.getSigner(account);
+    const signer = await signerFromFuzzyAccount(account, env);
     const accountName = namedAccounts[account] ?
         account :
         "address";
@@ -86,7 +92,7 @@ task("distributeUsdc", "distribute USDC from the deployer account")
     const to: Address = taskArgs.to;
     const amount: number = taskArgs.amount;
 
-    const {ethers, deployments, getNamedAccounts} = env;
+    const {ethers, getNamedAccounts} = env;
     const { deployer } = await getNamedAccounts();
     const {usdc} = await getDeployedContracts(env);
 
@@ -103,8 +109,7 @@ task("distributeUsdc", "distribute USDC from the deployer account")
     // console.log(`${amount} USDC sent to ${toFormatted}`);
     const txReceipt = await tx.wait();
     if (!txReceipt) {
-        console.log('timeout');
-        return;
+        throw new Error('no tx receipt');
     }
     const transaction = await tx.getTransaction();
     console.log(`${amount} USDC sent to ${toFormatted} in block number ${txReceipt.blockNumber} txid ${txReceipt.hash}`);
@@ -165,19 +170,16 @@ task("provideLiquidity", "add USDC to a lending pool")
         const liquidityAccountAddress = await liquidityAccount.getAddress();
         console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${liquidityAccountAddress}`);
         if (usdcBalance < parsedUsdc) {
-            console.log('insufficient USDC balance in account - aborting');
-            return;
+            throw new Error('insufficient USDC balance in account - aborting');
         }
+
         // Check approval of account to ensure that it is sufficient
-        const approved = await usdc.connect(liquidityAccount).allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
-        console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
-        // If approval is not sufficient then create an approval tx
-        if (approved < parsedUsdc) {
-            const needToApprove = parsedUsdc - approved;
-            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
-            await sendTransaction(usdc.connect(liquidityAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
-        }
-        // Send the deposit tx
+        await env.run('approveErc20', {
+            account: liquidityAccount.address,
+            tokenAddress: await usdc.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            requiredAmount: ethers.formatUnits(parsedUsdc, 6)
+        });
         await sendTransaction(lendingPlatform.connect(liquidityAccount).deposit(timestamp, parsedUsdc), `Deposit USDC`);
     })
 
@@ -202,16 +204,12 @@ task("extendDeposit", "extend an existing deposit")
         const tokenTotalSupply = await oldPoolShareToken.totalSupply();
 
         const usdcToDeposit = (lendingPool.lendPrincipal + lendingPool.lendAccumInterest) * tokenAmount / tokenTotalSupply;
-        // // Check approval of account to ensure that it is sufficient
-        const usdcApproved = await usdc.allowance(liquidityAccount.getAddress(), lendingPlatform.getAddress());
-        console.log(`approval is currently ${ethers.formatUnits(usdcApproved, 6)} USDC`);
-        // If approval is not sufficient then create an approval tx
-        if (usdcApproved < usdcToDeposit) {
-            const needToApprove = usdcToDeposit - usdcApproved;
-            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
-            await sendTransaction(usdc.connect(liquidityAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
-        }
-
+        await env.run('approveErc20', {
+            account: liquidityAccount.address,
+            tokenAddress: await usdc.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            requiredAmount: ethers.formatUnits(usdcToDeposit, 6)
+        });
         await sendTransaction(lendingPlatform.connect(liquidityAccount).extendDeposit(currentTimestamp, newTimestamp, tokenAmount), "Extend Deposit");
     });
 
@@ -250,34 +248,18 @@ task("extendBorrow", "extend an existing borrow")
         // Adding 1% buffer to deal with possible small increase in debt between calculation and when extend is called
         const usdcRequirement = borrowDebt * 101n / 100n + parsedAdditionalRepayment;
         // Check approval of account to ensure that it is sufficient
-        console.log(`approval is currently ${ethers.formatUnits(usdcAllowance, 6)} USDC`);
-        // If approval is not sufficient then create an approval tx
-        if (usdcAllowance < usdcRequirement) {
-            const usdcNeedToApprove = usdcRequirement - usdcAllowance;
-            console.log(`
-bpt.debt: ${borrowDebt}
-parsedAdditionalRequirement: ${parsedAdditionalRepayment}
-USDC Allowance: ${usdcAllowance}
-USDC Requirement: ${usdcRequirement}
-USDC needToApprove: ${usdcNeedToApprove}
-`)
-            console.log(`approving additional ${ethers.formatUnits(usdcNeedToApprove, 6)} USDC for deposit`);
-            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), usdcNeedToApprove), "USDC Approval");
-        }
-        if (aethAllowance < aethRequirement) {
-            const aethNeedToApprove = aethRequirement - aethAllowance;
-            console.log(`
-bpt.collateral: ${borrowDetails.collateral}
-parsedAdditionalCollateral: ${parsedAdditionalCollateral}
-flashLoanAmount: ${flashLoanAmount}
-AETH Allowance: ${aethAllowance}
-AETH Requirement: ${aethRequirement}
-AETH needToApprove: ${aethNeedToApprove}
-`)
-            console.log(`approving additional ${ethers.formatUnits(aethNeedToApprove, 6)} AETH for deposit`);
-            await sendTransaction(aeth.connect(borrowerAccount).approve(lendingPlatform.getAddress(), aethNeedToApprove), "AETH Approval");
-        }
-
+        await env.run('approveErc20', {
+            account: borrowerAccount.address,
+            tokenAddress: await usdc.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            requiredAmount: ethers.formatUnits(usdcRequirement, 6)
+        });
+        await env.run('approveErc20', {
+            account: borrowerAccount.address,
+            tokenAddress: await aeth.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            requiredAmount: ethers.formatUnits(aethRequirement, 18)
+        });
         await sendTransaction(
             lendingPlatform.connect(borrowerAccount).extendBorrow(
                 tokenId,
@@ -315,18 +297,14 @@ task("repayBorrow", "add USDC to a lending pool")
         if (usdcBalance < debt) {
             console.log('insufficient USDC balance in account - aborting');
             throw new Error("insufficient USDC balance in account - aborting");
-            return;
         }
         // Check approval of account to ensure that it is sufficient
-        const approved = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
-        console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
-        // If approval is not sufficient then create an approval tx
-        if (approved < debt) {
-            // Adding 1% buffer to deal with possible small increase in debt between calculation and when extend is called
-            const needToApprove = debt * 101n / 100n - approved;
-            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
-            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
-        }
+        await env.run('approveErc20', {
+            account: borrowerAccount.address,
+            tokenAddress: await usdc.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            requiredAmount: ethers.formatUnits(debt * 101n / 100n, 6)
+        });
         // Send the deposit tx
         await sendTransaction(lendingPlatform.connect(borrowerAccount).repayBorrow(tokenId, beneficiary), `Fully Repay Borrow`);
     })
@@ -352,18 +330,15 @@ task("partialRepayBorrow", "add USDC to a lending pool")
         const borrowerAccountAddress = await borrowerAccount.getAddress();
         console.log(`There is a balance of ${ethers.formatUnits(usdcBalance, 6)} USDC in account ${borrowerAccountAddress}`);
         if (usdcBalance < parsedUsdc) {
-            console.log('insufficient USDC balance in account - aborting');
-            return;
+            throw new Error("insufficient USDC balance in account - aborting");
         }
         // Check approval of account to ensure that it is sufficient
-        const approved = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
-        console.log(`approval is currently ${ethers.formatUnits(approved, 6)} USDC`);
-        // If approval is not sufficient then create an approval tx
-        if (approved < parsedUsdc) {
-            const needToApprove = parsedUsdc - approved;
-            console.log(`approving additional ${ethers.formatUnits(needToApprove, 6)} USDC for deposit`);
-            await sendTransaction(usdc.connect(borrowerAccount).approve(lendingPlatform.getAddress(), needToApprove), "USDC Approval");
-        }
+        await env.run('approveErc20', {
+            account: borrowerAccount.address,
+            tokenAddress: await usdc.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            requiredAmount: ethers.formatUnits(parsedUsdc, 6)
+        });
         // Send the deposit tx
         await sendTransaction(lendingPlatform.connect(borrowerAccount).partialRepayBorrow(tokenId, parsedUsdc), `Partial Repay Borrow`);
     })
@@ -401,6 +376,34 @@ task('takeSnapshot', 'snapshot and update the accumInterest and accumYield')
         await sendTransaction(lendingPlatform.connect(signer).takeSnapshot(), "takeSnapshot");
     })
 
+task('forceExtendBorrow', 'Liquidator extends overdue loan for a reward')
+    .addParam("account", "Address of account to force extend with (or named account)", undefined, types.string, false)
+    .addParam("tokenid", "Token ID of the borrow position token ERC-721 of the loan to extend", undefined, types.int, false)
+    .addParam("liquidationPhase", "Liquidation Phase to call this with. (0: 1% Bonus, 1: 2% Bonus, 2:3% Bonus)", 0, types.int, true)
+    .setAction(async (taskArgs, env) => {
+        const { account, tokenid, liquidationPhase } = taskArgs;
+        const { ethers } = env;
+        const {lendingPlatform, bpt} = await getDeployedContracts(env);
+        const signer = await signerFromFuzzyAccount(account, env);
+        const {usdc, aeth} = await getDeployedContracts(env);
+        const debt = await bpt.debt(tokenid);
+        const loanDetails = await bpt.getBorrow(tokenid);
+        await env.run('approveErc20', {
+            account: signer.address,
+            tokenAddress: await usdc.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            requiredAmount: ethers.formatUnits(debt * 101n / 100n, 6)
+        });
+        await env.run('approveErc20', {
+            account: signer.address,
+            tokenAddress: await aeth.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            // TODO: This could be reduced by the amount of the bonus... but don't want to think abou that right now
+            requiredAmount: ethers.formatUnits(loanDetails.collateral * 2n, 18)
+        });
+        await sendTransaction(lendingPlatform.connect(signer).forceExtendBorrow(tokenid, liquidationPhase), "forceExtendBorrow");
+    });
+
 task('borrow', 'take a borrow')
     .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
     .addParam("borrowAmount", "Amount of USDC to borrow - in USD", undefined, types.float, false)
@@ -415,14 +418,11 @@ task('borrow', 'take a borrow')
         const {ethers, deployments, getNamedAccounts} = env;
         const ltv = ethers.parseUnits(taskArgs.ltv.toString(), 2);
         const {lendingPlatform} = await getDeployedContracts(env);
-        const namedAccounts = await getNamedAccounts();
-        const borrowAccount = namedAccounts[account] ?
-            await ethers.getSigner(namedAccounts[account]) :
-            await ethers.getSigner(account);
+        const signer = await signerFromFuzzyAccount(account, env);
         const borrowAmountBigInt = parseUnits(borrowAmount.toString(), 6);
         const collateralAmountBigInt = parseEther(collateralAmount.toString());
 
-        await sendTransaction(lendingPlatform.connect(borrowAccount).borrow(
+        await sendTransaction(lendingPlatform.connect(signer).borrow(
             borrowAmountBigInt,
             collateralAmountBigInt,
             ltv,
@@ -437,19 +437,16 @@ task('withdraw', 'withdraw deposited funds after term')
     .setAction(async (taskArgs, env) => {
         const timestamp: number = taskArgs.timestamp;
         const account = taskArgs.account;
-        const {ethers, deployments, getNamedAccounts} = env;
+        const {ethers} = env;
         const {lendingPlatform} = await getDeployedContracts(env);
-        const namedAccounts = await getNamedAccounts();
-        const withdrawAccount = namedAccounts[account] ?
-            await ethers.getSigner(namedAccounts[account]) :
-            await ethers.getSigner(account);
+        const signer = await signerFromFuzzyAccount(account, env);
         const lendingPoolDetails = await lendingPlatform.getPool(timestamp);
         const poolShareTokenAddress = lendingPoolDetails.lendPoolShareTokenAddress;
         const poolShareToken = await ethers.getContractAt("PoolShareToken", poolShareTokenAddress);
-        const poolShareTokenBalance = await poolShareToken.balanceOf(withdrawAccount.address);
+        const poolShareTokenBalance = await poolShareToken.balanceOf(signer.address);
         console.log(`Exchanging ${poolShareTokenBalance} of poolShareToken `)
 
-        await sendTransaction(lendingPlatform.connect(withdrawAccount).withdraw(
+        await sendTransaction(lendingPlatform.connect(signer).withdraw(
             timestamp,
             poolShareTokenBalance
         ), `withdraw USDC`);
@@ -608,8 +605,7 @@ task("setTime", "update the blockchain time for the test environment")
         // Calculate the difference in seconds
         const timeDiff = ethDate - currentTimestamp;
         if (timeDiff < 0) {
-            console.log(`Cannot set a time to the past - Current time: ${currentTimestamp} - Value: ${ethDate}`);
-            return;
+            throw new Error(`Cannot set a time to the past - Current time: ${ethDate} - Value: ${ethDate}`);
         }
         // Increase the network time
         await ethers.provider.send('evm_increaseTime', [timeDiff]);
@@ -621,4 +617,36 @@ task("setTime", "update the blockchain time for the test environment")
             throw new Error('latest block not found');
         }
         console.log(`Time set to ${fromEthDate(latestBlock.timestamp)}`);
+    });
+
+task('approveErc20', 'checks if erc20 token has a sufficient allowance to be spent and increses allowance if necessary')
+    .addParam("account", "Address of account to take loan with (or named account)", undefined, types.string, false)
+    .addParam("tokenAddress", "contract address of the ERC-20 token", undefined, types.string, false)
+    .addParam("spendAddress", "address of the authorized spender", undefined, types.string, false)
+    .addParam("requiredAmount", "amount of the ERC-20 token that the authorized spender needs to spend", undefined, types.string, false)
+    .setAction(async (taskArgs, env) => {
+        const {account, tokenAddress, spendAddress, requiredAmount} = taskArgs;
+        const {ethers} = env;
+        const erc20contract = await ethers.getContractAt("ERC20", tokenAddress);
+        const signer = await signerFromFuzzyAccount(account, env);
+
+        const decimals = await erc20contract.decimals();
+        const symbol = await erc20contract.symbol();
+        // Check approval of account to ensure that it is sufficient
+        const approved = await erc20contract.connect(signer).allowance(signer.getAddress(), spendAddress);
+        console.log(`approval is currently ${ethers.formatUnits(approved, decimals)} ${symbol}`);
+
+
+        const parsedRequiredAmount = ethers.parseUnits(requiredAmount, decimals);
+        // If approval is not sufficient then create an approval tx
+        if (approved < parsedRequiredAmount) {
+            const needToApprove = parsedRequiredAmount - approved;
+            console.log(`approving additional ${ethers.formatUnits(needToApprove, decimals)} ${symbol} for deposit`);
+            console.log(`
+        APPROVAL:
+        approved: ${approved}
+        needToApprove: ${needToApprove}
+        `)
+            await sendTransaction(erc20contract.connect(signer).approve(spendAddress, needToApprove + approved), `${symbol} Approval`);
+        }
     });
