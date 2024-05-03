@@ -12,6 +12,7 @@ import {Constants} from '../configuration/Constants.sol';
  */
 library ShrubLendMath {
     uint256 internal constant USDC_WAD_RATIO = 1e12;
+    uint256 internal constant PERCENTAGE_WAD_RATIO = 1e14;
 
     /**
     * @dev Casts 6 decimals (6 decimals) up to Wad
@@ -43,6 +44,23 @@ library ShrubLendMath {
                 b := add(b, 1)
             }
         }
+    }
+
+    /**
+   * @dev Casts wad down to a percentage (4 decimal)
+   * @dev assembly optimized for improved gas savings, see https://twitter.com/transmissions11/status/1451131036377571328
+   * @param a Wad
+   * @return b = a converted to 4 decimals, rounded half up to the nearest unit
+   */
+    function wadToPercentage(uint256 a) internal pure returns (uint16 b) {
+        assembly {
+            b := div(a, PERCENTAGE_WAD_RATIO)
+            let remainder := mod(a, PERCENTAGE_WAD_RATIO)
+            if iszero(lt(remainder, div(PERCENTAGE_WAD_RATIO, 2))) {
+                b := add(b, 1)
+            }
+        }
+        b = uint16(b);
     }
 
     /**

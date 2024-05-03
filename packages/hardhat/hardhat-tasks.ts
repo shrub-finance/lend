@@ -377,7 +377,7 @@ task('takeSnapshot', 'snapshot and update the accumInterest and accumYield')
 task('forceExtendBorrow', 'Liquidator extends overdue loan for a reward')
     .addParam("account", "Address of account to force extend with (or named account)", undefined, types.string, false)
     .addParam("tokenid", "Token ID of the borrow position token ERC-721 of the loan to extend", undefined, types.int, false)
-    .addParam("liquidationPhase", "Liquidation Phase to call this with. (1: 1% Bonus, 2: 2% Bonus, 3:3% Bonus)", 1, types.int, true)
+    .addParam("liquidationPhase", "Liquidation Phase to call this with. (0: 1% Bonus, 1: 2% Bonus, 2:3% Bonus)", 0, types.int, true)
     .setAction(async (taskArgs, env) => {
         const { account, tokenid, liquidationPhase } = taskArgs;
         const { ethers } = env;

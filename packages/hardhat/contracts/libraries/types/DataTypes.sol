@@ -42,20 +42,20 @@ library DataTypes {
 
     struct BorrowData {
         uint40 startDate;  // Max Date with uint40 is 2106 (83 years from now)
-        uint40 endDate;
-        uint256 principal;
-        uint256 collateral;
-        uint16 apy;
+        uint40 endDate;  // End Date of the loan (uint40)
+        uint256 principal;  // USDC Amount borrowed (6 decimals)
+        uint256 collateral;  // ETH provided as collateral (Wad)
+        uint16 apy;  // Interest rate of loan (percentage)
     }
 
     struct TakeLoanInternalParams {
         uint256 principal; // Amount of USDC with 6 decimal places
         uint256 collateral; // Amount of ETH collateral with 18 decimal places
         uint16 ltv; // ltv expressed as a percentage
-        uint40 timestamp;
-        uint40 startDate;
-        address beneficiary;
-        address loanHolder;
+        uint40 timestamp;  // End date of the borrow
+        uint40 startDate;  // Start date of the borrow
+        address beneficiary;  // Account to receive the USDC borrowed
+        address loanHolder;  // Account to take passession of the BPT
     }
 
     struct calcLPIncreasesParams {

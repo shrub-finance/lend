@@ -270,6 +270,20 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         );
     }
 
+/**
+    * @notice Returns the current calculated ltv of a loan
+    * @dev makes use of getEthPrice
+    * @param tokenId - the tokenId of the Borrow Position Token of the loan
+    * @return ltv - loan to value of loan (expressed as percentage)
+*/
+    function getLtv(uint tokenId) public view returns (uint16 ltv) {
+        DataTypes.BorrowData memory bd = bpt.getLoan(tokenId);
+        uint usdcWad = ShrubLendMath.usdcToWad(bd.principal);
+        uint collateralValue = WadRayMath.wadMul(bd.collateral, getEthPrice());
+        uint percentageWad = WadRayMath.wadDiv(usdcWad, collateralValue);
+        return ShrubLendMath.wadToPercentage(percentageWad);
+    }
+
     function getDeficitForPeriod(
         uint40 _timestamp
     ) public validTimestamp(_timestamp) view returns (uint256 deficit) {
@@ -813,7 +827,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         DataTypes.BorrowData memory loanDetails = bpt.getLoan(tokenId);
         uint debt = bpt.debt(tokenId);
         address borrower = bpt.ownerOf(tokenId);
-        require(liquidationPhase > 0 && liquidationPhase < 4, "invalid claim");
+        require(liquidationPhase < 4, "invalid claim");
 //        uint availabilityTime = liquidationPhase == 1 ? Configuration.FORCED_EXTENSION_1 :
 //            liquidationPhase == 2 ? Configuration.FORCED_EXTENSION_2 :
 //            Configuration.FORCED_EXTENSION_3;
@@ -848,7 +862,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             collateral: newCollateral,
         // TODO: ltv should be calculated to be the smallest valid
         // TODO: the LTV to be provided to this method needs to be calculated - probably by a reusable method
-            ltv: PlatformConfig.calculateSmallestValidLtv(),
+            ltv: calculateSmallestValidLtv(getLtv(tokenId), true),
             timestamp: getNextActivePool(loanDetails.endDate),
             startDate: lastSnapshotDate,
             beneficiary: msg.sender,

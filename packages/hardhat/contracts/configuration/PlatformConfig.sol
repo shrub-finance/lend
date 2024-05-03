@@ -66,7 +66,7 @@ contract PlatformConfig is Ownable {
         config.END_OF_LOAN_PHASES[6] = EndOfLoanParams({bonus: 600, liquidationEligible: true, duration: 5 * Constants.HOUR});
     }
 
-    function calculateSmallestValidLtv(uint16 ltv, bool isExtend) external view returns (uint16) {
+    function calculateSmallestValidLtv(uint16 ltv, bool isExtend) public view returns (uint16) {
 
         uint16 smallestValid = 0; // Initialize to 0 or a suitable default value
         bool found = false;
