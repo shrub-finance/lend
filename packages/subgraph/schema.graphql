@@ -51,8 +51,8 @@ type Borrow @entity {
     collateral: BigInt!
     collateralReturned: BigInt!
     startDate: BigInt!
-    ltv: BigInt!
-    apy: BigInt!
+    ltv: Int!
+    apy: Int!
     user: User
     beneficiary: User
 }
