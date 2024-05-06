@@ -282,8 +282,18 @@ export const DashboardView: FC = ({}) => {
                                     const tokenAmountBN = ethers.BigNumber.from(item.amount ? item.amount : Zero);
                                     const tokenSupplyBN = ethers.BigNumber.from(item.lendingPool.tokenSupply ? item.lendingPool.tokenSupply : Zero);
                                     const netDeposits = depositsUsdcBN.sub(withdrawsUsdcBN);
-                                    const currentBalance = tokenSupplyBN.eq(Zero) ? Zero : (
-                                    lendingPoolPrincipalBN.add(lendingPoolUsdcInterestBN).add(ethPrice.mul(lendingPoolEthYieldBN).div(ethers.utils.parseUnits("1", 20)))).mul(tokenAmountBN).div(tokenSupplyBN);
+                                    const currentBalance = tokenSupplyBN.eq(Zero) ? Zero :
+                                    (
+                                        lendingPoolPrincipalBN
+                                            .add(lendingPoolUsdcInterestBN)
+                                            .add(
+                                                ethPrice
+                                                    .mul(lendingPoolEthYieldBN)
+                                                    .div(ethers.utils.parseUnits("1", 20))
+                                            )
+                                    )
+                                        .mul(tokenAmountBN)
+                                        .div(tokenSupplyBN);
                                     const interestEarned = currentBalance.sub(netDeposits);
                                     return (
                                   <tr key={`earnRow-${index}`} className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700">
