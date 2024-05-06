@@ -10,21 +10,23 @@ import Image from 'next/image'
 import { Loan } from '../../types/types'
 
 interface BorrowSummaryViewProps {
-  requiredCollateral: string;
+  requiredCollateral: ethers.BigNumber;
   timestamp: number;
   interestRate: string;
   amount: string;
   onBack: () => void;
   onCancel: () => void;
+  setRequiredCollateral: (value: ethers.BigNumber) => void;
 }
 
 export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                                                 onBack,
                                                                 onCancel,
                                                                 requiredCollateral,
+                                                                setRequiredCollateral,
                                                                 timestamp,
                                                                 interestRate,
-                                                                amount
+                                                                amount,
                                                               }) => {
 
   const router = useRouter();
@@ -116,7 +118,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   </div>
                   <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">You
                     are borrowing <strong>{amount} USDC</strong> and
-                    giving <strong>{requiredCollateral} ETH</strong> as collateral. The collateral will be locked until
+                    giving <strong>{ethers.utils.formatEther(requiredCollateral)} ETH</strong> as collateral. The collateral will be locked until
                     the loan is fully paid, and then returned to
                     you.</p>
                 </div>}
@@ -156,7 +158,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row  justify-between">
                       <span className="">Required Collateral</span>
-                      <span>{requiredCollateral} ETH</span>
+                      <span>{ethers.utils.formatEther(requiredCollateral)} ETH</span>
                     </div>
                     <div className="flex flex-row  justify-between">
                       <span className="">Start Date</span>
@@ -185,13 +187,13 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       </span>
                     </div>
                   </div>
-
+                  {/*divider*/}
                   <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
                   {/*total*/}
                   <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row justify-between ">
                       <span className="">Due today</span>
-                      <span>{requiredCollateral} ETH</span>
+                      <span>{ethers.utils.formatEther(requiredCollateral)} ETH</span>
                     </div>
                     <div className="flex flex-row justify-between">
                       <span className="">Gas Cost</span>
@@ -205,10 +207,10 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                               action={async (lendingPlatform) => {
                                 setLocalError('');
                                 return await lendingPlatform?.contractWrapper?.writeContract.takeLoan(ethers.utils.parseUnits(amount, 6),
-                                  ethers.utils.parseEther(requiredCollateral),
+                                  requiredCollateral,
                                   interestToLTV[interestRate],
                                   timestamp, {
-                                    value: ethers.utils.parseEther(requiredCollateral)
+                                    value: requiredCollateral
                                   })
                               }}
 
@@ -217,7 +219,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                 const newLoan:Loan = {
                                   id: tx.hash,
                                   status: "pending",
-                                  collateral: ethers.utils.parseEther(requiredCollateral),
+                                  collateral: requiredCollateral,
                                   created: Math.floor(Date.now() / 1000),
                                   ltv: interestToLTV[interestRate].toString(),
                                   originalPrincipal: (ethers.utils.parseEther(amount)).toString(),

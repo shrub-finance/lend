@@ -23,7 +23,7 @@ export function handleErrorMessagesFactory(
           setter("Pools are not initiated.")
         }
         else if(customError.reason.includes('Insufficient collateral provided for specified ltv')){
-          setter("Collateral is insufficient for the LTV you selected. Try adding more ETH or choose different LTV. ")
+          setter("Collateral is insufficient for the LTV you selected. Try adding more ETH or choose a different LTV. ")
         }
         else {
           setter(customError.reason);

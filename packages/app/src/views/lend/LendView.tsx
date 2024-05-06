@@ -29,7 +29,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
     if (!usdcBalanceIsLoading) {
       setLendAmount(usdcBalance.displayValue);
     } else {
-      handleErrorMessages({customMessage: "Wallet not connected. Please check."});
+      handleErrorMessages({customMessage: "Wallet not connected. Please check your connection."});
       console.log('wallet not connected');
     }
   }

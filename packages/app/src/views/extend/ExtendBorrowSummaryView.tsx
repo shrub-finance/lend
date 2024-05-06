@@ -15,27 +15,15 @@ import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
 import {LendPosition} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
 
-interface ExtendSummaryProps {
-  lendAmountBeingExtended: ethers.BigNumber;
-  estimatedAPY: ethers.BigNumber;
-  oldTimestamp: Date;
-  newTimestamp: Date;
-  poolShareTokenAmount: ethers.BigNumber;
-  totalEthYield: ethers.BigNumber;
-  tokenSupply: ethers.BigNumber;
+interface ExtendDepositSummaryProps {
+
   onBackExtend: () => void;
 }
 
-const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (initiated: boolean) => void }> = (
-  { lendAmountBeingExtended,
-    estimatedAPY,
-    oldTimestamp,
-    newTimestamp,
-    poolShareTokenAmount,
-    totalEthYield,
-    tokenSupply,
+const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendDepositActionChange: (initiated: boolean) => void }> = (
+  {
     onBackExtend,
-    onExtendActionChange}) =>
+    onExtendDepositActionChange}) =>
 {
   const [
     getActiveLendingPools,
@@ -51,7 +39,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
     const {store, dispatch} = useFinancialData();
   const walletAddress = useAddress();
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
-  const [extendActionInitiated, setExtendActionInitiated] = useState(false);
+  const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
@@ -80,8 +68,8 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
 
 
   useEffect(() => {
-    onExtendActionChange(extendActionInitiated);
-  }, [extendActionInitiated, onExtendActionChange]);
+    onExtendDepositActionChange(extendDepositActionInitiated);
+  }, [extendDepositActionInitiated, onExtendDepositActionChange]);
 
 
   return (
@@ -90,7 +78,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
         <div className="card w-full">
           <div className="card-body">
             <div>
-              {!extendActionInitiated && (
+              {!extendDepositActionInitiated && (
                 <div className='flex items-center'>
                   <button onClick={onBackExtend}>
                     <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none' className='w-6 grow-0 order-0 flex-none mr-[16px] mb-[4px]'>
@@ -102,18 +90,13 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
               )}
 
               <div className='w-full text-xl font-semibold flex flex-row'>
-                <span className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(lendAmountBeingExtended)} USDC</span>
+                <span className='text-4xl  font-medium text-left w-[500px]'>{} USDC</span>
                 <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
               </div>
               <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-                When you extend this deposit, <span className='font-bold'>{formatLargeUsdc(lendAmountBeingExtended)} USDC</span> will be
-                moved from the old lending pool ending<span
-                className='font-bold'> {oldTimestamp?.toLocaleString()}</span> to the new lending pool ending <span
-                className='font-bold'>{newTimestamp?.toLocaleString()}</span>. You will collect earned ETH yield of <span className='font-bold'>
-                  {
-                    poolShareTokenAmount && ethers.utils.formatUnits(ethers.BigNumber.from(poolShareTokenAmount).mul(totalEthYield).div(tokenSupply), 6)
-                  }
-              </span>.</p>
+                When you extend this borrow of <span className='font-bold'>{} USDC</span>, your exisiting borrow position
+                token will be burnt and a new one will be minted reflecting the new date of <span
+                className='font-bold'>{}</span> . </p>
             </div>
 
             <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
@@ -122,38 +105,46 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
             <div>
               <div className='mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
                 <div className='flex flex-row  justify-between'>
-                  <span className=''>Previous End Date</span>
-                  <span>{oldTimestamp?.toDateString()}</span>
+                  <span className=''>Collateral</span>
+                  <span>{}</span>
                 </div>
-                <div className="flex flex-row  justify-between">
-                  <span className="">New End Date</span>
-                  <span>{newTimestamp?.toDateString()}
-                    <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>
+                <div className='flex flex-row  justify-between'>
+                  <span className=''>Principal</span>
+                  <span>{}
+                    <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20'
+                           height='20' />
                       </span>
                 </div>
-                <div className="flex flex-row  justify-between">
-                  <span className="">Estimated Yield ✨</span>
-                  <span className="font-semibold text-shrub-green-500"> {formatPercentage(estimatedAPY)}%</span>
+                <div className='flex flex-row  justify-between'>
+                  <span className=''>Current LTV ✨</span>
+                  <span className='font-semibold text-shrub-green-500'> {}%</span>
                 </div>
-                <div className="flex flex-row  justify-between">
-                  <span className="">Contract Address</span>
-                  <span>{truncateEthAddress(lendingPlatformAddress)}
-                    <Image alt="copy icon" src="/copy.svg" className="w-6 hidden md:inline align-baseline ml-2" width="24" height="24"/>
+                <div className='flex flex-row  justify-between'>
+                  <span className=''>Due Date</span>
+                  <span>{}
+                    <Image alt='copy icon' src='/copy.svg' className='w-6 hidden md:inline align-baseline ml-2'
+                           width='24' height='24' />
+                      </span>
+                </div>
+                <div className='flex flex-row  justify-between'>
+                  <span className=''>New Date</span>
+                  <span>{}
+                    <Image alt='copy icon' src='/copy.svg' className='w-6 hidden md:inline align-baseline ml-2'
+                           width='24' height='24' />
                       </span>
                 </div>
               </div>
 
-              <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
-             {/*approve and extend deposit*/}
-             {(allowanceIsLoading) ? (
-               <p>Loading balance...</p>
-             ) : (
-               <>
-                 {/* Approve if allowance is insufficient */}
-                 {!allowance ||
-                 BigNumber.from(allowance).lt(
-                   ethers.utils.parseUnits(formatLargeUsdc(lendAmountBeingExtended), 6),
-                 )
+              <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
+              {/*approve and extend deposit*/}
+              {(allowanceIsLoading) ? (
+                <p>Loading balance...</p>
+              ) : (
+                <>
+                  {/* Approve if allowance is insufficient */}
+                  {!allowance
+                    // ||
+                 // BigNumber.from(allowance).lt(ethers.utils.parseUnits(formatLargeUsdc('lendAmountBeingExtended'), 6),)
                    && (
                      <Web3Button
                        contractAddress={usdcAddress}
@@ -180,29 +171,25 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                          handleErrorMessages({err: e});
                        }}
                      >
-                       {!extendActionInitiated && !approveUSDCActionInitiated  ?'Approve USDC': 'USDC Approval Submitted'}
+                       {!extendDepositActionInitiated && !approveUSDCActionInitiated  ?'Approve USDC': 'USDC Approval Submitted'}
                      </Web3Button>
                    )
                    }
 
-                 {allowance &&
-                   !BigNumber.from(allowance).lt(
-                     ethers.utils.parseUnits(formatLargeUsdc(lendAmountBeingExtended), 6),
-                   ) && (
+                 {allowance
+                   // &&
+                   // !BigNumber.from(allowance).lt(ethers.utils.parseUnits(formatLargeUsdc('lendAmountBeingExtended'), 6),)
+                   && (
                      <Web3Button
                        contractAddress={lendingPlatformAddress}
                        contractAbi = {lendingPlatformAbi}
-                       isDisabled={extendActionInitiated}
+                       isDisabled={extendDepositActionInitiated}
                        className="web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
                        action={
 
                          async (lendingPlatform) =>
                          {
-                             return await lendingPlatform?.contractWrapper?.writeContract?.extendDeposit(
-                               toEthDate(oldTimestamp),
-                               toEthDate(newTimestamp),
-                               ethers.utils.formatUnits(poolShareTokenAmount, 0)
-                             );
+
                          }
                      }
                        onSuccess={
@@ -212,43 +199,39 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                                handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
                                return
                            }
-                           const filteredLendingPools =
-                               activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
-                                   item => item.timestamp === toEthDate(oldTimestamp).toString(),
-                               );
-                           console.log(filteredLendingPools);
+                         const filteredLendingPools =''
+                           // const filteredLendingPools =
 
                            const matchedLendingPool =
                                filteredLendingPools.length > 0
                                    ? filteredLendingPools[0]
                                    : null;
                            const newLendPositionWithdraw: LendPosition = {
-                               id: `${matchedLendingPool.id}-withdraw`,
+                               id: `${matchedLendingPool}-withdraw`,
                                status: "pending",
-                               depositsUsdc: lendAmountBeingExtended.mul(-1).toString(),
-                               apy: formatPercentage(estimatedAPY),
-                               currentBalanceOverride: lendAmountBeingExtended.mul(-1).toString(),
+                               depositsUsdc:matchedLendingPool ,
+                               apy: formatPercentage('estimatedAPY'),
+                               currentBalanceOverride: matchedLendingPool,
                                interestEarnedOverride: "0",
                                lendingPool: {
-                                   id: matchedLendingPool.id,
-                                   timestamp: matchedLendingPool.timestamp,
-                                   tokenSupply: matchedLendingPool.tokenSupply,
-                                   totalEthYield: matchedLendingPool.totalEthYield,
-                                   totalPrincipal: matchedLendingPool.totalPrincipal,
-                                   totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
-                                   __typename: matchedLendingPool.__typename,
+                                   id: matchedLendingPool,
+                                   timestamp: matchedLendingPool,
+                                   tokenSupply: matchedLendingPool,
+                                   totalEthYield: matchedLendingPool,
+                                   totalPrincipal: matchedLendingPool,
+                                   totalUsdcInterest: matchedLendingPool,
+                                   __typename: matchedLendingPool,
                                },
-                               timestamp: toEthDate(oldTimestamp),
-                               updated: Math.floor(Date.now() / 1000),
+                               timestamp: 1,
                            };
                            const newLendPositionDeposit = {
                                ...newLendPositionWithdraw,
-                               id: `${matchedLendingPool.id}-deposit`,
-                               depositsUsdc: lendAmountBeingExtended.toString(),
-                               currentBalanceOverride: lendAmountBeingExtended.toString(),
+                               id: `${matchedLendingPool}-deposit`,
+                               depositsUsdc: 'lendAmountBeingExtended'.toString(),
+                               currentBalanceOverride: 'lendAmountBeingExtended'.toString(),
                                lendingPool: {
                                    ...newLendPositionWithdraw.lendingPool,
-                                   timestamp: toEthDate(newTimestamp).toString()
+                                   timestamp: matchedLendingPool
                                }
                            };
                            dispatch({
@@ -262,34 +245,34 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                            dispatch({
                                type: "UPDATE_LEND_POSITION_STATUS",
                                payload: {
-                                   id: matchedLendingPool.id,
+                                   id: matchedLendingPool,
                                    status: "extending"
                                },
                            });
 
                            try {
-                               const receipt = await tx.wait();
-                               if(!receipt.status) {
-                                   throw new Error("Transaction failed")
-                               }
+                               const receipt = {  };
+                               // if(!receipt.status) {
+                               //     throw new Error("Transaction failed")
+                               // }
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
-                                       id: `${matchedLendingPool.id}-deposit`,
+                                       id: `${matchedLendingPool}-deposit`,
                                        status: "confirmed",
                                    },
                                });
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
-                                       id: `${matchedLendingPool.id}-withdraw`,
+                                       id: `${matchedLendingPool}-withdraw`,
                                        status: "confirmed",
                                    },
                                });
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
-                                       id: matchedLendingPool.id,
+                                       id: matchedLendingPool,
                                        status: "extended",
                                    },
                                });
@@ -298,20 +281,20 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
-                                       id: `${matchedLendingPool.id}-deposit`,
+                                       id: `${matchedLendingPool}-deposit`,
                                        status: "failed",
                                    },
                                });
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
-                                       id: `${matchedLendingPool.id}-withdraw`,
+                                       id: `${matchedLendingPool}-withdraw`,
                                        status: "failed",
                                    },
                                });
                            }
 
-                           setExtendActionInitiated(true)
+                           setExtendDepositActionInitiated(true)
 
 
                        }}
@@ -319,7 +302,7 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
                          handleErrorMessages({err: e});
                        }}
                      >
-                       {!extendActionInitiated ?'Initiate Extend': 'Extend Order Submitted'}
+                       {!extendDepositActionInitiated ?'Initiate Extend': 'Extend Order Submitted'}
                      </Web3Button>
                    )}
                </>
@@ -332,4 +315,4 @@ const ExtendSummaryView: React.FC<ExtendSummaryProps & { onExtendActionChange: (
   );
 };
 
-export default ExtendSummaryView;
+export default ExtendDepositSummaryView;
