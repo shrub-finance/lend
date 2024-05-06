@@ -134,6 +134,8 @@ task("testLendingPlatform3", "Setup an environment for development")
             await env.run('setTime', {ethDate: may2026});
             await env.run('takeSnapshot', { account: deployer });
             await env.run('getBorrow', {tokenid: 0});
+            await env.run('setTime', {ethDate: may2026 + 60 * 135});
+            await env.run('takeSnapshot', { account: deployer });
         }
 
         async function partE() {

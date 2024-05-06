@@ -96,23 +96,24 @@ task("distributeUsdc", "distribute USDC from the deployer account")
     const { deployer } = await getNamedAccounts();
     const {usdc} = await getDeployedContracts(env);
 
-    const toFormatted = ethers.getAddress(to);
+    const signer = await signerFromFuzzyAccount(taskArgs.to, env);
+    // const toFormatted = ethers.getAddress(to);
     const amountInUnits = amount * 10 ** 6;
 
-    assert.ok(ethers.isAddress(toFormatted), "invalid to address");
-    assert.notEqual(toFormatted, deployer, "Address must not be deployer address")
+    // assert.ok(ethers.isAddress(toFormatted), "invalid to address");
+    // assert.notEqual(toFormatted, deployer, "Address must not be deployer address")
     assert.ok(amount > 0, "Amount must be greater than 0");
     assert.equal(amountInUnits, Math.floor(amountInUnits), "Amount must have no more than 6 decimals")
     const deployerAccount = await ethers.getSigner(deployer);
 
-    const tx = await usdc.connect(deployerAccount).transfer(toFormatted, amountInUnits)
+    const tx = await usdc.connect(deployerAccount).transfer(signer.address, amountInUnits)
     // console.log(`${amount} USDC sent to ${toFormatted}`);
     const txReceipt = await tx.wait();
     if (!txReceipt) {
         throw new Error('no tx receipt');
     }
     const transaction = await tx.getTransaction();
-    console.log(`${amount} USDC sent to ${toFormatted} in block number ${txReceipt.blockNumber} txid ${txReceipt.hash}`);
+    console.log(`${amount} USDC sent to ${signer.address} in block number ${txReceipt.blockNumber} txid ${txReceipt.hash}`);
   })
 
 task("createPool", "Create a lending pool")
@@ -383,9 +384,8 @@ task('forceExtendBorrow', 'Liquidator extends overdue loan for a reward')
     .setAction(async (taskArgs, env) => {
         const { account, tokenid, liquidationPhase } = taskArgs;
         const { ethers } = env;
-        const {lendingPlatform, bpt} = await getDeployedContracts(env);
+        const {lendingPlatform, bpt, usdc, aeth} = await getDeployedContracts(env);
         const signer = await signerFromFuzzyAccount(account, env);
-        const {usdc, aeth} = await getDeployedContracts(env);
         const debt = await bpt.debt(tokenid);
         const loanDetails = await bpt.getBorrow(tokenid);
         await env.run('approveErc20', {
@@ -402,6 +402,26 @@ task('forceExtendBorrow', 'Liquidator extends overdue loan for a reward')
             requiredAmount: ethers.formatUnits(loanDetails.collateral * 2n, 18)
         });
         await sendTransaction(lendingPlatform.connect(signer).forceExtendBorrow(tokenid, liquidationPhase), "forceExtendBorrow");
+    });
+
+task('forceLiquidation', 'Liquidator pays off overdue loan in exchange for collateral at a discount')
+    .addParam("account", "Address of account to liquidate with (or named account)", undefined, types.string, false)
+    .addParam("tokenid", "Token ID of the borrow position token ERC-721 of the loan to liquidate", undefined, types.int, false)
+    .addParam("liquidationPhase", "Liquidation Phase to call this with. (3: 4% Bonus, 4: 5% Bonus, 5: 6% Bonus)", 3, types.int, true)
+    .setAction(async (taskArgs, env) => {
+        const { account, tokenid, liquidationPhase } = taskArgs;
+        const { ethers } = env;
+        const {lendingPlatform, bpt, usdc} = await getDeployedContracts(env);
+        const signer = await signerFromFuzzyAccount(account, env);
+        const debt = await bpt.debt(tokenid);
+        const loanDetails = await bpt.getBorrow(tokenid);
+        await env.run('approveErc20', {
+            account: signer.address,
+            tokenAddress: await usdc.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            requiredAmount: ethers.formatUnits(debt * 101n / 100n, 6)
+        });
+        await sendTransaction(lendingPlatform.connect(signer).forceLiquidation(tokenid, liquidationPhase), "forceLiquidation");
     });
 
 task('borrow', 'take a borrow')

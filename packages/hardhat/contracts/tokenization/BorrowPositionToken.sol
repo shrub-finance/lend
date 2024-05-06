@@ -250,4 +250,19 @@ contract BorrowPositionToken is ERC721, Ownable {
         return currentIndex;
     }
 
+/**
+    * @notice Update the borrowData for a borrow that is being liquidated
+    * @dev Can only be called by the lendingPlatform contract
+    * @dev principal of borrow is reduced to 0 as no more is owed
+    * @dev collateral of borrow is reduced by the bonus amount which is transferred to the liquidator
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+    * @param bonus uint256 - amount in aETH that is to be transferred to the liquidator in exchange for repaying the loan
+*/
+    function fullLiquidateBorrowData(uint256 tokenId, uint256 bonus) onlyOwner external {
+        DataTypes.BorrowData memory bd = borrowDatas[tokenId];
+        bd.principal = 0;
+        bd.collateral = bd.collateral - bonus;
+        borrowDatas[tokenId] = bd;
+    }
+
 }
