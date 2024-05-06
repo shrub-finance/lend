@@ -66,7 +66,6 @@ export function handleNewDeposit(event: NewDeposit): void {
 }
 
 export function handleNewBorrow(event: NewBorrow): void {
-    // event NewBorrow(uint timestamp, address borrower, uint256 collateral, uint256 amount, uint256 apy);
     log.info("NewBorrow: tokenid: {}, timestamp: {}, borrower: {}, collateral: {}, principal: {}, startDate: {}, apy: {}", [
         event.params.tokenId.toString(),
         event.params.timestamp.toString(),

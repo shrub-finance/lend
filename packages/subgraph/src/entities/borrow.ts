@@ -17,7 +17,7 @@ export function getBorrowByTokenId(
 export function getBorrow(
     tokenId: BigInt,
     user: Address,
-    apy: BigInt,
+    apy: i32,
     principal: BigInt,
     collateral: BigInt,
     timestamp: BigInt,
@@ -38,7 +38,7 @@ export function getBorrow(
 function createBorrow(
     id: string,
     user: Address,
-    apy: BigInt,
+    apy: i32,
     principal: BigInt,
     collateral: BigInt,
     timestamp: BigInt,
@@ -60,7 +60,7 @@ function createBorrow(
     borrow.user = userObj.id;
     // borrow.owner = owner.toHexString();
     borrow.apy = apy;
-    borrow.ltv = Zero;  // This is complicated and would need to be calculated after price changes at some interval - leaving as 0 for now
+    borrow.ltv = 0;  // This is complicated and would need to be calculated after price changes at some interval - leaving as 0 for now
     borrow.principal = principal;
     borrow.originalPrincipal = principal;
     borrow.paid = Zero;
