@@ -2,9 +2,10 @@ import React, {useState} from "react";
 import {toEthDate} from '@shrub-lend/common';
 import {formatDate, getPlatformDates} from "@shrub-lend/common"
 import Image from 'next/image'
+import { ethers } from 'ethers';
 
 interface BorrowDurationViewProps {
-  requiredCollateral: string;
+  requiredCollateral: ethers.BigNumber;
   onDurationChange: (timestamp: number) => void;
   onBackDuration: () => void;
 }
@@ -56,7 +57,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                     </span>
                   </div>
                   <div className="card w-full py-4">
-                    <span className="text-5xl text-shrub-green-500 font-bold text-left">{requiredCollateral} ETH</span>
+                    <span className="text-5xl text-shrub-green-500 font-bold text-left">{ethers.utils.formatEther(requiredCollateral)} ETH</span>
                   </div>
                 </div>
 

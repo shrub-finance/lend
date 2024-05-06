@@ -2,31 +2,31 @@ import React, {useEffect, useState} from "react";
 
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import {useBalance, useContract} from "@thirdweb-dev/react";
-import {lendingPlatformAbi, lendingPlatformAddress, usdcAddress} from "../../utils/contracts";
+import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 import {interestToLTV} from "../../utils/ethMethods";
 import {BigNumber, ethers} from "ethers";
 import Image from 'next/image'
+import { interestRates } from '../../constants';
 
 interface BorrowViewProps {
-  onBorrowViewChange: (collateral: string, interestRate, amount) => void;
+  onBorrowViewChange: (interestRate, amount) => void;
+  requiredCollateral: ethers.BigNumber;
+  setRequiredCollateral: (value: ethers.BigNumber) => void;
 }
 
-export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) => {
+export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requiredCollateral, setRequiredCollateral }) => {
 
 
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
-  const [isContinuePressed, setIsContinuePressed] = useState(false);
   const [showBorrowAPYSection, setShowBorrowAPYSection] = useState(false);
 
 
-  const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
 
 
   const [maxBorrow, setMaxBorrow] = useState(ethers.utils.parseEther('0'));
-  const [requiredCollateral, setRequiredCollateral] = useState("0");
   const [borrowAmount, setBorrowAmount] = useState('');
   const [selectedInterestRate, setSelectedInterestRate] = useState("");
   const {
@@ -38,16 +38,11 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   const format = (val: string) => val;
   const [isValidationError, setIsValidationError] = useState(false);
 
-  const interestRates = [
-    { id: "smallest-borrow", rate: "0" },
-    { id: "small-borrow", rate: "1" },
-    { id: "big-borrow", rate: "5" },
-    { id: "biggest-borrow", rate: "8" },
-  ];
+
 
   async function fillMax() {
     if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading) {
-      handleErrorMessages({customMessage: "Wallet not connected. Please check."});
+      handleErrorMessages({customMessage: "Wallet not connected. Please check your connection."});
       console.log('wallet not connected');
     } else {
       console.log(ethers.utils.formatUnits(maxBorrow, 6))
@@ -71,7 +66,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
   };
 
   useEffect(() => {
-    const determineRequiredCollateral = async () => {
+      const determineRequiredCollateral = async () => {
       const ltv = interestToLTV[selectedInterestRate];
       const usdcUnits = ethers.utils.parseUnits(borrowAmount, 6);
       const coll: BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
@@ -81,11 +76,11 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
     if (selectedInterestRate !== "" && borrowAmount !== "0") {
       determineRequiredCollateral()
         .then(c => {
-          setRequiredCollateral(ethers.utils.formatEther(c.div(ethers.utils.parseUnits('1', 12)).mul(ethers.utils.parseUnits('1', 12))));
+          setRequiredCollateral(c);
         })
         .catch(e => console.error(e));
     }
-  }, [borrowAmount, selectedInterestRate, lendingPlatform]);
+  }, [borrowAmount, selectedInterestRate, lendingPlatform, setRequiredCollateral]);
 
 
   useEffect(() => {
@@ -100,26 +95,11 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
     if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading || !selectedInterestRate || !ethBalance.value) {
       return ethers.utils.parseEther('0');
     }
-    // console.log(lendingPlatform);
-    // console.log(selectedInterestRate);
-    // console.log([interestToLTV[selectedInterestRate], ethBalance.value])
     const maxBorrow: BigNumber = await lendingPlatform.call('maxBorrow', [interestToLTV[selectedInterestRate], ethBalance.value])
     return maxBorrow;
   }
-
-
-  function handleCollateralCalc() {
-    setIsContinuePressed(true);
-    let requiredCollateralAmount;
-    if (requiredCollateralAmount) {
-      setRequiredCollateral(requiredCollateralAmount.toFixed(4));
-    } else {
-      setRequiredCollateral('N/A')
-    }
-  }
-
   const handleBorrowContinue = () => {
-    onBorrowViewChange(requiredCollateral, selectedInterestRate, borrowAmount);
+    onBorrowViewChange(selectedInterestRate, borrowAmount);
   };
 
   return (
@@ -171,7 +151,6 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                     <span className="label-text-alt text-shrub-grey-200 text-sm font-light">Wallet balance:  {!ethBalanceIsLoading &&
                         <span>
                           {( ethBalance.displayValue || 0)} ETH
-                          {/*{(balance || 0).toLocaleString()} ETH*/}
                         </span>
 
                     }</span>
@@ -217,7 +196,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange }) =>
                       </span>
                     </div>
                     <div className="card w-full bg-teal-50 border border-shrub-green p-10">
-                      { (Number(borrowAmount))? <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} ETH</span>:<span className="sm: text-medium text-shrub-green-500 font-bold text-center">Enter amount to see the required collateral</span>}
+                      { (Number(borrowAmount))? <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{ethers.utils.formatEther(requiredCollateral)} ETH</span>:<span className="sm: text-medium text-shrub-green-500 font-bold text-center">Enter amount to calculate required collateral</span>}
                     </div>
                   </div>
                 )}

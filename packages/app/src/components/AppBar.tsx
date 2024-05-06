@@ -41,11 +41,9 @@ export const AppBar: React.FC = () => {
           </div>
         </div>
 
-        {/* Nav Links */}
-        {/* Wallet & Settings */}
         <div className="navbar-end">
           <div className="md:inline-flex align-items-center justify-items gap-6 ">
-            <ConnectWallet  btnTitle="Connect Wallet" className=" !border !border-shrub-green !bg-shrub-green-900 !rounded-3xl !text-white !text-[16px] " style={{border: "1px #16735B solid !important", }}/>
+            <ConnectWallet btnTitle="Connect Wallet" className=" !border !border-shrub-green !bg-shrub-green-900 !rounded-3xl !text-white !text-[16px] " style={{border: "1px #16735B solid !important", }}/>
         </div>
         </div>
       </div>

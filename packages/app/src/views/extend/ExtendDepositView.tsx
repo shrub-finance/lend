@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import Image from "next/image";
 import { calculateLockupPeriod, fromEthDate, toEthDate } from '@shrub-lend/common';
-import ExtendSummaryView from './ExtendSummaryView';
+import ExtendDepositSummaryView from './ExtendDepositSummaryView';
 import {ethers} from "ethers";
 import {formatLargeUsdc, formatPercentage} from "../../utils/ethMethods";
 
-interface ExtendViewProps {
+interface ExtendDepositViewProps {
   timestamp: number;
   setTimestamp: (timestamp: number) => void;
   showAPYSection: boolean;
@@ -21,7 +21,7 @@ interface ExtendViewProps {
   selectedPoolTokenId: string;
 }
 
-const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => void }> = ({
+const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date: Date) => void }> = ({
                                                  timestamp,
                                                  setTimestamp,
                                                  showAPYSection,
@@ -37,18 +37,18 @@ const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => voi
                                                  onModalClose
                                                }) => {
   const [showSummary, setShowSummary] = useState(false);
-  const handleBackExtend = () => {
+  const handleExtendDepositBack = () => {
     setShowSummary(false)
   };
-  const [extendActionInitiated, setExtendActionInitiated] = useState(false);
+  const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
 
 
-  const handleExtendActionChange = (initiated) => {
-    setExtendActionInitiated(initiated);
+  const handleExtendDepositActionChange = (initiated) => {
+    setExtendDepositActionInitiated(initiated);
   };
 
   const closeModalAndPassData = () => {
-    if (extendActionInitiated) {
+    if (extendDepositActionInitiated) {
       onModalClose(fromEthDate(timestamp));
     }
     setIsModalOpen(false);
@@ -138,7 +138,7 @@ const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => voi
     </div>
   </div>
         :
-      <ExtendSummaryView
+      <ExtendDepositSummaryView
         lendAmountBeingExtended={selectedDepositBalance}
         estimatedAPY={estimatedAPY}
         newTimestamp={fromEthDate(timestamp)}
@@ -146,12 +146,12 @@ const ExtendView: React.FC<ExtendViewProps & { onModalClose: (date: Date) => voi
         poolShareTokenAmount={selectedPoolShareTokenAmount}
         totalEthYield={selectedTotalEthYield}
         tokenSupply={selectedTokenSupply}
-        onBackExtend={handleBackExtend}
-        onExtendActionChange={handleExtendActionChange}
+        onBackExtend={handleExtendDepositBack}
+        onExtendDepositActionChange={handleExtendDepositActionChange}
       />
       }
     </>
   );
 };
 
-export default ExtendView;
+export default ExtendDepositView;

@@ -74,6 +74,14 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
     }
   }, [activeLendingPoolsLoading]);
 
+  useEffect(() => {
+    if (localError) {
+      const element = document.querySelector('.md\\:hero');
+      if (element) element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [localError]);
+
+
 
   return (
     <div className="md:hero mx-auto p-4">

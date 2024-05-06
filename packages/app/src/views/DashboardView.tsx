@@ -8,7 +8,7 @@ import {
   useContractRead
 } from "@thirdweb-dev/react";
 import { getBlock, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
-import { toEthDate, fromEthDate, getPlatformDates } from '@shrub-lend/common'
+import { toEthDate, fromEthDate } from '@shrub-lend/common'
 import {
   usdcAddress,
   chainlinkAggregatorAbi,
@@ -21,9 +21,11 @@ import { USER_POSITIONS_QUERY } from "../constants/queries";
 import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
-import ExtendView from './extend/ExtendView';
+import ExtendDepositView from './extend/ExtendDepositView';
 import { formatLargeUsdc } from '../utils/ethMethods';
 import {Deposit} from "../types/types";
+import ExtendBorrowView from './extend/ExtendBorrowView';
+import { depositTerms, oneMonth, sixMonth, threeMonth, twelveMonth } from '../constants';
 
 const now = new Date();
 const Zero = ethers.constants.Zero;
@@ -31,7 +33,8 @@ new Date(new Date(now).setFullYear(now.getFullYear() + 1));
 export const DashboardView: FC = ({}) => {
 
   const wallet = useConnectedWallet();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [extendDepositModalOpen, setExtendDepositModalOpen] = useState(false);
+  const [extendBorrowModalOpen, setExtendBorrowModalOpen] = useState(false);
   const { store, dispatch } = useFinancialData();
   const { data: usdcBalance, isLoading: usdcBalanceIsLoading } = useBalance(usdcAddress);
   const { data: ethBalance, isLoading: ethBalanceIsLoading } = useBalance(NATIVE_TOKEN_ADDRESS);
@@ -67,19 +70,13 @@ export const DashboardView: FC = ({}) => {
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState(Zero);
-  const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
-  const depositTerms = [
-    { id: 'smallest-deposit', value: 'smallest-deposit', duration: oneMonth },
-    { id: 'small-deposit', value: 'small-deposit', duration: threeMonth },
-    { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
-    { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
-  ];
   const [selectedDepositBalance, setSelectedDepositBalance] = useState(Zero);
   const [selectedDepositTermDate, setSelectedDepositTermDate] = useState<Date | null>(null);
   const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(Zero);
   const [selectedTokenSupply, setSelectedTokenSupply] = useState(Zero);
   const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(Zero);
   const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('')
+  const [selectedBorrowAmount, setSelectedBorrowAmount] = useState(Zero)
   const dummyEarningPools = "2";
 
   useEffect(() => {
@@ -96,7 +93,6 @@ export const DashboardView: FC = ({}) => {
       handleAPYCalc();
     }
   }, [timestamp]);
-
   useEffect(() => {
     // console.log("running usdc useEffect");
   }, [usdcBalanceIsLoading]);
@@ -112,7 +108,6 @@ export const DashboardView: FC = ({}) => {
     // console.log("running userPositionsDataLoading useEffect");
     if (userPositionsDataLoading) {return}
   }, [userPositionsDataLoading]);
-
   useEffect(() => {
     // Once data is loaded, update the store
     if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
@@ -132,7 +127,6 @@ export const DashboardView: FC = ({}) => {
       });
     }
   }, [userPositionsDataLoading, userPositionsData, dispatch]);
-
   useEffect(() => {
     // console.log("running usdcEthRound useEffect");
     if (usdcEthRoundData) {
@@ -141,7 +135,6 @@ export const DashboardView: FC = ({}) => {
       setEthPrice(ethPriceTemp);
     }
   }, [usdcEthRoundIsLoading, usdcEthRoundData]);
-
   useEffect(() => {
         // console.log('running block useEffect')
         getBlockTest()
@@ -160,11 +153,16 @@ export const DashboardView: FC = ({}) => {
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
   }
 
-  const handleUnlockFromExtend = () => {
-    setIsModalOpen(false);
+  const handleExtendDeposit = () => {
+    setExtendDepositModalOpen(false);
   };
 
-  /** might need this later **/
+  const handleExtendBorrow = () => {
+    setExtendBorrowModalOpen(false);
+  };
+
+
+  /** Might Need Later **/
   // let newlyAddedDeposit = store.deposits.filter(item => item.hasOwnProperty('id'));
   // newlyAddedDeposit = newlyAddedDeposit[0];
   // let calculatedPoolShareTokenAmount = (newlyAddedDeposit?.lendingPool?.totalPrincipal + newlyAddedDeposit?.lendingPool?.totalUsdcInterest + newlyAddedDeposit?.lendingPool?.totalEthYield === 0) ?
@@ -173,10 +171,11 @@ export const DashboardView: FC = ({}) => {
   //   (newlyAddedDeposit?.lendingPool?.totalPrincipal + newlyAddedDeposit?.lendingPool?.totalUsdcInterest +
   //     (newlyAddedDeposit?.lendingPool?.totalEthYield * ethPrice));
 
-console.log(store);
-
   return (
+
     <div className="md:hero mx-auto p-4">
+
+
       <div className="md:hero-content flex flex-col ">
         <div className="relative group mt-4 w-full bg-shrub-grey-light">
           <div className="flex flex-col">
@@ -185,37 +184,30 @@ console.log(store);
                 <div className="flex-col gap-2">
                   <div className="flex flex-row text-lg ">
                     <span className="w-[500px]">
-                      <h1 className=" text-[36px] font-semibold self-start leading-9">
-                        Dashboard
-                      </h1>
+                      <h1 className=" text-[36px] font-semibold self-start leading-9">Dashboard</h1>
                     </span>
                     <span className="w-[500px]"></span>
                     <span>
                       <Link href="/borrow" passHref>
                         <button
                           type="button"
-                          className="text-shrub-grey-900 mr-2 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700"
-                        >
-                          Borrow
-                        </button>
+                          className="text-shrub-grey-900 mr-2 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700">Borrow</button>
                       </Link>
                       <Link href="/lend" passHref>
                         <button
                           type="button"
-                          className="text-white bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600  dark:focus:ring-grey-700"
-                        >
-                          Lend
-                        </button>
+                          className="text-white bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600  dark:focus:ring-grey-700">Lend</button>
                       </Link>
                     </span>
                   </div>
-                  <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} >
-                    <ExtendView
-                      onModalClose={handleUnlockFromExtend}
+
+                  <Modal isOpen={extendDepositModalOpen} onClose={() => setExtendDepositModalOpen(false)} >
+                    <ExtendDepositView
+                      onModalClose={handleExtendDeposit}
                       depositTerms={depositTerms}
                       timestamp={timestamp}
                       selectedDepositBalance={selectedDepositBalance}
-                      setIsModalOpen={setIsModalOpen}
+                      setIsModalOpen={setExtendDepositModalOpen}
                       setTimestamp={setTimestamp}
                       showAPYSection={showAPYSection}
                       estimatedAPY={estimatedAPY}
@@ -227,6 +219,13 @@ console.log(store);
                       selectedPoolTokenId={selectedPoolTokenId}
                     />
                   </Modal>
+                  <Modal isOpen={extendBorrowModalOpen} onClose={() => setExtendBorrowModalOpen(false)} >
+                    <ExtendBorrowView
+                      onModalClose={handleExtendBorrow}
+                      setIsModalOpen={setExtendBorrowModalOpen}
+                      selectedBorrowAmount={selectedBorrowAmount}
+                    />
+                  </Modal>
 
                   <div className="card w-full py-4">
                     <span className="text-left">
@@ -234,7 +233,7 @@ console.log(store);
                         {" "}
                         Welcome back, ryan.eth!
                       </h3>
-                      Eth Price:{" "}
+                      ETH Price:{" "}
                       {ethers.utils.formatUnits(ethPrice, 8)} USDC
                     </span>
                     <span>{fromEthDate(blockchainTime).toLocaleString()}</span>
@@ -282,25 +281,12 @@ console.log(store);
                                     const lendingPoolEthYieldBN = ethers.BigNumber.from(item.lendingPool.totalEthYield ? item.lendingPool.totalEthYield : Zero);
                                     const tokenAmountBN = ethers.BigNumber.from(item.amount ? item.amount : Zero);
                                     const tokenSupplyBN = ethers.BigNumber.from(item.lendingPool.tokenSupply ? item.lendingPool.tokenSupply : Zero);
-
                                     const netDeposits = depositsUsdcBN.sub(withdrawsUsdcBN);
                                     const currentBalance = tokenSupplyBN.eq(Zero) ? Zero : (
-                                        lendingPoolPrincipalBN
-                                            .add(lendingPoolUsdcInterestBN)
-                                            .add(
-                                                ethPrice
-                                                    .mul(lendingPoolEthYieldBN)
-                                                    .div(ethers.utils.parseUnits("1", 20))
-                                            )
-                                    )
-                                        .mul(tokenAmountBN)
-                                        .div(tokenSupplyBN);
+                                    lendingPoolPrincipalBN.add(lendingPoolUsdcInterestBN).add(ethPrice.mul(lendingPoolEthYieldBN).div(ethers.utils.parseUnits("1", 20)))).mul(tokenAmountBN).div(tokenSupplyBN);
                                     const interestEarned = currentBalance.sub(netDeposits);
                                     return (
-                                  <tr
-                                    key={`earnRow-${index}`}
-                                    className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700"
-                                  >
+                                  <tr key={`earnRow-${index}`} className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700">
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {wallet && !ethBalanceIsLoading ? (
                                         <p>{" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
@@ -351,9 +337,10 @@ console.log(store);
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className="flex items-center justify-center space-x-2 h-full p-2">
-
-                                          <button type="button" style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }} className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700" disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()  } onClick={() => {
-                                          setIsModalOpen(true)
+                                          <button type="button" style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }} className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700"
+                                          disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()}
+                                         onClick={() => {
+                                          setExtendDepositModalOpen(true)
                                           setSelectedDepositBalance(currentBalance)
                                           setSelectedDepositTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
                                           setSelectedPoolShareTokenAmount(tokenAmountBN)
@@ -437,7 +424,22 @@ console.log(store);
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {store?.borrows?.map((item, index) => (
+                              {store?.borrows?.map((item, index) => {
+                                const amountBorrowedBN = ethers.BigNumber.from(item.originalPrincipal ? item.originalPrincipal : Zero)
+                                const amountPaidBackBN = ethers.BigNumber.from(item.paid ? item.paid : Zero)
+                                const timeLeftBN = daysFromNow(fromEthDate(parseInt(item.timestamp ?? "0", 10)),)
+                                const apyBN = ethers.utils.formatUnits(item.apy ?? "0",2,)
+                                const currentBalanceBN = formatLargeUsdc(
+                                ethers.BigNumber.from(item.principal ?? "0",)
+                                .add(ethers.BigNumber.from(item.apy ?? "0")
+                                .mul(ethers.BigNumber.from(item.principal ?? "0",),)
+                                .mul(ethers.BigNumber.from(blockchainTime,)
+                                .sub(ethers.BigNumber.from(item.updated ?? "0",),),)
+                                .div(ethers.BigNumber.from(60 * 60 * 24 * 365,),)
+                                .div(ethers.utils.parseUnits("1", 8)),))
+                                const dueDateBN = fromEthDate(parseInt(item.timestamp ?? "0", 10),).toLocaleString()
+
+                                return (
                                 <tr
                                   key={`borrowRow-${index}`}
                                   className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700"
@@ -445,7 +447,8 @@ console.log(store);
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {wallet && !ethBalanceIsLoading ? (
                                       <p>
-                                        {formatLargeUsdc(item.originalPrincipal ?? "0")}
+                                        {" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
+                                        {formatLargeUsdc(amountBorrowedBN)}{" "}USDC
                                         {item.status === 'pending' && (
                                           <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                         )}
@@ -460,71 +463,39 @@ console.log(store);
                                     )}
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
-                                    {formatLargeUsdc(item.paid ?? "0")}
+                                    {formatLargeUsdc(amountPaidBackBN)}
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
-                                    {daysFromNow(
-                                      fromEthDate(parseInt(item.timestamp ?? "0", 10)),
-                                    )}
+                                    {timeLeftBN}
                                   </td>
                                   <td>
-                                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${ethers.utils.formatUnits(
-                                      item.apy ?? "0",
-                                      2,
-                                    )}%`}</span>
+                                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${apyBN}%`}</span>
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
-                                    {formatLargeUsdc(
-                                        // TODO: Move this up and assign to a variable
-                                      ethers.BigNumber.from(
-                                        item.principal ?? "0",
-                                      ).add(
-                                        ethers.BigNumber.from(item.apy ?? "0")
-                                          .mul(
-                                            ethers.BigNumber.from(
-                                              item.principal ?? "0",
-                                            ),
-                                          )
-                                          .mul(
-                                            ethers.BigNumber.from(
-                                              blockchainTime,
-                                            ).sub(
-                                              ethers.BigNumber.from(
-                                                item.updated ?? "0",
-                                              ),
-                                            ),
-                                          )
-                                          .div(
-                                            ethers.BigNumber.from(
-                                              60 * 60 * 24 * 365,
-                                            ),
-                                          )
-                                          .div(ethers.utils.parseUnits("1", 8)),
-                                      )
-                                    )}
+                                    {currentBalanceBN}
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
-                                    {fromEthDate(
-                                      parseInt(item.timestamp ?? "0", 10),
-                                    ).toLocaleString()}
+                                    {dueDateBN}
                                   </td>
                                   <td className="px-1 py-4 text-sm font-bold">
-                                    <button
-                                      type="button"
-                                      className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700"
-                                    >
-                                      <Image
-                                        src="/up-right-arrow.svg"
-                                        alt="down arrow"
-                                        width={20}
-                                        height={20}
-                                        className="mr-2"
-                                      />
-                                      Pay
-                                    </button>
+                                    <div className="flex items-center justify-center space-x-2 h-full p-2">
+                                      <button type="button"
+                                              className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700"
+                                              onClick={() => {
+                                                setExtendBorrowModalOpen(true)
+                                                setSelectedBorrowAmount(amountBorrowedBN)
+                                              }}>
+                                        {/*Corresponding modal at the top*/}
+                                        Extend
+                                      </button>
+                                      <button type="button"
+                                              className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700">
+                                        Repay
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
-                              ))}
+                                )})}
                             </tbody>
                           </table>
                         </div>
@@ -532,11 +503,12 @@ console.log(store);
                     </ul>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+);
 }
