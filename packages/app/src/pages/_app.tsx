@@ -17,8 +17,8 @@ const client = new ApolloClient({
 });
 
 const userFinancialData = {
-  loans: [], // initial loans data
-  lendPositions: [], // initial lendPositions data
+  borrows: [], // initial borrows data
+  deposits: [], // initial deposits data
 };
 
 

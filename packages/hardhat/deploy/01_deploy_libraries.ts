@@ -7,14 +7,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const { deployer } = await getNamedAccounts();
 
-    await deploy("AdminLogic", { from: deployer, log: true, args: [] });
     await deploy("BorrowLogic", { from: deployer, log: true, args: [] });
     await deploy("ExtendBorrowLogic", { from: deployer, log: true, args: [] });
     await deploy("ExtendSupplyLogic", { from: deployer, log: true, args: [] });
     await deploy("HelpersLogic", { from: deployer, log: true, args: [] });
     await deploy("LiquidationLogic", { from: deployer, log: true, args: [] });
     await deploy("SupplyLogic", { from: deployer, log: true, args: [] });
-    await deploy("ShrubLendMath", { from: deployer, log: true, args: [] });
 
     // External Libraries
     await deploy("PercentageMath", { from: deployer, log: true, args: [] });

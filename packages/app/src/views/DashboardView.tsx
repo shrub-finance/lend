@@ -23,7 +23,7 @@ import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendDepositView from './extend/ExtendDepositView';
 import { formatLargeUsdc } from '../utils/ethMethods';
-import {LendPosition} from "../types/types";
+import {Deposit} from "../types/types";
 import ExtendBorrowView from './extend/ExtendBorrowView';
 import { depositTerms, oneMonth, sixMonth, threeMonth, twelveMonth } from '../constants';
 
@@ -70,8 +70,8 @@ export const DashboardView: FC = ({}) => {
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState(Zero);
-  const [selectedLendPositionBalance, setSelectedLendPositionBalance] = useState(Zero);
-  const [selectedLendPositionTermDate, setSelectedLendPositionTermDate] = useState<Date | null>(null);
+  const [selectedDepositBalance, setSelectedDepositBalance] = useState(Zero);
+  const [selectedDepositTermDate, setSelectedDepositTermDate] = useState<Date | null>(null);
   const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(Zero);
   const [selectedTokenSupply, setSelectedTokenSupply] = useState(Zero);
   const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(Zero);
@@ -111,18 +111,18 @@ export const DashboardView: FC = ({}) => {
   useEffect(() => {
     // Once data is loaded, update the store
     if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
-      const { loans, lendPositions } = userPositionsData.user;
-      const tempLendPositions: LendPosition[] = lendPositions.map((lendPosition) => {
+      const { borrows, deposits } = userPositionsData.user;
+      const tempDeposits: Deposit[] = deposits.map((deposit) => {
           return {
-              ...lendPosition,
-              id: lendPosition.lendingPool.id
+              ...deposit,
+              id: deposit.lendingPool.id
           }
       });
       dispatch({
         type: "SET_USER_DATA",
         payload: {
-          loans,
-          lendPositions: tempLendPositions,
+          borrows,
+          deposits: tempDeposits,
         },
       });
     }
@@ -163,13 +163,13 @@ export const DashboardView: FC = ({}) => {
 
 
   /** Might Need Later **/
-  // let newlyAddedLendPosition = store.lendPositions.filter(item => item.hasOwnProperty('id'));
-  // newlyAddedLendPosition = newlyAddedLendPosition[0];
-  // let calculatedPoolShareTokenAmount = (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest + newlyAddedLendPosition?.lendingPool?.totalEthYield === 0) ?
-  //   newlyAddedLendPosition?.depositsUsdc * 1e12 :
-  //   (newlyAddedLendPosition?.depositsUsdc * newlyAddedLendPosition?.lendingPool?.tokenSupply) /
-  //   (newlyAddedLendPosition?.lendingPool?.totalPrincipal + newlyAddedLendPosition?.lendingPool?.totalUsdcInterest +
-  //     (newlyAddedLendPosition?.lendingPool?.totalEthYield * ethPrice));
+  // let newlyAddedDeposit = store.deposits.filter(item => item.hasOwnProperty('id'));
+  // newlyAddedDeposit = newlyAddedDeposit[0];
+  // let calculatedPoolShareTokenAmount = (newlyAddedDeposit?.lendingPool?.totalPrincipal + newlyAddedDeposit?.lendingPool?.totalUsdcInterest + newlyAddedDeposit?.lendingPool?.totalEthYield === 0) ?
+  //   newlyAddedDeposit?.depositsUsdc * 1e12 :
+  //   (newlyAddedDeposit?.depositsUsdc * newlyAddedDeposit?.lendingPool?.tokenSupply) /
+  //   (newlyAddedDeposit?.lendingPool?.totalPrincipal + newlyAddedDeposit?.lendingPool?.totalUsdcInterest +
+  //     (newlyAddedDeposit?.lendingPool?.totalEthYield * ethPrice));
 
   return (
 
@@ -206,13 +206,13 @@ export const DashboardView: FC = ({}) => {
                       onModalClose={handleExtendDeposit}
                       depositTerms={depositTerms}
                       timestamp={timestamp}
-                      selectedLendPositionBalance={selectedLendPositionBalance}
+                      selectedDepositBalance={selectedDepositBalance}
                       setIsModalOpen={setExtendDepositModalOpen}
                       setTimestamp={setTimestamp}
                       showAPYSection={showAPYSection}
                       estimatedAPY={estimatedAPY}
                       setShowAPYSection={setShowAPYSection}
-                      selectedLendPositionTermDate={selectedLendPositionTermDate}
+                      selectedDepositTermDate={selectedDepositTermDate}
                       selectedPoolShareTokenAmount={selectedPoolShareTokenAmount}
                       selectedTotalEthYield={selectedTotalEthYield}
                       selectedTokenSupply={selectedTokenSupply}
@@ -272,7 +272,7 @@ export const DashboardView: FC = ({}) => {
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {store?.lendPositions?.sort((a,b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
+                              {store?.deposits?.sort((a,b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
                                 (item, index) => {
                                     const depositsUsdcBN = ethers.BigNumber.from(item.depositsUsdc ? item.depositsUsdc : Zero);
                                     const withdrawsUsdcBN = ethers.BigNumber.from(item.withdrawsUsdc ? item.withdrawsUsdc : Zero);
@@ -341,8 +341,8 @@ export const DashboardView: FC = ({}) => {
                                           disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()}
                                          onClick={() => {
                                           setExtendDepositModalOpen(true)
-                                          setSelectedLendPositionBalance(currentBalance)
-                                          setSelectedLendPositionTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
+                                          setSelectedDepositBalance(currentBalance)
+                                          setSelectedDepositTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
                                           setSelectedPoolShareTokenAmount(tokenAmountBN)
                                           setSelectedTokenSupply(tokenSupplyBN)
                                           setSelectedTotalEthYield(lendingPoolEthYieldBN)
@@ -424,7 +424,7 @@ export const DashboardView: FC = ({}) => {
                               </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {store?.loans?.map((item, index) => {
+                              {store?.borrows?.map((item, index) => {
                                 const amountBorrowedBN = ethers.BigNumber.from(item.originalPrincipal ? item.originalPrincipal : Zero)
                                 const amountPaidBackBN = ethers.BigNumber.from(item.paid ? item.paid : Zero)
                                 const timeLeftBN = daysFromNow(fromEthDate(parseInt(item.timestamp ?? "0", 10)),)

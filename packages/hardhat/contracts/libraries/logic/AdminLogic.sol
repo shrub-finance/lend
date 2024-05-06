@@ -1,24 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
-
 import "../../tokenization/PoolShareToken.sol";
 
 import {DataTypes} from '../types/DataTypes.sol';
+import {HelpersLogic} from "./HelpersLogic.sol";
 
 import "hardhat/console.sol";
 
 library AdminLogic {
-    using Strings for uint256;
 
 //    event PoolCreated(uint256 timestamp, address poolShareTokenAddress);
 
     function executeCreatePool(
-        mapping(uint256 => DataTypes.LendingPool) storage _lendingPools,
-        mapping(uint256 => uint256) storage _activePoolIndex,
-        uint256[] storage _activePools,
-        uint256 _timestamp
+        mapping(uint40 => DataTypes.LendingPool) storage _lendingPools,
+        mapping(uint40 => uint256) storage _activePoolIndex,
+        uint40[] storage _activePools,
+        uint40 _timestamp
     ) external returns (address poolShareTokenAddress) {
         console.log("Running AdminLogic.executeCreatePool");
         require(
@@ -26,12 +24,12 @@ library AdminLogic {
             "Pool already exists"
         );
         require(
-            _timestamp > block.timestamp,
+            _timestamp > HelpersLogic.currentTimestamp(),
             "_timestamp must be in the future"
         );
         _lendingPools[_timestamp].poolShareToken = new PoolShareToken(
-            string(abi.encodePacked("PoolShareToken_", _timestamp.toString())),
-            string(abi.encodePacked("PST_", _timestamp.toString()))
+            string(abi.encodePacked("PoolShareToken_", HelpersLogic.timestampToString(_timestamp))),
+            string(abi.encodePacked("PST_", HelpersLogic.timestampToString(_timestamp)))
         );
         _lendingPools[_timestamp].finalized = false;
         // Make sure to keep the pool sorted
@@ -42,9 +40,9 @@ library AdminLogic {
     }
 
     function insertIntoSortedArr(
-        mapping(uint256 => uint256) storage _activePoolIndex,
-        uint256[] storage _activePools,
-        uint newValue
+        mapping(uint40 => uint256) storage _activePoolIndex,
+        uint40[] storage _activePools,
+        uint40 newValue
     ) internal {
         console.log("Running AdminLogic.insertIntoSortedArr");
         if (_activePools.length == 0) {
@@ -79,8 +77,8 @@ library AdminLogic {
     }
 
     function indexActivePools(
-        mapping(uint256 => uint256) storage _activePoolIndex,
-        uint256[] storage _activePools
+        mapping(uint40 => uint256) storage _activePoolIndex,
+        uint40[] storage _activePools
     ) internal {
         console.log("Running AdminLogic.indexActivePools");
         for (uint i = 0; i < _activePools.length; i++) {

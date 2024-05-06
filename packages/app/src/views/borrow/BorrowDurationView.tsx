@@ -63,14 +63,14 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
 
                 <div className="form-control w-full mt-6">
                   <label className="label">
-                    <span className="label-text text-shrub-blue">Loan Duration</span>
+                    <span className="label-text text-shrub-blue">Borrow Duration</span>
                   </label>
                   <div>
 
                     <ul className="flex flex-col gap-4">
                       {durations.map(({ id, duration }) => (
                         <li className="mr-4" key={id}>
-                          <input type="radio" id={id} name="loan" value={id} className="hidden peer" required onChange={(e) => {
+                          <input type="radio" id={id} name="borrow" value={id} className="hidden peer" required onChange={(e) => {
                             setSelectedDuration(e.target.value)
                             setTimestamp(toEthDate(duration))}}
                                  checked={selectedDuration === id}/>

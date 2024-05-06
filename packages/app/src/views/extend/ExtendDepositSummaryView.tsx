@@ -12,7 +12,7 @@ import {
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
 import { useLazyQuery } from '@apollo/client';
 import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
-import {LendPosition} from "../../types/types";
+import {Deposit} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
 
 interface ExtendDepositSummaryProps {
@@ -220,7 +220,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                filteredLendingPools.length > 0
                                    ? filteredLendingPools[0]
                                    : null;
-                           const newLendPositionWithdraw: LendPosition = {
+                           const newDepositWithdraw: Deposit = {
                                id: `${matchedLendingPool.id}-withdraw`,
                                status: "pending",
                                depositsUsdc: lendAmountBeingExtended.mul(-1).toString(),
@@ -239,23 +239,23 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                timestamp: toEthDate(oldTimestamp),
                                updated: Math.floor(Date.now() / 1000),
                            };
-                           const newLendPositionDeposit = {
-                               ...newLendPositionWithdraw,
+                           const newDepositDeposit = {
+                               ...newDepositWithdraw,
                                id: `${matchedLendingPool.id}-deposit`,
                                depositsUsdc: lendAmountBeingExtended.toString(),
                                currentBalanceOverride: lendAmountBeingExtended.toString(),
                                lendingPool: {
-                                   ...newLendPositionWithdraw.lendingPool,
+                                   ...newDepositWithdraw.lendingPool,
                                    timestamp: toEthDate(newTimestamp).toString()
                                }
                            };
                            dispatch({
                                type: "ADD_LEND_POSITION",
-                               payload: newLendPositionWithdraw,
+                               payload: newDepositWithdraw,
                            });
                            dispatch({
                                type: "ADD_LEND_POSITION",
-                               payload: newLendPositionDeposit,
+                               payload: newDepositDeposit,
                            });
                            dispatch({
                                type: "UPDATE_LEND_POSITION_STATUS",

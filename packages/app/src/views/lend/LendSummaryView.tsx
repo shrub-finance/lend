@@ -9,7 +9,7 @@ import {useRouter} from "next/router"
 import { useFinancialData } from '../../components/FinancialDataContext'
 import { useLazyQuery } from '@apollo/client'
 import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries'
-import { LendPosition } from '../../types/types'
+import { Deposit } from '../../types/types'
 
 
 interface LendSummaryViewProps {
@@ -45,8 +45,8 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
   const walletAddress = useAddress();
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
-  const latestLendPosition: LendPosition = store?.lendPositions?.reduce((latest, current) =>
-    current.updated > latest.updated ? current : latest, store?.lendPositions[0] || {});
+  const latestDeposit: Deposit = store?.deposits?.reduce((latest, current) =>
+    current.updated > latest.updated ? current : latest, store?.deposits[0] || {});
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
@@ -113,7 +113,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
           <div className="flex flex-col ">
             <div className="card w-full text-left">
               <div className="card-body ">
-                {(!lendActionInitiated || latestLendPosition?.status === "pending") && (
+                {(!lendActionInitiated || latestDeposit?.status === "pending") && (
                   <div>
                     <p className="text-lg font-bold pb-2">Lend amount</p>
                     <div className="w-full text-xl font-semibold flex flex-row">
@@ -134,13 +134,13 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 {lendActionInitiated && (
                   <>
                       {/*spinner */}
-                      {/*{latestLendPosition?.status === "pending" && (*/}
+                      {/*{latestDeposit?.status === "pending" && (*/}
                       {/*  <div class="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin">*/}
                       {/*    <div class="w-[205px] h-[205px] rounded-full bg-white"></div>*/}
                       {/*  </div>*/}
                       {/*)}*/}
 
-                      {latestLendPosition?.status === "confirmed" && (
+                      {latestDeposit?.status === "confirmed" && (
                         <>
                           <p className="text-lg font-bold pb-2 text-left">
                             Deposit Successful!
@@ -153,7 +153,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                         </div>
                         </>
                       )}
-                      {latestLendPosition?.status === "failed" && (
+                      {latestDeposit?.status === "failed" && (
                         <>
                         <p className="text-lg font-bold pb-2 text-left">
                         Deposit Unsuccessful
@@ -171,7 +171,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
                 <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
                 {/*receipt start*/}
-                {(!lendActionInitiated || latestLendPosition?.status === "pending") &&
+                {(!lendActionInitiated || latestDeposit?.status === "pending") &&
                   <div>
                     <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                       <div className="flex flex-row  justify-between">
@@ -222,7 +222,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 }
 
                 {/*total*/}
-                {(!lendActionInitiated || latestLendPosition?.status === "pending") && (
+                {(!lendActionInitiated || latestDeposit?.status === "pending") && (
                   <div>
                     <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                       <div className="flex flex-row justify-between ">
@@ -304,7 +304,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                             <Web3Button
                               contractAddress={lendingPlatformAddress}
                               contractAbi = {lendingPlatformAbi}
-                              isDisabled={latestLendPosition?.status === "pending"}
+                              isDisabled={latestDeposit?.status === "pending"}
                               className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
                               action={
                               async (lendingPlatform) =>
@@ -328,7 +328,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                     filteredLendingPools.length > 0
                                       ? filteredLendingPools[0]
                                       : null;
-                                  const newLendPosition: LendPosition = {
+                                  const newDeposit: Deposit = {
                                     id: matchedLendingPool.id,
                                     status: "pending",
                                     depositsUsdc: (ethers.utils.parseEther(lendAmount)).toString(),
@@ -349,7 +349,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                   };
                                   dispatch({
                                     type: "ADD_LEND_POSITION",
-                                    payload: newLendPosition,
+                                    payload: newDeposit,
                                   });
 
                                   try {
@@ -381,7 +381,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
                               }}
                             >
-                              {latestLendPosition?.status === "pending"? "Deposit Order Submitted":"Initiate Deposit"}
+                              {latestDeposit?.status === "pending"? "Deposit Order Submitted":"Initiate Deposit"}
                             </Web3Button>
                           )}
                       </>
@@ -390,7 +390,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                 )}
 
 
-                {(lendActionInitiated || latestLendPosition?.status === "pending") && (
+                {(lendActionInitiated || latestDeposit?.status === "pending") && (
                   <button
                     onClick={handleViewDash}
                     className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
@@ -398,14 +398,14 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                   </button>
                   )}
 
-                {(lendActionInitiated || latestLendPosition?.status === "pending") &&  ( <button
+                {(lendActionInitiated || latestDeposit?.status === "pending") &&  ( <button
                   onClick={onBackLend}
                   className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4">
                   Lend More
                 </button>
                   )}
 
-                {(!lendActionInitiated  && latestLendPosition?.status !== "pending") &&
+                {(!lendActionInitiated  && latestDeposit?.status !== "pending") &&
                   <button
                     onClick={onBackLend}
                     className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"

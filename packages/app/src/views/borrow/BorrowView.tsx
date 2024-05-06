@@ -26,7 +26,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
 
 
-  const [maxLoan, setMaxLoan] = useState(ethers.utils.parseEther('0'));
+  const [maxBorrow, setMaxBorrow] = useState(ethers.utils.parseEther('0'));
   const [borrowAmount, setBorrowAmount] = useState('');
   const [selectedInterestRate, setSelectedInterestRate] = useState("");
   const {
@@ -45,8 +45,8 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
       handleErrorMessages({customMessage: "Wallet not connected. Please check your connection."});
       console.log('wallet not connected');
     } else {
-      console.log(ethers.utils.formatUnits(maxLoan, 6))
-      setBorrowAmount(ethers.utils.formatUnits(maxLoan, 6));
+      console.log(ethers.utils.formatUnits(maxBorrow, 6))
+      setBorrowAmount(ethers.utils.formatUnits(maxBorrow, 6));
     }
   }
 
@@ -84,19 +84,19 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
 
 
   useEffect(() => {
-    getMaxLoan()
+    getMaxBorrow()
         .then(m => {
-          setMaxLoan(m);
+          setMaxBorrow(m);
         })
         .catch(e => console.error(e))
   }, [selectedInterestRate]);
 
-  async function getMaxLoan() {
+  async function getMaxBorrow() {
     if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading || !selectedInterestRate || !ethBalance.value) {
       return ethers.utils.parseEther('0');
     }
-    const maxLoan: BigNumber = await lendingPlatform.call('maxLoan', [interestToLTV[selectedInterestRate], ethBalance.value])
-    return maxLoan;
+    const maxBorrow: BigNumber = await lendingPlatform.call('maxBorrow', [interestToLTV[selectedInterestRate], ethBalance.value])
+    return maxBorrow;
   }
   const handleBorrowContinue = () => {
     onBorrowViewChange(selectedInterestRate, borrowAmount);
@@ -167,7 +167,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                     <ul className="flex flex-row ">
                       {interestRates.map(({ id, rate }) => (
                         <li className="mr-4" key={id}>
-                          <input type="radio" id={id} name="loan" value={id} className="hidden peer" onChange={() =>
+                          <input type="radio" id={id} name="borrow" value={id} className="hidden peer" onChange={() =>
                           { setSelectedInterestRate(rate)
                             setShowBorrowAPYSection(true)
                           }} required/>

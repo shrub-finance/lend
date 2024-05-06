@@ -16,12 +16,12 @@ library DataTypes {
     }
 
     struct BorrowingPool {
-        uint principal; // Total amount of USDC that has been borrowed in this buckets' loans
-        uint collateral; // The total amount of ETH collateral deposited for loans in this bucket
+        uint principal; // Total amount of USDC that has been borrowed in this buckets' borrows
+        uint collateral; // The total amount of ETH collateral deposited for borrows in this bucket
         uint poolShareAmount; // Relative claim of the total platform aETH for this bucket. Used to calculate yield for lending pools
-        uint totalAccumInterest; // Tracking accumulator for use in case of loan default
-        uint totalAccumYield; // Tracking accumulator for use in case of loan default
-        uint totalRepaid; // Tracking accumulator for use in case of loan default - tracks USDC paid back
+        uint totalAccumInterest; // Tracking accumulator for use in case of borrow default
+        uint totalAccumYield; // Tracking accumulator for use in case of borrow default
+        uint totalRepaid; // Tracking accumulator for use in case of borrow default - tracks USDC paid back
     }
 
     struct PoolDetails {
@@ -42,20 +42,20 @@ library DataTypes {
 
     struct BorrowData {
         uint40 startDate;  // Max Date with uint40 is 2106 (83 years from now)
-        uint40 endDate;
-        uint256 principal;
-        uint256 collateral;
-        uint32 apy;
+        uint40 endDate;  // End Date of the loan (uint40)
+        uint256 principal;  // USDC Amount borrowed (6 decimals)
+        uint256 collateral;  // ETH provided as collateral (Wad)
+        uint16 apy;  // Interest rate of loan (percentage)
     }
 
-    struct TakeLoanInternalParams {
+    struct BorrowInternalParams {
         uint256 principal; // Amount of USDC with 6 decimal places
         uint256 collateral; // Amount of ETH collateral with 18 decimal places
-        uint32 ltv; // ltv expressed as a percentage
-        uint40 timestamp;
-        uint40 startDate;
-        address beneficiary;
-        address loanHolder;
+        uint16 ltv; // ltv expressed as a percentage
+        uint40 timestamp;  // End date of the borrow
+        uint40 startDate;  // Start date of the borrow
+        address beneficiary;  // Account to receive the USDC borrowed
+        address borrower;  // Account to take passession of the BPT
     }
 
     struct calcLPIncreasesParams {

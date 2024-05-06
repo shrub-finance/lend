@@ -1,5 +1,5 @@
 import {Address, BigInt, ethereum} from "@graphprotocol/graph-ts";
-import {BorrowingPool, Loan} from "../../generated/schema";
+import {BorrowingPool, Borrow} from "../../generated/schema";
 import {Zero} from "../constants";
 
 export function getBorrowingPool(
@@ -14,16 +14,16 @@ export function getBorrowingPool(
     return createBorrowingPool(timestamp, block);
 }
 
-export function addLoanToPool(borrowingPool: BorrowingPool, loan: Loan): BorrowingPool {
-    borrowingPool.totalBorrowedUsdc = borrowingPool.totalBorrowedUsdc.plus(loan.principal);
-    borrowingPool.totalCollateralEth = borrowingPool.totalCollateralEth.plus(loan.collateral);
+export function addBorrowToPool(borrowingPool: BorrowingPool, borrow: Borrow): BorrowingPool {
+    borrowingPool.totalBorrowedUsdc = borrowingPool.totalBorrowedUsdc.plus(borrow.principal);
+    borrowingPool.totalCollateralEth = borrowingPool.totalCollateralEth.plus(borrow.collateral);
     borrowingPool.save();
     return borrowingPool;
 }
 
-export function removeLoanFromPool(borrowingPool: BorrowingPool, loan: Loan): BorrowingPool {
-    borrowingPool.totalBorrowedUsdc = borrowingPool.totalBorrowedUsdc.minus(loan.principal);
-    borrowingPool.totalCollateralEth = borrowingPool.totalCollateralEth.minus(loan.collateral);
+export function removeBorrowFromPool(borrowingPool: BorrowingPool, borrow: Borrow): BorrowingPool {
+    borrowingPool.totalBorrowedUsdc = borrowingPool.totalBorrowedUsdc.minus(borrow.principal);
+    borrowingPool.totalCollateralEth = borrowingPool.totalCollateralEth.minus(borrow.collateral);
     borrowingPool.save();
     return borrowingPool;
 }

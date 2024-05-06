@@ -17,8 +17,8 @@ dataSources:
         - User
         - LendingPool
         - BorrowingPool
-        - Loan
-        - LendPosition
+        - Borrow
+        - Deposit
       abis:
         - name: LendingPlatform
           file: ./abis/LendingPlatform.json
@@ -27,14 +27,14 @@ dataSources:
           handler: handlePoolCreated
         - event: NewDeposit(uint256,address,address,uint256,uint256)
           handler: handleNewDeposit
-        - event: NewLoan(uint256,uint256,address,uint256,uint256,uint40,uint32)
-          handler: handleNewLoan
+        - event: NewBorrow(uint256,uint256,address,uint256,uint256,uint40,uint32)
+          handler: handleNewBorrow
         - event: LendingPoolYield(address,uint256,uint256)
           handler: handleLendingPoolYield
-        - event: PartialRepayLoan(uint256,uint256,uint256)
-          handler: handlePartialRepayLoan
-        - event: RepayLoan(uint256,uint256,uint256,address)
-          handler: handleRepayLoan
+        - event: PartialRepayBorrow(uint256,uint256,uint256)
+          handler: handlePartialRepayBorrow
+        - event: RepayBorrow(uint256,uint256,uint256,address)
+          handler: handleRepayBorrow
         - event: Withdraw(address,address,uint256,uint256,uint256,uint256)
           handler: handleWithdraw
         - event: FinalizeLendingPool(address,uint256,uint256)
