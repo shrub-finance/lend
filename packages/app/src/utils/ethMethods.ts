@@ -34,6 +34,7 @@ export const timestamps = {
  * @notice converts USDC value in Wad to a string
  * @dev Wad means 18 decimal
  * @dev rounds up for positive numbers and down for negative numbers
+ * @param usdcInWad - ethers.BigNumberish : An amount of USDC represented in Wad as a big numberish
  * @return USDC as a formatted string
  */
 export function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
@@ -43,6 +44,20 @@ export function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
         ethers.BigNumber.from(5).mul(divisionFactor).div(10) :
         ethers.BigNumber.from(5).mul(divisionFactor).div(10).mul(-1);
     return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
+}
+
+/**
+ * @notice Converts eth value from a Big Number to a rounded Big Number
+ * @dev rounds up for positive numbers and down for negative numbers
+ * @param amount - ethers.BigNumberish : An amount of ETH represented in Wad as a big numberish
+ * @param decimals - number : number of decimals to round to
+ * @return USDC as a formatted string
+ */
+export function roundEth(amount: ethers.BigNumberish, decimals: number) {
+    const amountBN = ethers.BigNumber.from(amount);
+    const divisionFactor = ethers.BigNumber.from(10).pow(18 - decimals)
+    const roundAmount = amountBN.gt(amountBN.div(divisionFactor).mul(divisionFactor)) ? divisionFactor : ethers.constants.Zero
+    return amountBN.add(roundAmount).div(divisionFactor).mul(divisionFactor);
 }
 
 export function formatPercentage(percentage: ethers.BigNumberish) {

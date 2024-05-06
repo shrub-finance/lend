@@ -4,7 +4,7 @@ import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
 import {useBalance, useContract} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
-import {interestToLTV} from "../../utils/ethMethods";
+import {interestToLTV, roundEth} from "../../utils/ethMethods";
 import {BigNumber, ethers} from "ethers";
 import Image from 'next/image'
 import { interestRates } from '../../constants';
@@ -70,14 +70,12 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
       const ltv = interestToLTV[selectedInterestRate];
       const usdcUnits = ethers.utils.parseUnits(borrowAmount, 6);
       const coll: BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
-      return coll;
+      return roundEth(coll, 6);
     };
 
     if (selectedInterestRate !== "" && borrowAmount !== "0") {
       determineRequiredCollateral()
-        .then(c => {
-          setRequiredCollateral(c);
-        })
+        .then(res => setRequiredCollateral(res))
         .catch(e => console.error(e));
     }
   }, [borrowAmount, selectedInterestRate, lendingPlatform, setRequiredCollateral]);
