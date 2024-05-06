@@ -64,7 +64,7 @@ task("testLendingPlatform3", "Setup an environment for development")
         const jan2027 = toEthDate(new Date('2027-01-01T00:00:00Z'));
 
         const {ethers, deployments, getNamedAccounts} = env;
-        const { deployer, account1, account2, account3, account4 } = await getNamedAccounts();
+        const { deployer, account1, account2, account3, account4, shrubTreasury } = await getNamedAccounts();
 
         await partA();
         await partB();
@@ -83,6 +83,7 @@ task("testLendingPlatform3", "Setup an environment for development")
             // await env.run('createPlatformPools');
             await env.run('distributeUsdc', { to: account1, amount: 10000 });
             await env.run('distributeUsdc', { to: account2, amount: 10000 });
+            // await env.run('distributeUsdc', { to: shrubTreasury, amount: 100 });
             await env.run('createPool', { timestamp: feb2026});  // 1 month
             await env.run('createPool', { timestamp: may2026});  // 3 month
             await env.run('createPool', { timestamp: aug2026});  // 6 month
@@ -90,6 +91,7 @@ task("testLendingPlatform3", "Setup an environment for development")
         }
         async function partB() {
             await env.run('approveUsdc', { account: account1 });
+            await env.run('approveUsdc', { account: shrubTreasury });
             await env.run('setTime', {ethDate: jan2026});
             await env.run('takeSnapshot', { account: deployer });
             await env.run('setEthPrice', {ethPrice: '2000'});
@@ -135,6 +137,7 @@ task("testLendingPlatform3", "Setup an environment for development")
             await env.run('takeSnapshot', { account: deployer });
             await env.run('getBorrow', {tokenid: 0});
             await env.run('setTime', {ethDate: may2026 + 60 * 135});
+            // await env.run('setTime', {ethDate: may2026 + 60 * 300});
             await env.run('takeSnapshot', { account: deployer });
         }
 

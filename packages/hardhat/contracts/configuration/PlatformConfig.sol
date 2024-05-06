@@ -22,6 +22,7 @@ import {Constants} from '../libraries/configuration/Constants.sol';
         uint16 bonus; // Percentage of borrow debt that liquidator gets to keep as a reward (out of the collateral) (percentage)
         uint40 duration; // Time after the endDate of the loan this phase becomes eligible
         bool liquidationEligible; // If liquidation is a option - if false, only ForceExtendBorrow may be called
+        bool shrubLiquidationEligible; // If liquidation from shrub is a option
     }
 
     struct InterestValue {
@@ -57,13 +58,13 @@ contract PlatformConfig is Ownable {
         config.SHRUB_INTEREST_FEE = 10;
         config.SHRUB_YIELD_FEE = 10;
         config.DEPOSIT_CUTOFF_THRESHOLD = Constants.DAY;
-        config.END_OF_LOAN_PHASES[0] = EndOfLoanParams({bonus: 100, liquidationEligible: false, duration: 0});
-        config.END_OF_LOAN_PHASES[1] = EndOfLoanParams({bonus: 200, liquidationEligible: false, duration: 45 * Constants.MINUTE});
-        config.END_OF_LOAN_PHASES[2] = EndOfLoanParams({bonus: 300, liquidationEligible: false, duration: 1 * Constants.HOUR + 30 * Constants.MINUTE});
-        config.END_OF_LOAN_PHASES[3] = EndOfLoanParams({bonus: 400, liquidationEligible: true, duration: 2 * Constants.HOUR + 15 * Constants.MINUTE});
-        config.END_OF_LOAN_PHASES[4] = EndOfLoanParams({bonus: 500, liquidationEligible: true, duration: 3 * Constants.HOUR});
-        config.END_OF_LOAN_PHASES[5] = EndOfLoanParams({bonus: 600, liquidationEligible: true, duration: 4 * Constants.HOUR});
-        config.END_OF_LOAN_PHASES[6] = EndOfLoanParams({bonus: 600, liquidationEligible: true, duration: 5 * Constants.HOUR});
+        config.END_OF_LOAN_PHASES[0] = EndOfLoanParams({bonus: 100, liquidationEligible: false, shrubLiquidationEligible: false, duration: 0});
+        config.END_OF_LOAN_PHASES[1] = EndOfLoanParams({bonus: 200, liquidationEligible: false, shrubLiquidationEligible: false, duration: 45 * Constants.MINUTE});
+        config.END_OF_LOAN_PHASES[2] = EndOfLoanParams({bonus: 300, liquidationEligible: false, shrubLiquidationEligible: false, duration: 1 * Constants.HOUR + 30 * Constants.MINUTE});
+        config.END_OF_LOAN_PHASES[3] = EndOfLoanParams({bonus: 400, liquidationEligible: true, shrubLiquidationEligible: false, duration: 2 * Constants.HOUR + 15 * Constants.MINUTE});
+        config.END_OF_LOAN_PHASES[4] = EndOfLoanParams({bonus: 500, liquidationEligible: true, shrubLiquidationEligible: false, duration: 3 * Constants.HOUR});
+        config.END_OF_LOAN_PHASES[5] = EndOfLoanParams({bonus: 600, liquidationEligible: true, shrubLiquidationEligible: false, duration: 4 * Constants.HOUR});
+        config.END_OF_LOAN_PHASES[6] = EndOfLoanParams({bonus: 600, liquidationEligible: true, shrubLiquidationEligible: true, duration: 5 * Constants.HOUR});
     }
 
     function calculateSmallestValidLtv(uint16 ltv, bool isExtend) public view returns (uint16) {
