@@ -918,7 +918,45 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         bpt.fullLiquidateBorrowData(tokenId, bonus);
         // Liquidator is sent collateral that they bought : principle * ethPrice * (1 - bonus)
         aeth.transfer(msg.sender, bonus);
-        //
+    }
+
+
+/**
+    * @notice Called by shrub to force the liquidation of an expired borrow - when no other liquidator stepped in.
+    * @dev setup so that it can be called by chainlink automation
+    * @dev shrub repays loan and is compensated with an equivelant amount of collateral at a discount specified by the bonus in the liquidationPhase
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+*/
+    function shrubLiquidation(uint tokenId, uint liquidationPhase) external {
+        console.log("Running shrubLiquidation - tokenId: %s, liquidationPhase: %s", tokenId, liquidationPhase);
+        DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
+        uint debt = bpt.debt(tokenId);
+        address borrower = bpt.ownerOf(tokenId);
+        require(PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].shrubLiquidationEligible, "shrub liquidation not allowed in this phase");
+        uint availabilityTime = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].duration;
+        console.log(
+            "currentTimestamp: %s, loan endDate: %s, availabilityTime: %s",
+            HelpersLogic.currentTimestamp(),
+            loanDetails.endDate,
+            availabilityTime
+        );
+        require(HelpersLogic.currentTimestamp() > loanDetails.endDate + availabilityTime ,"loan is not eligible for liquidation");
+        uint bonusPecentage = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].bonus;
+        // The caller will be rewarded with some amount of the users' collateral. This will be based on the size of the debt to be refinanced
+        uint bonusUsdc = PercentageMath.percentMul(
+            debt,
+            10000 + bonusPecentage
+        );
+        uint bonus = usdcToEth(bonusUsdc);
+
+        // Liquidator repays loan with usdc amount equal to the debt
+        usdc.transferFrom(shrubTreasury, address(this), debt);
+        // BPT borrowData is updated so that:
+        // - principal = 0
+        // - collateral -= bonus
+        bpt.fullLiquidateBorrowData(tokenId, bonus);
+        // Liquidator is sent collateral that they bought : principle * ethPrice * (1 - bonus)
+        aeth.transfer(shrubTreasury, bonus);
     }
 
 /**

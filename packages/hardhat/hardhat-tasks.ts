@@ -424,6 +424,17 @@ task('forceLiquidation', 'Liquidator pays off overdue loan in exchange for colla
         await sendTransaction(lendingPlatform.connect(signer).forceLiquidation(tokenid, liquidationPhase), "forceLiquidation");
     });
 
+task('shrubLiquidation', 'Shrub treasury pays off overdue loan in exchange for collateral at a discount')
+    .addParam("account", "Address of account to liquidate with (or named account)", undefined, types.string, false)
+    .addParam("tokenid", "Token ID of the borrow position token ERC-721 of the loan to liquidate", undefined, types.int, false)
+    .addParam("liquidationPhase", "Liquidation Phase to call this with. (6)", 6, types.int, true)
+    .setAction(async (taskArgs, env) => {
+        const { account, tokenid, liquidationPhase } = taskArgs;
+        const {lendingPlatform} = await getDeployedContracts(env);
+        const signer = await signerFromFuzzyAccount(account, env);
+        await sendTransaction(lendingPlatform.connect(signer).shrubLiquidation(tokenid, liquidationPhase), "shrubLiquidation");
+    });
+
 task('borrow', 'take a borrow')
     .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
     .addParam("borrowAmount", "Amount of USDC to borrow - in USD", undefined, types.float, false)
