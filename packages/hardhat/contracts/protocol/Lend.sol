@@ -819,14 +819,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     * @notice Called by liquidator to force the extension of an expired borrow.
     * @dev Bonuses and durations for the liquidationPhase are specified in Configuration
     * @param tokenId uint256 - tokenId of the borrow position token representing the loan
-    * @param liquidationPhase uint256 - liquidation phase. Must be between 1 and 3. Higher values have greater bonuses. increasing values become eligible as more time since the endDate elapses
+    * @param liquidationPhase uint256 - liquidation phase. Must be between 0 and 2. Higher values have greater bonuses. increasing values become eligible as more time since the endDate elapses
 */
     function forceExtendBorrow(uint tokenId, uint liquidationPhase) external {
         console.log("Running forceExtendBorrow - tokenId: %s, liquidationPhase: %s", tokenId, liquidationPhase);
         DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
         uint debt = bpt.debt(tokenId);
         address borrower = bpt.ownerOf(tokenId);
-        require(liquidationPhase < 4, "invalid claim");
+//        require(liquidationPhase < 3, "invalid claim");
         uint availabilityTime = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].duration;
         console.log(
             "currentTimestamp: %s, loan endDate: %s, availabilityTime: %s",
@@ -878,6 +878,47 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             console.log("about to send %s from %s with %s allowance", flashLoanAmount, msg.sender, aeth.allowance(msg.sender, address(this)));
             aeth.transferFrom(msg.sender, address(this), flashLoanAmount);
         }
+    }
+
+/**
+    * @notice Called by liquidator to force the liquidation of an expired borrow.
+    * @dev Bonuses and durations for the liquidationPhase are specified in Configuration
+    * @dev Liquidator repays loan and is compensated with an equivelant amount of collateral at a discount specified by the bonus in the liquidationPhase
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+    * @param liquidationPhase uint256 - liquidation phase. Must be between 3 and 5. Higher values have greater bonuses. increasing values become eligible as more time since the endDate elapses
+*/
+    function forceLiquidation(uint tokenId, uint liquidationPhase) external {
+        console.log("Running forceLiquidation - tokenId: %s, liquidationPhase: %s", tokenId, liquidationPhase);
+        DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
+        uint debt = bpt.debt(tokenId);
+        address borrower = bpt.ownerOf(tokenId);
+//        require(liquidationPhase > 2 && liquidationPhase < 6, "invalid claim");
+        require(PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].liquidationEligible, "liquidation not allowed in this phase");
+        uint availabilityTime = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].duration;
+        console.log(
+            "currentTimestamp: %s, loan endDate: %s, availabilityTime: %s",
+            HelpersLogic.currentTimestamp(),
+            loanDetails.endDate,
+            availabilityTime
+        );
+        require(HelpersLogic.currentTimestamp() > loanDetails.endDate + availabilityTime ,"loan is not eligible for liquidation");
+        uint bonusPecentage = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].bonus;
+        // The caller will be rewarded with some amount of the users' collateral. This will be based on the size of the debt to be refinanced
+        uint bonusUsdc = PercentageMath.percentMul(
+            debt,
+            10000 + bonusPecentage
+        );
+        uint bonus = usdcToEth(bonusUsdc);
+
+        // Liquidator repays loan with usdc amount equal to the debt
+        usdc.transferFrom(msg.sender, address(this), debt);
+        // BPT borrowData is updated so that:
+        // - principal = 0
+        // - collateral -= bonus
+        bpt.fullLiquidateBorrowData(tokenId, bonus);
+        // Liquidator is sent collateral that they bought : principle * ethPrice * (1 - bonus)
+        aeth.transfer(msg.sender, bonus);
+        //
     }
 
 /**
