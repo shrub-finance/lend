@@ -40,6 +40,16 @@ library DataTypes {
         uint borrowTotalRepaid;
     }
 
+
+/**
+    * @notice BorrowData struct
+    * @dev There is a BorrowData tied to each borrow position token
+    * @elem uint40 startDate - Max Date with uint40 is 2106 (83 years from now)
+    * @elem uint40 endDate - End Date of the loan (uint40)
+    * @elem uint256 principal - USDC Amount borrowed (6 decimals)
+    * @elem uint256 collateral - ETH provided as collateral (Wad)
+    * @elem uint16 apy - Interest rate of loan (percentage)
+*/
     struct BorrowData {
         uint40 startDate;  // Max Date with uint40 is 2106 (83 years from now)
         uint40 endDate;  // End Date of the loan (uint40)

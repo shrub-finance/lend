@@ -82,7 +82,12 @@ contract BorrowPositionToken is ERC721, Ownable {
         return borrowDatas[tokenId];
     }
 
-    // Returns the total owed on a borrow
+/**
+    * @notice Get the total amount owed on a borrow
+    * @dev returns 6 decimal USDC
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+    * @return uint256 - total amount owed (principal + interest) - 6 Decimal USDC
+*/
     function debt(uint256 tokenId) public view checkExists(tokenId) returns (uint256) {
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         console.log("running bd.debt - (tokenId, bd.startDate, timestamp)");
