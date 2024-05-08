@@ -984,27 +984,31 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         require(getLtv(tokenId) > PlatformConfig.config.LIQUIDATION_THRESHOLD, "borrow not eligible for liquidation");
         DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
         uint debt = bpt.debt(tokenId);
+        uint interest = bpt.getInterest(tokenId);
+        uint ethPrice = getEthPrice();
         address borrower = bpt.ownerOf(tokenId);
         // TODO: for now limit the percentage to 50% - later make it so that if this would not resolve the safety factor issue that the loan may be paid off 100%
-        uint usdcToPay = PercentageMath(debt, percentage);
+        uint usdcToPay = PercentageMath.percentMul(debt, percentage);
         // usdcAmount / ethPrice * (1 + bonusPecentage)
         uint aethToReceive = PercentageMath.percentMul(
             WadRayMath.wadDiv(
                 ShrubLendMath.usdcToWad(usdcToPay),
-                getEthPrice()
+                ethPrice
             ),
             10000 + PlatformConfig.config.LIQUIDATION_BONUS
+        );
+        uint newPrincipal = loanDetails.principal + interest - usdcToPay;
+        uint newCollateral = loanDetails.collateral - aethToReceive;
+        require(
+            calcLtv(newPrincipal, 0, newCollateral, ethPrice) < PlatformConfig.config.LIQUIDATION_THRESHOLD,
+            "Liquidation insufficient to make borrow healthy"
         );
 
         // Liquidator repays loan with usdc amount equal to the debt
         usdc.transferFrom(msg.sender, address(this), usdcToPay);
-        // TODO: Must reduce interest first and then principal
-        // BPT borrowData is updated so that:
-        // - principal = 0
-        // - collateral -= bonus
-        bpt.fullLiquidateBorrowData(tokenId, bonus);
+        bpt.liquidateBorrowData(tokenId, newPrincipal, newCollateral);
         // Liquidator is sent collateral that they bought : principle * ethPrice * (1 - bonus)
-        aeth.transfer(shrubTreasury, bonus);
+        aeth.transfer(msg.sender, aethToReceive);
     }
 
 /**

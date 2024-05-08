@@ -5,36 +5,26 @@ import "hardhat-abi-exporter";
 import "./hardhat-tasks";
 import "./hardhat-tests";
 
-import getDeployedContracts from "./scripts/get-deployed-contracts";
-
 extendEnvironment((hre) => {
-    async function init() {
-        const {ethers, deployments} = hre;
-        hre.aeth = await ethers.getContractAt("AETH", (await deployments.get('AETH')).address);
-        hre.usdc = await ethers.getContractAt("USDCoin", (await deployments.get('USDCoin')).address);
-        hre.bpt = await ethers.getContractAt("BorrowPositionToken", (await deployments.get('BorrowPositionToken')).address);
-        hre.lendingPlatform = await ethers.getContractAt("LendingPlatform", (await deployments.get('LendingPlatform')).address);
-        hre.mockAaveV3 = await ethers.getContractAt("MockAaveV3", (await deployments.get('MockAaveV3')).address);
-        hre.mockChainlinkAggregator = await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregator')).address);
+    hre.init = async() =>  {
+        const {ethers, deployments, getNamedAccounts} = hre;
+        const { account1, account2, account3, account4, account5, account6, deployer, shrubTreasury } = await getNamedAccounts()
+        global.aeth = await ethers.getContractAt("AETH", (await deployments.get('AETH')).address);
+        global.usdc = await ethers.getContractAt("USDCoin", (await deployments.get('USDCoin')).address);
+        global.bpt = await ethers.getContractAt("BorrowPositionToken", (await deployments.get('BorrowPositionToken')).address);
+        global.lendingPlatform = await ethers.getContractAt("LendingPlatform", (await deployments.get('LendingPlatform')).address);
+        global.mockAaveV3 = await ethers.getContractAt("MockAaveV3", (await deployments.get('MockAaveV3')).address);
+        global.mockChainlinkAggregator = await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregator')).address);
             
-        // const { aeth, usdc, bpt, lendingPlatform, mockAaveV3, mockChainlinkAggregator } = await require('./scripts/get-deployed-contracts')(hre)
-        const { account1, account2, account3, account4, account5, account6, deployer, shrubTreasury } = await hre.getNamedAccounts()
-        // hre.aeth = aeth;
-        // hre.usdc = usdc;
-        // hre.bpt = bpt;
-        // hre.lendingPlatform = lendingPlatform;
-        // hre.mockAaveV3 = mockAaveV3;
-        // hre.mockChainlinkAggregator = mockChainlinkAggregator;
-        hre.account1 = account1;
-        hre.account2 = account2;
-        hre.account3 = account3;
-        hre.account4 = account4;
-        hre.account5 = account5;
-        hre.account6 = account6;
-        hre.deployer = deployer;
-        hre.shrubTreasury = shrubTreasury;
+        global.account1 = account1;
+        global.account2 = account2;
+        global.account3 = account3;
+        global.account4 = account4;
+        global.account5 = account5;
+        global.account6 = account6;
+        global.deployer = deployer;
+        global.shrubTreasury = shrubTreasury;
     }
-    init().then().catch(console.log)
 });
 
 const config: HardhatUserConfig = {
