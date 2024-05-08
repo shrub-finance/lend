@@ -82,7 +82,12 @@ contract BorrowPositionToken is ERC721, Ownable {
         return borrowDatas[tokenId];
     }
 
-    // Returns the total owed on a borrow
+/**
+    * @notice Get the total amount owed on a borrow
+    * @dev returns 6 decimal USDC
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+    * @return uint256 - total amount owed (principal + interest) - 6 Decimal USDC
+*/
     function debt(uint256 tokenId) public view checkExists(tokenId) returns (uint256) {
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         console.log("running bd.debt - (tokenId, bd.startDate, timestamp)");
@@ -251,7 +256,7 @@ contract BorrowPositionToken is ERC721, Ownable {
     }
 
 /**
-    * @notice Update the borrowData for a borrow that is being liquidated
+    * @notice Update the borrowData for a borrow that is being fully liquidated
     * @dev Can only be called by the lendingPlatform contract
     * @dev principal of borrow is reduced to 0 as no more is owed
     * @dev collateral of borrow is reduced by the bonus amount which is transferred to the liquidator
@@ -265,4 +270,20 @@ contract BorrowPositionToken is ERC721, Ownable {
         borrowDatas[tokenId] = bd;
     }
 
+/**
+    * @notice Update the borrowData for a borrow that is being partially liquidated
+    * @dev Can only be called by the lendingPlatform contract
+    * @dev Principal is reduced by the payment amount minus interest owed
+    * @dev collateral of borrow is reduced by the bonus amount which is transferred to the liquidator
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+    * @param newPrincipal uint256 - amount in USDC that is now the principal (6 Decimals)
+    * @param newCollateral uint256 - amount in aETH that is now the collateral (Wad)
+*/
+    function liquidateBorrowData(uint256 tokenId, uint256 newPrincipal, uint256 newCollateral) onlyOwner external {
+        DataTypes.BorrowData memory bd = borrowDatas[tokenId];
+        bd.startDate = HelpersLogic.currentTimestamp();
+        bd.principal = newPrincipal;
+        bd.collateral = newCollateral;
+        borrowDatas[tokenId] = bd;
+    }
 }

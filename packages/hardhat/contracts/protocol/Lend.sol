@@ -279,10 +279,23 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 */
     function getLtv(uint tokenId) public view returns (uint16 ltv) {
         DataTypes.BorrowData memory bd = bpt.getBorrow(tokenId);
-        uint usdcWad = ShrubLendMath.usdcToWad(bd.principal);
-        uint collateralValue = WadRayMath.wadMul(bd.collateral, getEthPrice());
+        ltv = calcLtv(bd.principal, bpt.getInterest(tokenId), bd.collateral, getEthPrice());
+    }
+
+/**
+    * @notice Returns the ltv based on principal, interest, collateral, and ethPrice
+    * @dev encapsulates the math required to calculate LTV
+    * @param principal - USDC principal of loan (6 decimals)
+    * @param interest - USDC interest of loan (6 decimals)
+    * @param collateral - ETH collateral (Wad)
+    * @param ethPrice - USDC/ETH exchange rate (Wad)
+    * @return ltv - loan to value of loan (expressed as percentage)
+*/
+    function calcLtv(uint principal, uint interest, uint collateral, uint ethPrice) private pure returns (uint16 ltv) {
+        uint usdcWad = ShrubLendMath.usdcToWad(principal + interest);
+        uint collateralValue = WadRayMath.wadMul(collateral, ethPrice);
         uint percentageWad = WadRayMath.wadDiv(usdcWad, collateralValue);
-        return ShrubLendMath.wadToPercentage(percentageWad);
+        ltv = ShrubLendMath.wadToPercentage(percentageWad);
     }
 
     function getDeficitForPeriod(
@@ -957,6 +970,45 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         bpt.fullLiquidateBorrowData(tokenId, bonus);
         // Liquidator is sent collateral that they bought : principle * ethPrice * (1 - bonus)
         aeth.transfer(shrubTreasury, bonus);
+    }
+
+/**
+    * @notice Called by shrub to force the liquidation of an expired borrow - when no other liquidator stepped in.
+    * @dev setup so that it can be called by chainlink automation
+    * @dev shrub repays loan and is compensated with an equivelant amount of collateral at a discount specified by the bonus in the liquidationPhase
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+*/
+    function borrowLiquidation(uint tokenId, uint percentage) external {
+        console.log("Running borrowLiquidation - tokenId: %s, percentage: %s", tokenId, percentage);
+        require(percentage == 5000, "Invalid Percentage");
+        require(getLtv(tokenId) > PlatformConfig.config.LIQUIDATION_THRESHOLD, "borrow not eligible for liquidation");
+        DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
+        uint debt = bpt.debt(tokenId);
+        uint interest = bpt.getInterest(tokenId);
+        uint ethPrice = getEthPrice();
+        address borrower = bpt.ownerOf(tokenId);
+        // TODO: for now limit the percentage to 50% - later make it so that if this would not resolve the safety factor issue that the loan may be paid off 100%
+        uint usdcToPay = PercentageMath.percentMul(debt, percentage);
+        // usdcAmount / ethPrice * (1 + bonusPecentage)
+        uint aethToReceive = PercentageMath.percentMul(
+            WadRayMath.wadDiv(
+                ShrubLendMath.usdcToWad(usdcToPay),
+                ethPrice
+            ),
+            10000 + PlatformConfig.config.LIQUIDATION_BONUS
+        );
+        uint newPrincipal = loanDetails.principal + interest - usdcToPay;
+        uint newCollateral = loanDetails.collateral - aethToReceive;
+        require(
+            calcLtv(newPrincipal, 0, newCollateral, ethPrice) < PlatformConfig.config.LIQUIDATION_THRESHOLD,
+            "Liquidation insufficient to make borrow healthy"
+        );
+
+        // Liquidator repays loan with usdc amount equal to the debt
+        usdc.transferFrom(msg.sender, address(this), usdcToPay);
+        bpt.liquidateBorrowData(tokenId, newPrincipal, newCollateral);
+        // Liquidator is sent collateral that they bought : principle * ethPrice * (1 - bonus)
+        aeth.transfer(msg.sender, aethToReceive);
     }
 
 /**

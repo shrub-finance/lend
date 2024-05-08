@@ -114,7 +114,7 @@ task("testLendingPlatform3", "Setup an environment for development")
             await env.run('setTime', {ethDate: apr2026});
             await env.run('takeSnapshot', { account: deployer });
             await env.run('getBorrow', {tokenid: 0});
-            await env.run('getBorrow', {tokenid: 1});
+            // await env.run('getBorrow', {tokenid: 1});
             await env.run('getBorrow', {tokenid: 2});
         }
 
