@@ -4,6 +4,7 @@ import { calculateLockupPeriod, fromEthDate, toEthDate } from '@shrub-lend/commo
 import ExtendDepositSummaryView from './ExtendDepositSummaryView';
 import {ethers} from "ethers";
 import {formatLargeUsdc, formatPercentage} from "../../utils/ethMethods";
+import { depositTerms } from '../../constants';
 
 interface ExtendDepositViewProps {
   timestamp: number;
@@ -15,7 +16,6 @@ interface ExtendDepositViewProps {
   selectedPoolShareTokenAmount: ethers.BigNumber;
   selectedTokenSupply: ethers.BigNumber;
   selectedTotalEthYield: ethers.BigNumber;
-  depositTerms: any[];
   estimatedAPY: ethers.BigNumber;
   setIsModalOpen: (isOpen: boolean) => void;
   selectedPoolTokenId: string;
@@ -31,7 +31,6 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
                                                  selectedPoolShareTokenAmount,
                                                  selectedTokenSupply,
                                                  selectedTotalEthYield,
-                                                 depositTerms,
                                                  estimatedAPY,
                                                  setIsModalOpen,
                                                  onModalClose
@@ -41,12 +40,9 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
     setShowSummary(false)
   };
   const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
-
-
   const handleExtendDepositActionChange = (initiated) => {
     setExtendDepositActionInitiated(initiated);
   };
-
   const closeModalAndPassData = () => {
     if (extendDepositActionInitiated) {
       onModalClose(fromEthDate(timestamp));
@@ -87,11 +83,12 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
               <span className="label-text text-shrub-blue">New Lockup Period</span>
             </label>
             <ul className="flex flex-row">
-              {depositTerms.filter(option => option.duration > new Date(selectedDepositTermDate)).map((item) => (
+              {depositTerms.filter(option => option.duration > selectedDepositTermDate).map((item) => (
                 <li key={item.id} className="mr-4">
                   <input
                     type="radio"
-                    id={item.id} name="deposit-extension"
+                    id={item.id}
+                    name="deposit-extension"
                     value={item.value}
                     className="hidden peer"
                     required
@@ -112,7 +109,6 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
               ))}
             </ul>
           </div>
-
           {/*divider*/}
           <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
           { showAPYSection && (<div className="hero-content flex-col mb-4">
