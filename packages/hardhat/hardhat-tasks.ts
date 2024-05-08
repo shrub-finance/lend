@@ -435,6 +435,26 @@ task('shrubLiquidation', 'Shrub treasury pays off overdue loan in exchange for c
         await sendTransaction(lendingPlatform.connect(signer).shrubLiquidation(tokenid, liquidationPhase), "shrubLiquidation");
     });
 
+task('borrowLiquidation', 'Liquidator pays off part of an unhealty borrow to return health factor under 1')
+    .addParam("account", "Address of account to liquidate with (or named account)", undefined, types.string, false)
+    .addParam("tokenid", "Token ID of the borrow position token ERC-721 of the loan to liquidate", undefined, types.int, false)
+    .addParam("percentage", "Percentage of borrow to liquidate (i.e. 50 for 50%)", 50, types.int, true)
+    .setAction(async (taskArgs, env) => {
+        const { account, tokenid, percentage } = taskArgs;
+        const { ethers } = env;
+        const {lendingPlatform, bpt, usdc} = await getDeployedContracts(env);
+        const signer = await signerFromFuzzyAccount(account, env);
+        const debt = await bpt.debt(tokenid);
+        const percentageBN = ethers.parseUnits(percentage.toString(), 2);
+        await env.run('approveErc20', {
+            account: signer.address,
+            tokenAddress: await usdc.getAddress(),
+            spendAddress: await lendingPlatform.getAddress(),
+            requiredAmount: ethers.formatUnits(debt * 101n / 100n * percentageBN / 10000n, 6)
+        });
+        await sendTransaction(lendingPlatform.connect(signer).borrowLiquidation(tokenid, percentageBN), "borrowLiquidation");
+    });
+
 task('borrow', 'take a borrow')
     .addParam("timestamp", "Unix timestamp of the pool", undefined, types.int, false)
     .addParam("borrowAmount", "Amount of USDC to borrow - in USD", undefined, types.float, false)
@@ -568,6 +588,8 @@ task("getBorrow", "get deatils of a borrow")
         const tokenId = taskArgs.tokenid;
         const {ethers, deployments, getNamedAccounts} = env;
         const {lendingPlatform, bpt} = await getDeployedContracts(env);
+        const ltv = await lendingPlatform.getLtv(tokenId);
+        const ethPrice = await lendingPlatform.getEthPrice();
         let res;
         try {
             res = await bpt.getBorrow(tokenId);
@@ -583,14 +605,15 @@ task("getBorrow", "get deatils of a borrow")
 Borrow: ${tokenId}
 ============
 owner: ${owner}
-endDate: ${fromEthDate(Number(res.endDate)).toISOString()}
 startDate: ${fromEthDate(Number(res.startDate)).toISOString()}
+endDate: ${fromEthDate(Number(res.endDate)).toISOString()}
 principal: ${ethers.formatUnits(res.principal, 6)} USDC
 interest: ${ethers.formatUnits(interest, 6)} USDC
-collateral: ${ethers.formatEther(res.collateral)} ETH
+collateral: ${ethers.formatEther(res.collateral)} ETH ($${ethers.formatUnits(res.collateral * ethPrice, 18 * 2)} @ $${ethers.formatEther(ethPrice)}/ETH)
 apy: ${ethers.formatUnits(res.apy, 2)}%
 
 total debt: ${ethers.formatUnits(debt, 6)} USDC
+ltv: ${ethers.formatUnits(ltv, 2)}%
 `)
     })
 
