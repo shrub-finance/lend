@@ -3,6 +3,7 @@ import {toEthDate} from '@shrub-lend/common';
 import {formatDate, getPlatformDates} from "@shrub-lend/common"
 import Image from 'next/image'
 import { ethers } from 'ethers';
+import { depositTerms } from '../../constants';
 
 interface BorrowDurationViewProps {
   requiredCollateral: ethers.BigNumber;
@@ -14,13 +15,6 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
 
   const [timestamp, setTimestamp] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState('');
-  const dates = getPlatformDates();
-  const durations = [
-    { id: 'smallest-duration', duration: dates.oneMonth },
-    { id: 'small-duration', duration: dates.threeMonth },
-    { id: 'big-duration', duration: dates.sixMonth },
-    { id: 'biggest-duration', duration: dates.twelveMonth },
-  ];
 
   const handleDurationContinue = () => {
     onDurationChange(timestamp);
@@ -66,9 +60,8 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                     <span className="label-text text-shrub-blue">Borrow Duration</span>
                   </label>
                   <div>
-
                     <ul className="flex flex-col gap-4">
-                      {durations.map(({ id, duration }) => (
+                      {depositTerms.map(({ id, duration }) => (
                         <li className="mr-4" key={id}>
                           <input type="radio" id={id} name="borrow" value={id} className="hidden peer" required onChange={(e) => {
                             setSelectedDuration(e.target.value)

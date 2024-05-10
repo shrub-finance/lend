@@ -1,4 +1,5 @@
 import { getPlatformDates } from '@shrub-lend/common';
+import { ethers } from 'ethers';
 
 export const {oneMonth, threeMonth, sixMonth, twelveMonth} = getPlatformDates();
 
@@ -15,3 +16,5 @@ export const depositTerms  = [
   { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
   { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
 ];
+
+export const Zero = ethers.constants.Zero;

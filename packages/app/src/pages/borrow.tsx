@@ -5,10 +5,11 @@ import {BorrowDurationView} from "../views/borrow/BorrowDurationView";
 import {BorrowSummaryView} from "../views/borrow/BorrowSummaryView";
 import {useState} from "react";
 import { ethers } from 'ethers';
+import { Zero } from '../constants';
 
 const Borrow: NextPage = (props) => {
 
-  const [requiredCollateral, setRequiredCollateral] = useState<ethers.BigNumber>(ethers.constants.Zero);
+  const [requiredCollateral, setRequiredCollateral] = useState<ethers.BigNumber>(Zero);
   const [timestamp, setTimestamp] = useState(0);
   const [interestRate, setInterestRate] = useState<string | undefined>(undefined);
   const [amount, setAmount] = useState<string | undefined>(undefined);

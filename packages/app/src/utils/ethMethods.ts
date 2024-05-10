@@ -1,5 +1,6 @@
 import {toEthDate, fromEthDate, getPlatformDates} from "@shrub-lend/common"
 import { ethers } from 'ethers';
+import { Zero } from '../constants';
 
 export {toEthDate, fromEthDate};
 
@@ -40,7 +41,7 @@ export const timestamps = {
 export function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
     const usdcInWadBN = ethers.BigNumber.from(usdcInWad)
     const divisionFactor = ethers.BigNumber.from(10).pow(12)
-    const roundAmount = usdcInWadBN.gte(ethers.constants.Zero) ?
+    const roundAmount = usdcInWadBN.gte(Zero) ?
         ethers.BigNumber.from(5).mul(divisionFactor).div(10) :
         ethers.BigNumber.from(5).mul(divisionFactor).div(10).mul(-1);
     return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
@@ -56,7 +57,7 @@ export function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
 export function roundEth(amount: ethers.BigNumberish, decimals: number) {
     const amountBN = ethers.BigNumber.from(amount);
     const divisionFactor = ethers.BigNumber.from(10).pow(18 - decimals)
-    const roundAmount = amountBN.gt(amountBN.div(divisionFactor).mul(divisionFactor)) ? divisionFactor : ethers.constants.Zero
+    const roundAmount = amountBN.gt(amountBN.div(divisionFactor).mul(divisionFactor)) ? divisionFactor : Zero
     return amountBN.add(roundAmount).div(divisionFactor).mul(divisionFactor);
 }
 

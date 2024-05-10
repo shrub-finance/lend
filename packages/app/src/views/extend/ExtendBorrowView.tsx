@@ -1,45 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import Image from "next/image";
-import { BigNumber, ethers } from 'ethers';
-import { formatLargeUsdc, formatPercentage, interestToLTV } from '../../utils/ethMethods';
-import { interestRates } from '../../constants';
+import { ethers } from 'ethers';
+import { formatLargeUsdc, interestToLTV, roundEth } from '../../utils/ethMethods';
+import { depositTerms, interestRates, Zero } from '../../constants';
 import { useContract } from '@thirdweb-dev/react';
 import { lendingPlatformAbi, lendingPlatformAddress } from '../../utils/contracts';
 import ExtendBorrowSummaryView from './ExtendBorrowSummaryView';
+import { formatDate } from '@shrub-lend/common';
 
 interface ExtendBorrowViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
-  selectedBorrowAmount: BigNumber;
+  selectedBorrowAmount: ethers.BigNumber;
+  oldDueDate: Date;
+  currenBalance: ethers.BigNumber;
 
 }
 
 const ExtendBorrowView: React.FC<ExtendBorrowViewProps & { onModalClose: (date: Date) => void }> = ({
-                                                                                          setIsModalOpen, onModalClose, selectedBorrowAmount
-                                                                                        }) => {
-  const [selectedInterestRate, setSelectedInterestRate] = useState("");
-
+setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
+})=> {
+  const [selectedInterestRate, setSelectedInterestRate] = useState('8');
   const [extendActionInitiated, setExtendBorrowActionInitiated] = useState(false);
-  const [requiredCollateral, setRequiredCollateral] = useState("0");
-  const [showExtendBorrowAPYSection, setShowExtendBorrowAPYSection] = useState(false);
-
-const borrowAmountExtending = selectedBorrowAmount
-
-  // const handleExtendBorrowBack = (initiated) => {
-  //   setExtendBorrowActionInitiated(initiated);
-  // };
-
-  const handleExtendBorrowBack = () => {
-    setShowSummary(false)
+  const [requiredCollateralToExtendBorrow, setRequiredCollateralToExtendBorrow] = useState<ethers.BigNumber>(Zero);
+  const [showExtendBorrowCollateralSection, setShowExtendBorrowCollateralSection] = useState(true);
+  const [ltvChangeRequested, setLtvChangeRequested] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState('');
+  const [showDueDateOptions, setShowDueDateOptions] = useState(false);
+  const handleExtendBorrowBack = (data) => {
+    setLtvChangeRequested(true);
+    if (data === 'dateChangeRequest') {
+      setShowDueDateOptions(true);
+    }
+    if (data === 'ltvChangeRequest') {
+      setShowDueDateOptions(false);
+    }
+  };
+  const handleExtendBorrowActionChange = (initiated) => {
+    setExtendBorrowActionInitiated(initiated);
   };
 
   const closeModalAndPassData = () => {
-    if (extendActionInitiated) {
-
-    }
+    if (extendActionInitiated) {}
     setIsModalOpen(false);
   };
-
-  const [showSummary, setShowSummary] = useState(false);
 
   const {
     contract: lendingPlatform,
@@ -50,30 +53,22 @@ const borrowAmountExtending = selectedBorrowAmount
   useEffect(() => {
     const determineRequiredCollateral = async () => {
       const ltv = interestToLTV[selectedInterestRate];
-      const usdcUnits = ethers.utils.parseUnits(borrowAmountExtending.toString(), 6);
-      const coll: BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
-      return coll;
+      const usdcUnits = ethers.utils.parseUnits(formatLargeUsdc(selectedBorrowAmount.toString()), 6);
+      const coll: ethers.BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
+      return roundEth(coll, 6);
     };
-
-
     if (selectedInterestRate !== "") {
       determineRequiredCollateral()
-        .then(c => {
-          setRequiredCollateral(c);
-        })
+        .then(res => setRequiredCollateralToExtendBorrow(res))
         .catch(e => console.error(e));
     }
-  }, [selectedInterestRate, lendingPlatform]);
-
-  const handleExtendBorrowActionChange = (initiated) => {
-    setExtendBorrowActionInitiated(initiated);
-  };
+  }, [selectedInterestRate, lendingPlatform, setRequiredCollateralToExtendBorrow]);
 
 
   return (
     <>
       <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-shrub-grey-600">
-        <h3 className="text-xl font-semibold text-shrub-grey-900 dark:text-white">Extend Borrow</h3>
+        <h3 className="text-xl font-semibold text-shrub-grey-900 dark:text-white">Extending Loan</h3>
         <button type="button" onClick={closeModalAndPassData} className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-shrub-grey-600 dark:hover:text-white">
           <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
             <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
@@ -81,16 +76,26 @@ const borrowAmountExtending = selectedBorrowAmount
           <span className="sr-only">Close modal</span>
         </button>
       </div>
-      {!showSummary ?
+      {ltvChangeRequested ?
         <div className="relative group w-full">
           <div className="absolute border rounded-3xl"></div>
           <div className="flex flex-col">
             <div className="card w-full text-left">
-              <div className="card-body ">
-                <div className="form-control w-full">
+              <div className='card-body '>
+                <div className='form-control w-full'>
+                  <div className='flex items-center pb-2'>
+                    <button onClick={() => setLtvChangeRequested(false)}>
+                      <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none'
+                           className='w-6 grow-0 order-0 flex-none'>
+                        <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='black' strokeWidth='2' strokeLinecap='round'
+                              strokeLinejoin='round' />
+                      </svg>
+                    </button>
+                    {/*<p className='text-lg font-bold pb-2 text-left'>Back</p>*/}
+                  </div>
                   <div>
-                    <label className="label">
-                      <span className="label-text text-shrub-blue">Amount Being Extended</span>
+                    <label className='label'>
+                      <span className='label-text text-shrub-blue'>Amount Being Extended</span>
                     </label>
                     <div className='w-full text-xl font-semibold flex flex-row'>
                       <span
@@ -100,53 +105,79 @@ const borrowAmountExtending = selectedBorrowAmount
                     </div>
                   </div>
                 </div>
-
-                {/*apr*/}
-                <div className="form-control w-full">
-                  <label className="label">
-                    <span className="label-text text-shrub-blue">Interest Rate</span>
-                  </label>
-                  <div>
-                    <ul className="flex flex-row ">
-                      {interestRates.map(({ id, rate }) => (
-                        <li className="mr-4" key={id}>
-                          <input type="radio" id={id} name="loan" value={id} className="hidden peer" onChange={() => {
-                            setSelectedInterestRate(rate)
-                            setShowExtendBorrowAPYSection(true)
-                          }} required />
-                          <label htmlFor={id}
-                                 className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-200 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 select-none">
-                            <div className="block">
-                              <div className="w-full text-lg font-semibold">{rate}%</div>
+                {/*due date*/}
+                {showDueDateOptions ?
+                  <div className='form-control w-full mt-4'>
+                    <label className='label'>
+                      <span className='label-text text-shrub-blue'>Due Date</span>
+                    </label>
+                    <ul className='flex flex-col gap-4'>
+                      {depositTerms.filter(option => option.duration > oldDueDate).map((item) => (
+                        <li className='mr-4' key={item.id}>
+                          <input type='radio' id={item.id} name='borrow' value={item.id} className='hidden peer'
+                                 required onChange={(e) => {
+                            setSelectedDuration(e.target.value);
+                          }} checked={selectedDuration === item.id} />
+                          <label htmlFor={item.id}
+                                 className='inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey-200 bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700'>
+                            <div className='block'>
+                              <div className='w-full text-xl font-semibold'>{formatDate.long(item.duration)}</div>
                             </div>
                           </label>
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </div> :
+                  /*interest rate*/
+                  <div className='form-control w-full pt-4'>
+                    <label className='label'>
+                      <span className='label-text text-shrub-blue'>Interest Rate</span>
+                    </label>
+                    <div>
+                      <ul className='flex flex-row '>
+                        {interestRates.map(({ id, rate }) => (
+                          <li className='mr-4' key={id}>
+                            <input type='radio' id={id} name='loan' value={id} className='hidden peer' checked={rate === selectedInterestRate}
+                             onChange={() => {
+                              setSelectedInterestRate(rate);
+                              setShowExtendBorrowCollateralSection(true);
+                            }} required />
+                            <label htmlFor={id}
+                                   className='inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-200 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 select-none'>
+                              <div className='block'>
+                                <div className='w-full text-lg font-semibold'>{rate}%</div>
+                              </div>
+                            </label>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
-                </div>
-                <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
+                  </div>
+                }
+                <div className='divider h-0.5 w-full bg-shrub-grey-light2 my-8'></div>
 
                 {/*display required collateral*/}
-                {showExtendBorrowAPYSection && (
-                  <div className="hero-content mb-2 flex-col gap-2 justify-between">
-                    <div className="card w-full flex flex-row text-lg justify-between">
-                      <span className="w-[360px]">Required collateral</span>
-                      <span className="hidden md:inline">
-                        <Image alt="eth logo" src="/eth-logo.svg" className="w-4 inline align-middle" width="16" height="24"/> ETH
+                {showExtendBorrowCollateralSection && !showDueDateOptions && (
+                  <div className='hero-content mb-2 flex-col gap-2 justify-between'>
+                    <div className='card w-full flex flex-row text-lg justify-between'>
+                      <span className='w-[360px]'>Required collateral</span>
+                      <span className='hidden md:inline'>
+                        <Image alt='eth logo' src='/eth-logo.svg' className='w-4 inline align-middle' width='16'
+                               height='24' /> ETH
                       </span>
                     </div>
-                    <div className="card w-full bg-teal-50 border border-shrub-green p-10">
-                      { (Number(borrowAmountExtending))? <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{requiredCollateral} ETH</span>:<span className="sm: text-medium text-shrub-green-500 font-bold text-center">Enter amount to calculate required collateral</span>}
+                    <div className='card w-full bg-teal-50 border border-shrub-green p-10'>
+                        <span className='sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center'>
+                          {ethers.utils.formatEther(requiredCollateralToExtendBorrow)} ETH</span>
                     </div>
                   </div>
                 )}
                 {/*CTA*/}
                 <button
-                  className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border"
-                  disabled={selectedInterestRate === ""}
-                  onClick={() => setShowSummary(true)}>
+                  className='btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border'
+                  /*  disabled={!showDueDateOptions && selectedInterestRate === '' || showDueDateOptions && selectedDuration === ''}*/
+                  onClick={() => setLtvChangeRequested(false)}>
                   Continue
                 </button>
               </div>
@@ -154,7 +185,14 @@ const borrowAmountExtending = selectedBorrowAmount
           </div>
         </div>
         :
-        <ExtendBorrowSummaryView onBackExtend={handleExtendBorrowBack} onExtendDepositActionChange={handleExtendBorrowActionChange}/> }
+        <ExtendBorrowSummaryView onBackExtend={handleExtendBorrowBack}
+                                 onExtendBorrowActionChange={handleExtendBorrowActionChange}
+                                 requiredCollateralToExtendBorrow={requiredCollateralToExtendBorrow}
+                                 selectedBorrowAmount={selectedBorrowAmount}
+                                 selectedDuration={selectedDuration}
+                                 oldDueDate={oldDueDate}
+                                 principalForExtendingBorrow={currenBalance}
+                                 />}
     </>
   );
 };

@@ -91,13 +91,15 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
           <div className="card-body">
             <div>
               {!extendDepositActionInitiated && (
-                <div className='flex items-center'>
-                  <button onClick={onBackExtend}>
-                    <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none' className='w-6 grow-0 order-0 flex-none mr-[16px] mb-[4px]'>
-                      <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='black' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' />
-                    </svg>
-                  </button>
-                  <p className='text-lg font-bold pb-2 text-left'>Back</p>
+                <div className='flex items-center pb-4'>
+                <button onClick={onBackExtend}>
+              <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none'
+                   className='w-6 grow-0 order-0 flex-none'>
+                <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='black' strokeWidth='2' strokeLinecap='round'
+                      strokeLinejoin='round' />
+              </svg>
+            </button>
+                  {/*<p className='text-lg font-bold pb-2 text-left'>Back</p>*/}
                 </div>
               )}
 
@@ -125,7 +127,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                   <span className=''>Previous End Date</span>
                   <span>{oldTimestamp?.toDateString()}</span>
                 </div>
-                <div className="flex flex-row  justify-between">
+                <div className="flex flex-row  justify-between cursor-pointer" onClick={onBackExtend}>
                   <span className="">New End Date</span>
                   <span>{newTimestamp?.toDateString()}
                     <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>
