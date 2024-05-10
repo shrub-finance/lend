@@ -5,6 +5,9 @@ import "hardhat-abi-exporter";
 import "./hardhat-tasks";
 import "./hardhat-tests";
 
+import dotenv from "dotenv";
+dotenv.config();
+
 extendEnvironment((hre) => {
     hre.init = async() =>  {
         const {ethers, deployments, getNamedAccounts} = hre;
@@ -31,10 +34,10 @@ const config: HardhatUserConfig = {
   solidity: "0.8.18",
   defaultNetwork: "hardhat",
   networks: {
+
     hardhat: {
       allowUnlimitedContractSize: true,
       chainId: 1337,
-      // chainId: 1337,
       // mining: {
       //   auto: false,
       //   interval: [3000, 3500] // Simulate mining time between 3 and 6 seconds
@@ -59,5 +62,15 @@ const config: HardhatUserConfig = {
         only: ["LendingPlatform", "USDCoin", "PoolShareToken"]
     }
 };
+
+if (process.env.HOLESKY_SECRET_MNEMONIC && config.networks) {
+    config.networks.holesky = {
+        url: "https://rpc.holesky.ethpandaops.io",
+        chainId: 17000,
+        accounts: {
+            mnemonic: process.env.HOLESKY_SECRET_MNEMONIC
+        }
+    };
+}
 
 export default config;
