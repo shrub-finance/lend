@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { formatLargeUsdc, formatPercentage, interestToLTV } from '../../utils/ethMethods';
+import {calcPercentage, ethInUsdc, formatLargeUsdc, formatPercentage, interestToLTV} from '../../utils/ethMethods';
 import {
   chainlinkAggregatorAbi,
   chainlinkAggregatorAddress,
@@ -22,14 +22,14 @@ import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
 import { useFinancialData } from '../../components/FinancialDataContext';
 import { depositTerms } from '../../constants';
 import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
+import {BorrowObj} from "../../types/types";
+import borrow from "../../pages/borrow";
 
 interface ExtendBorrowSummaryProps {
   onBackExtend: (data?) => void,
-  requiredCollateralToExtendBorrow: ethers.BigNumber,
-  selectedBorrowAmount: ethers.BigNumber,
-  oldDueDate: Date,
+  borrow: BorrowObj
+  debt: ethers.BigNumber,
   selectedDuration: string,
-  principalForExtendingBorrow: ethers.BigNumber,
 }
 
 const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
@@ -38,11 +38,9 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
   {
     onBackExtend,
     onExtendBorrowActionChange,
-    requiredCollateralToExtendBorrow,
-    selectedBorrowAmount,
-    oldDueDate,
+    borrow,
+    debt,
     selectedDuration,
-    principalForExtendingBorrow,
   }) => {
   const [
     getActiveLendingPools,
@@ -92,12 +90,16 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     onExtendBorrowActionChange(extendDepositActionInitiated);
   }, [extendDepositActionInitiated, onExtendBorrowActionChange]);
 
-  const ltv = requiredCollateralToExtendBorrow.isZero() || !ethPrice || ethPrice.isZero() ?
+    console.log(`debt: ${debt}`);
+    console.log(`collateral: ${borrow.collateral}`);
+    console.log(`ethPrice: ${ethPrice}`);
+  const ltv = borrow.collateral.isZero() || !ethPrice || ethPrice.isZero() ?
     BigNumber.from(0) :
-    principalForExtendingBorrow
-      .mul(ethers.BigNumber.from(10).pow(12))  // multiplying by 10 to the 12th to normalize decimals to 4 in the result
-      .div(requiredCollateralToExtendBorrow.mul(ethPrice));
+    // debt.div(ethInUsdc(borrow.collateral, ethPrice));
 
+    calcPercentage(debt, ethInUsdc(borrow.collateral, ethPrice))
+
+    console.log(`ltv: ${ltv.toString()}`);
   return (
     <div className='relative group mt-4 w-full min-w-[500px]'>
       <div className='flex flex-col'>
@@ -105,13 +107,13 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
           <div className='card-body'>
             <div className='w-full text-xl font-semibold flex flex-row'>
               <span
-                className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(selectedBorrowAmount).toString()} USDC</span>
+                className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(debt)} USDC</span>
               <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40'
                      height='40' />
             </div>
             <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
               When you extend this borrow of
-              <span className='font-bold'>{' '}{formatLargeUsdc(selectedBorrowAmount).toString()} USDC</span>, your
+              <span className='font-bold'>{' '}{formatLargeUsdc(debt)} USDC</span>, your
               existing borrow position
               token will be burnt and a new one will be minted reflecting the new date <span
               className='font-bold'>{selectedDuration ? depositTerms.find(term => term.id === selectedDuration)?.duration.toLocaleString() : depositTerms[depositTerms.length - 1].duration.toLocaleString()}</span>.
@@ -122,15 +124,15 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
               <div className='mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
                 <div className='flex flex-row  justify-between'>
                   <span className=''>Collateral</span>
-                  <span>{ethers.utils.formatEther(requiredCollateralToExtendBorrow)} ETH</span>
+                  <span>{ethers.utils.formatEther(borrow.collateral)} ETH</span>
                 </div>
                 <div className='flex flex-row  justify-between'>
                   <span className=''>Principal</span>
-                  <span>{formatLargeUsdc(principalForExtendingBorrow.toString())} USDC</span>
+                  <span>{formatLargeUsdc(borrow.principal)} USDC</span>
                 </div>
                 <div className='flex flex-row  justify-between'>
                   <span className=''>Old Due Date</span>
-                  <span>{oldDueDate.toLocaleString()}
+                  <span>{borrow.endDate.toLocaleString()}
                   </span>
                 </div>
                 <div className='flex flex-row  justify-between cursor-pointer'

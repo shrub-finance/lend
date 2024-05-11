@@ -1,4 +1,5 @@
 import { ethers } from 'ethers'
+import {et} from "date-fns/locale";
 
 
 export type PendingStatuses = "pending" | "confirmed" | "failed" | "extending" | "extended";
@@ -17,6 +18,19 @@ export type Borrow = {
   updated?: number,
   __typename?: string,
 };
+
+export type BorrowObj = {
+    id: ethers.BigNumber,
+    endDate: Date,
+    created: Date,
+    updated: Date,
+    collateral: ethers.BigNumber,
+    principal: ethers.BigNumber
+    originalPrincipal: ethers.BigNumber,
+    paid: ethers.BigNumber,
+    ltv: ethers.BigNumber,
+    apy: ethers.BigNumber,
+}
 
 
 type LendingPool = {

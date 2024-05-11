@@ -7,17 +7,16 @@ import { useContract } from '@thirdweb-dev/react';
 import { lendingPlatformAbi, lendingPlatformAddress } from '../../utils/contracts';
 import ExtendBorrowSummaryView from './ExtendBorrowSummaryView';
 import { formatDate } from '@shrub-lend/common';
+import {BorrowObj} from "../../types/types";
 
 interface ExtendBorrowViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
-  selectedBorrowAmount: ethers.BigNumber;
-  oldDueDate: Date;
-  currenBalance: ethers.BigNumber;
-
+  borrow: BorrowObj;
+  debt: ethers.BigNumber;
 }
 
 const ExtendBorrowView: React.FC<ExtendBorrowViewProps & { onModalClose: (date: Date) => void }> = ({
-setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
+setIsModalOpen, borrow, debt
 })=> {
   const [selectedInterestRate, setSelectedInterestRate] = useState('8');
   const [extendActionInitiated, setExtendBorrowActionInitiated] = useState(false);
@@ -53,7 +52,7 @@ setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
   useEffect(() => {
     const determineRequiredCollateral = async () => {
       const ltv = interestToLTV[selectedInterestRate];
-      const usdcUnits = ethers.utils.parseUnits(formatLargeUsdc(selectedBorrowAmount.toString()), 6);
+      const usdcUnits = ethers.utils.parseUnits(formatLargeUsdc(debt), 6);
       const coll: ethers.BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
       return roundEth(coll, 6);
     };
@@ -99,7 +98,7 @@ setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
                     </label>
                     <div className='w-full text-xl font-semibold flex flex-row'>
                       <span
-                        className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(selectedBorrowAmount.toString())} USDC</span>
+                        className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(debt)} USDC</span>
                       <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10}
                              height={10} />
                     </div>
@@ -112,7 +111,7 @@ setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
                       <span className='label-text text-shrub-blue'>Due Date</span>
                     </label>
                     <ul className='flex flex-col gap-4'>
-                      {depositTerms.filter(option => option.duration > oldDueDate).map((item) => (
+                      {depositTerms.filter(option => option.duration > borrow.endDate).map((item) => (
                         <li className='mr-4' key={item.id}>
                           <input type='radio' id={item.id} name='borrow' value={item.id} className='hidden peer'
                                  required onChange={(e) => {
@@ -187,11 +186,9 @@ setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
         :
         <ExtendBorrowSummaryView onBackExtend={handleExtendBorrowBack}
                                  onExtendBorrowActionChange={handleExtendBorrowActionChange}
-                                 requiredCollateralToExtendBorrow={requiredCollateralToExtendBorrow}
-                                 selectedBorrowAmount={selectedBorrowAmount}
+                                 borrow={borrow}
+                                 debt={debt}
                                  selectedDuration={selectedDuration}
-                                 oldDueDate={oldDueDate}
-                                 principalForExtendingBorrow={currenBalance}
                                  />}
     </>
   );
