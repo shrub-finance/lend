@@ -146,7 +146,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
               </div>
 
               <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
-             {/*approve and extend deposit*/}
+             {/*approve and modals deposit*/}
              {(allowanceIsLoading) ? (
                <p>Loading balance...</p>
              ) : (

@@ -158,7 +158,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                   <span>{`calculatedField`}</span>
                 </div>
               </div>
-              {/*approve and extend deposit*/}
+              {/*approve and modals deposit*/}
               {(allowanceIsLoading) ? (
                 <p>Loading balance...</p>
               ) : (

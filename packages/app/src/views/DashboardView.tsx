@@ -15,12 +15,13 @@ import { USER_POSITIONS_QUERY } from "../constants/queries";
 import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
-import ExtendDepositView from './extend/ExtendDepositView';
+import ExtendDepositView from './modals/ExtendDepositView';
 import { formatLargeUsdc, formatPercentage } from '../utils/ethMethods';
 import {Deposit} from "../types/types";
-import ExtendBorrowView from './extend/ExtendBorrowView';
+import ExtendBorrowView from './modals/ExtendBorrowView';
 import { oneMonth, sixMonth, threeMonth, twelveMonth, Zero } from '../constants';
 import useEthPriceFromChainlink from '../hooks/useEthPriceFromChainlink';
+import WithdrawView from './modals/WithdrawView';
 const now = new Date();
 new Date(new Date(now).setFullYear(now.getFullYear() + 1));
 export const DashboardView: FC = ({}) => {
@@ -28,6 +29,7 @@ export const DashboardView: FC = ({}) => {
   const wallet = useConnectedWallet();
   const [extendDepositModalOpen, setExtendDepositModalOpen] = useState(false);
   const [extendBorrowModalOpen, setExtendBorrowModalOpen] = useState(false);
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const { store, dispatch } = useFinancialData();
   const { data: usdcBalance, isLoading: usdcBalanceIsLoading } = useBalance(usdcAddress);
   const { data: ethBalance, isLoading: ethBalanceIsLoading } = useBalance(NATIVE_TOKEN_ADDRESS);
@@ -136,15 +138,19 @@ export const DashboardView: FC = ({}) => {
     setExtendBorrowModalOpen(false);
   };
 
+  const handleWithdraw = () => {
+    setWithdrawModalOpen(false);
+  };
 
+console.log(store);
   /** Might Need Later **/
   // let newlyAddedDeposit = store.deposits.filter(item => item.hasOwnProperty('id'));
   // newlyAddedDeposit = newlyAddedDeposit[0];
-  // let calculatedPoolShareTokenAmount = (newlyAddedDeposit?.lendingPool?.totalPrincipal + newlyAddedDeposit?.lendingPool?.totalUsdcInterest + newlyAddedDeposit?.lendingPool?.totalEthYield === 0) ?
-  //   newlyAddedDeposit?.depositsUsdc * 1e12 :
-  //   (newlyAddedDeposit?.depositsUsdc * newlyAddedDeposit?.lendingPool?.tokenSupply) /
-  //   (newlyAddedDeposit?.lendingPool?.totalPrincipal + newlyAddedDeposit?.lendingPool?.totalUsdcInterest +
-  //     (newlyAddedDeposit?.lendingPool?.totalEthYield * ethPrice));
+  // let calculatedPoolShareTokenAmount = (newlyAddedDeposit.lendingPool.totalPrincipal + newlyAddedDeposit.lendingPool.totalUsdcInterest + newlyAddedDeposit.lendingPool.totalEthYield === 0) ?
+  //   newlyAddedDeposit.depositsUsdc * 1e12 :
+  //   (newlyAddedDeposit.depositsUsdc * newlyAddedDeposit.lendingPool.tokenSupply) /
+  //   (newlyAddedDeposit.lendingPool.totalPrincipal + newlyAddedDeposit.lendingPool.totalUsdcInterest +
+  //     (newlyAddedDeposit.lendingPool.totalEthYield * ethPrice));
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -172,7 +178,15 @@ export const DashboardView: FC = ({}) => {
                       </Link>
                     </span>
                   </div>
-
+                  {/*withdraw modal*/}
+                  <Modal isOpen={withdrawModalOpen} onClose={() => setWithdrawModalOpen(false)} >
+                    <WithdrawView
+                      selectedDepositBalance={selectedDepositBalance}
+                      onModalClose={handleWithdraw}
+                      setIsModalOpen={setWithdrawModalOpen}
+                     />
+                  </Modal>
+                  {/*modals deposit modal*/}
                   <Modal isOpen={extendDepositModalOpen} onClose={() => setExtendDepositModalOpen(false)} >
                     <ExtendDepositView
                       onModalClose={handleExtendDeposit}
@@ -190,6 +204,7 @@ export const DashboardView: FC = ({}) => {
                       selectedPoolTokenId={selectedPoolTokenId}
                     />
                   </Modal>
+                  {/*modals borrow modal*/}
                   <Modal isOpen={extendBorrowModalOpen} onClose={() => setExtendBorrowModalOpen(false)} >
                     <ExtendBorrowView
                       onModalClose={handleExtendBorrow}
@@ -313,54 +328,62 @@ export const DashboardView: FC = ({}) => {
                                       {fromEthDate(parseInt(item.lendingPool.timestamp)).toLocaleString()}
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
-                                      <div className="flex items-center justify-center space-x-2 h-full p-2">
-                                          <button type="button" style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }} className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700"
-                                          disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()}
-                                         onClick={() => {
-                                          setExtendDepositModalOpen(true)
-                                          setSelectedDepositBalance(currentBalance)
-                                          setSelectedDepositTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)))
-                                          setSelectedPoolShareTokenAmount(tokenAmountBN)
-                                          setSelectedTokenSupply(tokenSupplyBN)
-                                          setSelectedTotalEthYield(lendingPoolEthYieldBN)
-                                          setSelectedPoolTokenId(item.lendingPool.id)
-                                        }} >
+                                      <div className='flex items-center justify-center space-x-2 h-full p-2'>
+                                        <button type='button'
+                                                style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }}
+                                                className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700'
+                                                disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()}
+                                                onClick={() => {
+                                                  setExtendDepositModalOpen(true);
+                                                  setSelectedDepositBalance(currentBalance);
+                                                  setSelectedDepositTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)));
+                                                  setSelectedPoolShareTokenAmount(tokenAmountBN);
+                                                  setSelectedTokenSupply(tokenSupplyBN);
+                                                  setSelectedTotalEthYield(lendingPoolEthYieldBN);
+                                                  setSelectedPoolTokenId(item.lendingPool.id);
+                                                }}>
                                           {/*Corresponding modal at the top*/}
-                                        Extend
-                                      </button>
-                                        <a onMouseOver={() => setCurrentHovered(index)} onMouseOut={() => setCurrentHovered(null)}
-                                             href="https://app.uniswap.org/" target="_blank"
-                                             type="button"
-                                             className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700">{currentHovered === index  ? <Image
-                                            src="/up-right-arrow-light.svg"
-                                            alt="down arrow"
-                                            width={20}
-                                            height={20}
-                                            className="mr-2"
-                                          /> : <Image
-                                            src="/up-right-arrow.svg"
-                                            alt="down arrow"
-                                            width={20}
-                                            height={20}
-                                            className="mr-2"
-                                          />} Trade</a>
+                                          Extend
+                                        </button>
+                                        <a onMouseOver={() => setCurrentHovered(index)}
+                                           onMouseOut={() => setCurrentHovered(null)} href='https://app.uniswap.org/'
+                                           target='_blank' type='button'
+                                           className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700'>{currentHovered === index ?
+                                          <Image src='/up-right-arrow-light.svg' alt='down arrow' width={20} height={20}
+                                                 className='mr-2' /> :
+                                          <Image src='/up-right-arrow.svg' alt='down arrow' width={20} height={20}
+                                                 className='mr-2' />} Trade</a>
+                                        {item.lendingPool.finalized && <button type='button'
+                                                // style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }}
+                                                className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700'
+                                                // disabled={}
+                                                onClick={() => {
+                                                  setWithdrawModalOpen(true);
+                                                  setSelectedDepositBalance(currentBalance)
 
+                                                }}>
+                                          {/*Corresponding modal at the top*/}
+                                          Withdraw
+                                        </button>}
                                       </div>
                                     </td>
                                   </tr>
-                                )}
-                              )}
+                                    )
+                                }
+                            )}
                             </tbody>
                           </table>
                         </div>
                       </li>
-                      <li className="mr-4">
-                        <div className="relative overflow-x-auto border rounded-2xl">
-                          <table className="w-full text-left text-shrub-grey  dark:text-shrub-grey-400">
-                            <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white dark:text-white dark:bg-shrub-grey-800">
+                      <li className='mr-4'>
+                        <div className='relative overflow-x-auto border rounded-2xl'>
+                          <table className='w-full text-left text-shrub-grey  dark:text-shrub-grey-400'>
+                            <caption
+                              className='p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white dark:text-white dark:bg-shrub-grey-800'>
                               Borrow Account
                             </caption>
-                            <thead className="text-xs bg-shrub-grey-light dark:bg-shrub-grey-700 border border-shrub-grey-light2">
+                            <thead
+                              className='text-xs bg-shrub-grey-light dark:bg-shrub-grey-700 border border-shrub-grey-light2'>
                             <tr>
                               <th scope='col' className='px-6 py-3 text-shrub-grey font-medium'>Current Balance</th>
 
