@@ -10,7 +10,7 @@
     "deploy": "npx hardhat node --hostname 0.0.0.0 --export deployments/deployed-contracts.json",
     "start-graph-node": "rm -rf graph-node/data; docker-compose --project-directory graph-node up",
     "restart-graph-node": "docker-compose restart graph-node",
-    "local-initialize": "npx hardhat testLendingPlatform3 --network localhost"
+    "local-initialize": "npx hardhat testLendingPlatform --network localhost"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.8.0",

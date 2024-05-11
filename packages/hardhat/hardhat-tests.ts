@@ -70,11 +70,11 @@ task("testLendingPlatform3", "Setup an environment for development")
         await partB();
         await partC();
         await partD();
-        // await partD4();
+        await partD4();
         // await partD2();
         // await partD3();
-        await partE();
-        await partF();
+        // await partE();
+        // await partF();
         // await partF2();
         // await partG();
         // await partH();
@@ -145,10 +145,10 @@ task("testLendingPlatform3", "Setup an environment for development")
             await env.run('distributeUsdc', { to: account4, amount: 3 });
             await env.run('repayBorrow', { account: account4, tokenId: 2 })
             await env.run('takeSnapshot', { account: deployer });
-            // await env.run('getBorrow', {tokenid: 0});
-            // await env.run('getBorrow', {tokenid: 1});
-            // await env.run('getBorrow', {tokenid: 2});
-            // await env.run('getBorrow', {tokenid: 3});
+            await env.run('getBorrow', {tokenid: 0});
+            await env.run('getBorrow', {tokenid: 1});
+            await env.run('getBorrow', {tokenid: 2});
+            await env.run('getBorrow', {tokenid: 3});
         }
 
         async function partF() {
