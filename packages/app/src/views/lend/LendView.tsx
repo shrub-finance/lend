@@ -5,7 +5,8 @@ import {usdcAddress} from "../../utils/contracts";
 import {toEthDate} from '@shrub-lend/common';
 import {calculateLockupPeriod} from "@shrub-lend/common";
 import Image from 'next/image';
-import { depositTerms, oneMonth, sixMonth, threeMonth, twelveMonth } from '../../constants';
+import { oneMonth, sixMonth, threeMonth, twelveMonth } from '../../constants';
+import {useFinancialData} from "../../components/FinancialDataContext";
 
 
 interface LendViewProps {
@@ -24,6 +25,8 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
   const [continueButtonEnabled, setContinueButtonEnabled] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
   const [isValidationError, setIsValidationError] = useState(false);
+
+  const { store, dispatch } = useFinancialData();
 
   async function fillMax() {
     if (!usdcBalanceIsLoading) {
@@ -137,27 +140,29 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                     <span className="label-text text-shrub-blue">Lockup period</span>
                   </label>
                   <ul className="flex flex-row">
-                    {depositTerms.map((item) => (
-                      <li key={item.id} className="mr-4">
+                    {
+                      store.activePoolTimestamps.map((activePoolTimestamp) => (
+                      // const activePoolTimestampId = toEthDate(activePoolTimestamp).toString();
+                      <li key={activePoolTimestamp.toISOString()} className="mr-4">
                         <input
                           type="radio"
-                          id={item.id}
+                          id={activePoolTimestamp.toISOString()}
                           name="deposit"
-                          value={item.value}
+                          value={toEthDate(activePoolTimestamp)}
                           className="hidden peer"
                           required
                           onChange={() => {
-                            setTimestamp(toEthDate(item.duration))
+                            setTimestamp(toEthDate(activePoolTimestamp))
                             setShowLendAPYSection(true)
                           }}
                         />
                         <label
-                          htmlFor={item.id}
+                          htmlFor={activePoolTimestamp.toISOString()}
                           className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500  dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 dark:hover:text-shrub-green select-none"
                         >
                           <div className="block">
                             <div className="w-full text-lg font-semibold">
-                              {calculateLockupPeriod(item.duration)}
+                              {calculateLockupPeriod(activePoolTimestamp)}
                             </div>
                           </div>
                         </label>

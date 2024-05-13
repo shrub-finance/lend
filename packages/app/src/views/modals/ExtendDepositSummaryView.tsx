@@ -166,6 +166,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                          async (usdc) =>
                          {
                            setLocalError('');
+                           // @ts-ignore
                            return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
                          }}
                        onSuccess={
@@ -200,6 +201,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
 
                          async (lendingPlatform) =>
                          {
+                           // @ts-ignore
                              return await lendingPlatform?.contractWrapper?.writeContract?.extendDeposit(
                                toEthDate(oldTimestamp),
                                toEthDate(newTimestamp),
