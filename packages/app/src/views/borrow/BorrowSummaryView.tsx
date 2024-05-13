@@ -197,6 +197,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                               className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl !text-white hover:!bg-shrub-green-500 !mb-4 web3button"
                               action={async (lendingPlatform) => {
                                 setLocalError('');
+                                // @ts-ignore
                                 return await lendingPlatform?.contractWrapper?.writeContract.borrow(ethers.utils.parseUnits(amount, 6),
                                   requiredCollateral,
                                   interestToLTV[interestRate],

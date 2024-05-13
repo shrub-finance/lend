@@ -10,11 +10,4 @@ export const interestRates = [
   { id: "biggest-borrow", rate: "8" },
 ];
 
-export const depositTerms  = [
-  { id: 'smallest-deposit', value: 'smallest-deposit', duration: oneMonth },
-  { id: 'small-deposit', value: 'small-deposit', duration: threeMonth },
-  { id: 'big-deposit', value: 'big-deposit', duration: sixMonth },
-  { id: 'biggest-deposit', value: 'biggest-deposit', duration: twelveMonth },
-];
-
 export const Zero = ethers.constants.Zero;

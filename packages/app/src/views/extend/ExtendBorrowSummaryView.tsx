@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
-    calcPercentage,
-    ethInUsdc,
-    formatLargeUsdc,
-    formatPercentage,
-    toEthDate
+  calcPercentage,
+  ethInUsdc,
+  formatLargeUsdc,
+  formatPercentage,
+  fromEthDate,
+  toEthDate
 } from '../../utils/ethMethods';
 import {
   chainlinkAggregatorAbi,
@@ -28,7 +29,6 @@ import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
 import { useLazyQuery } from '@apollo/client';
 import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
 import { useFinancialData } from '../../components/FinancialDataContext';
-import { depositTerms } from '../../constants';
 import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
 import {BorrowObj} from "../../types/types";
 
@@ -36,7 +36,7 @@ interface ExtendBorrowSummaryProps {
   onBackExtend: (data?) => void,
   borrow: BorrowObj
   debt: ethers.BigNumber,
-  newEndDate: string,
+  newEndDate: number,
 }
 
 const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
@@ -128,7 +128,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
            return setErc20ApprovalNeeded('aeth');
        }
        setErc20ApprovalNeeded('none');
-    }, [usdcAllowanceIsLoading, aethAllowanceIsLoading]);
+    }, [usdcAllowanceIsLoading, aethAllowanceIsLoading, approveAETHActionInitiated, approveUSDCActionInitiated]);
 
 
   useEffect(() => {
@@ -164,7 +164,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
               <span className='font-bold'>{' '}{formatLargeUsdc(debt)} USDC</span>, your
               existing borrow position
               token will be burnt and a new one will be minted reflecting the new date <span
-              className='font-bold'>{newEndDate ? depositTerms.find(term => term.id === newEndDate)?.duration.toLocaleString() : depositTerms[depositTerms.length - 1].duration.toLocaleString()}</span>.
+              className='font-bold'>{newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1])}</span>.
             </p>
             <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
             {/*receipt start*/}
@@ -187,7 +187,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                      onClick={(e) => onBackExtend('dateChangeRequest')}>
                   <span className=''>New Due Date</span>
                   <span>
-                    {newEndDate ? depositTerms.find(term => term.id === newEndDate)?.duration.toLocaleString() : depositTerms[depositTerms.length - 1].duration.toLocaleString()}<Image
+                    {newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1])}<Image
                     alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' /></span>
                 </div>
                 <div className='flex flex-row  justify-between cursor-pointer'
@@ -222,6 +222,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                   action={
                                     async (usdc) => {
                                       setLocalError('');
+                                      // @ts-ignore
                                       return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256);
                                     }
                       } onSuccess={
@@ -255,6 +256,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         action={
                                             async (aeth) => {
                                                 setLocalError('');
+                                              // @ts-ignore
                                                 return await aeth.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256);
                                             }
                                         } onSuccess={
@@ -286,15 +288,13 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         className='web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
                                         action={
                                             async (lendingPlatform) => {
-                                                console.log(depositTerms);
                                                 console.log(`newEndDate: ${newEndDate}`);
-                                                console.log(depositTerms.find(term => term.id === newEndDate).duration);
-                                                console.log(toEthDate(depositTerms.find(term => term.id === newEndDate).duration));
                                                 console.log(borrow.id);
                                                 setLocalError('');
+                                              // @ts-ignore
                                                 return await lendingPlatform.contractWrapper.writeContract.extendBorrow(
                                                     borrow.id,
-                                                    toEthDate(depositTerms.find(term => term.id === newEndDate).duration),
+                                                    newEndDate,
                                                     0,  // TODO: Control Additional Collateral with an option
                                                     0,  // Additional Repayment
                                                     targetLtv   // LTV

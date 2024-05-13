@@ -2,17 +2,16 @@ import {FC, useEffect, useState} from "react";
 import Link from "next/link";
 import {
   useConnectedWallet,
-  useBalance,
   useAddress
 } from "@thirdweb-dev/react";
-import { getBlock, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
+import { getBlock } from "@thirdweb-dev/sdk";
 import { toEthDate, fromEthDate } from '@shrub-lend/common'
 import { chainlinkAggregatorAbi, chainlinkAggregatorAddress, usdcAddress } from '../utils/contracts';
 import { ethers } from 'ethers';
 import Image from "next/image";
 import { secondsInDay} from "@shrub-lend/common";
-import {ACTIVE_LENDINGPOOLS_QUERY, USER_POSITIONS_QUERY} from "../constants/queries";
-import { useQuery, useLazyQuery } from "@apollo/client";
+import {USER_POSITIONS_QUERY} from "../constants/queries";
+import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendDepositView from './extend/ExtendDepositView';
@@ -43,11 +42,6 @@ export const DashboardView: FC = ({}) => {
       user: walletAddress && walletAddress.toLowerCase(),
     },
   });
-  const {
-      loading: activeLendingPoolsLoading,
-      error: activeLendingPoolsError,
-      data: activeLendingPoolsData,
-  } = useQuery(ACTIVE_LENDINGPOOLS_QUERY);
   const { ethPrice, isLoading, error } = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
   const [currentHovered, setCurrentHovered] = useState<number | null>(null);
   const [timestamp, setTimestamp] = useState(0);
@@ -105,16 +99,6 @@ export const DashboardView: FC = ({}) => {
     }
   }, [userPositionsDataLoading, userPositionsData, dispatch]);
 
-  useEffect(() => {
-    if (!activeLendingPoolsData) {
-      return;
-    }
-    const activePoolTimestamps = activeLendingPoolsData.lendingPools.map(lendingPool => fromEthDate(lendingPool.timestamp));
-    dispatch({
-      type: "SET_ACTIVE_POOLS",
-      payload: activePoolTimestamps
-    })
-  }, [activeLendingPoolsLoading]);
 
   useEffect(() => {
         // console.log('running block useEffect')
