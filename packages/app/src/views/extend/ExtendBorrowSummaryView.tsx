@@ -5,7 +5,6 @@ import {
     ethInUsdc,
     formatLargeUsdc,
     formatPercentage,
-    interestToLTV,
     toEthDate
 } from '../../utils/ethMethods';
 import {
@@ -15,6 +14,8 @@ import {
   lendingPlatformAddress,
   usdcAbi,
   usdcAddress,
+  aethAddress,
+  aethAbi,
 } from '../../utils/contracts';
 import { BigNumber, ethers } from 'ethers';
 import {
@@ -62,20 +63,44 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
   const { store, dispatch } = useFinancialData();
   const walletAddress = useAddress();
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
-  const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
+  const [approveAETHActionInitiated, setApproveAETHActionInitiated] = useState(false);
+  const [extendBorrowActionInitiated, setExtendBorrowActionInitiated] = useState(false);
+  const [erc20ApprovalNeeded, setErc20ApprovalNeeded] = useState('');
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
     error: usdcError,
   } = useContract(usdcAddress, usdcAbi);
+    const {
+        contract: aeth,
+        isLoading: aethIsLoading,
+        error: aethError,
+    } = useContract(aethAddress, aethAbi);
+  const {
+    contract: lendingPlatform,
+    isLoading: lendingPlatformIsLoading,
+    error: lendingPlatformError,
+  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
   const [localError, setLocalError] = useState('');
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const {
-    data: allowance,
-    isLoading: allowanceIsLoading,
-    error: errorAllowance,
+    data: usdcAllowance,
+    isLoading: usdcAllowanceIsLoading,
+    error: usdcAllowanceError,
   } = useContractRead(usdc, 'allowance', [walletAddress, lendingPlatformAddress]);
-
+    const {
+        data: aethAllowance,
+        isLoading: aethAllowanceIsLoading,
+        error: aethAllowanceError,
+    } = useContractRead(aeth, 'allowance', [walletAddress, lendingPlatformAddress]);
+    const ltv = borrow.collateral.isZero() || !ethPrice || ethPrice.isZero() ?
+        BigNumber.from(0) :
+        calcPercentage(debt, ethInUsdc(borrow.collateral, ethPrice));
+    const {
+        data: targetLtv,
+        isLoading: targetLtvIsLoading,
+        error: targetLtvError,
+    } = useContractRead(lendingPlatform, 'calculateSmallestValidLtv', [ltv, true]);
 
   useEffect(() => {
     if (!walletAddress) return;
@@ -83,6 +108,27 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
       console.error('Failed to fetch active lending pools:', error);
     });
   }, [walletAddress, getActiveLendingPools]);
+
+  useEffect(() => {
+      console.log(`ltv: ${ltv}`);
+      console.log(`targetLtv: ${targetLtv}`);
+  }, [targetLtvIsLoading])
+
+    useEffect(() => {
+       if (
+           !usdcAllowance ||
+           BigNumber.from(usdcAllowance).lt(ethers.utils.parseUnits(formatLargeUsdc(debt), 6))
+       ) {
+           return setErc20ApprovalNeeded('usdc');
+       }
+       if (
+           !aethAllowance ||
+           BigNumber.from(aethAllowance).lt(borrow.collateral)
+       ) {
+           return setErc20ApprovalNeeded('aeth');
+       }
+       setErc20ApprovalNeeded('none');
+    }, [usdcAllowanceIsLoading, aethAllowanceIsLoading]);
 
 
   useEffect(() => {
@@ -93,20 +139,15 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
 
 
   useEffect(() => {
-    onExtendBorrowActionChange(extendDepositActionInitiated);
-  }, [extendDepositActionInitiated, onExtendBorrowActionChange]);
+    onExtendBorrowActionChange(extendBorrowActionInitiated);
+  }, [extendBorrowActionInitiated, onExtendBorrowActionChange]);
 
-    console.log(`debt: ${debt}`);
-    console.log(`collateral: ${borrow.collateral}`);
-    console.log(`ethPrice: ${ethPrice}`);
-  const ltv = borrow.collateral.isZero() || !ethPrice || ethPrice.isZero() ?
-    BigNumber.from(0) :
-    // debt.div(ethInUsdc(borrow.collateral, ethPrice));
 
-    calcPercentage(debt, ethInUsdc(borrow.collateral, ethPrice))
-
-    console.log(`ltv: ${ltv.toString()}`);
-  console.log(`new End Date 2: ${newEndDate}`);
+    // console.log(`debt: ${debt}`);
+    // console.log(`collateral: ${borrow.collateral}`);
+    // console.log(`ethPrice: ${ethPrice}`);
+  // console.log(`ltv: ${ltv.toString()}`);
+  // console.log(`new End Date 2: ${newEndDate}`);
   return (
     <div className='relative group mt-4 w-full min-w-[500px]'>
       <div className='flex flex-col'>
@@ -168,14 +209,12 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                 </div>
               </div>
               {/*approve and extend deposit*/}
-              {(allowanceIsLoading) ? (
+              {(usdcAllowanceIsLoading || aethAllowanceIsLoading) ? (
                 <p>Loading balance...</p>
               ) : (
                 <>
                   {/* Approve if allowance is insufficient */}
-                  {!allowance
-                    // ||
-                    // BigNumber.from(allowance).lt(ethers.utils.parseUnits(formatLargeUsdc('lendAmountBeingExtended'), 6),)
+                  { erc20ApprovalNeeded === 'usdc'
                     && (
                       <Web3Button contractAddress={usdcAddress} contractAbi={usdcAbi}
                                   isDisabled={approveUSDCActionInitiated}
@@ -201,17 +240,49 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                         console.log(e);
                         handleErrorMessages({ err: e });
                       }}>
-                        {!extendDepositActionInitiated && !approveUSDCActionInitiated ? 'Approve USDC' : 'USDC Approval Submitted'}
+                        {!extendBorrowActionInitiated && !approveUSDCActionInitiated ? 'Approve USDC' : 'USDC Approval Submitted'}
                       </Web3Button>
                     )
                   }
 
-                    {allowance
-                        // &&
-                        // !BigNumber.from(allowance).lt(ethers.utils.parseUnits(formatLargeUsdc('lendAmountBeingExtended'), 6),)
+
+                    {/* Approve if allowance is insufficient */}
+                    {erc20ApprovalNeeded === 'aeth'
+                        && (
+                            <Web3Button contractAddress={aethAddress} contractAbi={aethAbi}
+                                        isDisabled={approveAETHActionInitiated}
+                                        className='!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
+                                        action={
+                                            async (aeth) => {
+                                                setLocalError('');
+                                                return await aeth.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256);
+                                            }
+                                        } onSuccess={
+                                async (tx) => {
+                                    setLocalError('');
+                                    try {
+                                        const receipt = await tx.wait();
+                                        if (!receipt.status) {
+                                            throw new Error('Transaction failed');
+                                        }
+                                    } catch (e) {
+                                        console.log('Transaction failed:', e);
+                                    }
+                                    setApproveAETHActionInitiated(true);
+                                }} onError={(e) => {
+                                console.log(e);
+                                handleErrorMessages({ err: e });
+                            }}>
+                                {!extendBorrowActionInitiated && !approveAETHActionInitiated ? 'Approve aETH' : 'aETH Approval Submitted'}
+                            </Web3Button>
+                        )
+                    }
+
+
+                    {erc20ApprovalNeeded === 'none'
                         && (
                             <Web3Button contractAddress={lendingPlatformAddress} contractAbi={lendingPlatformAbi}
-                                        isDisabled={extendDepositActionInitiated}
+                                        isDisabled={extendBorrowActionInitiated || !targetLtv}
                                         className='web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
                                         action={
                                             async (lendingPlatform) => {
@@ -224,10 +295,9 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                                 return await lendingPlatform.contractWrapper.writeContract.extendBorrow(
                                                     borrow.id,
                                                     toEthDate(depositTerms.find(term => term.id === newEndDate).duration),
-                                                    0,  // Additional Collateral
+                                                    0,  // TODO: Control Additional Collateral with an option
                                                     0,  // Additional Repayment
-                                                    // TODO: LTV Target needs to be calculated via the contract method lendingPlatform.calculateSmallestValidLtv(ltv,true)
-                                                    2500   // LTV
+                                                    targetLtv   // LTV
                                                 );
                                             }
                                         }
@@ -335,12 +405,12 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                             },
                                         });
                                     }
-                                    setExtendDepositActionInitiated(true);
+                                    setExtendBorrowActionInitiated(true);
                                 }}
                             onError={(e) => {
                                 handleErrorMessages({err: e});
                             }}>
-                                {!extendDepositActionInitiated ? 'Initiate Extend' : 'Extend Order Submitted'}
+                                {!extendBorrowActionInitiated ? 'Initiate Extend' : 'Extend Order Submitted'}
                             </Web3Button>
                         )}
                 </>
