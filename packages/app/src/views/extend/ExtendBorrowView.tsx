@@ -188,7 +188,7 @@ setIsModalOpen, borrow, debt
                                  onExtendBorrowActionChange={handleExtendBorrowActionChange}
                                  borrow={borrow}
                                  debt={debt}
-                                 selectedDuration={selectedDuration}
+                                 newEndDate={selectedDuration}
                                  />}
     </>
   );
