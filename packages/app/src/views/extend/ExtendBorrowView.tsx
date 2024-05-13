@@ -1,30 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import Image from "next/image";
 import { ethers } from 'ethers';
-import { formatLargeUsdc, interestToLTV, roundEth } from '../../utils/ethMethods';
-import { depositTerms, interestRates, Zero } from '../../constants';
+import {formatLargeUsdc, interestToLTV, roundEth, toEthDate} from '../../utils/ethMethods';
+import { interestRates, Zero } from '../../constants';
 import { useContract } from '@thirdweb-dev/react';
 import { lendingPlatformAbi, lendingPlatformAddress } from '../../utils/contracts';
 import ExtendBorrowSummaryView from './ExtendBorrowSummaryView';
 import { formatDate } from '@shrub-lend/common';
+import {BorrowObj} from "../../types/types";
+import {useFinancialData} from "../../components/FinancialDataContext";
 
 interface ExtendBorrowViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
-  selectedBorrowAmount: ethers.BigNumber;
-  oldDueDate: Date;
-  currenBalance: ethers.BigNumber;
-
+  borrow: BorrowObj;
+  debt: ethers.BigNumber;
 }
 
 const ExtendBorrowView: React.FC<ExtendBorrowViewProps & { onModalClose: (date: Date) => void }> = ({
-setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
+setIsModalOpen, borrow, debt
 })=> {
+  const { store, dispatch } = useFinancialData();
   const [selectedInterestRate, setSelectedInterestRate] = useState('8');
   const [extendActionInitiated, setExtendBorrowActionInitiated] = useState(false);
   const [requiredCollateralToExtendBorrow, setRequiredCollateralToExtendBorrow] = useState<ethers.BigNumber>(Zero);
   const [showExtendBorrowCollateralSection, setShowExtendBorrowCollateralSection] = useState(true);
   const [ltvChangeRequested, setLtvChangeRequested] = useState(false);
-  const [selectedDuration, setSelectedDuration] = useState('');
+  const [selectedDuration, setSelectedDuration] = useState(toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1]));
   const [showDueDateOptions, setShowDueDateOptions] = useState(false);
   const handleExtendBorrowBack = (data) => {
     setLtvChangeRequested(true);
@@ -53,7 +54,7 @@ setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
   useEffect(() => {
     const determineRequiredCollateral = async () => {
       const ltv = interestToLTV[selectedInterestRate];
-      const usdcUnits = ethers.utils.parseUnits(formatLargeUsdc(selectedBorrowAmount.toString()), 6);
+      const usdcUnits = ethers.utils.parseUnits(formatLargeUsdc(debt), 6);
       const coll: ethers.BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
       return roundEth(coll, 6);
     };
@@ -99,7 +100,7 @@ setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
                     </label>
                     <div className='w-full text-xl font-semibold flex flex-row'>
                       <span
-                        className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(selectedBorrowAmount.toString())} USDC</span>
+                        className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(debt)} USDC</span>
                       <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10}
                              height={10} />
                     </div>
@@ -112,16 +113,16 @@ setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
                       <span className='label-text text-shrub-blue'>Due Date</span>
                     </label>
                     <ul className='flex flex-col gap-4'>
-                      {depositTerms.filter(option => option.duration > oldDueDate).map((item) => (
-                        <li className='mr-4' key={item.id}>
-                          <input type='radio' id={item.id} name='borrow' value={item.id} className='hidden peer'
+                      {store.activePoolTimestamps.filter(activePoolTimestamp => activePoolTimestamp > borrow.endDate).map((activePoolTimestamp) => (
+                        <li className='mr-4' key={activePoolTimestamp.toISOString()}>
+                          <input type='radio' id={activePoolTimestamp.toISOString()} name='borrow' value={toEthDate(activePoolTimestamp)} className='hidden peer'
                                  required onChange={(e) => {
-                            setSelectedDuration(e.target.value);
-                          }} checked={selectedDuration === item.id} />
-                          <label htmlFor={item.id}
+                            setSelectedDuration(toEthDate(activePoolTimestamp));
+                          }} checked={selectedDuration === toEthDate(activePoolTimestamp)} />
+                          <label htmlFor={activePoolTimestamp.toISOString()}
                                  className='inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey-200 bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700'>
                             <div className='block'>
-                              <div className='w-full text-xl font-semibold'>{formatDate.long(item.duration)}</div>
+                              <div className='w-full text-xl font-semibold'>{formatDate.long(activePoolTimestamp)}</div>
                             </div>
                           </label>
                         </li>
@@ -187,11 +188,9 @@ setIsModalOpen, selectedBorrowAmount, oldDueDate, currenBalance
         :
         <ExtendBorrowSummaryView onBackExtend={handleExtendBorrowBack}
                                  onExtendBorrowActionChange={handleExtendBorrowActionChange}
-                                 requiredCollateralToExtendBorrow={requiredCollateralToExtendBorrow}
-                                 selectedBorrowAmount={selectedBorrowAmount}
-                                 selectedDuration={selectedDuration}
-                                 oldDueDate={oldDueDate}
-                                 principalForExtendingBorrow={currenBalance}
+                                 borrow={borrow}
+                                 debt={debt}
+                                 newEndDate={selectedDuration}
                                  />}
     </>
   );

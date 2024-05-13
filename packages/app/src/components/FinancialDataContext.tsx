@@ -1,10 +1,14 @@
 // FinancialDataContext.tsx
 import React, {createContext, useReducer, useContext, ReactNode, useEffect} from 'react'
 import { UserFinancialDataState, UserFinancialDataAction, Borrow, Deposit } from '../types/types'
+import {fromEthDate} from "@shrub-lend/common";
+import {useQuery} from "@apollo/client";
+import {ACTIVE_LENDINGPOOLS_QUERY} from "../constants/queries";
 
 const initialState: UserFinancialDataState = {
   borrows: [],
   deposits: [],
+  activePoolTimestamps: []
 };
 
 const FinancialDataContext = createContext<{ store: UserFinancialDataState; dispatch: React.Dispatch<UserFinancialDataAction>; }>({ store: initialState, dispatch: () => null });
@@ -33,7 +37,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
       const updatedBorrow = { ...store, borrows: [action.payload, ...store.borrows] };
       return updatedBorrow;
     case "ADD_LEND_POSITION":
-      const updatedDeposits: { borrows: Borrow[]; deposits: (Deposit | Deposit)[] } = { ...store, deposits: [action.payload, ...store.deposits] };
+      const updatedDeposits = { ...store, deposits: [action.payload, ...store.deposits] };
       return updatedDeposits;
     case "UPDATE_LEND_POSITION_STATUS":
       // console.log("Updating lend position status", action.payload); // Log the action payload before the update
@@ -60,6 +64,11 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         }),
       };
       return updatedBorrowState;
+      case "SET_ACTIVE_POOLS":
+        return {
+          ...store,
+          activePoolTimestamps: action.payload.sort((a,b) => a.getTime() - b.getTime())
+        };
 
     default:
       return store;
@@ -68,6 +77,11 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
 
 export const FinancialDataProvider: React.FC<{children: ReactNode; userData: UserFinancialDataState}> = ({ children, userData }) => {
   const [store, dispatch] = useReducer(financialDataReducer, initialState);
+  const {
+    loading: activeLendingPoolsLoading,
+    error: activeLendingPoolsError,
+    data: activeLendingPoolsData,
+  } = useQuery(ACTIVE_LENDINGPOOLS_QUERY);
 
   // Initialize the store with user data
 useEffect(() => {
@@ -76,6 +90,17 @@ useEffect(() => {
     dispatch({ type: "SET_USER_DATA", payload: userData });
   }
   }, [userData]);
+
+  useEffect(() => {
+    if (!activeLendingPoolsData) {
+      return;
+    }
+    const activePoolTimestamps = activeLendingPoolsData.lendingPools.map(lendingPool => fromEthDate(lendingPool.timestamp));
+    dispatch({
+      type: "SET_ACTIVE_POOLS",
+      payload: activePoolTimestamps
+    })
+  }, [activeLendingPoolsLoading]);
 
 
   return (

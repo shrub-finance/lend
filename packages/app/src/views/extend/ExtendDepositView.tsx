@@ -4,7 +4,7 @@ import { calculateLockupPeriod, fromEthDate, toEthDate } from '@shrub-lend/commo
 import ExtendDepositSummaryView from './ExtendDepositSummaryView';
 import {ethers} from "ethers";
 import {formatLargeUsdc, formatPercentage} from "../../utils/ethMethods";
-import { depositTerms } from '../../constants';
+import {useFinancialData} from "../../components/FinancialDataContext";
 
 interface ExtendDepositViewProps {
   timestamp: number;
@@ -36,6 +36,7 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
                                                  onModalClose
                                                }) => {
   const [showSummary, setShowSummary] = useState(false);
+  const { store, dispatch } = useFinancialData();
   const handleExtendDepositBack = () => {
     setShowSummary(false)
   };
@@ -83,25 +84,25 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
               <span className="label-text text-shrub-blue">New Lockup Period</span>
             </label>
             <ul className="flex flex-row">
-              {depositTerms.filter(option => option.duration > selectedDepositTermDate).map((item) => (
-                <li key={item.id} className="mr-4">
+              {store.activePoolTimestamps.filter(activePoolTimestamp => activePoolTimestamp > selectedDepositTermDate).map((activePoolTimestamp) => (
+                <li key={activePoolTimestamp.toISOString()} className="mr-4">
                   <input
                     type="radio"
-                    id={item.id}
+                    id={activePoolTimestamp.toISOString()}
                     name="deposit-extension"
-                    value={item.value}
+                    value={toEthDate(activePoolTimestamp)}
                     className="hidden peer"
                     required
                     onChange={() => {
-                      setTimestamp(toEthDate(item.duration))
+                      setTimestamp(toEthDate(activePoolTimestamp))
                       setShowAPYSection(true)
                     }}
                   />
                   <label
-                    htmlFor={item.id}
+                    htmlFor={activePoolTimestamp.toISOString()}
                     className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 select-none">
                     <div className="block">
-                      <div className="w-full text-lg font-semibold">{calculateLockupPeriod(item.duration)}
+                      <div className="w-full text-lg font-semibold">{calculateLockupPeriod(activePoolTimestamp)}
                       </div>
                     </div>
                   </label>

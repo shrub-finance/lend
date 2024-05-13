@@ -2,35 +2,30 @@ import {FC, useEffect, useState} from "react";
 import Link from "next/link";
 import {
   useConnectedWallet,
-  useBalance,
   useAddress
 } from "@thirdweb-dev/react";
-import { getBlock, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
+import { getBlock } from "@thirdweb-dev/sdk";
 import { toEthDate, fromEthDate } from '@shrub-lend/common'
 import { chainlinkAggregatorAbi, chainlinkAggregatorAddress, usdcAddress } from '../utils/contracts';
 import { ethers } from 'ethers';
 import Image from "next/image";
 import { secondsInDay} from "@shrub-lend/common";
-import { USER_POSITIONS_QUERY } from "../constants/queries";
+import {USER_POSITIONS_QUERY} from "../constants/queries";
 import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendDepositView from './extend/ExtendDepositView';
-import { formatLargeUsdc, formatPercentage } from '../utils/ethMethods';
-import {Deposit} from "../types/types";
+import {durationWad, formatLargeUsdc, formatPercentage, wadMul} from '../utils/ethMethods';
+import {BorrowObj, Deposit} from "../types/types";
 import ExtendBorrowView from './extend/ExtendBorrowView';
 import { oneMonth, sixMonth, threeMonth, twelveMonth, Zero } from '../constants';
 import useEthPriceFromChainlink from '../hooks/useEthPriceFromChainlink';
-const now = new Date();
-new Date(new Date(now).setFullYear(now.getFullYear() + 1));
 export const DashboardView: FC = ({}) => {
 
   const wallet = useConnectedWallet();
   const [extendDepositModalOpen, setExtendDepositModalOpen] = useState(false);
   const [extendBorrowModalOpen, setExtendBorrowModalOpen] = useState(false);
   const { store, dispatch } = useFinancialData();
-  const { data: usdcBalance, isLoading: usdcBalanceIsLoading } = useBalance(usdcAddress);
-  const { data: ethBalance, isLoading: ethBalanceIsLoading } = useBalance(NATIVE_TOKEN_ADDRESS);
   const walletAddress = useAddress();
   const [blockchainTime, setBlockchainTime] = useState(0);
   const [
@@ -58,9 +53,8 @@ export const DashboardView: FC = ({}) => {
   const [selectedTokenSupply, setSelectedTokenSupply] = useState(Zero);
   const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(Zero);
   const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('');
-  const [selectedBorrowAmount, setSelectedBorrowAmount] = useState(Zero);
-  const [oldDueDate, setOldDueDate] = useState<Date | null>(null);
-  const [currentBalance, setCurrentBalance] = useState(Zero);
+  const [selectedDebt, setSelectedDebt] = useState(Zero);
+  const [selectedBorrow, setSelectedBorrow] = useState<BorrowObj | undefined>()
   const dummyEarningPools = "2";
 
   useEffect(() => {
@@ -76,12 +70,6 @@ export const DashboardView: FC = ({}) => {
       handleAPYCalc();
     }
   }, [timestamp]);
-  useEffect(() => {
-    // console.log("running usdc useEffect");
-  }, [usdcBalanceIsLoading]);
-  useEffect(() => {
-    // console.log("running eth useEffect");
-  }, [ethBalanceIsLoading]);
   useEffect(() => {
     // console.log("running walletAddress useEffect");
     if (!walletAddress) {return}
@@ -110,6 +98,8 @@ export const DashboardView: FC = ({}) => {
       });
     }
   }, [userPositionsDataLoading, userPositionsData, dispatch]);
+
+
   useEffect(() => {
         // console.log('running block useEffect')
         getBlockTest()
@@ -135,7 +125,6 @@ export const DashboardView: FC = ({}) => {
   const handleExtendBorrow = () => {
     setExtendBorrowModalOpen(false);
   };
-
 
   /** Might Need Later **/
   // let newlyAddedDeposit = store.deposits.filter(item => item.hasOwnProperty('id'));
@@ -194,9 +183,8 @@ export const DashboardView: FC = ({}) => {
                     <ExtendBorrowView
                       onModalClose={handleExtendBorrow}
                       setIsModalOpen={setExtendBorrowModalOpen}
-                      selectedBorrowAmount={selectedBorrowAmount}
-                      oldDueDate={oldDueDate}
-                      currenBalance={currentBalance}
+                      borrow={selectedBorrow}
+                      debt={selectedDebt}
                     />
                   </Modal>
 
@@ -271,7 +259,7 @@ export const DashboardView: FC = ({}) => {
                                     return (
                                   <tr key={`earnRow-${index}`} className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700">
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {wallet && !ethBalanceIsLoading ? (
+                                      {wallet ? (
                                         <p>{" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
                                           {item.currentBalanceOverride ? formatLargeUsdc(item.currentBalanceOverride) : formatLargeUsdc(currentBalance)} USDC
                                           {item.status === 'pending' && (
@@ -381,20 +369,26 @@ export const DashboardView: FC = ({}) => {
                             </thead>
                             <tbody className="text-lg">
                               {store?.borrows?.map((item, index) => {
-                                const amountBorrowedBN = ethers.BigNumber.from(item.originalPrincipal ? item.originalPrincipal : Zero)
-                                const amountPaidBackBN = ethers.BigNumber.from(item.paid ? item.paid : Zero)
-                                const timeLeft = daysFromNow(fromEthDate(parseInt(item.timestamp ?? "0", 10)),)
-                                const borrowApy = ethers.BigNumber.from(item.apy ? item.apy : Zero)
-                                const currentBalanceBN =
-                                  ethers.BigNumber.from(item.principal ? item.principal : Zero)
-                                    .add(
-                                      ethers.BigNumber.from(item.apy ? item.apy : Zero)
-                                        .mul(ethers.BigNumber.from(item.principal ? item.principal : Zero))
-                                  .mul(ethers.BigNumber.from(blockchainTime)
-                                  .sub(ethers.BigNumber.from(item.updated ? item.updated : Zero)))
-                                  .div(ethers.BigNumber.from(60 * 60 * 24 * 365,))
-                                  .div(ethers.utils.parseUnits("1", 8)))
-                                const dueDate = fromEthDate(parseInt(item.timestamp ?? "0", 10)).toLocaleString()
+                                const borrow: BorrowObj = {
+                                    id: ethers.BigNumber.from(item.id),
+                                    endDate: fromEthDate(parseInt(item.timestamp, 10)),
+                                    created: fromEthDate(item.created),
+                                    updated: fromEthDate(item.updated),
+                                    collateral: ethers.BigNumber.from(item.collateral),
+                                    principal: ethers.BigNumber.from(item.principal),
+                                    originalPrincipal: ethers.BigNumber.from(item.originalPrincipal),
+                                    paid: ethers.BigNumber.from(item.paid),
+                                    ltv: ethers.BigNumber.from(item.ltv),
+                                    apy: ethers.BigNumber.from(item.apy)
+                                };
+                                function calcBorrowInterest(borrowObj: BorrowObj) {
+                                    const {principal, apy, updated} = borrowObj;
+                                    const duration = durationWad(updated, fromEthDate(blockchainTime));
+                                    const interestPerYear = wadMul(apy, principal);
+                                    return wadMul(interestPerYear, duration);
+                                }
+                                const timeLeft = daysFromNow(borrow.endDate);
+                                const currentBalanceBN = borrow.principal.add(calcBorrowInterest(borrow));
 
                                 return (
                                 <tr
@@ -402,7 +396,7 @@ export const DashboardView: FC = ({}) => {
                                   className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700"
                                 >
                                   <td className="px-6 py-4 text-sm font-bold">
-                                    {wallet && !ethBalanceIsLoading ? (
+                                    {wallet ? (
                                       <p>
                                         {" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
                                         {formatLargeUsdc(currentBalanceBN)} USDC
@@ -420,29 +414,30 @@ export const DashboardView: FC = ({}) => {
                                     )}
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
-                                    {formatLargeUsdc(amountPaidBackBN)}
+                                    {formatLargeUsdc(borrow.paid)}
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {timeLeft}
                                   </td>
                                   <td>
-                                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${formatPercentage(borrowApy)}%`}</span>
+                                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${formatPercentage(borrow.apy)}%`}</span>
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
-                                    {formatLargeUsdc(amountBorrowedBN)} USDC
+                                    {formatLargeUsdc(borrow.originalPrincipal)} USDC
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
-                                    {dueDate}
+                                    {borrow.endDate.toLocaleString()}
                                   </td>
                                   <td className="px-1 py-4 text-sm font-bold">
                                     <div className="flex items-center justify-center space-x-2 h-full p-2">
                                       <button type="button"
                                               className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700"
                                               onClick={() => {
-                                                setExtendBorrowModalOpen(true)
-                                                setSelectedBorrowAmount(amountBorrowedBN)
-                                                setOldDueDate(new Date(dueDate))
-                                                setCurrentBalance(currentBalanceBN)
+                                                setExtendBorrowModalOpen(true);
+                                                setSelectedBorrow(borrow);
+                                                setSelectedDebt(borrow.originalPrincipal)
+                                                // setOldDueDate(borrowObj.endDate)
+                                                // setCurrentBalance(currentBalanceBN)
                                               }}>
                                         {/*Corresponding modal at the top*/}
                                         Extend

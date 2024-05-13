@@ -5,7 +5,7 @@ import { AppBar } from "../components/AppBar";
 import { MobileMenu } from "../components/MobileMenu";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
-import { FinancialDataProvider, useFinancialData } from '../components/FinancialDataContext';
+import { FinancialDataProvider } from '../components/FinancialDataContext';
 
 require("../styles/globals.css");
 
@@ -19,6 +19,7 @@ const client = new ApolloClient({
 const userFinancialData = {
   borrows: [], // initial borrows data
   deposits: [], // initial deposits data
+  activePoolTimestamps: []
 };
 
 
