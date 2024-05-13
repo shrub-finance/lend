@@ -11,8 +11,8 @@ import { chainlinkAggregatorAbi, chainlinkAggregatorAddress, usdcAddress } from 
 import { ethers } from 'ethers';
 import Image from "next/image";
 import { secondsInDay} from "@shrub-lend/common";
-import { USER_POSITIONS_QUERY } from "../constants/queries";
-import { useLazyQuery } from "@apollo/client";
+import {ACTIVE_LENDINGPOOLS_QUERY, USER_POSITIONS_QUERY} from "../constants/queries";
+import { useQuery, useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendDepositView from './extend/ExtendDepositView';
@@ -43,6 +43,11 @@ export const DashboardView: FC = ({}) => {
       user: walletAddress && walletAddress.toLowerCase(),
     },
   });
+  const {
+      loading: activeLendingPoolsLoading,
+      error: activeLendingPoolsError,
+      data: activeLendingPoolsData,
+  } = useQuery(ACTIVE_LENDINGPOOLS_QUERY);
   const { ethPrice, isLoading, error } = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
   const [currentHovered, setCurrentHovered] = useState<number | null>(null);
   const [timestamp, setTimestamp] = useState(0);
@@ -55,8 +60,6 @@ export const DashboardView: FC = ({}) => {
   const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(Zero);
   const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('');
   const [selectedDebt, setSelectedDebt] = useState(Zero);
-  const [oldDueDate, setOldDueDate] = useState<Date | null>(null);
-  const [currentBalance, setCurrentBalance] = useState(Zero);
   const [selectedBorrow, setSelectedBorrow] = useState<BorrowObj | undefined>()
   const dummyEarningPools = "2";
 
@@ -101,6 +104,18 @@ export const DashboardView: FC = ({}) => {
       });
     }
   }, [userPositionsDataLoading, userPositionsData, dispatch]);
+
+  useEffect(() => {
+    if (!activeLendingPoolsData) {
+      return;
+    }
+    const activePoolTimestamps = activeLendingPoolsData.lendingPools.map(lendingPool => fromEthDate(lendingPool.timestamp));
+    dispatch({
+      type: "SET_ACTIVE_POOLS",
+      payload: activePoolTimestamps
+    })
+  }, [activeLendingPoolsLoading]);
+
   useEffect(() => {
         // console.log('running block useEffect')
         getBlockTest()
@@ -126,7 +141,6 @@ export const DashboardView: FC = ({}) => {
   const handleExtendBorrow = () => {
     setExtendBorrowModalOpen(false);
   };
-
 
   /** Might Need Later **/
   // let newlyAddedDeposit = store.deposits.filter(item => item.hasOwnProperty('id'));

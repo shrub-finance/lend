@@ -61,6 +61,7 @@ type LendingPool = {
 export type UserFinancialDataState = {
   borrows: Borrow[];
   deposits: Deposit[];
+  activePoolTimestamps: Date[]
 };
 
 export type UserFinancialDataAction =
@@ -69,6 +70,7 @@ export type UserFinancialDataAction =
   | { type: "ADD_LOAN"; payload: Borrow }
   | { type: "ADD_LEND_POSITION"; payload: Deposit }
   | { type: "UPDATE_LEND_POSITION_STATUS"; payload: Deposit }
-  | { type: "UPDATE_LOAN_STATUS"; payload: Borrow };
+  | { type: "UPDATE_LOAN_STATUS"; payload: Borrow }
+  | { type: "SET_ACTIVE_POOLS"; payload: Date[] };
 
 

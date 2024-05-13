@@ -5,6 +5,7 @@ import { UserFinancialDataState, UserFinancialDataAction, Borrow, Deposit } from
 const initialState: UserFinancialDataState = {
   borrows: [],
   deposits: [],
+  activePoolTimestamps: []
 };
 
 const FinancialDataContext = createContext<{ store: UserFinancialDataState; dispatch: React.Dispatch<UserFinancialDataAction>; }>({ store: initialState, dispatch: () => null });
@@ -60,6 +61,11 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         }),
       };
       return updatedBorrowState;
+      case "SET_ACTIVE_POOLS":
+        return {
+          ...store,
+          activePoolTimestamps: action.payload.sort((a,b) => a.getTime() - b.getTime())
+        };
 
     default:
       return store;
