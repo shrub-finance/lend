@@ -64,7 +64,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
         <div className='mt-6 self-start'>
           {localError && (
             <div
-              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-shrub-grey-900 dark:text-red-400 flex items-center"
+              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50   flex items-center"
               role="alert">
               <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 mr-2" fill="none"
                    viewBox="0 0 24 24">
@@ -76,7 +76,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
           )}
           <h1 className=" text-4xl font-medium ">
             <button
-              className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full dark:bg-shrub-grey-600" onClick={backtoBorrowDuration}>
+              className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full " onClick={backtoBorrowDuration}>
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
                    className="w-6 grow-0 order-0 flex-none ml-[16px] mt-[4px]">
                 <path d="M20 12H4M4 12L10 18M4 12L10 6" stroke="black" strokeWidth="2"
