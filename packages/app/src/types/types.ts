@@ -44,6 +44,7 @@ type LendingPool = {
   totalEthYield: string;
   totalPrincipal: string;
   totalUsdcInterest: string;
+  finalized?: boolean;
   __typename: string;
 };
 
@@ -59,6 +60,7 @@ type LendingPool = {
     timestamp?: number;
     updated?: number;
     amount?:number;
+
   };
 
 
