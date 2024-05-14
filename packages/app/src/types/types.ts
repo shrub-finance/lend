@@ -15,12 +15,14 @@ export type Borrow = {
   apy?: string,
   principal?: string,
   timestamp?: string,
+  startDate?: number,
   updated?: number,
   __typename?: string,
 };
 
 export type BorrowObj = {
     id: ethers.BigNumber,
+    startDate: Date,
     endDate: Date,
     created: Date,
     updated: Date,
@@ -30,6 +32,8 @@ export type BorrowObj = {
     paid: ethers.BigNumber,
     ltv: ethers.BigNumber,
     apy: ethers.BigNumber,
+    interest: ethers.BigNumber,
+    debt: ethers.BigNumber,
 }
 
 

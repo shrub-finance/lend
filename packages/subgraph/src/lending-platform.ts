@@ -22,6 +22,7 @@ import {getBorrow, getBorrowByTokenId, partialRepayBorrow, repayBorrow} from "./
 import {PoolShareToken} from "../generated/templates";
 import {getDeposit, incrementDeposit, lendPostionWithdraw} from "./entities/deposit";
 import {UsdcToWadRatio} from "./constants";
+import {updateLastSnapshotDate} from "./entities/global-data";
 
 
 export function handlePoolCreated(event: PoolCreated): void {
@@ -107,6 +108,7 @@ export function handleLendingPoolYield(event: LendingPoolYield): void {
     ]);
     let lendingPool = getLendingPool(poolShareTokenAddress);
     lendingPoolUpdateYield(lendingPool, accumInterest, accumYield)
+    updateLastSnapshotDate(event.block.timestamp);
 }
 
 export function handlePartialRepayBorrow(event: PartialRepayBorrow): void {

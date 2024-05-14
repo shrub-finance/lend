@@ -1,3 +1,8 @@
+type GlobalData @entity {
+    id: ID!
+    lastSnapshotDate: BigInt!
+}
+
 type User @entity(immutable: true) {
     "address"
     id: ID!

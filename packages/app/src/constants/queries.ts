@@ -33,6 +33,7 @@ export const USER_POSITIONS_QUERY = gql`
             borrows(where:{active:true}){
                 id
                 timestamp
+                startDate
                 principal
                 originalPrincipal
                 collateral
@@ -61,3 +62,11 @@ export const ACTIVE_LENDINGPOOLS_QUERY = gql`
     }
 `;
 
+export const GLOBAL_DATA_QUERY = gql`
+    query GetGlobalData {
+        globalData(id:1){
+            id
+            lastSnapshotDate
+        }
+    }
+`

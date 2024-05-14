@@ -35,7 +35,6 @@ import {BorrowObj} from "../../types/types";
 interface ExtendBorrowSummaryProps {
   onBackExtend: (data?) => void,
   borrow: BorrowObj
-  debt: ethers.BigNumber,
   newEndDate: number,
 }
 
@@ -46,7 +45,6 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     onBackExtend,
     onExtendBorrowActionChange,
     borrow,
-    debt,
     newEndDate,
   }) => {
   const [
@@ -95,7 +93,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     } = useContractRead(aeth, 'allowance', [walletAddress, lendingPlatformAddress]);
     const ltv = borrow.collateral.isZero() || !ethPrice || ethPrice.isZero() ?
         BigNumber.from(0) :
-        calcPercentage(debt, ethInUsdc(borrow.collateral, ethPrice));
+        calcPercentage(borrow.debt, ethInUsdc(borrow.collateral, ethPrice));
     const {
         data: targetLtv,
         isLoading: targetLtvIsLoading,
@@ -115,19 +113,29 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
   }, [targetLtvIsLoading])
 
     useEffect(() => {
+      console.log('running allowance useEffect');
        if (
+          erc20ApprovalNeeded !== 'usdc' && (
            !usdcAllowance ||
-           BigNumber.from(usdcAllowance).lt(ethers.utils.parseUnits(formatLargeUsdc(debt), 6))
+           BigNumber.from(usdcAllowance).lt(ethers.utils.parseUnits(formatLargeUsdc(borrow.debt), 6))
+         )
        ) {
+         console.log('setting erc20ApprovalNeeded to usdc');
            return setErc20ApprovalNeeded('usdc');
        }
        if (
+          erc20ApprovalNeeded !== 'aeth' && (
            !aethAllowance ||
            BigNumber.from(aethAllowance).lt(borrow.collateral)
+         )
        ) {
+           console.log('setting erc20ApprovalNeeded to aeth');
            return setErc20ApprovalNeeded('aeth');
        }
-       setErc20ApprovalNeeded('none');
+       if (erc20ApprovalNeeded !== 'none') {
+         console.log('setting erc20ApprovalNeeded to none');
+         setErc20ApprovalNeeded('none');
+       }
     }, [usdcAllowanceIsLoading, aethAllowanceIsLoading, approveAETHActionInitiated, approveUSDCActionInitiated]);
 
 
@@ -155,13 +163,13 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
           <div className='card-body'>
             <div className='w-full text-xl font-semibold flex flex-row'>
               <span
-                className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(debt)} USDC</span>
+                className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(borrow.debt)} USDC</span>
               <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40'
                      height='40' />
             </div>
             <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
               When you extend this borrow of
-              <span className='font-bold'>{' '}{formatLargeUsdc(debt)} USDC</span>, your
+              <span className='font-bold'>{' '}{formatLargeUsdc(borrow.debt)} USDC</span>, your
               existing borrow position
               token will be burnt and a new one will be minted reflecting the new date <span
               className='font-bold'>{newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1])}</span>.
@@ -337,8 +345,8 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                     const newBorrowPositionDeposit = {
                                         ...newBorrowPositionWithdraw,
                                         id: `${matchedLendingPool}-borrow`,
-                                        depositsUsdc: debt.toString(),
-                                        currentBalanceOverride: debt.toString(),
+                                        depositsUsdc: borrow.debt.toString(),
+                                        currentBalanceOverride: borrow.debt.toString(),
                                         lendingPool: {
                                             ...newBorrowPositionWithdraw.lendingPool,
                                             timestamp: matchedLendingPool,
