@@ -273,6 +273,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                   async (usdc) =>
                                   {
                                     setLocalError('');
+                                    // @ts-ignore
                                     return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
                                   }}
                                 onSuccess={
@@ -312,6 +313,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               async (lendingPlatform) =>
                               {
                                 setLocalError('');
+                                // @ts-ignore
                                 return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(lendAmount, 6))
                               }}
                               onSuccess={async (tx) => {

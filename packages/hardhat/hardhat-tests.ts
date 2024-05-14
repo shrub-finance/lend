@@ -20,7 +20,7 @@ task("testLendingPlatform", "Setup an environment for development")
     await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: toEthDate(twelveMonth), account: account1});  // 12 month
     await env.run('borrow', { account: account2, timestamp: toEthDate(twelveMonth), borrowAmount: 100, collateralAmount: 1, ltv: 20})
     await env.run('borrow', { account: account3, timestamp: toEthDate(threeMonth), borrowAmount: 22, collateralAmount: 0.1, ltv: 33})
-    await env.run('takeSnapshot', {account: deployer})
+    await env.run('takeSnapshot', { account: deployer });
   })
 
 task("testLendingPlatform2", "Setup an environment for development")
