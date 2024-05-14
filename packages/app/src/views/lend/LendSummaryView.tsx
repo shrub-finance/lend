@@ -178,9 +178,12 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                         <span className="">Lockup starts</span>
                         <span>{currentDate.toDateString()}</span>
                       </div>
-                      <div className="flex flex-row  justify-between">
+                      <div className="flex flex-row justify-between cursor-pointer" onClick={onBackLend}>
                         <span className="">Lockup ends</span>
-                        <span>{endDate.toDateString()}</span>
+                        <span>
+                          {endDate.toDateString()}
+                          <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>
+                        </span>
                       </div>
                       <div className="flex flex-row  justify-between">
                         <span className="">Estimated Yield</span>
@@ -283,7 +286,6 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                   setApproveUSDCActionInitiated(true);
                                 }}
                                 onError={(e) => {
-                                  console.log(e);
                                   handleErrorMessages({err: e});
                                 }}
                               >

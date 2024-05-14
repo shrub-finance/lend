@@ -44,6 +44,7 @@ type LendingPool = {
   totalEthYield: string;
   totalPrincipal: string;
   totalUsdcInterest: string;
+  finalized?: boolean;
   __typename: string;
 };
 
@@ -59,6 +60,7 @@ type LendingPool = {
     timestamp?: number;
     updated?: number;
     amount?:number;
+
   };
 
 
@@ -71,10 +73,10 @@ export type UserFinancialDataState = {
 export type UserFinancialDataAction =
   | { type: "SET_USER_DATA"; payload: { borrows: Borrow[]; deposits: Deposit[] }; }
   | { type: "CLEAR_USER_DATA" }
-  | { type: "ADD_LOAN"; payload: Borrow }
+  | { type: "ADD_BORROW"; payload: Borrow }
   | { type: "ADD_LEND_POSITION"; payload: Deposit }
   | { type: "UPDATE_LEND_POSITION_STATUS"; payload: Deposit }
-  | { type: "UPDATE_LOAN_STATUS"; payload: Borrow }
+  | { type: "UPDATE_BORROW_STATUS"; payload: Borrow }
   | { type: "SET_ACTIVE_POOLS"; payload: Date[] };
 
 

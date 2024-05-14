@@ -26,7 +26,7 @@ const Borrow: NextPage = (props) => {
     setBorrowView("summary");
   };
 
-  const handleBack = () => {
+  const handleBorrowScreensBackButtons = () => {
     if (borrowView === "summary") {
       setBorrowView("duration");
     } else if (borrowView === "duration") {
@@ -50,8 +50,8 @@ const Borrow: NextPage = (props) => {
       </Head>
       <div>
         {borrowView === "borrow" && <BorrowView onBorrowViewChange={handleBorrowViewChange} requiredCollateral={requiredCollateral} setRequiredCollateral={setRequiredCollateral}/>}
-        {borrowView === "duration" && <BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleTimestampChange} onBackDuration={handleBack}/>}
-        {borrowView === "summary" && <BorrowSummaryView timestamp={timestamp} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount} onBack={handleBack} onCancel={handleCancel} setRequiredCollateral={setRequiredCollateral}/>}
+        {borrowView === "duration" && <BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleTimestampChange} onBackDuration={handleBorrowScreensBackButtons}/>}
+        {borrowView === "summary" && <BorrowSummaryView timestamp={timestamp} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount} backtoBorrowDuration={handleBorrowScreensBackButtons} onCancel={handleCancel} />}
       </div>
     </>
   );
