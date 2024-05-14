@@ -10,7 +10,7 @@ import { chainlinkAggregatorAbi, chainlinkAggregatorAddress, usdcAddress } from 
 import { ethers } from 'ethers';
 import Image from "next/image";
 import { secondsInDay} from "@shrub-lend/common";
-import {USER_POSITIONS_QUERY} from "../constants/queries";
+import {USER_POSITIONS_QUERY, GLOBAL_DATA_QUERY} from "../constants/queries";
 import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
@@ -33,8 +33,19 @@ export const DashboardView: FC = ({}) => {
   const walletAddress = useAddress();
   const [blockchainTime, setBlockchainTime] = useState(0);
   const [
+    getGlobalData,
+    {
+      loading: globalDataLoading,
+      error: globalDataError,
+      data: globalData,
+      startPolling: globalDataStartPolling,
+      stopPolling: globalDataStopPolling,
+    }
+  ] = useLazyQuery(GLOBAL_DATA_QUERY);
+  const [
     getUserPositions,
-    { loading: userPositionsDataLoading,
+    {
+      loading: userPositionsDataLoading,
       error: userPositionsDataError,
       data: userPositionsData,
       startPolling: userPositionsDataStartPolling,
@@ -57,9 +68,19 @@ export const DashboardView: FC = ({}) => {
   const [selectedTokenSupply, setSelectedTokenSupply] = useState(Zero);
   const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(Zero);
   const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('');
-  const [selectedDebt, setSelectedDebt] = useState(Zero);
-  const [selectedBorrow, setSelectedBorrow] = useState<BorrowObj | undefined>()
+  const [selectedBorrow, setSelectedBorrow] = useState<BorrowObj | undefined>();
+  const [lastSnapshotDate, setLastSnapshotDate] = useState(new Date(0))
   const dummyEarningPools = "2";
+
+  useEffect(() => {
+    getGlobalData();
+  }, []);
+
+  useEffect(() => {
+    if (globalData) {
+      setLastSnapshotDate(fromEthDate(globalData.globalData.lastSnapshotDate));
+    }
+  }, [globalDataLoading]);
 
   useEffect(() => {
     const handleAPYCalc = () => {
@@ -120,6 +141,12 @@ export const DashboardView: FC = ({}) => {
 
   function daysFromNow(date: Date) {
       return Math.round((toEthDate(date) - blockchainTime) / secondsInDay);
+  }
+
+  function calcBorrowInterest(principal: ethers.BigNumber, apy: ethers.BigNumber, startDate: Date) {
+    const duration = durationWad(startDate, lastSnapshotDate);
+    const interestPerYear = wadMul(apy, principal);
+    return wadMul(interestPerYear, duration);
   }
 
   const handleExtendDeposit = () => {
@@ -202,7 +229,6 @@ export const DashboardView: FC = ({}) => {
                       onModalClose={handleExtendBorrow}
                       setIsModalOpen={setExtendBorrowModalOpen}
                       borrow={selectedBorrow}
-                      debt={selectedDebt}
                     />
                   </Modal>
 
@@ -395,26 +421,26 @@ export const DashboardView: FC = ({}) => {
                             </thead>
                             <tbody className="text-lg">
                               {store?.borrows?.map((item, index) => {
+                                const principal = ethers.BigNumber.from(item.principal);
+                                const apy = ethers.BigNumber.from(item.apy);
+                                const startDate = fromEthDate(item.startDate);
+                                const interest = calcBorrowInterest(principal, apy, startDate);
                                 const borrow: BorrowObj = {
                                     id: ethers.BigNumber.from(item.id),
                                     endDate: fromEthDate(parseInt(item.timestamp, 10)),
+                                    startDate,
                                     created: fromEthDate(item.created),
                                     updated: fromEthDate(item.updated),
                                     collateral: ethers.BigNumber.from(item.collateral),
-                                    principal: ethers.BigNumber.from(item.principal),
+                                    principal,
                                     originalPrincipal: ethers.BigNumber.from(item.originalPrincipal),
                                     paid: ethers.BigNumber.from(item.paid),
                                     ltv: ethers.BigNumber.from(item.ltv),
-                                    apy: ethers.BigNumber.from(item.apy)
+                                    apy,
+                                    interest,
+                                    debt: principal.add(interest)
                                 };
-                                function calcBorrowInterest(borrowObj: BorrowObj) {
-                                    const {principal, apy, updated} = borrowObj;
-                                    const duration = durationWad(updated, fromEthDate(blockchainTime));
-                                    const interestPerYear = wadMul(apy, principal);
-                                    return wadMul(interestPerYear, duration);
-                                }
                                 const timeLeft = daysFromNow(borrow.endDate);
-                                const currentBalanceBN = borrow.principal.add(calcBorrowInterest(borrow));
 
                                 return (
                                 <tr
@@ -425,7 +451,7 @@ export const DashboardView: FC = ({}) => {
                                     {wallet ? (
                                       <p>
                                         {" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
-                                        {formatLargeUsdc(currentBalanceBN)} USDC
+                                        {formatLargeUsdc(borrow.debt)} USDC
                                         {item.status === 'pending' && (
                                           <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                         )}
@@ -461,9 +487,6 @@ export const DashboardView: FC = ({}) => {
                                               onClick={() => {
                                                 setExtendBorrowModalOpen(true);
                                                 setSelectedBorrow(borrow);
-                                                setSelectedDebt(borrow.originalPrincipal)
-                                                // setOldDueDate(borrowObj.endDate)
-                                                // setCurrentBalance(currentBalanceBN)
                                               }}>
                                         {/*Corresponding modal at the top*/}
                                         Extend
@@ -490,5 +513,5 @@ export const DashboardView: FC = ({}) => {
         </div>
       </div>
     </div>
-);
-}
+  );
+};

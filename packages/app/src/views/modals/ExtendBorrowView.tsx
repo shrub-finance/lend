@@ -13,11 +13,10 @@ import {useFinancialData} from "../../components/FinancialDataContext";
 interface ExtendBorrowViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
   borrow: BorrowObj;
-  debt: ethers.BigNumber;
 }
 
 const ExtendBorrowView: React.FC<ExtendBorrowViewProps & { onModalClose: (date: Date) => void }> = ({
-setIsModalOpen, borrow, debt
+setIsModalOpen, borrow
 })=> {
   const { store, dispatch } = useFinancialData();
   const [selectedInterestRate, setSelectedInterestRate] = useState('8');
@@ -54,7 +53,7 @@ setIsModalOpen, borrow, debt
   useEffect(() => {
     const determineRequiredCollateral = async () => {
       const ltv = interestToLTV[selectedInterestRate];
-      const usdcUnits = ethers.utils.parseUnits(formatLargeUsdc(debt), 6);
+      const usdcUnits = ethers.utils.parseUnits(formatLargeUsdc(borrow.debt), 6);
       const coll: ethers.BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
       return roundEth(coll, 6);
     };
@@ -100,7 +99,7 @@ setIsModalOpen, borrow, debt
                     </label>
                     <div className='w-full text-xl font-semibold flex flex-row'>
                       <span
-                        className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(debt)} USDC</span>
+                        className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(borrow.debt)} USDC</span>
                       <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10}
                              height={10} />
                     </div>
@@ -189,7 +188,6 @@ setIsModalOpen, borrow, debt
         <ExtendBorrowSummaryView onBackExtend={handleExtendBorrowBack}
                                  onExtendBorrowActionChange={handleExtendBorrowActionChange}
                                  borrow={borrow}
-                                 debt={debt}
                                  newEndDate={selectedDuration}
                                  />}
     </>

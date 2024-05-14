@@ -219,6 +219,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   apy: ethers.utils.parseUnits(interestRate,2).toString(),
                                   principal: (ethers.utils.parseEther(amount)).toString(),
                                   timestamp: (timestamp).toString(),
+                                  startDate: Math.floor(Date.now() / 1000),
                                   updated: Math.floor(Date.now() / 1000),
                                   __typename: "Borrow",
                                 };
