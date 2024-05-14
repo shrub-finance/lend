@@ -25,6 +25,7 @@ export const USER_POSITIONS_QUERY = gql`
                     totalEthYield
                     totalUsdcInterest
                     tokenSupply
+                    finalized
                 }
                 amount
                 depositsUsdc

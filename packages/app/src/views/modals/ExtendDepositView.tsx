@@ -63,7 +63,7 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
       </button>
     </div>
       {!showSummary ?
-      <div className="relative group w-full">
+    <div className="relative group w-full">
     <div className="absolute border rounded-3xl"></div>
     <div className="flex flex-col">
       <div className="card w-full text-left">
