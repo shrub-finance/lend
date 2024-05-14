@@ -282,7 +282,6 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                   setApproveUSDCActionInitiated(true);
                                 }}
                                 onError={(e) => {
-                                  console.log(e);
                                   handleErrorMessages({err: e});
                                 }}
                               >

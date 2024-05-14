@@ -43,11 +43,6 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
 
 
   const walletAddress = useAddress();
-  const {
-    contract: lendingPlatform,
-    isLoading: lendingPlatformIsLoading,
-    error: lendingPlatformError
-  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
   // Calculate the end date by adding the number of months to the current date
   const currentDate = new Date();
@@ -224,7 +219,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   __typename: "Borrow",
                                 };
                                 dispatch({
-                                  type: "ADD_LOAN",
+                                  type: "ADD_BORROW",
                                   payload: newBorrow,
                                 });
 
@@ -235,7 +230,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                     throw new Error("Transaction failed")
                                   }
                                   dispatch({
-                                    type: "UPDATE_LOAN_STATUS",
+                                    type: "UPDATE_BORROW_STATUS",
                                     payload: {
                                       id: tx.hash,
                                       status: "confirmed",
@@ -244,7 +239,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                 } catch (e) {
                                   console.log("Transaction failed:", e);
                                   dispatch({
-                                    type: "UPDATE_LOAN_STATUS",
+                                    type: "UPDATE_BORROW_STATUS",
                                     payload: {
                                       id: tx.hash,
                                       status: "failed",
@@ -255,14 +250,10 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                               }}
 
                               onError={(e) => {
-                                if (e instanceof Error) {
                                   handleErrorMessages({err: e});
-                                }
-                              }}
-                  >
+                              }}>
                     {latestBorrow?.status === "pending"? "Borrow Order Submitted":"Initiate Borrow"}
                   </Web3Button>
-
                 </div>
                 }
 

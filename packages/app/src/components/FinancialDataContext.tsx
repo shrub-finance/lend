@@ -33,7 +33,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
       };
     case "CLEAR_USER_DATA":
       return { ...initialState };
-    case "ADD_LOAN":
+    case "ADD_BORROW":
       const updatedBorrow = { ...store, borrows: [action.payload, ...store.borrows] };
       return updatedBorrow;
     case "ADD_LEND_POSITION":
@@ -53,7 +53,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
       };
       // console.log("Updated lend positions", updatedState.deposits); // Log the updated lend positions array
       return updatedState;
-    case "UPDATE_LOAN_STATUS":
+    case "UPDATE_BORROW_STATUS":
       const updatedBorrowState = {
         ...store,
         borrows: store.borrows.map(borrow => {

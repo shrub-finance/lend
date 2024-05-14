@@ -179,7 +179,6 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                            setApproveUSDCActionInitiated(true);
                          }}
                        onError={(e) => {
-                         console.log(e);
                          handleErrorMessages({err: e});
                        }}
                      >
