@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import Image from 'next/image';
 import {
+  calcLtv,
   calcPercentage,
   ethInUsdc,
   formatLargeUsdc,
-  formatPercentage,
-  fromEthDate,
+  formatPercentage, formatWad,
+  fromEthDate, ltvToInterest,
   toEthDate
 } from '../../utils/ethMethods';
 import {
@@ -18,17 +19,17 @@ import {
   aethAddress,
   aethAbi,
 } from '../../utils/contracts';
-import { BigNumber, ethers } from 'ethers';
+import {BigNumber, ethers} from 'ethers';
 import {
   useAddress,
   useContract,
   useContractRead,
   Web3Button,
 } from '@thirdweb-dev/react';
-import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
-import { useLazyQuery } from '@apollo/client';
-import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
-import { useFinancialData } from '../../components/FinancialDataContext';
+import {handleErrorMessagesFactory} from '../../utils/handleErrorMessages';
+import {useLazyQuery} from '@apollo/client';
+import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries';
+import {useFinancialData} from '../../components/FinancialDataContext';
 import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
 import {BorrowObj} from "../../types/types";
 
@@ -36,6 +37,8 @@ interface ExtendBorrowSummaryProps {
   onBackExtend: (data?) => void,
   borrow: BorrowObj
   newEndDate: number,
+  targetLtv: ethers.BigNumber,
+  additionalCollateral: ethers.BigNumber,
 }
 
 const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
@@ -46,6 +49,8 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     onExtendBorrowActionChange,
     borrow,
     newEndDate,
+    targetLtv,
+    additionalCollateral,
   }) => {
   const [
     getActiveLendingPools,
@@ -57,8 +62,8 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
       stopPolling: activeLendingPoolsStopPolling,
     },
   ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
-  const { ethPrice, isLoading, error } = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
-  const { store, dispatch } = useFinancialData();
+  const {ethPrice, isLoading, error} = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
+  const {store, dispatch} = useFinancialData();
   const walletAddress = useAddress();
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
   const [approveAETHActionInitiated, setApproveAETHActionInitiated] = useState(false);
@@ -69,11 +74,11 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     isLoading: usdcIsLoading,
     error: usdcError,
   } = useContract(usdcAddress, usdcAbi);
-    const {
-        contract: aeth,
-        isLoading: aethIsLoading,
-        error: aethError,
-    } = useContract(aethAddress, aethAbi);
+  const {
+    contract: aeth,
+    isLoading: aethIsLoading,
+    error: aethError,
+  } = useContract(aethAddress, aethAbi);
   const {
     contract: lendingPlatform,
     isLoading: lendingPlatformIsLoading,
@@ -86,19 +91,20 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     isLoading: usdcAllowanceIsLoading,
     error: usdcAllowanceError,
   } = useContractRead(usdc, 'allowance', [walletAddress, lendingPlatformAddress]);
-    const {
-        data: aethAllowance,
-        isLoading: aethAllowanceIsLoading,
-        error: aethAllowanceError,
-    } = useContractRead(aeth, 'allowance', [walletAddress, lendingPlatformAddress]);
-    const ltv = borrow.collateral.isZero() || !ethPrice || ethPrice.isZero() ?
-        BigNumber.from(0) :
-        calcPercentage(borrow.debt, ethInUsdc(borrow.collateral, ethPrice));
-    const {
-        data: targetLtv,
-        isLoading: targetLtvIsLoading,
-        error: targetLtvError,
-    } = useContractRead(lendingPlatform, 'calculateSmallestValidLtv', [ltv, true]);
+  const {
+    data: aethAllowance,
+    isLoading: aethAllowanceIsLoading,
+    error: aethAllowanceError,
+  } = useContractRead(aeth, 'allowance', [walletAddress, lendingPlatformAddress]);
+  const ltv = borrow.collateral.isZero() || !ethPrice || ethPrice.isZero() ?
+    BigNumber.from(0) :
+    calcLtv(borrow.debt, borrow.collateral, ethPrice);
+    // calcPercentage(borrow.debt, ethInUsdc(borrow.collateral, ethPrice));
+  // const {
+  //   data: targetLtvData,
+  //   isLoading: targetLtvIsLoading,
+  //   error: targetLtvError,
+  // } = useContractRead(lendingPlatform, 'calculateSmallestValidLtv', [ltv, true]);
 
   useEffect(() => {
     if (!walletAddress) return;
@@ -107,36 +113,39 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     });
   }, [walletAddress, getActiveLendingPools]);
 
-  useEffect(() => {
-      console.log(`ltv: ${ltv}`);
-      console.log(`targetLtv: ${targetLtv}`);
-  }, [targetLtvIsLoading])
+  // useEffect(() => {
+  //   if (targetLtvData) {
+  //     setTargetLtv(targetLtvData);
+  //   }
+  //   // console.log(`ltv: ${ltv}`);
+  //   // console.log(`targetLtv: ${targetLtv}`);
+  // }, [targetLtvIsLoading])
 
-    useEffect(() => {
-      console.log('running allowance useEffect');
-       if (
-          erc20ApprovalNeeded !== 'usdc' && (
-           !usdcAllowance ||
-           BigNumber.from(usdcAllowance).lt(ethers.utils.parseUnits(formatLargeUsdc(borrow.debt), 6))
-         )
-       ) {
-         console.log('setting erc20ApprovalNeeded to usdc');
-           return setErc20ApprovalNeeded('usdc');
-       }
-       if (
-          erc20ApprovalNeeded !== 'aeth' && (
-           !aethAllowance ||
-           BigNumber.from(aethAllowance).lt(borrow.collateral)
-         )
-       ) {
-           console.log('setting erc20ApprovalNeeded to aeth');
-           return setErc20ApprovalNeeded('aeth');
-       }
-       if (erc20ApprovalNeeded !== 'none') {
-         console.log('setting erc20ApprovalNeeded to none');
-         setErc20ApprovalNeeded('none');
-       }
-    }, [usdcAllowanceIsLoading, aethAllowanceIsLoading, approveAETHActionInitiated, approveUSDCActionInitiated]);
+  useEffect(() => {
+    console.log('running allowance useEffect');
+    if (
+      erc20ApprovalNeeded !== 'usdc' && (
+        !usdcAllowance ||
+        BigNumber.from(usdcAllowance).lt(ethers.utils.parseUnits(formatLargeUsdc(borrow.debt), 6))
+      )
+    ) {
+      console.log('setting erc20ApprovalNeeded to usdc');
+      return setErc20ApprovalNeeded('usdc');
+    }
+    if (
+      erc20ApprovalNeeded !== 'aeth' && (
+        !aethAllowance ||
+        BigNumber.from(aethAllowance).lt(borrow.collateral)
+      )
+    ) {
+      console.log('setting erc20ApprovalNeeded to aeth');
+      return setErc20ApprovalNeeded('aeth');
+    }
+    if (erc20ApprovalNeeded !== 'none') {
+      console.log('setting erc20ApprovalNeeded to none');
+      setErc20ApprovalNeeded('none');
+    }
+  }, [usdcAllowanceIsLoading, aethAllowanceIsLoading, approveAETHActionInitiated, approveUSDCActionInitiated]);
 
 
   useEffect(() => {
@@ -151,9 +160,9 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
   }, [extendBorrowActionInitiated, onExtendBorrowActionChange]);
 
 
-    // console.log(`debt: ${debt}`);
-    // console.log(`collateral: ${borrow.collateral}`);
-    // console.log(`ethPrice: ${ethPrice}`);
+  // console.log(`debt: ${debt}`);
+  // console.log(`collateral: ${borrow.collateral}`);
+  // console.log(`ethPrice: ${ethPrice}`);
   // console.log(`ltv: ${ltv.toString()}`);
   // console.log(`new End Date 2: ${newEndDate}`);
   return (
@@ -165,7 +174,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
               <span
                 className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(borrow.debt)} USDC</span>
               <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40'
-                     height='40' />
+                     height='40'/>
             </div>
             <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
               When you extend this borrow of
@@ -196,24 +205,31 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                   <span className=''>New Due Date</span>
                   <span>
                     {newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1])}<Image
-                    alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' /></span>
+                    alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20'/></span>
+                </div>
+                <div className='flex flex-row  justify-between'>
+                  <span className=''>Current LTV ✨</span>
+                  <span>
+                    {formatPercentage(ltv)}%
+                  </span>
                 </div>
                 <div className='flex flex-row  justify-between cursor-pointer'
                      onClick={(e) => onBackExtend('ltvChangeRequest')}>
-                  <span className=''>Current LTV ✨</span>
-                  <span className='font-semibold text-shrub-green-500'> {formatPercentage(ltv)}%<Image alt='edit icon'
-                                                                                                src='/edit.svg'
-                                                                                                className='w-5 inline align-baseline ml-2'
-                                                                                                width='20'
-                                                                                                height='20' /></span>
+                  <span className=''>Interest Rate</span>
+                  <span className='font-semibold text-shrub-green-500'> {ltvToInterest[targetLtv.toString()]}%<Image
+                    alt='edit icon'
+                    src='/edit.svg'
+                    className='w-5 inline align-baseline ml-2'
+                    width='20'
+                    height='20'/></span>
                 </div>
               </div>
 
               <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
               <div className='mb-6 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
                 <div className='flex flex-row  justify-between'>
-                  <span className=''>Additional Payment Required</span>
-                  <span>{`calculatedField`}</span>
+                  <span className=''>Additional Collateral</span>
+                  <span>{ethers.utils.formatEther(additionalCollateral)} ETH</span>
                 </div>
               </div>
               {/*approve and modals deposit*/}
@@ -222,7 +238,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
               ) : (
                 <>
                   {/* Approve if allowance is insufficient */}
-                  { erc20ApprovalNeeded === 'usdc'
+                  {erc20ApprovalNeeded === 'usdc'
                     && (
                       <Web3Button contractAddress={usdcAddress} contractAbi={usdcAbi}
                                   isDisabled={approveUSDCActionInitiated}
@@ -233,7 +249,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                       // @ts-ignore
                                       return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256);
                                     }
-                      } onSuccess={
+                                  } onSuccess={
                         async (tx) => {
                           setLocalError('');
                           try {
@@ -247,7 +263,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                           setApproveUSDCActionInitiated(true);
                         }} onError={(e) => {
                         console.log(e);
-                        handleErrorMessages({ err: e });
+                        handleErrorMessages({err: e});
                       }}>
                         {!extendBorrowActionInitiated && !approveUSDCActionInitiated ? 'Approve USDC' : 'USDC Approval Submitted'}
                       </Web3Button>
@@ -255,75 +271,76 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                   }
 
 
-                    {/* Approve if allowance is insufficient */}
-                    {erc20ApprovalNeeded === 'aeth'
-                        && (
-                            <Web3Button contractAddress={aethAddress} contractAbi={aethAbi}
-                                        isDisabled={approveAETHActionInitiated}
-                                        className='!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
-                                        action={
-                                            async (aeth) => {
-                                                setLocalError('');
-                                              // @ts-ignore
-                                                return await aeth.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256);
-                                            }
-                                        } onSuccess={
-                                async (tx) => {
-                                    setLocalError('');
-                                    try {
-                                        const receipt = await tx.wait();
-                                        if (!receipt.status) {
-                                            throw new Error('Transaction failed');
-                                        }
-                                    } catch (e) {
-                                        console.log('Transaction failed:', e);
+                  {/* Approve if allowance is insufficient */}
+                  {erc20ApprovalNeeded === 'aeth'
+                    && (
+                      <Web3Button contractAddress={aethAddress} contractAbi={aethAbi}
+                                  isDisabled={approveAETHActionInitiated}
+                                  className='!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
+                                  action={
+                                    async (aeth) => {
+                                      setLocalError('');
+                                      // @ts-ignore
+                                      return await aeth.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256);
                                     }
-                                    setApproveAETHActionInitiated(true);
-                                }} onError={(e) => {
-                                console.log(e);
-                                handleErrorMessages({ err: e });
-                            }}>
-                                {!extendBorrowActionInitiated && !approveAETHActionInitiated ? 'Approve aETH' : 'aETH Approval Submitted'}
-                            </Web3Button>
-                        )
-                    }
+                                  } onSuccess={
+                        async (tx) => {
+                          setLocalError('');
+                          try {
+                            const receipt = await tx.wait();
+                            if (!receipt.status) {
+                              throw new Error('Transaction failed');
+                            }
+                          } catch (e) {
+                            console.log('Transaction failed:', e);
+                          }
+                          setApproveAETHActionInitiated(true);
+                        }} onError={(e) => {
+                        console.log(e);
+                        handleErrorMessages({err: e});
+                      }}>
+                        {!extendBorrowActionInitiated && !approveAETHActionInitiated ? 'Approve aETH' : 'aETH Approval Submitted'}
+                      </Web3Button>
+                    )
+                  }
 
 
-                    {erc20ApprovalNeeded === 'none'
-                        && (
-                            <Web3Button contractAddress={lendingPlatformAddress} contractAbi={lendingPlatformAbi}
-                                        isDisabled={extendBorrowActionInitiated || !targetLtv}
-                                        className='web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
-                                        action={
-                                            async (lendingPlatform) => {
-                                                console.log(`newEndDate: ${newEndDate}`);
-                                                console.log(borrow.id);
-                                                setLocalError('');
-                                              // @ts-ignore
-                                                return await lendingPlatform.contractWrapper.writeContract.extendBorrow(
-                                                    borrow.id,
-                                                    newEndDate,
-                                                    0,  // TODO: Control Additional Collateral with an option
-                                                    0,  // Additional Repayment
-                                                    targetLtv   // LTV
-                                                );
-                                            }
-                                        }
-                                        onSuccess={
-                                async (tx) => {
-                                    setLocalError('');
-                                    if (activeLendingPoolsError) {
+                  {erc20ApprovalNeeded === 'none'
+                    && (
+                      <Web3Button contractAddress={lendingPlatformAddress} contractAbi={lendingPlatformAbi}
+                                  isDisabled={extendBorrowActionInitiated}
+                                  className='web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
+                                  action={
+                                    async (lendingPlatform) => {
+                                      console.log(`newEndDate: ${newEndDate}`);
+                                      console.log(borrow.id);
+                                      setLocalError('');
+                                      // @ts-ignore
+                                      return await lendingPlatform.contractWrapper.writeContract.extendBorrow(
+                                        borrow.id,
+                                        newEndDate,
+                                        additionalCollateral,
+                                        0,  // Additional Repayment
+                                        targetLtv, // LTV
+                                        {value: additionalCollateral}
+                                      );
+                                    }
+                                  }
+                                  onSuccess={
+                                    async (tx) => {
+                                      setLocalError('');
+                                      if (activeLendingPoolsError) {
                                         handleErrorMessages({customMessage: activeLendingPoolsError.message});
                                         return;
-                                    }
-                                    const filteredLendingPools = '';
-                                    // const filteredLendingPools =
+                                      }
+                                      const filteredLendingPools = '';
+                                      // const filteredLendingPools =
 
-                                    const matchedLendingPool =
+                                      const matchedLendingPool =
                                         filteredLendingPools.length > 0
-                                            ? filteredLendingPools[0]
-                                            : null;
-                                    const newBorrowPositionWithdraw = {
+                                          ? filteredLendingPools[0]
+                                          : null;
+                                      const newBorrowPositionWithdraw = {
                                         id: `${matchedLendingPool}-withdraw`,
                                         status: 'pending',
                                         depositsUsdc: matchedLendingPool,
@@ -332,95 +349,95 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         currentBalanceOverride: matchedLendingPool,
                                         interestEarnedOverride: '0',
                                         lendingPool: {
-                                            id: matchedLendingPool,
-                                            timestamp: matchedLendingPool,
-                                            tokenSupply: matchedLendingPool,
-                                            totalEthYield: matchedLendingPool,
-                                            totalPrincipal: matchedLendingPool,
-                                            totalUsdcInterest: matchedLendingPool,
-                                            __typename: matchedLendingPool,
+                                          id: matchedLendingPool,
+                                          timestamp: matchedLendingPool,
+                                          tokenSupply: matchedLendingPool,
+                                          totalEthYield: matchedLendingPool,
+                                          totalPrincipal: matchedLendingPool,
+                                          totalUsdcInterest: matchedLendingPool,
+                                          __typename: matchedLendingPool,
                                         },
                                         timestamp: 1,
-                                    };
-                                    const newBorrowPositionDeposit = {
+                                      };
+                                      const newBorrowPositionDeposit = {
                                         ...newBorrowPositionWithdraw,
                                         id: `${matchedLendingPool}-borrow`,
                                         depositsUsdc: borrow.debt.toString(),
                                         currentBalanceOverride: borrow.debt.toString(),
                                         lendingPool: {
-                                            ...newBorrowPositionWithdraw.lendingPool,
-                                            timestamp: matchedLendingPool,
+                                          ...newBorrowPositionWithdraw.lendingPool,
+                                          timestamp: matchedLendingPool,
                                         },
-                                    };
-                                    dispatch({
+                                      };
+                                      dispatch({
                                         type: 'ADD_LEND_POSITION',
                                         // @ts-ignore
                                         payload: newBorrowPositionWithdraw,
-                                    });
-                                    dispatch({
+                                      });
+                                      dispatch({
                                         type: 'ADD_LEND_POSITION',
                                         // @ts-ignore
                                         payload: newBorrowPositionDeposit,
-                                    });
-                                    dispatch({
+                                      });
+                                      dispatch({
                                         type: 'UPDATE_LEND_POSITION_STATUS',
                                         payload: {
-                                            id: matchedLendingPool,
-                                            status: 'extending',
+                                          id: matchedLendingPool,
+                                          status: 'extending',
                                         },
-                                    });
+                                      });
 
-                                    try {
+                                      try {
                                         const receipt = {};
                                         // if(!receipt.status) {
                                         //     throw new Error("Transaction failed")
                                         // }
                                         dispatch({
-                                            type: 'UPDATE_LEND_POSITION_STATUS',
-                                            payload: {
-                                                id: `${matchedLendingPool}-deposit`,
-                                                status: 'confirmed',
-                                            },
+                                          type: 'UPDATE_LEND_POSITION_STATUS',
+                                          payload: {
+                                            id: `${matchedLendingPool}-deposit`,
+                                            status: 'confirmed',
+                                          },
                                         });
                                         dispatch({
-                                            type: 'UPDATE_LEND_POSITION_STATUS',
-                                            payload: {
-                                                id: `${matchedLendingPool}-withdraw`,
-                                                status: 'confirmed',
-                                            },
+                                          type: 'UPDATE_LEND_POSITION_STATUS',
+                                          payload: {
+                                            id: `${matchedLendingPool}-withdraw`,
+                                            status: 'confirmed',
+                                          },
                                         });
                                         dispatch({
-                                            type: 'UPDATE_LEND_POSITION_STATUS',
-                                            payload: {
-                                                id: matchedLendingPool,
-                                                status: 'extended',
-                                            },
+                                          type: 'UPDATE_LEND_POSITION_STATUS',
+                                          payload: {
+                                            id: matchedLendingPool,
+                                            status: 'extended',
+                                          },
                                         });
-                                    } catch (e) {
+                                      } catch (e) {
                                         console.log('Transaction failed:', e);
                                         dispatch({
-                                            type: 'UPDATE_LEND_POSITION_STATUS',
-                                            payload: {
-                                                id: `${matchedLendingPool}-deposit`,
-                                                status: 'failed',
-                                            },
+                                          type: 'UPDATE_LEND_POSITION_STATUS',
+                                          payload: {
+                                            id: `${matchedLendingPool}-deposit`,
+                                            status: 'failed',
+                                          },
                                         });
                                         dispatch({
-                                            type: 'UPDATE_LEND_POSITION_STATUS',
-                                            payload: {
-                                                id: `${matchedLendingPool}-withdraw`,
-                                                status: 'failed',
-                                            },
+                                          type: 'UPDATE_LEND_POSITION_STATUS',
+                                          payload: {
+                                            id: `${matchedLendingPool}-withdraw`,
+                                            status: 'failed',
+                                          },
                                         });
-                                    }
-                                    setExtendBorrowActionInitiated(true);
-                                }}
-                            onError={(e) => {
-                                handleErrorMessages({err: e});
-                            }}>
-                                {!extendBorrowActionInitiated ? 'Initiate Extend' : 'Extend Order Submitted'}
-                            </Web3Button>
-                        )}
+                                      }
+                                      setExtendBorrowActionInitiated(true);
+                                    }}
+                                  onError={(e) => {
+                                    handleErrorMessages({err: e});
+                                  }}>
+                        {!extendBorrowActionInitiated ? 'Initiate Extend' : 'Extend Order Submitted'}
+                      </Web3Button>
+                    )}
                 </>
               )}
             </div>

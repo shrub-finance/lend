@@ -3,6 +3,14 @@ import { ethers } from 'ethers';
 import { Zero } from '../constants';
 
 const Ten = ethers.BigNumber.from(10);
+const REVERSE_SORTED_VALID_LTV = [
+  ethers.BigNumber.from(5000),
+  ethers.BigNumber.from(3300),
+  ethers.BigNumber.from(2500),
+  ethers.BigNumber.from(2000),
+  ethers.BigNumber.from(0),
+];
+const MAX_LTV_FOR_EXTEND = ethers.BigNumber.from(5000);
 
 export {toEthDate, fromEthDate};
 
@@ -26,6 +34,14 @@ export const interestToLTV = {
     "8": 5000
 }
 
+export const ltvToInterest = {
+  '2000': "0",
+  '2500': "1",
+  '3300': "5",
+  '5000': "8",
+  '8000': "8"
+};
+
 export const timestamps = {
     1: toEthDate(getPlatformDates().oneMonth),
     3: toEthDate(getPlatformDates().threeMonth),
@@ -41,12 +57,30 @@ export const timestamps = {
  * @return USDC as a formatted string
  */
 export function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
-    const usdcInWadBN = ethers.BigNumber.from(usdcInWad)
-    const divisionFactor = ethers.BigNumber.from(10).pow(12)
-    const roundAmount = usdcInWadBN.gte(Zero) ?
-        ethers.BigNumber.from(5).mul(divisionFactor).div(10) :
-        ethers.BigNumber.from(5).mul(divisionFactor).div(10).mul(-1);
-    return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
+    // const usdcInWadBN = ethers.BigNumber.from(usdcInWad)
+    // const divisionFactor = ethers.BigNumber.from(10).pow(12)
+    // const roundAmount = usdcInWadBN.gte(Zero) ?
+    //     ethers.BigNumber.from(5).mul(divisionFactor).div(10) :
+    //     ethers.BigNumber.from(5).mul(divisionFactor).div(10).mul(-1);
+    // return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
+  return formatWad(usdcInWad, 6);
+}
+
+/**
+ * @notice converts USDC value in Wad to a string
+ * @dev Wad means 18 decimal
+ * @dev rounds up for positive numbers and down for negative numbers
+ * @param wads - ethers.BigNumberish : An amount of Wads represented in Wad as a big numberish
+ * @param decimals - number : number of decimals in the returned result
+ * @return a formatted string with specified number of decimals
+ */
+export function formatWad(wads: ethers.BigNumberish, decimals: number) {
+  const usdcInWadBN = ethers.BigNumber.from(wads)
+  const divisionFactor = ethers.BigNumber.from(10).pow(12)
+  const roundAmount = usdcInWadBN.gte(Zero) ?
+    ethers.BigNumber.from(5).mul(divisionFactor).div(10) :
+    ethers.BigNumber.from(5).mul(divisionFactor).div(10).mul(-1);
+  return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), decimals)
 }
 
 /**
@@ -151,9 +185,86 @@ export function ethInUsdc(ethAmount: ethers.BigNumberish, ethPrice: ethers.BigNu
 export function calcPercentage(numerator: ethers.BigNumberish, denominator: ethers.BigNumberish) {
     const numeratorBN = ethers.BigNumber.from(numerator);
     const denominatorBN = ethers.BigNumber.from(denominator);
-    console.log(`numeratorBN: ${numeratorBN.toString()}`);
-    console.log(`denominatorBN: ${denominatorBN.toString()}`);
     const roundAmount = Ten.pow(13).mul(5);
     const scaleFactor = Ten.pow(14); // Convert to bps percentage with 4 decimals
     return (wadDiv(numeratorBN, denominatorBN).add(roundAmount)).div(scaleFactor);
+}
+
+/**
+ * @notice return the ltv as a percentage in bps
+ * @param debt - ethers.BigNumberish : USDC debt (Wad)
+ * @param collateral - ethers.BigNumberish : ETH Collateral (Wad)
+ * @param ethPrice - ethers.BigNumberish : USDC/ETH expressed as 8 decimals
+ * @return ethers.BigNumber : ltv expressed as a percentage in bps (10000 = 100%)
+ */
+export function calcLtv(debt: ethers.BigNumberish, collateral: ethers.BigNumberish, ethPrice: ethers.BigNumberish) {
+  return calcPercentage(debt, ethInUsdc(collateral, ethPrice));
+}
+
+/**
+ * @notice return the smallest threshold ltv that an ltv corresponds to
+ * @param ltv - ethers.BigNumber : ltv expressed as a percentage in bps
+ * @param isExtend - boolean : whether the calculation is being made for a borow extension
+ * @return ethers.BigNumber : target ltv expressed as a percentage in bps (10000 = 100%)
+ */
+export function calculateSmallestValidLtv(ltv: ethers.BigNumber, isExtend: boolean) {
+  let smallestValid = ethers.constants.Zero; // Initialize to 0 or a suitable default value
+  let found = false;
+
+  // Iterate through the array to find the smallest value >= value
+  for (let i = 0; i < REVERSE_SORTED_VALID_LTV.length; i++) {
+    if (REVERSE_SORTED_VALID_LTV[i].lt(ltv)) {
+      continue;
+    }
+    smallestValid = REVERSE_SORTED_VALID_LTV[i];
+    found = true;
+  }
+  if (!found || !(isExtend && ltv.lte(MAX_LTV_FOR_EXTEND))) {
+    throw new Error("Invalid ltv");
+  }
+  if (found) {
+    return smallestValid;
+  }
+  return MAX_LTV_FOR_EXTEND;
+}
+
+/**
+ * @notice return required collateral for specified principal and target LTV
+ * @param principal - ethers.BigNumber : USDC principal in Wad
+ * @param targetLtv - ethers.BigNumber : target ltv expressed as a percentage in bps
+ * @param ethPrice - ethers.BigNumber : USDC/ETH expressed as 8 decimals
+ * @return ethers.BigNumber : required ETH collateral in Wad
+ */
+export function requiredCollateral(
+  principal: ethers.BigNumber, // 18 Decimals
+  targetLtv: ethers.BigNumber, // 4 Decimals
+  ethPrice: ethers.BigNumber   // 8 Decimals
+) {
+  // principal / (targetLtv * ethPrice) - collateral
+  const scaleFactor = Ten.pow(6);
+  return wadDiv(
+    principal,
+    ethPrice.mul(targetLtv).mul(scaleFactor)
+  );
+}
+
+/**
+ * @notice return required additional collateral for specified principal, collateral and target LTV
+ * @param principal - ethers.BigNumber : USDC principal in Wad
+ * @param targetLtv - ethers.BigNumber : target ltv expressed as a percentage in bps
+ * @param collateral - ethers.BigNumber : existing ETH collateral for the borrow in Wad
+ * @param ethPrice - ethers.BigNumber : USDC/ETH expressed as 8 decimals
+ * @return ethers.BigNumber : required ETH collateral in Wad
+ */
+export function requiredAdditionalCollateral(
+  principal: ethers.BigNumber, // 18 Decimals
+  targetLtv: ethers.BigNumber, // 4 Decimals
+  collateral: ethers.BigNumber, // 18 Decimals
+  ethPrice: ethers.BigNumber   // 8 Decimals
+) {
+  const additionalCollateral = requiredCollateral(principal, targetLtv, ethPrice).sub(collateral)
+  if (additionalCollateral.lte(Zero)) {
+    return Zero;
+  }
+  return additionalCollateral;
 }

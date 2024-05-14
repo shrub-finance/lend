@@ -1,14 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import Image from "next/image";
 import { ethers } from 'ethers';
-import {formatLargeUsdc, interestToLTV, roundEth, toEthDate} from '../../utils/ethMethods';
+import {
+  calcLtv,
+  calculateSmallestValidLtv,
+  formatLargeUsdc, formatWad,
+  interestToLTV,
+  ltvToInterest, requiredAdditionalCollateral,
+  roundEth,
+  toEthDate
+} from '../../utils/ethMethods';
 import { interestRates, Zero } from '../../constants';
 import { useContract } from '@thirdweb-dev/react';
-import { lendingPlatformAbi, lendingPlatformAddress } from '../../utils/contracts';
+import {
+  chainlinkAggregatorAbi,
+  chainlinkAggregatorAddress,
+  lendingPlatformAbi,
+  lendingPlatformAddress
+} from '../../utils/contracts';
 import ExtendBorrowSummaryView from './ExtendBorrowSummaryView';
 import { formatDate } from '@shrub-lend/common';
 import {BorrowObj} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
+import useEthPriceFromChainlink from "../../hooks/useEthPriceFromChainlink";
 
 interface ExtendBorrowViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
@@ -19,15 +33,20 @@ const ExtendBorrowView: React.FC<ExtendBorrowViewProps & { onModalClose: (date: 
 setIsModalOpen, borrow
 })=> {
   const { store, dispatch } = useFinancialData();
-  const [selectedInterestRate, setSelectedInterestRate] = useState('8');
+  // const [selectedInterestRate, setSelectedInterestRate] = useState('8');
   const [extendActionInitiated, setExtendBorrowActionInitiated] = useState(false);
-  const [requiredCollateralToExtendBorrow, setRequiredCollateralToExtendBorrow] = useState<ethers.BigNumber>(Zero);
+  // const [requiredCollateralToExtendBorrow, setRequiredCollateralToExtendBorrow] = useState<ethers.BigNumber>(Zero);
   const [showExtendBorrowCollateralSection, setShowExtendBorrowCollateralSection] = useState(true);
-  const [ltvChangeRequested, setLtvChangeRequested] = useState(false);
+  const [interestEditRequested, setinterestEditRequested] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1]));
   const [showDueDateOptions, setShowDueDateOptions] = useState(false);
+  const {ethPrice, isLoading, error} = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
+  const [targetLtv, setTargetLtv] = useState<ethers.BigNumber>();
+  const [additionalCollateral, setAdditionalCollateral] = useState<ethers.BigNumber>(Zero);
+  const [currentLtv, setCurrentLtv] = useState<ethers.BigNumber>()
+  const [extendBorrowViewLoading, setExtendBorrowViewLoading] = useState(true);
   const handleExtendBorrowBack = (data) => {
-    setLtvChangeRequested(true);
+    setinterestEditRequested(true);
     if (data === 'dateChangeRequest') {
       setShowDueDateOptions(true);
     }
@@ -50,19 +69,34 @@ setIsModalOpen, borrow
     error: lendingPlatformError
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
+  // useEffect(() => {
+  //   const determineRequiredCollateral = async () => {
+  //     // const ltv = interestToLTV[selectedInterestRate];
+  //     const ltv = targetLtv
+  //     const usdcUnits = ethers.utils.parseUnits(formatLargeUsdc(borrow.debt), 6);
+  //     const coll: ethers.BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
+  //     return roundEth(coll, 6);
+  //   };
+  //   if (!targetLtv) {
+  //     determineRequiredCollateral()
+  //       .then(res => setRequiredCollateralToExtendBorrow(res))
+  //       .catch(e => console.error(e));
+  //   }
+  // }, [targetLtv, lendingPlatform, setRequiredCollateralToExtendBorrow]);
+
   useEffect(() => {
-    const determineRequiredCollateral = async () => {
-      const ltv = interestToLTV[selectedInterestRate];
-      const usdcUnits = ethers.utils.parseUnits(formatLargeUsdc(borrow.debt), 6);
-      const coll: ethers.BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
-      return roundEth(coll, 6);
-    };
-    if (selectedInterestRate !== "") {
-      determineRequiredCollateral()
-        .then(res => setRequiredCollateralToExtendBorrow(res))
-        .catch(e => console.error(e));
+    if (!ethPrice || ethPrice.isZero()) {
+      return;
     }
-  }, [selectedInterestRate, lendingPlatform, setRequiredCollateralToExtendBorrow]);
+    const currentLtv = calcLtv(borrow.debt, borrow.collateral, ethPrice);
+    setCurrentLtv(currentLtv);
+    if (!targetLtv) {
+      setTargetLtv(calculateSmallestValidLtv(currentLtv, true));
+    }
+    if (extendBorrowViewLoading) {
+      setExtendBorrowViewLoading(false);
+    }
+  }, [ethPrice]);
 
 
   return (
@@ -76,7 +110,9 @@ setIsModalOpen, borrow
           <span className="sr-only">Close modal</span>
         </button>
       </div>
-      {ltvChangeRequested ?
+      {
+        extendBorrowViewLoading ? <p>is loading...</p> :(
+        interestEditRequested ?
         <div className="relative group w-full">
           <div className="absolute border rounded-3xl"></div>
           <div className="flex flex-col">
@@ -84,7 +120,7 @@ setIsModalOpen, borrow
               <div className='card-body '>
                 <div className='form-control w-full'>
                   <div className='flex items-center pb-2'>
-                    <button onClick={() => setLtvChangeRequested(false)}>
+                    <button onClick={() => setinterestEditRequested(false)}>
                       <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none'
                            className='w-6 grow-0 order-0 flex-none'>
                         <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='black' strokeWidth='2' strokeLinecap='round'
@@ -137,9 +173,10 @@ setIsModalOpen, borrow
                       <ul className='flex flex-row '>
                         {interestRates.map(({ id, rate }) => (
                           <li className='mr-4' key={id}>
-                            <input type='radio' id={id} name='loan' value={id} className='hidden peer' checked={rate === selectedInterestRate}
+                            <input type='radio' id={id} name='loan' value={id} className='hidden peer' checked={rate === ltvToInterest[targetLtv.toString()]}
                              onChange={() => {
-                              setSelectedInterestRate(rate);
+                               setTargetLtv(ethers.BigNumber.from(interestToLTV[rate]));
+                              // setSelectedInterestRate(rate);
                               setShowExtendBorrowCollateralSection(true);
                             }} required />
                             <label htmlFor={id}
@@ -161,7 +198,7 @@ setIsModalOpen, borrow
                 {showExtendBorrowCollateralSection && !showDueDateOptions && (
                   <div className='hero-content mb-2 flex-col gap-2 justify-between'>
                     <div className='card w-full flex flex-row text-lg justify-between'>
-                      <span className='w-[360px]'>Required collateral</span>
+                      <span className='w-[360px]'>Required additional collateral</span>
                       <span className='hidden md:inline'>
                         <Image alt='eth logo' src='/eth-logo.svg' className='w-4 inline align-middle' width='16'
                                height='24' /> ETH
@@ -169,7 +206,12 @@ setIsModalOpen, borrow
                     </div>
                     <div className='card w-full bg-teal-50 border border-shrub-green p-10'>
                         <span className='sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center'>
-                          {ethers.utils.formatEther(requiredCollateralToExtendBorrow)} ETH</span>
+                          {formatWad(requiredAdditionalCollateral(
+                            borrow.principal,
+                            targetLtv,
+                            borrow.collateral,
+                            ethPrice
+                          ), 6)} ETH</span>
                     </div>
                   </div>
                 )}
@@ -177,7 +219,19 @@ setIsModalOpen, borrow
                 <button
                   className='btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border'
                   /*  disabled={!showDueDateOptions && selectedInterestRate === '' || showDueDateOptions && selectedDuration === ''}*/
-                  onClick={() => setLtvChangeRequested(false)}>
+                  onClick={() => {
+                    setinterestEditRequested(false);
+                    setAdditionalCollateral(ethers.utils.parseUnits(
+                      formatWad(requiredAdditionalCollateral(
+                        borrow.principal,
+                        targetLtv,
+                        borrow.collateral,
+                        ethPrice
+                      ), 6)
+                    ))
+                  }
+                  }
+                >
                   Continue
                 </button>
               </div>
@@ -189,7 +243,11 @@ setIsModalOpen, borrow
                                  onExtendBorrowActionChange={handleExtendBorrowActionChange}
                                  borrow={borrow}
                                  newEndDate={selectedDuration}
-                                 />}
+                                 targetLtv={targetLtv}
+                                 additionalCollateral={additionalCollateral}
+                                 />
+        )
+      }
     </>
   );
 };
