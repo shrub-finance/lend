@@ -74,7 +74,6 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                 <div className="flex flex-row  justify-between cursor-pointer" >
                   <span className="">ETH to receive</span>
                   <span>{} ETH
-                    <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>
                       </span>
                 </div>
                 <div className="flex flex-row  justify-between">

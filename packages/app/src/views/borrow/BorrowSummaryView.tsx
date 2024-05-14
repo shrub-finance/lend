@@ -14,16 +14,14 @@ interface BorrowSummaryViewProps {
   timestamp: number;
   interestRate: string;
   amount: string;
-  onBack: () => void;
+  backtoBorrowDuration: () => void;
   onCancel: () => void;
-  setRequiredCollateral: (value: ethers.BigNumber) => void;
 }
 
 export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
-                                                                onBack,
+                                                                backtoBorrowDuration,
                                                                 onCancel,
                                                                 requiredCollateral,
-                                                                setRequiredCollateral,
                                                                 timestamp,
                                                                 interestRate,
                                                                 amount,
@@ -78,7 +76,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
           )}
           <h1 className=" text-4xl font-medium ">
             <button
-              className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full dark:bg-shrub-grey-600" onClick={onBack}>
+              className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full dark:bg-shrub-grey-600" onClick={backtoBorrowDuration}>
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
                    className="w-6 grow-0 order-0 flex-none ml-[16px] mt-[4px]">
                 <path d="M20 12H4M4 12L10 18M4 12L10 6" stroke="black" strokeWidth="2"
@@ -150,7 +148,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       <span className="">Start Date</span>
                       <span>{currentDate.toDateString()}</span>
                     </div>
-                    <div className="flex flex-row  justify-between">
+                    <div className="flex flex-row justify-between cursor-pointer" onClick={backtoBorrowDuration}>
                       <span className="">Due Date</span>
                       <span>{endDate.toDateString()}
                         <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>

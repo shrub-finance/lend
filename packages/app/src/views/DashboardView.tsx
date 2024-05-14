@@ -370,7 +370,8 @@ export const DashboardView: FC = ({}) => {
                                                  className='mr-2' /> :
                                           <Image src='/up-right-arrow.svg' alt='down arrow' width={20} height={20}
                                                  className='mr-2' />} Trade</a>
-                                        {item.lendingPool.finalized && <button type='button'
+                                        {/*{item.lendingPool.finalized && */}
+                                          <button type='button'
                                                 // style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700'
                                                 // disabled={}
@@ -381,7 +382,8 @@ export const DashboardView: FC = ({}) => {
                                                 }}>
                                           {/*Corresponding modal at the top*/}
                                           Withdraw
-                                        </button>}
+                                        </button>
+                                         {/*}*/}
                                       </div>
                                     </td>
                                   </tr>
