@@ -279,7 +279,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 */
     function getLtv(uint tokenId) public view returns (uint16 ltv) {
         DataTypes.BorrowData memory bd = bpt.getBorrow(tokenId);
-        ltv = calcLtv(bd.principal, bpt.getInterest(tokenId), bd.collateral, getEthPrice());
+        ltv = calcLtv(bd.principal, getBorrowInterest(tokenId), bd.collateral, getEthPrice());
     }
 
 /**
@@ -627,10 +627,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // Check that the user has sufficient funds
         require(usdc.balanceOf(msg.sender) >= repaymentAmount, "insufficient balance");
         // Check that the funds are less than the owed balance
-//        uint debt = bpt.debt(tokenId);
-//        require(repaymentAmount < , "repayment amount must be less than total debt");
-//        uint interest = bpt.getInterest(tokenId);
-//        require(repaymentAmount >= interest, "repayment amount must be at least the accumulated interest");
+        require(repaymentAmount < getBorrowDebt(tokenId), "repayment amount must be less than total debt");
+        require(repaymentAmount >= getBorrowInterest(tokenId), "repayment amount must be at least the accumulated interest");
         // Check that funds are approved
         // NOTE: We are letting the ERC-20 contract handle this
         // Transfer USDC funds to Shrub
@@ -669,7 +667,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        bd.principal = _principal;
 //        bd.collateral = _collateral;
 //        bd.apy = apy;
-        uint interest = bpt.getInterest(tokenId);
+        uint interest = getBorrowInterest(tokenId);
         console.log("interest: %s", interest);
         console.log("bd.principal: %s", bd.principal);
         console.log("msg.sender: %s has a balance of %s USDC", msg.sender, usdc.balanceOf(msg.sender));
@@ -770,7 +768,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // Check that the newTimestamp is after the endDate of the token
         require(newTimestamp > bd.endDate, "newTimestamp must be greater than endDate of the borrow");
         // Check that the additionalRepayment is less than the current debt of the loan
-        uint debt = bpt.debt(tokenId);
+        uint debt = getBorrowDebt(tokenId);
         require(debt > additionalRepayment, "additionalRepayment must be less than the total debt of the borrow");
         // Use the existing collateral and additionalCollateral to take a loan at the newTimestamp of the current loan debt minus additionalRepayment
         if (additionalCollateral > 0) {
@@ -782,7 +780,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             );
         }
         uint newCollateral = bd.collateral + additionalCollateral;
-        uint newPrincipal = bpt.debt(tokenId) - additionalRepayment;
+        uint newPrincipal = getBorrowDebt(tokenId) - additionalRepayment;
         uint flashLoanAmount = 0;
         // User Receives a flash loan for the aETH collateral required to take the new loan
         console.log("extendBorrow-before-flash-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
@@ -837,7 +835,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     function forceExtendBorrow(uint tokenId, uint liquidationPhase) external {
         console.log("Running forceExtendBorrow - tokenId: %s, liquidationPhase: %s", tokenId, liquidationPhase);
         DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
-        uint debt = bpt.debt(tokenId);
+        uint debt = getBorrowDebt(tokenId);
         address borrower = bpt.ownerOf(tokenId);
 //        require(liquidationPhase < 3, "invalid claim");
         uint availabilityTime = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].duration;
@@ -903,7 +901,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     function forceLiquidation(uint tokenId, uint liquidationPhase) external {
         console.log("Running forceLiquidation - tokenId: %s, liquidationPhase: %s", tokenId, liquidationPhase);
         DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
-        uint debt = bpt.debt(tokenId);
+        uint debt = getBorrowDebt(tokenId);
         address borrower = bpt.ownerOf(tokenId);
 //        require(liquidationPhase > 2 && liquidationPhase < 6, "invalid claim");
         require(PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].liquidationEligible, "liquidation not allowed in this phase");
@@ -943,7 +941,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     function shrubLiquidation(uint tokenId, uint liquidationPhase) external {
         console.log("Running shrubLiquidation - tokenId: %s, liquidationPhase: %s", tokenId, liquidationPhase);
         DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
-        uint debt = bpt.debt(tokenId);
+        uint debt = getBorrowDebt(tokenId);
         address borrower = bpt.ownerOf(tokenId);
         require(PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].shrubLiquidationEligible, "shrub liquidation not allowed in this phase");
         uint availabilityTime = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].duration;
@@ -983,8 +981,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         require(percentage == 5000, "Invalid Percentage");
         require(getLtv(tokenId) > PlatformConfig.config.LIQUIDATION_THRESHOLD, "borrow not eligible for liquidation");
         DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
-        uint debt = bpt.debt(tokenId);
-        uint interest = bpt.getInterest(tokenId);
+        uint debt = getBorrowDebt(tokenId);
+        uint interest = getBorrowInterest(tokenId);
         uint ethPrice = getEthPrice();
         address borrower = bpt.ownerOf(tokenId);
         // TODO: for now limit the percentage to 50% - later make it so that if this would not resolve the safety factor issue that the loan may be paid off 100%
@@ -1009,6 +1007,26 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         bpt.liquidateBorrowData(tokenId, newPrincipal, newCollateral);
         // Liquidator is sent collateral that they bought : principle * ethPrice * (1 - bonus)
         aeth.transfer(msg.sender, aethToReceive);
+    }
+
+/**
+    * @notice Returns the current interest of a borrow
+    * @dev returns 6 decimal USDC
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+    * @return interest - uint256 - current interest of the borrow (6 decimals)
+*/
+    function getBorrowInterest(uint tokenId) public view returns (uint interest) {
+        interest = bpt.getInterest(tokenId, lastSnapshotDate);
+    }
+
+/**
+    * @notice Returns the current debt of a borrow
+    * @dev returns 6 decimal USDC
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+    * @return debt - uint256 - current total debt (principal + interest) of the borrow (6 decimals)
+*/
+    function getBorrowDebt(uint tokenId) public view returns (uint debt) {
+        debt = bpt.debt(tokenId, lastSnapshotDate);
     }
 
 /**

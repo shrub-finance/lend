@@ -236,7 +236,7 @@ task("extendBorrow", "extend an existing borrow")
         const borrowerAccount = await ethers.getSigner(account);
         const parsedAdditionalCollateral = ethers.parseUnits(additionalCollateral.toString(),6);
         const parsedAdditionalRepayment = ethers.parseEther(additionalRepayment.toString());
-        const borrowDebt = await bpt.debt(tokenId);
+        const borrowDebt = await lendingPlatform.getBorrowDebt(tokenId);
         const borrowDetails = await bpt.getBorrow(tokenId);
         const usdcAllowance = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
         const aethAllowance = await aeth.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
@@ -283,13 +283,13 @@ task("repayBorrow", "add USDC to a lending pool")
 
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer } = await getNamedAccounts();
-        const {lendingPlatform, usdc, aeth, bpt} = await getDeployedContracts(env);
+        const {lendingPlatform, usdc} = await getDeployedContracts(env);
 
         const borrowerAccount = await ethers.getSigner(account || deployer);
         const beneficiary = taskArgs.beneficiary || borrowerAccount.address;
         // const parsedUsdc = ethers.parseUnits(repaymentAmount.toString(), 6);
 
-        const debt = await bpt.debt(tokenId);
+        const debt = await lendingPlatform.getBorrowDebt(tokenId);
 
         // Check balance of account to ensure that it is sufficient
         const usdcBalance = await usdc.balanceOf(borrowerAccount);
@@ -386,7 +386,7 @@ task('forceExtendBorrow', 'Liquidator extends overdue loan for a reward')
         const { ethers } = env;
         const {lendingPlatform, bpt, usdc, aeth} = await getDeployedContracts(env);
         const signer = await signerFromFuzzyAccount(account, env);
-        const debt = await bpt.debt(tokenid);
+        const debt = await lendingPlatform.getBorrowDebt(tokenid);
         const loanDetails = await bpt.getBorrow(tokenid);
         await env.run('approveErc20', {
             account: signer.address,
@@ -413,7 +413,7 @@ task('forceLiquidation', 'Liquidator pays off overdue loan in exchange for colla
         const { ethers } = env;
         const {lendingPlatform, bpt, usdc} = await getDeployedContracts(env);
         const signer = await signerFromFuzzyAccount(account, env);
-        const debt = await bpt.debt(tokenid);
+        const debt = await lendingPlatform.getBorrowDebt(tokenid);
         const loanDetails = await bpt.getBorrow(tokenid);
         await env.run('approveErc20', {
             account: signer.address,
@@ -442,9 +442,9 @@ task('borrowLiquidation', 'Liquidator pays off part of an unhealty borrow to ret
     .setAction(async (taskArgs, env) => {
         const { account, tokenid, percentage } = taskArgs;
         const { ethers } = env;
-        const {lendingPlatform, bpt, usdc} = await getDeployedContracts(env);
+        const {lendingPlatform, usdc} = await getDeployedContracts(env);
         const signer = await signerFromFuzzyAccount(account, env);
-        const debt = await bpt.debt(tokenid);
+        const debt = await lendingPlatform.getBorrowDebt(tokenid);
         const percentageBN = ethers.parseUnits(percentage.toString(), 2);
         await env.run('approveErc20', {
             account: signer.address,
@@ -597,8 +597,8 @@ task("getBorrow", "get deatils of a borrow")
             console.log(`borrow with tokenId: ${tokenId} does not exist`);
             return;
         }
-        const interest = await bpt.getInterest(tokenId);
-        const debt = await bpt.debt(tokenId);
+        const interest = await lendingPlatform.getBorrowInterest(tokenId);
+        const debt = await lendingPlatform.getBorrowDebt(tokenId);
         const owner = await bpt.ownerOf(tokenId);
         // console.log(res);
         console.log(`

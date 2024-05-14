@@ -70,8 +70,18 @@ contract BorrowPositionToken is ERC721, Ownable {
         return borrowDatas[tokenId].collateral;
     }
 
-    function getInterest(uint tokenId) external view checkExists(tokenId) returns (uint256) {
-        return interestSinceTimestamp(tokenId, borrowDatas[tokenId].startDate);
+/**
+    * @notice Get the total interest of a borrow
+    * @dev returns 6 decimal USDC
+    * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+    * @param lastSnapshotDate uint40 - Date of the last shrub lend snapshot - this is when is interest is charged
+    * @return uint256 - interest on a borrow (between startDate and lastSnapshotDate) - 6 Decimal USDC
+*/
+    function getInterest(uint tokenId, uint40 lastSnapshotDate) public view checkExists(tokenId) returns (uint256) {
+        if (lastSnapshotDate <= borrowDatas[tokenId].startDate) {
+            return 0;
+        }
+        return interestSinceTimestampsUnchecked(tokenId, borrowDatas[tokenId].startDate, lastSnapshotDate);
     }
 
     function getStartDate(uint tokenId) external view checkExists(tokenId) returns (uint40) {
@@ -86,12 +96,12 @@ contract BorrowPositionToken is ERC721, Ownable {
     * @notice Get the total amount owed on a borrow
     * @dev returns 6 decimal USDC
     * @param tokenId uint256 - tokenId of the borrow position token representing the loan
+    * @param lastSnapshotDate uint40 - Date of the last shrub lend snapshot - this is when is interest is charged
     * @return uint256 - total amount owed (principal + interest) - 6 Decimal USDC
 */
-    function debt(uint256 tokenId) public view checkExists(tokenId) returns (uint256) {
+    function debt(uint256 tokenId, uint40 lastSnapshotDate) public view checkExists(tokenId) returns (uint256) {
         // Safemath should ensure that there is not an underflow if the block.timestamp < snapshotDate
         console.log("running bd.debt - (tokenId, bd.startDate, timestamp)");
-//        DataTypes.BorrowData memory bd = borrowDatas[tokenId];
         console.log(tokenId);
 //        console.log(bd.startDate);
 //        console.log(timestamp);
@@ -100,14 +110,8 @@ contract BorrowPositionToken is ERC721, Ownable {
 //            console.log(bd.startDate);
 //            return bd.principal + interestSinceTimestamp(tokenId, bd.startDate);
 //        }
-        return borrowDatas[tokenId].principal + interestSinceTimestamp(tokenId, borrowDatas[tokenId].startDate);
+        return borrowDatas[tokenId].principal + getInterest(tokenId, lastSnapshotDate);
     }
-
-//    function updateSnapshot(uint256 tokenId, uint newDebt) checkExists(tokenId) external onlyOwner {
-//        DataTypes.BorrowData storage bd = borrowDatas[tokenId];
-//        bd.snapshotDate = uint40(block.timestamp);
-//        bd.snapshotDebt = newDebt;
-//    }
 
     function burn(uint256 tokenId) external checkExists(tokenId) onlyOwner {
         console.log("running burn for tokenId: %s", tokenId);
@@ -209,7 +213,6 @@ contract BorrowPositionToken is ERC721, Ownable {
             durationRay = ShrubLendMath.durationToRay(HelpersLogic.currentTimestamp() - timestamp);
 //        return bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR);
         }
-//        console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, bd.apy * bd.principal * (HelpersLogic.currentTimestamp() - timestamp) / (Constants.APY_DECIMALS * Constants.YEAR));
         uint annualInterestRay = WadRayMath.wadToRay(PercentageMath.percentMul(bd.apy, bd.principal));
         console.log("interestSinceTimestamp for tokenId: %s, timestamp: %s - %s", tokenId, timestamp, WadRayMath.rayToWad( WadRayMath.rayMul( durationRay, annualInterestRay ) ));
         return WadRayMath.rayToWad(
@@ -230,7 +233,7 @@ contract BorrowPositionToken is ERC721, Ownable {
         require(ownerOf(tokenId) == sender, "msg.sender does not own specified BPT");
         // Check that repaymentAmount is less than the total debt;
         DataTypes.BorrowData storage bd = borrowDatas[tokenId];
-        uint interest = interestSinceTimestampsUnchecked(tokenId, bd.startDate, lastSnapshotDate);
+        uint interest = getInterest(tokenId, lastSnapshotDate);
         require(repaymentAmount < bd.principal + interest, "partial repayment amount must be less than total debt");
         require(repaymentAmount >= interest, "repayment amount must be at least the accumulated interest");
 

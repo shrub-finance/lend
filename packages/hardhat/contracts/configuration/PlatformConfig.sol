@@ -65,6 +65,8 @@ contract PlatformConfig is Ownable {
         config.END_OF_LOAN_PHASES[4] = EndOfLoanParams({bonus: 500, liquidationEligible: true, shrubLiquidationEligible: false, duration: 3 * Constants.HOUR});
         config.END_OF_LOAN_PHASES[5] = EndOfLoanParams({bonus: 600, liquidationEligible: true, shrubLiquidationEligible: false, duration: 4 * Constants.HOUR});
         config.END_OF_LOAN_PHASES[6] = EndOfLoanParams({bonus: 600, liquidationEligible: true, shrubLiquidationEligible: true, duration: 5 * Constants.HOUR});
+
+        // TODO: emit some events that push configuration to subgraph
     }
 
     function calculateSmallestValidLtv(uint16 ltv, bool isExtend) public view returns (uint16) {
