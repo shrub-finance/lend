@@ -21,7 +21,7 @@ export type Borrow = {
 };
 
 export type BorrowObj = {
-    id: ethers.BigNumber,
+    id: ethers.BigNumber| string,
     startDate: Date,
     endDate: Date,
     created: Date,
