@@ -188,12 +188,12 @@ export const DashboardView: FC = ({}) => {
                       <Link href="/borrow" passHref>
                         <button
                           type="button"
-                          className="text-shrub-grey-900 mr-2 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700">Borrow</button>
+                          className="text-shrub-grey-900 mr-2 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2      ">Borrow</button>
                       </Link>
                       <Link href="/lend" passHref>
                         <button
                           type="button"
-                          className="text-white bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600  dark:focus:ring-grey-700">Lend</button>
+                          className="text-white bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2     ">Lend</button>
                       </Link>
                     </span>
                   </div>
@@ -249,14 +249,14 @@ export const DashboardView: FC = ({}) => {
                     <ul className="flex flex-col gap-4">
                       <li className="mr-4">
                         <div className="relative overflow-x-auto border rounded-2xl">
-                          <table className="w-full text-left text-shrub-grey  dark:text-shrub-grey-400">
-                            <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white dark:text-white dark:bg-shub-grey-800">
+                          <table className="w-full text-left text-shrub-grey  ">
+                            <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white  ">
                               Earn Account
-                              <span className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                              <span className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full  ">
                                 Total of {dummyEarningPools} Earning Pools
                               </span>
                             </caption>
-                            <thead className="text-xs bg-shrub-grey-light dark:bg-shrub-grey-700 border border-shrub-grey-light2">
+                            <thead className="text-xs bg-shrub-grey-light  border border-shrub-grey-light2">
                             <tr>
                               <th scope='col' className='px-6 py-3 text-shrub-grey font-medium'>
                                 Current Balance
@@ -301,25 +301,25 @@ export const DashboardView: FC = ({}) => {
                                         .div(tokenSupplyBN);
                                     const interestEarned = currentBalance.sub(netDeposits);
                                     return (
-                                  <tr key={`earnRow-${index}`} className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700">
+                                  <tr key={`earnRow-${index}`} className="bg-white border-b  ">
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {wallet ? (
                                         <p>{" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
                                           {item.currentBalanceOverride ? formatLargeUsdc(item.currentBalanceOverride) : formatLargeUsdc(currentBalance)} USDC
                                           {item.status === 'pending' && (
-                                            <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
+                                            <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                           )}
                                           {item.status === 'failed' && (
-                                            <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
+                                            <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
                                           )}
                                             {item.status === 'confirmed' && (
-                                                <span className=" ml-2 inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300"><span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>Confirmed</span>
+                                                <span className=" ml-2 inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>Confirmed</span>
                                             )}
                                             {item.status === 'extending' && (
-                                                <span className=" ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-amber-900 dark:text-amber-300"><span className="w-2 h-2 me-1 bg-amber-500 rounded-full"></span>Extending</span>
+                                                <span className=" ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-amber-500 rounded-full"></span>Extending</span>
                                             )}
                                             {item.status === 'extended' && (
-                                                <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300"><span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>Extended</span>
+                                                <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>Extended</span>
                                             )}
                                         </p>
                                       ) : (
@@ -337,7 +337,7 @@ export const DashboardView: FC = ({}) => {
                                       {formatLargeUsdc(netDeposits)}{" "} USDC
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                                      <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full  ">
                                         {(item.apy)?item.apy :"X"}%
                                       </span>
                                     </td>
@@ -348,8 +348,8 @@ export const DashboardView: FC = ({}) => {
                                       <div className='flex items-center justify-center space-x-2 h-full p-2'>
                                         <button type='button'
                                                 style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }}
-                                                className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700'
-                                                disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()}
+                                                className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
+                                                disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime()}
                                                 onClick={() => {
                                                   setExtendDepositModalOpen(true);
                                                   setSelectedDepositBalance(currentBalance);
@@ -365,7 +365,7 @@ export const DashboardView: FC = ({}) => {
                                         <a onMouseOver={() => setCurrentHovered(index)}
                                            onMouseOut={() => setCurrentHovered(null)} href='https://app.uniswap.org/'
                                            target='_blank' type='button'
-                                           className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700'>{currentHovered === index ?
+                                           className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5      '>{currentHovered === index ?
                                           <Image src='/up-right-arrow-light.svg' alt='down arrow' width={20} height={20}
                                                  className='mr-2' /> :
                                           <Image src='/up-right-arrow.svg' alt='down arrow' width={20} height={20}
@@ -373,7 +373,7 @@ export const DashboardView: FC = ({}) => {
                                         {/*{item.lendingPool.finalized && */}
                                           <button type='button'
                                                 // style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }}
-                                                className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700'
+                                                className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
                                                 // disabled={}
                                                 onClick={() => {
                                                   setWithdrawModalOpen(true);
@@ -396,13 +396,13 @@ export const DashboardView: FC = ({}) => {
                       </li>
                       <li className='mr-4'>
                         <div className='relative overflow-x-auto border rounded-2xl'>
-                          <table className='w-full text-left text-shrub-grey  dark:text-shrub-grey-400'>
+                          <table className='w-full text-left text-shrub-grey  '>
                             <caption
-                              className='p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white dark:text-white dark:bg-shrub-grey-800'>
+                              className='p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white  '>
                               Borrow Account
                             </caption>
                             <thead
-                              className='text-xs bg-shrub-grey-light dark:bg-shrub-grey-700 border border-shrub-grey-light2'>
+                              className='text-xs bg-shrub-grey-light  border border-shrub-grey-light2'>
                             <tr>
                               <th scope='col' className='px-6 py-3 text-shrub-grey font-medium'>Current Balance</th>
 
@@ -428,7 +428,7 @@ export const DashboardView: FC = ({}) => {
                                 const startDate = fromEthDate(item.startDate);
                                 const interest = calcBorrowInterest(principal, apy, startDate);
                                 const borrow: BorrowObj = {
-                                    id: ethers.BigNumber.from(item.id),
+                                    id: isNaN(Number(item.id)) ? item.id :ethers.BigNumber.from(item.id),
                                     endDate: fromEthDate(parseInt(item.timestamp, 10)),
                                     startDate,
                                     created: fromEthDate(item.created),
@@ -447,7 +447,7 @@ export const DashboardView: FC = ({}) => {
                                 return (
                                 <tr
                                   key={`borrowRow-${index}`}
-                                  className="bg-white border-b dark:bg-shrub-grey-800 dark:border-shrub-grey-700"
+                                  className="bg-white border-b  "
                                 >
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {wallet ? (
@@ -455,10 +455,10 @@ export const DashboardView: FC = ({}) => {
                                         {" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
                                         {formatLargeUsdc(borrow.debt)} USDC
                                         {item.status === 'pending' && (
-                                          <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
+                                          <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                         )}
                                         {item.status === 'failed' && (
-                                          <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
+                                          <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
                                         )}
                                       </p>
                                     ) : (
@@ -474,7 +474,7 @@ export const DashboardView: FC = ({}) => {
                                     {timeLeft}
                                   </td>
                                   <td>
-                                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">{`${formatPercentage(borrow.apy)}%`}</span>
+                                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full  ">{`${formatPercentage(borrow.apy)}%`}</span>
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold">
                                     {formatLargeUsdc(borrow.originalPrincipal)} USDC
@@ -485,7 +485,8 @@ export const DashboardView: FC = ({}) => {
                                   <td className="px-1 py-4 text-sm font-bold">
                                     <div className="flex items-center justify-center space-x-2 h-full p-2">
                                       <button type="button"
-                                              className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100 dark:bg-shrub-grey-700 dark:text-white dark:border-shrub-grey-50 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-700 dark:focus:ring-grey-700"
+                                              className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"
+                                              disabled={store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime()}
                                               onClick={() => {
                                                 setExtendBorrowModalOpen(true);
                                                 setSelectedBorrow(borrow);
@@ -494,7 +495,7 @@ export const DashboardView: FC = ({}) => {
                                         Extend
                                       </button>
                                       <button type="button"
-                                              className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-shrub-grey-800 dark:text-white dark:border-shrub-grey-600 dark:hover:bg-shrub-grey-700 dark:hover:border-shrub-grey-600 dark:focus:ring-grey-700">
+                                              className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5      ">
                                         Repay
                                       </button>
                                     </div>

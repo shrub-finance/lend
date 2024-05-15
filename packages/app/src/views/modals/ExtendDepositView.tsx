@@ -53,9 +53,9 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
 
   return (
     <>
-    <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-shrub-grey-600">
-      <h3 className="text-xl font-semibold text-shrub-grey-900 dark:text-white">Extend Deposit</h3>
-      <button type="button" onClick={closeModalAndPassData} className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-shrub-grey-600 dark:hover:text-white">
+    <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t ">
+      <h3 className="text-xl font-semibold text-shrub-grey-900 ">Extend Deposit</h3>
+      <button type="button" onClick={closeModalAndPassData} className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center  ">
         <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
           <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
         </svg>
@@ -100,7 +100,7 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
                   />
                   <label
                     htmlFor={activePoolTimestamp.toISOString()}
-                    className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 select-none">
+                    className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green       select-none">
                     <div className="block">
                       <div className="w-full text-lg font-semibold">{calculateLockupPeriod(activePoolTimestamp)}
                       </div>

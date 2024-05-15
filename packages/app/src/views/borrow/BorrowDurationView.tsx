@@ -26,7 +26,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
         <div className='mt-6 self-start'>
           <h1 className=" text-4xl font-bold ">
             <button onClick={onBackDuration}
-              className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full dark:bg-shrub-grey-600">
+              className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full ">
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" className="w-6 grow-0 order-0 flex-none ml-[16px] mt-[4px]">
                 <path d="M20 12H4M4 12L10 18M4 12L10 6" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -76,7 +76,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                              checked={timestamp === toEthDate(activePoolTimestamp)}
                           />
                           <label htmlFor={activePoolTimestamp.toISOString()}
-                                 className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey-200 bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-400 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700">
+                                 className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey-200 bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer    peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50   ">
                             <div className="block">
                               <div className="w-full text-xl font-semibold">{formatDate.long(activePoolTimestamp)}</div>
                             </div>

@@ -108,7 +108,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
         <div className='mt-6 self-start'>
 
           {localError && (
-            <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-shrub-grey-900 dark:text-red-400 flex items-center" role="alert">
+            <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50   flex items-center" role="alert">
               <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -142,7 +142,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                          onChange={handleAmountChange}
                          value={format(borrowAmount)}/>
                   {isValidationError && (
-                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                    <p className="mt-2 text-sm text-red-600 ">
                       Amount must be a number
                     </p>)}
                   <label className="label">
@@ -170,7 +170,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                             setShowBorrowAPYSection(true)
                           }} required/>
                           <label htmlFor={id}
-                                 className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer dark:hover:text-shrub-green dark:border-shrub-grey-700 dark:peer-checked:text-shrub-green-500 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 dark:text-shrub-grey-200 dark:bg-shrub-grey-800 dark:hover:bg-shrub-grey-700 select-none">
+                                 className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer    peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50    select-none">
                             <div className="block">
                               <div className="w-full text-lg font-semibold">{rate}%</div>
                             </div>
