@@ -6,8 +6,8 @@ import {
   ethInUsdc,
   formatLargeUsdc,
   formatPercentage, formatWad,
-  fromEthDate, ltvToInterest,
-  toEthDate
+  fromEthDate, interestToLTV, ltvToInterest,
+  toEthDate,
 } from '../../utils/ethMethods';
 import {
   chainlinkAggregatorAbi,
@@ -31,7 +31,7 @@ import {useLazyQuery} from '@apollo/client';
 import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries';
 import {useFinancialData} from '../../components/FinancialDataContext';
 import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
-import {BorrowObj} from "../../types/types";
+import { Borrow, BorrowObj } from '../../types/types';
 
 interface ExtendBorrowSummaryProps {
   onBackExtend: (data?) => void,
@@ -52,16 +52,6 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     targetLtv,
     additionalCollateral,
   }) => {
-  const [
-    getActiveLendingPools,
-    {
-      loading: activeLendingPoolsLoading,
-      error: activeLendingPoolsError,
-      data: activeLendingPoolsData,
-      startPolling: activeLendingPoolsStartPolling,
-      stopPolling: activeLendingPoolsStopPolling,
-    },
-  ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
   const {ethPrice, isLoading, error} = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
   const {store, dispatch} = useFinancialData();
   const walletAddress = useAddress();
@@ -106,13 +96,6 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
   //   error: targetLtvError,
   // } = useContractRead(lendingPlatform, 'calculateSmallestValidLtv', [ltv, true]);
 
-  useEffect(() => {
-    if (!walletAddress) return;
-    getActiveLendingPools().then().catch(error => {
-      console.error('Failed to fetch active lending pools:', error);
-    });
-  }, [walletAddress, getActiveLendingPools]);
-
   // useEffect(() => {
   //   if (targetLtvData) {
   //     setTargetLtv(targetLtvData);
@@ -147,12 +130,6 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     }
   }, [usdcAllowanceIsLoading, aethAllowanceIsLoading, approveAETHActionInitiated, approveUSDCActionInitiated]);
 
-
-  useEffect(() => {
-    if (activeLendingPoolsLoading) {
-      return;
-    }
-  }, [activeLendingPoolsLoading]);
 
 
   useEffect(() => {
@@ -200,28 +177,24 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                   <span>{borrow.endDate.toLocaleString()}
                   </span>
                 </div>
-                <div className='flex flex-row  justify-between cursor-pointer'
-                     onClick={(e) => onBackExtend('dateChangeRequest')}>
-                  <span className=''>New Due Date</span>
-                  <span>
-                    {newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1])}<Image
-                    alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20'/></span>
-                </div>
                 <div className='flex flex-row  justify-between'>
-                  <span className=''>Current LTV ✨</span>
+                  <span className=''>Current LTV</span>
                   <span>
                     {formatPercentage(ltv)}%
                   </span>
                 </div>
                 <div className='flex flex-row  justify-between cursor-pointer'
+                     onClick={(e) => onBackExtend('dateChangeRequest')}>
+                  <span>New Due Date ✨</span>
+                  <span className='font-semibold text-shrub-green-500'>
+                    {newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1])}<Image
+                    alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' /></span>
+                </div>
+                <div className='flex flex-row  justify-between cursor-pointer'
                      onClick={(e) => onBackExtend('ltvChangeRequest')}>
                   <span className=''>Interest Rate</span>
                   <span className='font-semibold text-shrub-green-500'> {ltvToInterest[targetLtv.toString()]}%<Image
-                    alt='edit icon'
-                    src='/edit.svg'
-                    className='w-5 inline align-baseline ml-2'
-                    width='20'
-                    height='20'/></span>
+                    alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' /></span>
                 </div>
               </div>
 
@@ -313,7 +286,8 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                   action={
                                     async (lendingPlatform) => {
                                       console.log(`newEndDate: ${newEndDate}`);
-                                      console.log(borrow.id);
+                                      console.log(borrow);
+                                      console.log(`additionalCollateral: ${additionalCollateral.toString()}`);
                                       setLocalError('');
                                       // @ts-ignore
                                       return await lendingPlatform.contractWrapper.writeContract.extendBorrow(
@@ -329,103 +303,81 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                   onSuccess={
                                     async (tx) => {
                                       setLocalError('');
-                                      if (activeLendingPoolsError) {
-                                        handleErrorMessages({customMessage: activeLendingPoolsError.message});
-                                        return;
-                                      }
-                                      const filteredLendingPools = '';
-                                      // const filteredLendingPools =
-
-                                      const matchedLendingPool =
-                                        filteredLendingPools.length > 0
-                                          ? filteredLendingPools[0]
-                                          : null;
-                                      const newBorrowPositionWithdraw = {
-                                        id: `${matchedLendingPool}-withdraw`,
+                                      const newBorrowRepay: Borrow = {
+                                        id: `${tx.hash}-repay`,
                                         status: 'pending',
-                                        depositsUsdc: matchedLendingPool,
-                                        // TODO: Make this calculated
-                                        apy: formatPercentage(5000),
-                                        currentBalanceOverride: matchedLendingPool,
-                                        interestEarnedOverride: '0',
-                                        lendingPool: {
-                                          id: matchedLendingPool,
-                                          timestamp: matchedLendingPool,
-                                          tokenSupply: matchedLendingPool,
-                                          totalEthYield: matchedLendingPool,
-                                          totalPrincipal: matchedLendingPool,
-                                          totalUsdcInterest: matchedLendingPool,
-                                          __typename: matchedLendingPool,
-                                        },
-                                        timestamp: 1,
+                                        collateral: borrow.collateral,
+                                        created: Math.floor(Date.now() / 1000),
+                                        ltv: borrow.ltv.toString(),
+                                        originalPrincipal: borrow.originalPrincipal.toString(),
+                                        paid: "0",
+                                        apy: borrow.apy.toString(),
+                                        principal: borrow.principal.mul(-1).toString(),
+                                        timestamp: toEthDate(borrow.endDate).toString(),
+                                        startDate: Math.floor(Date.now() / 1000),
+                                        updated: Math.floor(Date.now() / 1000),
+                                        __typename: "Borrow",
                                       };
-                                      const newBorrowPositionDeposit = {
-                                        ...newBorrowPositionWithdraw,
-                                        id: `${matchedLendingPool}-borrow`,
-                                        depositsUsdc: borrow.debt.toString(),
-                                        currentBalanceOverride: borrow.debt.toString(),
-                                        lendingPool: {
-                                          ...newBorrowPositionWithdraw.lendingPool,
-                                          timestamp: matchedLendingPool,
-                                        },
+                                      const newBorrow = {
+                                        ...newBorrowRepay,
+                                        id: `${tx.hash}-borrow`,
+                                        principal: borrow.principal.toString()
+
                                       };
                                       dispatch({
-                                        type: 'ADD_LEND_POSITION',
-                                        // @ts-ignore
-                                        payload: newBorrowPositionWithdraw,
+                                        type: 'ADD_BORROW',
+                                        payload: newBorrowRepay,
                                       });
                                       dispatch({
-                                        type: 'ADD_LEND_POSITION',
-                                        // @ts-ignore
-                                        payload: newBorrowPositionDeposit,
+                                        type: 'ADD_BORROW',
+                                        payload: newBorrow,
                                       });
                                       dispatch({
-                                        type: 'UPDATE_LEND_POSITION_STATUS',
+                                        type: 'UPDATE_BORROW_STATUS',
                                         payload: {
-                                          id: matchedLendingPool,
+                                          id: borrow.id.toString(),
                                           status: 'extending',
                                         },
                                       });
-
                                       try {
-                                        const receipt = {};
-                                        // if(!receipt.status) {
-                                        //     throw new Error("Transaction failed")
-                                        // }
+                                        const receipt = await tx.wait();
+                                        if(!receipt.status) {
+                                            throw new Error("Transaction failed")
+                                        }
                                         dispatch({
-                                          type: 'UPDATE_LEND_POSITION_STATUS',
+                                          type: 'UPDATE_BORROW_STATUS',
                                           payload: {
-                                            id: `${matchedLendingPool}-deposit`,
+                                            id: `${tx.hash}-deposit`,
                                             status: 'confirmed',
                                           },
                                         });
                                         dispatch({
-                                          type: 'UPDATE_LEND_POSITION_STATUS',
+                                          type: 'UPDATE_BORROW_STATUS',
                                           payload: {
-                                            id: `${matchedLendingPool}-withdraw`,
+                                            id: `${tx.hash}-repay`,
                                             status: 'confirmed',
                                           },
                                         });
                                         dispatch({
-                                          type: 'UPDATE_LEND_POSITION_STATUS',
+                                          type: 'UPDATE_BORROW_STATUS',
                                           payload: {
-                                            id: matchedLendingPool,
+                                            id: borrow.id.toString(),
                                             status: 'extended',
                                           },
                                         });
                                       } catch (e) {
                                         console.log('Transaction failed:', e);
                                         dispatch({
-                                          type: 'UPDATE_LEND_POSITION_STATUS',
+                                          type: 'UPDATE_BORROW_STATUS',
                                           payload: {
-                                            id: `${matchedLendingPool}-deposit`,
+                                            id: `${tx.hash}-deposit`,
                                             status: 'failed',
                                           },
                                         });
                                         dispatch({
-                                          type: 'UPDATE_LEND_POSITION_STATUS',
+                                          type: 'UPDATE_BORROW_STATUS',
                                           payload: {
-                                            id: `${matchedLendingPool}-withdraw`,
+                                            id: `${tx.hash}-repay`,
                                             status: 'failed',
                                           },
                                         });

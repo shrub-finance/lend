@@ -349,7 +349,7 @@ export const DashboardView: FC = ({}) => {
                                         <button type='button'
                                                 style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
-                                                disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === twelveMonth.getTime()}
+                                                disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime()}
                                                 onClick={() => {
                                                   setExtendDepositModalOpen(true);
                                                   setSelectedDepositBalance(currentBalance);
@@ -428,7 +428,7 @@ export const DashboardView: FC = ({}) => {
                                 const startDate = fromEthDate(item.startDate);
                                 const interest = calcBorrowInterest(principal, apy, startDate);
                                 const borrow: BorrowObj = {
-                                    id: ethers.BigNumber.from(item.id),
+                                    id: isNaN(Number(item.id)) ? item.id :ethers.BigNumber.from(item.id),
                                     endDate: fromEthDate(parseInt(item.timestamp, 10)),
                                     startDate,
                                     created: fromEthDate(item.created),
@@ -485,7 +485,8 @@ export const DashboardView: FC = ({}) => {
                                   <td className="px-1 py-4 text-sm font-bold">
                                     <div className="flex items-center justify-center space-x-2 h-full p-2">
                                       <button type="button"
-                                              className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      "
+                                              className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"
+                                              disabled={store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime()}
                                               onClick={() => {
                                                 setExtendBorrowModalOpen(true);
                                                 setSelectedBorrow(borrow);
