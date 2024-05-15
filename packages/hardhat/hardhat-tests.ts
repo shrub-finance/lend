@@ -23,6 +23,18 @@ task("testLendingPlatform", "Setup an environment for development")
     await env.run('takeSnapshot', { account: deployer });
   })
 
+task("testExtendBorrow", "testing extend borrow")
+  .setAction(async (taskArgs, env) => {
+    const {ethers, deployments, getNamedAccounts} = env;
+    const { deployer, account1, account2, account3 } = await getNamedAccounts();
+    const { oneMonth, threeMonth, sixMonth, twelveMonth } = getPlatformDates();
+    await env.run('testLendingPlatform');
+    await env.run('borrow', { account: account2, timestamp: toEthDate(oneMonth), borrowAmount: 2, collateralAmount: 0.001739, ltv: 50})
+    await env.run('extendBorrow', {account: account2, tokenId: 2, newTimestamp: toEthDate(threeMonth), ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
+    await env.run('extendBorrow', {account: account2, tokenId: 3, newTimestamp: toEthDate(sixMonth), ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
+    await env.run('extendBorrow', {account: account2, tokenId: 4, newTimestamp: toEthDate(twelveMonth), ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
+  });
+
 task("testLendingPlatform2", "Setup an environment for development")
     .setAction(async (taskArgs, env) => {
         const jan2025 = toEthDate(new Date('2025-01-01T00:00:00Z'));

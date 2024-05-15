@@ -546,15 +546,15 @@ describe('testSuite', () => {
                 await expect(lendingPlatform.getEthPrice()).to.be.revertedWith("ETH Price out of range");
             });
             it('should properly return the ETH price based on the chainlink price feed', async() => {
-                await mockChainlinkAggregator.updateAnswer(parseUnits('3002.12345678', 8));
+                await mockChainlinkAggregator.updateAnswer(parseUnits('0.000333097560574531', 18));
                 const ethPrice = await lendingPlatform.getEthPrice();
-                await mockChainlinkAggregator.updateAnswer(parseUnits('2514.87654321', 8));
+                await mockChainlinkAggregator.updateAnswer(parseUnits('0.000333333333333333', 18));
                 const ethPrice2 = await lendingPlatform.getEthPrice();
-                await mockChainlinkAggregator.updateAnswer(parseUnits('200', 8));
+                await mockChainlinkAggregator.updateAnswer(parseUnits('0.0005', 18));
                 const ethPrice3 = await lendingPlatform.getEthPrice();
-                expect(ethPrice).to.equal(parseUnits('3002.12345678', 8));
-                expect(ethPrice2).to.equal(parseUnits('2514.87654321', 8));
-                expect(ethPrice3).to.equal(parseUnits('200', 8));
+                expect(ethPrice).to.equal(parseEther('3002.123456789017032270'));
+                expect(ethPrice2).to.equal(parseEther('3000.000000000003000000'));
+                expect(ethPrice3).to.equal(parseEther('2000'));
             });
         });
         describe('maxLoan', () => {

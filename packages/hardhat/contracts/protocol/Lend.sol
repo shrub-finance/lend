@@ -566,16 +566,18 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         borrowingPools[params.timestamp].collateral += params.collateral;
         uint deltaBpPoolShares;
 
+        console.log("collateral: %s, bpTotalPoolShares: %s, aEthSnapshotBalance: %s", params.collateral, bpTotalPoolShares, aEthSnapshotBalance);
+        console.log("aEthSnapshotBalance: %s, newCollateralSinceSnapshot: %s, claimedCollateralSinceSnapshot: %s", aEthSnapshotBalance, newCollateralSinceSnapshot, claimedCollateralSinceSnapshot);
+
         if (aEthSnapshotBalance == 0) {
             deltaBpPoolShares = params.collateral;
         } else {
             deltaBpPoolShares = WadRayMath.wadDiv(
                 WadRayMath.wadMul(params.collateral, bpTotalPoolShares),
-                aEthSnapshotBalance + newCollateralSinceSnapshot + claimedCollateralSinceSnapshot
+                aEthSnapshotBalance + newCollateralSinceSnapshot - claimedCollateralSinceSnapshot
             );
         }
 
-        console.log("collateral: %s, bpTotalPoolShares: %s, aEthSnapshotBalance: %s", params.collateral, bpTotalPoolShares, aEthSnapshotBalance);
         console.log("deltaBpPoolShares: %s", deltaBpPoolShares);
 
         borrowingPools[params.timestamp].poolShareAmount += deltaBpPoolShares;
