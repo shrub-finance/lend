@@ -161,7 +161,6 @@ export const DashboardView: FC = ({}) => {
     setWithdrawModalOpen(false);
   };
 
-
   /** Might Need Later **/
   // let newlyAddedDeposit = store.deposits.filter(item => item.hasOwnProperty('id'));
   // newlyAddedDeposit = newlyAddedDeposit[0];
@@ -188,12 +187,12 @@ export const DashboardView: FC = ({}) => {
                       <Link href="/borrow" passHref>
                         <button
                           type="button"
-                          className="text-shrub-grey-900 mr-2 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2      ">Borrow</button>
+                          className="text-shrub-grey-900 mr-2 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2">Borrow</button>
                       </Link>
-                      <Link href="/lend" passHref>
+                      <Link href="/deposit" passHref>
                         <button
                           type="button"
-                          className="text-white bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2     ">Lend</button>
+                          className="text-white bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 ">Deposit</button>
                       </Link>
                     </span>
                   </div>
@@ -251,10 +250,10 @@ export const DashboardView: FC = ({}) => {
                         <div className="relative overflow-x-auto border rounded-2xl">
                           <table className="w-full text-left text-shrub-grey  ">
                             <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white  ">
-                              Earn Account
-                              <span className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full  ">
-                                Total of {dummyEarningPools} Earning Pools
-                              </span>
+                              Deposits
+                              {/*<span className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full  ">*/}
+                              {/*  Total of {dummyEarningPools} Earning Pools*/}
+                              {/*</span>*/}
                             </caption>
                             <thead className="text-xs bg-shrub-grey-light  border border-shrub-grey-light2">
                             <tr>
@@ -278,14 +277,14 @@ export const DashboardView: FC = ({}) => {
                             </thead>
                             <tbody className='text-lg'>
                             {store?.deposits?.sort((a, b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
-                                (item, index) => {
-                                    const depositsUsdcBN = ethers.BigNumber.from(item.depositsUsdc ? item.depositsUsdc : Zero);
-                                    const withdrawsUsdcBN = ethers.BigNumber.from(item.withdrawsUsdc ? item.withdrawsUsdc : Zero);
-                                    const lendingPoolPrincipalBN = ethers.BigNumber.from(item.lendingPool.totalPrincipal ? item.lendingPool.totalPrincipal : Zero);
-                                    const lendingPoolUsdcInterestBN = ethers.BigNumber.from(item.lendingPool.totalUsdcInterest ? item.lendingPool.totalUsdcInterest : Zero);
-                                    const lendingPoolEthYieldBN = ethers.BigNumber.from(item.lendingPool.totalEthYield ? item.lendingPool.totalEthYield : Zero);
-                                    const tokenAmountBN = ethers.BigNumber.from(item.amount ? item.amount : Zero);
-                                    const tokenSupplyBN = ethers.BigNumber.from(item.lendingPool.tokenSupply ? item.lendingPool.tokenSupply : Zero);
+                                (storeDeposit, index) => {
+                                    const depositsUsdcBN = ethers.BigNumber.from(storeDeposit.depositsUsdc ? storeDeposit.depositsUsdc : Zero);
+                                    const withdrawsUsdcBN = ethers.BigNumber.from(storeDeposit.withdrawsUsdc ? storeDeposit.withdrawsUsdc : Zero);
+                                    const lendingPoolPrincipalBN = ethers.BigNumber.from(storeDeposit.lendingPool.totalPrincipal ? storeDeposit.lendingPool.totalPrincipal : Zero);
+                                    const lendingPoolUsdcInterestBN = ethers.BigNumber.from(storeDeposit.lendingPool.totalUsdcInterest ? storeDeposit.lendingPool.totalUsdcInterest : Zero);
+                                    const lendingPoolEthYieldBN = ethers.BigNumber.from(storeDeposit.lendingPool.totalEthYield ? storeDeposit.lendingPool.totalEthYield : Zero);
+                                    const tokenAmountBN = ethers.BigNumber.from(storeDeposit.amount ? storeDeposit.amount : Zero);
+                                    const tokenSupplyBN = ethers.BigNumber.from(storeDeposit.lendingPool.tokenSupply ? storeDeposit.lendingPool.tokenSupply : Zero);
                                     const netDeposits = depositsUsdcBN.sub(withdrawsUsdcBN);
                                     const currentBalance = tokenSupplyBN.eq(Zero) ? Zero :
                                       (
@@ -305,20 +304,20 @@ export const DashboardView: FC = ({}) => {
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {wallet ? (
                                         <p>{" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
-                                          {item.currentBalanceOverride ? formatLargeUsdc(item.currentBalanceOverride) : formatLargeUsdc(currentBalance)} USDC
-                                          {item.status === 'pending' && (
+                                          {storeDeposit.currentBalanceOverride ? formatLargeUsdc(storeDeposit.currentBalanceOverride) : formatLargeUsdc(currentBalance)} USDC
+                                          {storeDeposit.status === 'pending' && (
                                             <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                           )}
-                                          {item.status === 'failed' && (
+                                          {storeDeposit.status === 'failed' && (
                                             <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
                                           )}
-                                            {item.status === 'confirmed' && (
+                                            {storeDeposit.status === 'confirmed' && (
                                                 <span className=" ml-2 inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>Confirmed</span>
                                             )}
-                                            {item.status === 'extending' && (
+                                            {storeDeposit.status === 'extending' && (
                                                 <span className=" ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-amber-500 rounded-full"></span>Extending</span>
                                             )}
-                                            {item.status === 'extended' && (
+                                            {storeDeposit.status === 'extended' && (
                                                 <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>Extended</span>
                                             )}
                                         </p>
@@ -330,7 +329,7 @@ export const DashboardView: FC = ({}) => {
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {
-                                          item.interestEarnedOverride ? formatLargeUsdc(item.interestEarnedOverride) : formatLargeUsdc(interestEarned)
+                                          storeDeposit.interestEarnedOverride ? formatLargeUsdc(storeDeposit.interestEarnedOverride) : formatLargeUsdc(interestEarned)
                                       }
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
@@ -338,26 +337,26 @@ export const DashboardView: FC = ({}) => {
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full  ">
-                                        {(item.apy)?item.apy :"X"}%
+                                        {(storeDeposit.apy)?storeDeposit.apy :"X"}%
                                       </span>
                                     </td>
                                     <td className='px-6 py-4 text-sm font-bold'>
-                                      {fromEthDate(parseInt(item.lendingPool.timestamp)).toLocaleString()}
+                                      {fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).toLocaleString()}
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className='flex items-center justify-center space-x-2 h-full p-2'>
                                         <button type='button'
-                                                style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }}
+                                                style={{ visibility: storeDeposit.amount && !['extending', 'extended', 'failed'].includes(storeDeposit.status) ? 'visible' : 'hidden' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
-                                                disabled={fromEthDate(parseInt(item.lendingPool.timestamp)).getTime() === store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime()}
+                                                disabled={fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).getTime() === store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime()}
                                                 onClick={() => {
                                                   setExtendDepositModalOpen(true);
                                                   setSelectedDepositBalance(currentBalance);
-                                                  setSelectedDepositTermDate(fromEthDate(parseInt(item.lendingPool.timestamp)));
+                                                  setSelectedDepositTermDate(fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)));
                                                   setSelectedPoolShareTokenAmount(tokenAmountBN);
                                                   setSelectedTokenSupply(tokenSupplyBN);
                                                   setSelectedTotalEthYield(lendingPoolEthYieldBN);
-                                                  setSelectedPoolTokenId(item.lendingPool.id);
+                                                  setSelectedPoolTokenId(storeDeposit.lendingPool.id);
                                                 }}>
                                           {/*Corresponding modal at the top*/}
                                           Extend
@@ -372,7 +371,7 @@ export const DashboardView: FC = ({}) => {
                                                  className='mr-2' />} Trade</a>
                                         {/*{item.lendingPool.finalized && */}
                                           <button type='button'
-                                                // style={{ visibility: item.amount && !['extending', 'extended', 'failed'].includes(item.status) ? 'visible' : 'hidden' }}
+                                                  style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
                                                 // disabled={}
                                                 onClick={() => {
@@ -399,7 +398,7 @@ export const DashboardView: FC = ({}) => {
                           <table className='w-full text-left text-shrub-grey  '>
                             <caption
                               className='p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white  '>
-                              Borrow Account
+                              Borrows
                             </caption>
                             <thead
                               className='text-xs bg-shrub-grey-light  border border-shrub-grey-light2'>
@@ -422,22 +421,22 @@ export const DashboardView: FC = ({}) => {
                             </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {store?.borrows?.map((item, index) => {
-                                const principal = ethers.BigNumber.from(item.principal);
-                                const apy = ethers.BigNumber.from(item.apy);
-                                const startDate = fromEthDate(item.startDate);
+                              {store?.borrows?.map((storeBorrow, index) => {
+                                const principal = ethers.BigNumber.from(storeBorrow.principal);
+                                const apy = ethers.BigNumber.from(storeBorrow.apy);
+                                const startDate = fromEthDate(storeBorrow.startDate);
                                 const interest = calcBorrowInterest(principal, apy, startDate);
                                 const borrow: BorrowObj = {
-                                    id: isNaN(Number(item.id)) ? item.id :ethers.BigNumber.from(item.id),
-                                    endDate: fromEthDate(parseInt(item.timestamp, 10)),
+                                    id: isNaN(Number(storeBorrow.id)) ? storeBorrow.id : ethers.BigNumber.from(storeBorrow.id),
+                                    endDate: fromEthDate(parseInt(storeBorrow.timestamp, 10)),
                                     startDate,
-                                    created: fromEthDate(item.created),
-                                    updated: fromEthDate(item.updated),
-                                    collateral: ethers.BigNumber.from(item.collateral),
+                                    created: fromEthDate(storeBorrow.created),
+                                    updated: fromEthDate(storeBorrow.updated),
+                                    collateral: ethers.BigNumber.from(storeBorrow.collateral),
                                     principal,
-                                    originalPrincipal: ethers.BigNumber.from(item.originalPrincipal),
-                                    paid: ethers.BigNumber.from(item.paid),
-                                    ltv: ethers.BigNumber.from(item.ltv),
+                                    originalPrincipal: ethers.BigNumber.from(storeBorrow.originalPrincipal),
+                                    paid: ethers.BigNumber.from(storeBorrow.paid),
+                                    ltv: ethers.BigNumber.from(storeBorrow.ltv),
                                     apy,
                                     interest,
                                     debt: principal.add(interest)
@@ -454,11 +453,20 @@ export const DashboardView: FC = ({}) => {
                                       <p>
                                         {" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
                                         {formatLargeUsdc(borrow.debt)} USDC
-                                        {item.status === 'pending' && (
+                                        {storeBorrow.status === 'pending' && (
                                           <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                         )}
-                                        {item.status === 'failed' && (
+                                        {storeBorrow.status === 'failed' && (
                                           <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
+                                        )}
+                                        {storeBorrow.status === 'confirmed' && (
+                                          <span className=" ml-2 inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>Confirmed</span>
+                                        )}
+                                        {storeBorrow.status === 'extending' && (
+                                          <span className=" ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-amber-500 rounded-full"></span>Extending</span>
+                                        )}
+                                        {storeBorrow.status === 'extended' && (
+                                          <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>Extended</span>
                                         )}
                                       </p>
                                     ) : (
@@ -485,6 +493,7 @@ export const DashboardView: FC = ({}) => {
                                   <td className="px-1 py-4 text-sm font-bold">
                                     <div className="flex items-center justify-center space-x-2 h-full p-2">
                                       <button type="button"
+                                              style={{ visibility: storeBorrow.tempData || storeBorrow.status  ? 'hidden' : 'visible' }}
                                               className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"
                                               disabled={store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime()}
                                               onClick={() => {
@@ -495,6 +504,7 @@ export const DashboardView: FC = ({}) => {
                                         Extend
                                       </button>
                                       <button type="button"
+                                              style={{ visibility: storeBorrow.tempData || storeBorrow.status  ? 'hidden' : 'visible' }}
                                               className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5      ">
                                         Repay
                                       </button>

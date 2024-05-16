@@ -309,7 +309,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         collateral: borrow.collateral,
                                         created: Math.floor(Date.now() / 1000),
                                         ltv: borrow.ltv.toString(),
-                                        originalPrincipal: borrow.originalPrincipal.toString(),
+                                        originalPrincipal: borrow.originalPrincipal.mul(-1).toString(),
                                         paid: "0",
                                         apy: borrow.apy.toString(),
                                         principal: borrow.principal.mul(-1).toString(),
@@ -317,11 +317,14 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         startDate: Math.floor(Date.now() / 1000),
                                         updated: Math.floor(Date.now() / 1000),
                                         __typename: "Borrow",
+                                        tempData: true
                                       };
                                       const newBorrow = {
                                         ...newBorrowRepay,
                                         id: `${tx.hash}-borrow`,
-                                        principal: borrow.principal.toString()
+                                        principal: borrow.principal.toString(),
+                                        originalPrincipal: borrow.originalPrincipal.toString(),
+                                        timestamp: newEndDate.toString()
 
                                       };
                                       dispatch({
@@ -337,6 +340,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         payload: {
                                           id: borrow.id.toString(),
                                           status: 'extending',
+                                          tempData: true
                                         },
                                       });
                                       try {
@@ -347,8 +351,9 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         dispatch({
                                           type: 'UPDATE_BORROW_STATUS',
                                           payload: {
-                                            id: `${tx.hash}-deposit`,
+                                            id: `${tx.hash}-borrow`,
                                             status: 'confirmed',
+                                            tempData: true
                                           },
                                         });
                                         dispatch({
@@ -356,6 +361,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                           payload: {
                                             id: `${tx.hash}-repay`,
                                             status: 'confirmed',
+                                            tempData: true
                                           },
                                         });
                                         dispatch({
@@ -363,6 +369,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                           payload: {
                                             id: borrow.id.toString(),
                                             status: 'extended',
+                                            tempData: true
                                           },
                                         });
                                       } catch (e) {
@@ -370,8 +377,9 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         dispatch({
                                           type: 'UPDATE_BORROW_STATUS',
                                           payload: {
-                                            id: `${tx.hash}-deposit`,
+                                            id: `${tx.hash}-borrow`,
                                             status: 'failed',
+                                            tempData: true
                                           },
                                         });
                                         dispatch({
@@ -379,6 +387,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                           payload: {
                                             id: `${tx.hash}-repay`,
                                             status: 'failed',
+                                            tempData: true
                                           },
                                         });
                                       }
