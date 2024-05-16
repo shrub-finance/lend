@@ -23,7 +23,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
       const mergedBorrows = [...newBorrows, ...store.borrows];
       const newDeposits = action.payload.deposits.filter((newPosition) =>
         !store.deposits.some((existingPosition) => existingPosition.id === newPosition.id));
-      // Place new lend positions at the beginning
+      // Place new deposit positions at the beginning
       const mergedDeposits = [...newDeposits, ...store.deposits];
 
       return {
@@ -40,7 +40,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
       const updatedDeposits = { ...store, deposits: [action.payload, ...store.deposits] };
       return updatedDeposits;
     case "UPDATE_LEND_POSITION_STATUS":
-      // console.log("Updating lend position status", action.payload); // Log the action payload before the update
+      // console.log("Updating deposit position status", action.payload); // Log the action payload before the update
       const updatedState = {
         ...store,
         deposits: store.deposits.map(position => {
@@ -51,7 +51,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
           return position;
         }),
       };
-      // console.log("Updated lend positions", updatedState.deposits); // Log the updated lend positions array
+      // console.log("Updated deposit positions", updatedState.deposits); // Log the updated deposit positions array
       return updatedState;
     case "UPDATE_BORROW_STATUS":
       const updatedBorrowState = {

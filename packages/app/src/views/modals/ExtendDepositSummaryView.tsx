@@ -16,7 +16,7 @@ import {Deposit} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
 
 interface ExtendDepositSummaryProps {
-  lendAmountBeingExtended: ethers.BigNumber;
+  depositAmountBeingExtended: ethers.BigNumber;
   estimatedAPY: ethers.BigNumber;
   oldTimestamp: Date;
   newTimestamp: Date;
@@ -27,7 +27,7 @@ interface ExtendDepositSummaryProps {
 }
 
 const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendDepositActionChange: (initiated: boolean) => void }> = (
-  { lendAmountBeingExtended,
+  { depositAmountBeingExtended,
     estimatedAPY,
     oldTimestamp,
     newTimestamp,
@@ -104,11 +104,11 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
               )}
 
               <div className='w-full text-xl font-semibold flex flex-row'>
-                <span className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(lendAmountBeingExtended)} USDC</span>
+                <span className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(depositAmountBeingExtended)} USDC</span>
                 <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
               </div>
               <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-                When you extend this deposit, <span className='font-bold'>{formatLargeUsdc(lendAmountBeingExtended)} USDC</span> will be
+                When you extend this deposit, <span className='font-bold'>{formatLargeUsdc(depositAmountBeingExtended)} USDC</span> will be
                 moved from the old lending pool ending<span
                 className='font-bold'> {oldTimestamp?.toLocaleString()}</span> to the new lending pool ending <span
                 className='font-bold'>{newTimestamp?.toLocaleString()}</span>. You will collect earned ETH yield of <span className='font-bold'>
@@ -154,7 +154,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                  {/* Approve if allowance is insufficient */}
                  {!allowance ||
                  BigNumber.from(allowance).lt(
-                   ethers.utils.parseUnits(formatLargeUsdc(lendAmountBeingExtended), 6),
+                   ethers.utils.parseUnits(formatLargeUsdc(depositAmountBeingExtended), 6),
                  )
                    && (
                      <Web3Button
@@ -189,7 +189,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
 
                  {allowance &&
                    !BigNumber.from(allowance).lt(
-                     ethers.utils.parseUnits(formatLargeUsdc(lendAmountBeingExtended), 6),
+                     ethers.utils.parseUnits(formatLargeUsdc(depositAmountBeingExtended), 6),
                    ) && (
                      <Web3Button
                        contractAddress={lendingPlatformAddress}
@@ -226,9 +226,9 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                            const newDepositWithdraw: Deposit = {
                                id: `${matchedLendingPool.id}-withdraw`,
                                status: "pending",
-                               depositsUsdc: lendAmountBeingExtended.mul(-1).toString(),
+                               depositsUsdc: depositAmountBeingExtended.mul(-1).toString(),
                                apy: formatPercentage(estimatedAPY),
-                               currentBalanceOverride: lendAmountBeingExtended.mul(-1).toString(),
+                               currentBalanceOverride: depositAmountBeingExtended.mul(-1).toString(),
                                interestEarnedOverride: "0",
                                lendingPool: {
                                    id: matchedLendingPool.id,
@@ -241,12 +241,13 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                },
                                timestamp: toEthDate(oldTimestamp),
                                updated: Math.floor(Date.now() / 1000),
+                             tempData: true
                            };
                            const newDepositDeposit = {
                                ...newDepositWithdraw,
                                id: `${matchedLendingPool.id}-deposit`,
-                               depositsUsdc: lendAmountBeingExtended.toString(),
-                               currentBalanceOverride: lendAmountBeingExtended.toString(),
+                               depositsUsdc: depositAmountBeingExtended.toString(),
+                               currentBalanceOverride: depositAmountBeingExtended.toString(),
                                lendingPool: {
                                    ...newDepositWithdraw.lendingPool,
                                    timestamp: toEthDate(newTimestamp).toString()
@@ -264,7 +265,8 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                type: "UPDATE_LEND_POSITION_STATUS",
                                payload: {
                                    id: matchedLendingPool.id,
-                                   status: "extending"
+                                   status: "extending",
+                                 tempData: true
                                },
                            });
 
@@ -278,6 +280,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                    payload: {
                                        id: `${matchedLendingPool.id}-deposit`,
                                        status: "confirmed",
+                                     tempData: true
                                    },
                                });
                                dispatch({
@@ -285,6 +288,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                    payload: {
                                        id: `${matchedLendingPool.id}-withdraw`,
                                        status: "confirmed",
+                                     tempData: true
                                    },
                                });
                                dispatch({
@@ -292,6 +296,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                    payload: {
                                        id: matchedLendingPool.id,
                                        status: "extended",
+                                     tempData: true
                                    },
                                });
                            } catch (e) {
@@ -301,6 +306,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                    payload: {
                                        id: `${matchedLendingPool.id}-deposit`,
                                        status: "failed",
+                                     tempData: true
                                    },
                                });
                                dispatch({
@@ -308,6 +314,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                    payload: {
                                        id: `${matchedLendingPool.id}-withdraw`,
                                        status: "failed",
+                                     tempData: true
                                    },
                                });
                            }

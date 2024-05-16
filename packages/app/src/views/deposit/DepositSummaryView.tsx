@@ -15,11 +15,11 @@ import { Deposit } from '../../types/types'
 interface LendSummaryViewProps {
   timestamp: number;
   estimatedAPY: string;
-  lendAmount: string;
-  onBackLend: () => void;
+  depositAmount: string;
+  backOnDeposit: () => void;
 }
 
-export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp, estimatedAPY, lendAmount}) => {
+export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, timestamp, estimatedAPY, depositAmount}) => {
 
   const router = useRouter();
   const {store, dispatch} = useFinancialData();
@@ -45,8 +45,10 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
   const walletAddress = useAddress();
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
-  const latestDeposit: Deposit = store?.deposits?.reduce((latest, current) =>
-    current.updated > latest.updated ? current : latest, store?.deposits[0] || {});
+  const latestDeposit: Deposit = store?.deposits?.reduce((latest, current) => {
+      return current.updated > latest.updated ? current : latest;
+    }
+    , store?.deposits[0] || { tempData: false });
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
@@ -98,7 +100,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
           {!lendActionInitiated && (
             <h1 className="text-4xl font-medium">
-              <button onClick={onBackLend} className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full ">
+              <button onClick={backOnDeposit} className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full ">
                 <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" className="w-6 grow-0 order-0 flex-none ml-[16px] mt-[4px]">
                   <path d="M20 12H4M4 12L10 18M4 12L10 6" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -115,10 +117,10 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
               <div className="card-body ">
                 {(!lendActionInitiated || latestDeposit?.status === "pending") && (
                   <div>
-                    <p className="text-lg font-bold pb-2">Lend amount</p>
+                    <p className="text-lg font-bold pb-2">Deposit amount</p>
                     <div className="w-full text-xl font-semibold flex flex-row">
                       <span className="text-4xl  font-medium text-left w-[500px]">
-                        {lendAmount} USDC
+                        {depositAmount} USDC
                       </span>
                       <Image
                         src="/usdc-logo.svg"
@@ -178,7 +180,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                         <span className="">Lockup starts</span>
                         <span>{currentDate.toDateString()}</span>
                       </div>
-                      <div className="flex flex-row justify-between cursor-pointer" onClick={onBackLend}>
+                      <div className="flex flex-row justify-between cursor-pointer" onClick={backOnDeposit}>
                         <span className="">Lockup ends</span>
                         <span>
                           {endDate.toDateString()}
@@ -246,7 +248,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                         {/* Check for insufficient balance */}
                         {usdcBalanceData &&
                           BigNumber.from(usdcBalanceData.value).lt(
-                            ethers.utils.parseUnits(lendAmount, 6),
+                            ethers.utils.parseUnits(depositAmount, 6),
                           ) && (
                             <button
                               disabled={true}
@@ -258,11 +260,11 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                         {/* Approve if allowance is insufficient, and balance is enough */}
                         {!allowance ||
                         BigNumber.from(allowance).lt(
-                          ethers.utils.parseUnits(lendAmount, 6),
+                          ethers.utils.parseUnits(depositAmount, 6),
                         )
                           ? usdcBalanceData &&
                             !BigNumber.from(usdcBalanceData.value).lt(
-                              ethers.utils.parseUnits(lendAmount, 6),
+                              ethers.utils.parseUnits(depositAmount, 6),
                             ) && (
                               <Web3Button
                                 contractAddress={usdcAddress}
@@ -296,12 +298,12 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
 
                         {allowance &&
                           !BigNumber.from(allowance).lt(
-                            ethers.utils.parseUnits(lendAmount, 6),
+                            ethers.utils.parseUnits(depositAmount, 6),
                           ) &&
                           !(
                             usdcBalanceData &&
                             BigNumber.from(usdcBalanceData.value).lt(
-                              ethers.utils.parseUnits(lendAmount, 6),
+                              ethers.utils.parseUnits(depositAmount, 6),
                             )
                           ) && (
                             <Web3Button
@@ -314,7 +316,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                               {
                                 setLocalError('');
                                 // @ts-ignore
-                                return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(lendAmount, 6))
+                                return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(depositAmount, 6))
                               }}
                               onSuccess={async (tx) => {
                                   setLocalError('');
@@ -335,9 +337,9 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                   const newDeposit: Deposit = {
                                     id: matchedLendingPool.id,
                                     status: "pending",
-                                    depositsUsdc: (ethers.utils.parseEther(lendAmount)).toString(),
+                                    depositsUsdc: (ethers.utils.parseEther(depositAmount)).toString(),
                                     apy: estimatedAPY,
-                                    currentBalanceOverride: (ethers.utils.parseEther(lendAmount)).toString(),
+                                    currentBalanceOverride: (ethers.utils.parseEther(depositAmount)).toString(),
                                     interestEarnedOverride: "0",
                                     lendingPool: {
                                       id: matchedLendingPool.id,
@@ -350,6 +352,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                     },
                                     timestamp: timestamp,
                                     updated: Math.floor(Date.now() / 1000),
+                                    tempData: true
                                   };
                                   dispatch({
                                     type: "ADD_LEND_POSITION",
@@ -366,6 +369,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                         payload: {
                                           id: matchedLendingPool.id,
                                           status: "confirmed",
+                                          tempData: true
                                         },
                                       });
                                   } catch (e) {
@@ -375,6 +379,7 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                                       payload: {
                                         id: matchedLendingPool.id,
                                         status: "failed",
+                                        tempData: true
                                       },
                                     });
                                   }
@@ -403,15 +408,15 @@ export const LendSummaryView: FC<LendSummaryViewProps> = ({onBackLend, timestamp
                   )}
 
                 {(lendActionInitiated || latestDeposit?.status === "pending") &&  ( <button
-                  onClick={onBackLend}
+                  onClick={backOnDeposit}
                   className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4">
-                  Lend More
+                  Back
                 </button>
                   )}
 
                 {(!lendActionInitiated  && latestDeposit?.status !== "pending") &&
                   <button
-                    onClick={onBackLend}
+                    onClick={backOnDeposit}
                     className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
                   >
                     Cancel

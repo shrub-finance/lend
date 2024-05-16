@@ -18,6 +18,7 @@ export type Borrow = {
   startDate?: number,
   updated?: number,
   __typename?: string,
+  tempData : boolean
 };
 
 export type BorrowObj = {
@@ -59,13 +60,13 @@ type LendingPool = {
     lendingPool?: LendingPool;
     timestamp?: number;
     updated?: number;
-    amount?:number;
-
+    amount?: number;
+    tempData : boolean;
   };
 
 
 export type UserFinancialDataState = {
-  borrows: Borrow[];
+  borrows: Borrow[]
   deposits: Deposit[];
   activePoolTimestamps: Date[]
 };

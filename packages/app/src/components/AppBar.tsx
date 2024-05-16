@@ -27,8 +27,8 @@ export const AppBar: React.FC = () => {
               navigationStarts={() => setIsNavOpen(false)}
             />
         <NavElement
-          label="Lend"
-          href="/lend"
+          label="Deposit"
+          href="/deposit"
           navigationStarts={() => setIsNavOpen(false)}
         />
 
