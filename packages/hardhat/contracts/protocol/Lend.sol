@@ -13,6 +13,7 @@ import "../tokenization/BorrowPositionToken.sol";
 import "../dependencies/MockAaveV3.sol";
 import "../dependencies/AETH.sol";
 import "../configuration/PlatformConfig.sol";
+import "../interfaces/IAETH.sol";
 
 import {USDCoin} from "../dependencies/USDCoin.sol";
 import {DataTypes} from '../libraries/types/DataTypes.sol';
@@ -58,7 +59,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     // Interfaces for USDC and aETH
     IERC20 public usdc;
-    IERC20 public aeth;
+    IAETH public aeth;
     IBorrowPositionToken public bpt;
     IMockAaveV3 public wrappedTokenGateway;
     AggregatorV3Interface public chainlinkAggregator;  // Chainlink interface
@@ -761,7 +762,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        TODO: extendBorrow should allow LTV that is within health factor
 
 
-        console.log("running extendBorrow");
+        console.log("running extendBorrow: params: tokenId: %s, newTimestamp: %s, additionalCollateral: %s", tokenId, newTimestamp, additionalCollateral);
+        console.log("additionalRepayment: %s, _ltv: %s", additionalRepayment, _ltv);
         // Check that the additionalCollateral specified is correct
         require(msg.value == additionalCollateral, "Wrong amount of Ether provided.");
         // Check that the user holds at least additionalCollateral of USDC
@@ -775,11 +777,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // Use the existing collateral and additionalCollateral to take a loan at the newTimestamp of the current loan debt minus additionalRepayment
         if (additionalCollateral > 0) {
             // Convert additionalCollateral to aETH and move to platform
-            wrappedTokenGateway.depositETH{value: additionalCollateral}(
-                Constants.AAVE_AETH_POOL,  // This is the address of the Aave-v3 pool - it is not used
-                address(this),
-                0
-            );
+            aeth.deposit{value: additionalCollateral}(msg.sender);
         }
         uint newCollateral = bd.collateral + additionalCollateral;
         uint newPrincipal = getBorrowDebt(tokenId) - additionalRepayment;
@@ -795,6 +793,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log("flash loan amount: %s", flashLoanAmount);
         console.log("2 - platform aETH balance: %s", aeth.balanceOf(address(this)));
         console.log("extendBorrow-before-take-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
+        console.log("newCollateral: %s", newCollateral);
         aeth.transferFrom(msg.sender, address(this), newCollateral);
         console.log("3 - platform aETH balance: %s", aeth.balanceOf(address(this)));
 //        borrowInternal(newPrincipal, newCollateral, _ltv, newTimestamp, uint40(lastSnapshotDate), msg.sender, msg.sender);

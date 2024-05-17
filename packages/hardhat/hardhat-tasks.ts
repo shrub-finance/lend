@@ -234,8 +234,8 @@ task("extendBorrow", "extend an existing borrow")
         const ltv = ethers.parseUnits(taskArgs.ltv.toString(), 2);
 
         const borrowerAccount = await ethers.getSigner(account);
-        const parsedAdditionalCollateral = ethers.parseUnits(additionalCollateral.toString(),6);
-        const parsedAdditionalRepayment = ethers.parseEther(additionalRepayment.toString());
+        const parsedAdditionalRepayment = ethers.parseUnits(additionalRepayment.toString(),6);
+        const parsedAdditionalCollateral = ethers.parseEther(additionalCollateral.toString());
         const borrowDebt = await lendingPlatform.getBorrowDebt(tokenId);
         const borrowDetails = await bpt.getBorrow(tokenId);
         const usdcAllowance = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
@@ -267,7 +267,8 @@ task("extendBorrow", "extend an existing borrow")
                 newTimestamp,
                 parsedAdditionalCollateral,
                 parsedAdditionalRepayment,
-                ltv
+                ltv,
+              {value: parsedAdditionalCollateral}
             ),
             "Extending borrow"
         );
