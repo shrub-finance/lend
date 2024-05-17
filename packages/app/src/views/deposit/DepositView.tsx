@@ -9,15 +9,15 @@ import { oneMonth, sixMonth, threeMonth, twelveMonth } from '../../constants';
 import {useFinancialData} from "../../components/FinancialDataContext";
 
 
-interface LendViewProps {
-  onLendViewChange: (estimatedAPY: string, timestamp: number, lendAmount: string) => void;
+interface DepositViewProps {
+  onDepositViewChange: (estimatedAPY: string, timestamp: number, depositAmount: string) => void;
 }
 
-export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
+export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
 
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const format = (val: string) => val;
-  const [lendAmount, setLendAmount] = useState("");
+  const [depositAmount, setDepositAmount] = useState("");
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [timestamp, setTimestamp] = useState(0);
@@ -30,17 +30,17 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
 
   async function fillMax() {
     if (!usdcBalanceIsLoading) {
-      setLendAmount(usdcBalance.displayValue);
+      setDepositAmount(usdcBalance.displayValue);
     } else {
       handleErrorMessages({customMessage: "Wallet not connected. Please check your connection."});
       console.log('wallet not connected');
     }
   }
 
-  const handleLendAmountChange = (event) => {
+  const handleDepositAmountChange = (event) => {
     const inputValue = event.target.value.trim();
     // Update the state with the current input value
-    setLendAmount(inputValue);
+    setDepositAmount(inputValue);
 
     // Check if the input value is empty 
     if (inputValue === '') {
@@ -76,7 +76,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
 
 
   const handleLendContinue = () => {
-    onLendViewChange(estimatedAPY, timestamp, lendAmount);
+    onDepositViewChange(estimatedAPY, timestamp, depositAmount);
   };
 
 
@@ -97,7 +97,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
             </div>
           )}
           <h1 className=" text-5xl font-bold ">
-            Lend
+            Deposit
           </h1>
           <p className=" text-lg font-light pt-2">Supply your USDC on Shrub and earn up to <span
             className="font-semibold">7-12% APY</span></p>
@@ -117,8 +117,8 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   </label>
                   <input type="text" placeholder="Enter amount"
                          className="input input-bordered w-full h-[70px] bg-white border-solid border border-shrub-grey-light2 text-lg
-                         focus:outline-none focus:shadow-shrub-thin focus:border-shrub-green-50" onChange={handleLendAmountChange}
-                         value={format(lendAmount)}/>
+                         focus:outline-none focus:shadow-shrub-thin focus:border-shrub-green-50" onChange={handleDepositAmountChange}
+                         value={format(depositAmount)}/>
                   {isValidationError && (
                     <p className="mt-2 text-sm text-red-600 ">
                       Invalid USDC amount (numeric and maximum 6 decimals)
@@ -211,7 +211,7 @@ export const LendView: FC<LendViewProps> = ({onLendViewChange}) => {
                   disabled:text-white
                   disabled:border"
                   onClick={handleLendContinue}
-                  disabled={Number(lendAmount) <= 0 || !timestamp || isValidationError}>
+                  disabled={Number(depositAmount) <= 0 || !timestamp || isValidationError}>
                   Continue
                 </button>
               </div>

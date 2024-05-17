@@ -46,9 +46,10 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
 
-
-  const latestBorrow = store?.borrows?.reduce((latest, current) =>
-    current.updated > latest.updated ? current : latest, store?.borrows[0] || {});
+  const latestBorrow = store.borrows.reduce((latest, current) => {
+      return current.updated > latest.updated ? current : latest;
+    }
+    , store.borrows[0] || { tempData: false });
 
   useEffect(() => {
     if (localError) {
@@ -215,6 +216,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   startDate: Math.floor(Date.now() / 1000),
                                   updated: Math.floor(Date.now() / 1000),
                                   __typename: "Borrow",
+                                  tempData: true
                                 };
                                 dispatch({
                                   type: "ADD_BORROW",
@@ -232,6 +234,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                     payload: {
                                       id: tx.hash,
                                       status: "confirmed",
+                                      tempData : true
                                     },
                                   });
                                 } catch (e) {
@@ -241,6 +244,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                     payload: {
                                       id: tx.hash,
                                       status: "failed",
+                                      tempData: true
                                     },
                                   });
                                 }

@@ -31,8 +31,8 @@ export const MobileMenu: React.FC<Props> = ({ children }) => {
           </li>
           <li className="pb-4">
           <NavElement
-            label="Lend"
-            href="/lend"
+            label="Deposit"
+            href="/deposit"
           />
           </li>
           <li className="pb-4">
