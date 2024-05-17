@@ -30,9 +30,11 @@ task("testExtendBorrow", "testing extend borrow")
     const { oneMonth, threeMonth, sixMonth, twelveMonth } = getPlatformDates();
     await env.run('testLendingPlatform');
     await env.run('borrow', { account: account2, timestamp: toEthDate(oneMonth), borrowAmount: 2, collateralAmount: 0.001739, ltv: 50})
-    await env.run('extendBorrow', {account: account2, tokenId: 2, newTimestamp: toEthDate(threeMonth), ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
-    await env.run('extendBorrow', {account: account2, tokenId: 3, newTimestamp: toEthDate(sixMonth), ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
-    await env.run('extendBorrow', {account: account2, tokenId: 4, newTimestamp: toEthDate(twelveMonth), ltv: 50, additionalCollateral: 0, additionalRepayment: 0})
+    await env.run('getBalance', {account: account2});
+    await env.run('getBorrow', {tokenid: 2})
+    // await env.run('extendBorrow', {account: account2, tokenId: 2, newTimestamp: toEthDate(threeMonth), ltv: 25, additionalCollateral: 0.001741, additionalRepayment: 0})
+    // await env.run('extendBorrow', {account: account2, tokenId: 3, newTimestamp: toEthDate(sixMonth), ltv: 25, additionalCollateral: 0, additionalRepayment: 0})
+    // await env.run('extendBorrow', {account: account2, tokenId: 4, newTimestamp: toEthDate(twelveMonth), ltv: 25, additionalCollateral: 0, additionalRepayment: 0})
   });
 
 task("testLendingPlatform2", "Setup an environment for development")

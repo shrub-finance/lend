@@ -2,6 +2,9 @@ import {toEthDate, fromEthDate, getPlatformDates} from "@shrub-lend/common"
 import { ethers } from 'ethers';
 import { Zero } from '../constants';
 
+export const EXCHANGE_RATE_BUFFER = ethers.BigNumber.from(20); // 20 BPS
+export const ONE_HUNDRED_PERCENT = ethers.BigNumber.from(10000);  // 10000 BPS
+
 const Ten = ethers.BigNumber.from(10);
 const REVERSE_SORTED_VALID_LTV = [
   ethers.BigNumber.from(5000),
@@ -262,7 +265,8 @@ export function requiredAdditionalCollateral(
   collateral: ethers.BigNumber, // 18 Decimals
   ethPrice: ethers.BigNumber   // 8 Decimals
 ) {
-  const additionalCollateral = requiredCollateral(principal, targetLtv, ethPrice).sub(collateral)
+  const bufferedEthPrice = percentMul(ethPrice, ONE_HUNDRED_PERCENT.sub(EXCHANGE_RATE_BUFFER));
+  const additionalCollateral = requiredCollateral(principal, targetLtv, bufferedEthPrice).sub(collateral)
   if (additionalCollateral.lte(Zero)) {
     return Zero;
   }
