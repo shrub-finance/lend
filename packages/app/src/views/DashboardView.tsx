@@ -63,10 +63,11 @@ export const DashboardView: FC = ({}) => {
   const [showAPYSection, setShowAPYSection] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState(Zero);
   const [selectedDepositBalance, setSelectedDepositBalance] = useState(Zero);
+  const [selectedYieldEarned, setSelectedYieldEarned] = useState(Zero);
   const [selectedDepositTermDate, setSelectedDepositTermDate] = useState<Date | null>(null);
   const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(Zero);
   const [selectedTokenSupply, setSelectedTokenSupply] = useState(Zero);
-  const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(Zero);
+  const [selectedTotalLendingPoolEthYield, setSelectedTotalLendingPoolEthYield] = useState(Zero);
   const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('');
   const [selectedBorrow, setSelectedBorrow] = useState<BorrowObj | undefined>();
   const [lastSnapshotDate, setLastSnapshotDate] = useState(new Date(0))
@@ -170,6 +171,8 @@ export const DashboardView: FC = ({}) => {
   //   (newlyAddedDeposit.lendingPool.totalPrincipal + newlyAddedDeposit.lendingPool.totalUsdcInterest +
   //     (newlyAddedDeposit.lendingPool.totalEthYield * ethPrice));
 
+  console.log(store);
+
   return (
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col ">
@@ -202,9 +205,12 @@ export const DashboardView: FC = ({}) => {
                       selectedDepositBalance={selectedDepositBalance}
                       onModalClose={handleWithdraw}
                       setIsModalOpen={setWithdrawModalOpen}
+                      selectedDepositTermDate={selectedDepositTermDate}
+                      selectedPoolShareTokenAmount={selectedPoolShareTokenAmount}
+                      selectedYieldEarned={selectedYieldEarned}
                      />
                   </Modal>
-                  {/*modals deposit modal*/}
+                  {/*deposit modal*/}
                   <Modal isOpen={extendDepositModalOpen} onClose={() => setExtendDepositModalOpen(false)} >
                     <ExtendDepositView
                       onModalClose={handleExtendDeposit}
@@ -217,12 +223,12 @@ export const DashboardView: FC = ({}) => {
                       setShowAPYSection={setShowAPYSection}
                       selectedDepositTermDate={selectedDepositTermDate}
                       selectedPoolShareTokenAmount={selectedPoolShareTokenAmount}
-                      selectedTotalEthYield={selectedTotalEthYield}
+                      selectedTotalLendingPoolEthYield={selectedTotalLendingPoolEthYield}
                       selectedTokenSupply={selectedTokenSupply}
                       selectedPoolTokenId={selectedPoolTokenId}
                     />
                   </Modal>
-                  {/*modals borrow modal*/}
+                  {/*borrow modal*/}
                   <Modal isOpen={extendBorrowModalOpen} onClose={() => setExtendBorrowModalOpen(false)} >
                     <ExtendBorrowView
                       onModalClose={handleExtendBorrow}
@@ -299,6 +305,7 @@ export const DashboardView: FC = ({}) => {
                                         .mul(tokenAmountBN)
                                         .div(tokenSupplyBN);
                                     const interestEarned = currentBalance.sub(netDeposits);
+                                    const yieldEarned = lendingPoolEthYieldBN.mul(tokenAmountBN).div(tokenSupplyBN) //Eth yield belonging to a deposit
                                     return (
                                   <tr key={`earnRow-${index}`} className="bg-white border-b  ">
                                     <td className="px-6 py-4 text-sm font-bold">
@@ -355,12 +362,13 @@ export const DashboardView: FC = ({}) => {
                                                   setSelectedDepositTermDate(fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)));
                                                   setSelectedPoolShareTokenAmount(tokenAmountBN);
                                                   setSelectedTokenSupply(tokenSupplyBN);
-                                                  setSelectedTotalEthYield(lendingPoolEthYieldBN);
+                                                  setSelectedTotalLendingPoolEthYield(lendingPoolEthYieldBN);
                                                   setSelectedPoolTokenId(storeDeposit.lendingPool.id);
                                                 }}>
                                           {/*Corresponding modal at the top*/}
                                           Extend
                                         </button>
+                                        {!storeDeposit.lendingPool.finalized ?
                                         <a onMouseOver={() => setCurrentHovered(index)}
                                            onMouseOut={() => setCurrentHovered(null)} href='https://app.uniswap.org/'
                                            target='_blank' type='button'
@@ -369,7 +377,7 @@ export const DashboardView: FC = ({}) => {
                                                  className='mr-2' /> :
                                           <Image src='/up-right-arrow.svg' alt='down arrow' width={20} height={20}
                                                  className='mr-2' />} Trade</a>
-                                        {/*{item.lendingPool.finalized && */}
+                                       :
                                           <button type='button'
                                                   style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
@@ -377,12 +385,15 @@ export const DashboardView: FC = ({}) => {
                                                 onClick={() => {
                                                   setWithdrawModalOpen(true);
                                                   setSelectedDepositBalance(currentBalance)
+                                                  setSelectedDepositTermDate(fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)))
+                                                  setSelectedPoolShareTokenAmount(tokenAmountBN)
+                                                  setSelectedYieldEarned(yieldEarned)
 
                                                 }}>
                                           {/*Corresponding modal at the top*/}
                                           Withdraw
                                         </button>
-                                         {/*}*/}
+                                         }
                                       </div>
                                     </td>
                                   </tr>

@@ -1,22 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { formatLargeUsdc, fromEthDate, truncateEthAddress } from '../../utils/ethMethods';
-import { lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
+import { formatLargeUsdc, formatWad, fromEthDate, toEthDate, truncateEthAddress } from '../../utils/ethMethods';
+import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
 import { ethers } from 'ethers';
 import {
-  useAddress, Web3Button,
+  useAddress, useContract, Web3Button,
 } from '@thirdweb-dev/react';
 import {useFinancialData} from "../../components/FinancialDataContext";
+import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
 
 interface WithdrawViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
   selectedDepositBalance: ethers.BigNumber;
+  selectedDepositTermDate: Date;
+  selectedPoolShareTokenAmount: ethers.BigNumber;
+  selectedYieldEarned: ethers.BigNumber;
 }
 
 const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) => void }> = (
   {onModalClose,
     selectedDepositBalance,
-    setIsModalOpen
+    setIsModalOpen,
+    selectedDepositTermDate,
+    selectedPoolShareTokenAmount,
+    selectedYieldEarned
     }) =>
 {
 
@@ -29,7 +36,14 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
   const closeModalAndPassData = () => {
     setIsModalOpen(false);
   };
-
+  const [localError, setLocalError] = useState('');
+  const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
+  const [withdrawActionInitiated, setWithdrawActionInitiated] = useState(false);
+  const {
+    contract: lendingPlatform,
+    isLoading: lendingPlatformIsLoading,
+    error: lendingPlatformError,
+  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
 
   return (
@@ -57,8 +71,8 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                      height='40' />
             </div>
             <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-              Withdraw will exchange your, <span className='font-bold'>{} pool share token</span> from the <span className='font-bold'> {}</span> lending pool date of <span
-              className='font-bold'>{} </span> for <span className='font-bold'>{formatLargeUsdc(selectedDepositBalance)} USDC</span>, and <span className='font-bold'>{} ETH
+              Withdraw will exchange your, <span className='font-bold'>{formatWad(selectedPoolShareTokenAmount, 6)}</span>  pool share token from the <span className='font-bold'>{}</span> lending pool date of <span
+              className='font-bold'>{selectedDepositTermDate.toLocaleString()} </span> for <span className='font-bold'>{formatLargeUsdc(selectedDepositBalance)} USDC</span>, and <span className='font-bold'>{formatWad(selectedYieldEarned, 6)} ETH
               </span>.</p>
             </div>
 
@@ -71,33 +85,52 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                   <span className=''>USDC to receive</span>
                   <span>{formatLargeUsdc(selectedDepositBalance)} USDC</span>
                 </div>
-                <div className="flex flex-row  justify-between cursor-pointer" >
-                  <span className="">ETH to receive</span>
-                  <span>{} ETH
+                <div className='flex flex-row  justify-between cursor-pointer'>
+                  <span className=''>ETH to receive</span>
+                  <span>{formatWad(selectedYieldEarned, 6)} ETH
                       </span>
                 </div>
-                <div className="flex flex-row  justify-between">
-                  <span className="">End Date</span>
-                  <span className="font-semibold text-shrub-green-500"> {}%</span>
-                </div>
-                <div className="flex flex-row  justify-between">
-                  <span className="">Contract Address</span>
+                <div className='flex flex-row  justify-between'>
+                  <span className=''>Contract Address</span>
                   <span>{truncateEthAddress(lendingPlatformAddress)}
-                    <Image alt="copy icon" src="/copy.svg" className="w-6 hidden md:inline align-baseline ml-2" width="24" height="24"/>
+                    <Image alt='copy icon' src='/copy.svg' className='w-6 hidden md:inline align-baseline ml-2'
+                           width='24' height='24' />
                       </span>
                 </div>
+                <div className='flex flex-row  justify-between'>
+                  <span className=''>End Date</span>
+                  <span >{selectedDepositTermDate.toLocaleString()}</span>
+                </div>
+
               </div>
 
-              <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
-              <Web3Button contractAddress={usdcAddress}
-                          contractAbi={usdcAbi}
-                          className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
-              action={
-                async (usdc) =>
-              {
-                return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
-              }}>
-                Withdraw Deposit
+              <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
+              <Web3Button contractAddress={lendingPlatformAddress} contractAbi={lendingPlatformAbi}
+                          isDisabled={withdrawActionInitiated}
+                          className='!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
+                          action={
+                            async (lendingPlatform) => {
+                              setLocalError('');
+                              // @ts-ignore
+                              return await lendingPlatform.contractWrapper.writeContract.withdraw(toEthDate(selectedDepositTermDate),selectedPoolShareTokenAmount);
+                            }}
+                          onSuccess={
+                            async (tx) => {
+                              setLocalError("");
+                              try {
+                                const receipt = await tx.wait();
+                                if(!receipt.status) {
+                                  throw new Error("Transaction failed")
+                                }
+                              } catch (e) {
+                                console.log("Transaction failed:", e)
+                              }
+                              setWithdrawActionInitiated(true);
+                            }}
+                          onError={(e) => {
+                            handleErrorMessages({err: e});
+                          }}>
+                {!withdrawActionInitiated ?'Begin Withdraw': 'Withdraw Order Submitted'}
               </Web3Button>
 
             </div>

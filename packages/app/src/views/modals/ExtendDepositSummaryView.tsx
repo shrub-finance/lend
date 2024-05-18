@@ -21,7 +21,7 @@ interface ExtendDepositSummaryProps {
   oldTimestamp: Date;
   newTimestamp: Date;
   poolShareTokenAmount: ethers.BigNumber;
-  totalEthYield: ethers.BigNumber;
+  totalLendingPoolEthYield: ethers.BigNumber;
   tokenSupply: ethers.BigNumber;
   onBackExtend: () => void;
 }
@@ -32,7 +32,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
     oldTimestamp,
     newTimestamp,
     poolShareTokenAmount,
-    totalEthYield,
+    totalLendingPoolEthYield,
     tokenSupply,
     onBackExtend,
     onExtendDepositActionChange}) =>
@@ -113,7 +113,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                 className='font-bold'> {oldTimestamp?.toLocaleString()}</span> to the new lending pool ending <span
                 className='font-bold'>{newTimestamp?.toLocaleString()}</span>. You will collect earned ETH yield of <span className='font-bold'>
                   {
-                    poolShareTokenAmount && ethers.utils.formatUnits(ethers.BigNumber.from(poolShareTokenAmount).mul(totalEthYield).div(tokenSupply), 6)
+                    poolShareTokenAmount && ethers.utils.formatUnits(ethers.BigNumber.from(poolShareTokenAmount).mul(totalLendingPoolEthYield).div(tokenSupply), 6)
                   }
               </span>.</p>
             </div>
@@ -197,7 +197,6 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                        isDisabled={extendDepositActionInitiated}
                        className="web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
                        action={
-
                          async (lendingPlatform) =>
                          {
                            // @ts-ignore
@@ -318,10 +317,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                    },
                                });
                            }
-
                            setExtendDepositActionInitiated(true)
-
-
                        }}
                        onError={(e) => {
                          handleErrorMessages({err: e});

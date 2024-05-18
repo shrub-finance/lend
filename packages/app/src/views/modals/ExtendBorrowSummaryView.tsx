@@ -89,21 +89,6 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
   const ltv = borrow.collateral.isZero() || !ethPrice || ethPrice.isZero() ?
     BigNumber.from(0) :
     calcLtv(borrow.debt, borrow.collateral, ethPrice);
-    // calcPercentage(borrow.debt, ethInUsdc(borrow.collateral, ethPrice));
-  // const {
-  //   data: targetLtvData,
-  //   isLoading: targetLtvIsLoading,
-  //   error: targetLtvError,
-  // } = useContractRead(lendingPlatform, 'calculateSmallestValidLtv', [ltv, true]);
-
-  // useEffect(() => {
-  //   if (targetLtvData) {
-  //     setTargetLtv(targetLtvData);
-  //   }
-  //   // console.log(`ltv: ${ltv}`);
-  //   // console.log(`targetLtv: ${targetLtv}`);
-  // }, [targetLtvIsLoading])
-
   useEffect(() => {
     console.log('running allowance useEffect');
     if (
@@ -130,18 +115,10 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     }
   }, [usdcAllowanceIsLoading, aethAllowanceIsLoading, approveAETHActionInitiated, approveUSDCActionInitiated]);
 
-
-
   useEffect(() => {
     onExtendBorrowActionChange(extendBorrowActionInitiated);
   }, [extendBorrowActionInitiated, onExtendBorrowActionChange]);
 
-
-  // console.log(`debt: ${debt}`);
-  // console.log(`collateral: ${borrow.collateral}`);
-  // console.log(`ethPrice: ${ethPrice}`);
-  // console.log(`ltv: ${ltv.toString()}`);
-  // console.log(`new End Date 2: ${newEndDate}`);
   return (
     <div className='relative group mt-4 w-full min-w-[500px]'>
       <div className='flex flex-col'>
@@ -285,9 +262,6 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                   className='web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
                                   action={
                                     async (lendingPlatform) => {
-                                      console.log(`newEndDate: ${newEndDate}`);
-                                      console.log(borrow);
-                                      console.log(`additionalCollateral: ${additionalCollateral.toString()}`);
                                       setLocalError('');
                                       // @ts-ignore
                                       return await lendingPlatform.contractWrapper.writeContract.extendBorrow(

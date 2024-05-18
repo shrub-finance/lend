@@ -15,7 +15,7 @@ interface ExtendDepositViewProps {
   selectedDepositTermDate: Date;
   selectedPoolShareTokenAmount: ethers.BigNumber;
   selectedTokenSupply: ethers.BigNumber;
-  selectedTotalEthYield: ethers.BigNumber;
+  selectedTotalLendingPoolEthYield: ethers.BigNumber;
   estimatedAPY: ethers.BigNumber;
   setIsModalOpen: (isOpen: boolean) => void;
   selectedPoolTokenId: string;
@@ -30,7 +30,7 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
                                                  selectedDepositTermDate,
                                                  selectedPoolShareTokenAmount,
                                                  selectedTokenSupply,
-                                                 selectedTotalEthYield,
+                                                 selectedTotalLendingPoolEthYield,
                                                  estimatedAPY,
                                                  setIsModalOpen,
                                                  onModalClose
@@ -141,7 +141,7 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
         newTimestamp={fromEthDate(timestamp)}
         oldTimestamp={selectedDepositTermDate}
         poolShareTokenAmount={selectedPoolShareTokenAmount}
-        totalEthYield={selectedTotalEthYield}
+        totalLendingPoolEthYield={selectedTotalLendingPoolEthYield}
         tokenSupply={selectedTokenSupply}
         onBackExtend={handleExtendDepositBack}
         onExtendDepositActionChange={handleExtendDepositActionChange}
