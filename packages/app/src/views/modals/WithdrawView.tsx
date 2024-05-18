@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { formatLargeUsdc, formatWad, fromEthDate, toEthDate, truncateEthAddress } from '../../utils/ethMethods';
+import {
+  formatLargeUsdc,
+  formatPercentage,
+  formatWad,
+  fromEthDate,
+  toEthDate,
+  truncateEthAddress,
+} from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
 import { ethers } from 'ethers';
 import {
@@ -8,6 +15,8 @@ import {
 } from '@thirdweb-dev/react';
 import {useFinancialData} from "../../components/FinancialDataContext";
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
+import { Deposit } from '../../types/types';
+import useActiveLendingPools from '../../hooks/useActiveLendingPools';
 
 interface WithdrawViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
@@ -44,7 +53,14 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
     isLoading: lendingPlatformIsLoading,
     error: lendingPlatformError,
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
-
+  const {
+    getActiveLendingPools,
+    activeLendingPoolsLoading,
+    activeLendingPoolsError,
+    activeLendingPoolsData,
+    activeLendingPoolsStartPolling,
+    activeLendingPoolsStopPolling,
+  } = useActiveLendingPools();
 
   return (
     <>
@@ -117,6 +133,34 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                           onSuccess={
                             async (tx) => {
                               setLocalError("");
+                              const filteredLendingPools =
+                                activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
+                                  item => item.timestamp === toEthDate(oldTimestamp).toString(),
+                                );
+                              const matchedLendingPool =
+                                filteredLendingPools.length > 0
+                                  ? filteredLendingPools[0]
+                                  : null;
+                              const newDepositWithdraw: Deposit = {
+                                id: `${matchedLendingPool.id}-withdraw`,
+                                status: "pending",
+                                depositsUsdc: depositAmountBeingExtended.mul(-1).toString(),
+                                apy: formatPercentage(estimatedAPY),
+                                currentBalanceOverride: depositAmountBeingExtended.mul(-1).toString(),
+                                interestEarnedOverride: "0",
+                                lendingPool: {
+                                  id: matchedLendingPool.id,
+                                  timestamp: matchedLendingPool.timestamp,
+                                  tokenSupply: matchedLendingPool.tokenSupply,
+                                  totalEthYield: matchedLendingPool.totalEthYield,
+                                  totalPrincipal: matchedLendingPool.totalPrincipal,
+                                  totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
+                                  __typename: matchedLendingPool.__typename,
+                                },
+                                timestamp: toEthDate(oldTimestamp),
+                                updated: Math.floor(Date.now() / 1000),
+                                tempData: true
+                              };
                               try {
                                 const receipt = await tx.wait();
                                 if(!receipt.status) {

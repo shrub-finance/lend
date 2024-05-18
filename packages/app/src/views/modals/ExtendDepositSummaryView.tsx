@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import {formatLargeUsdc, formatPercentage, fromEthDate, toEthDate, truncateEthAddress} from '../../utils/ethMethods';
+import {formatLargeUsdc, formatPercentage, toEthDate, truncateEthAddress} from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
 import { BigNumber, ethers } from 'ethers';
 import {
@@ -10,10 +10,9 @@ import {
   Web3Button
 } from '@thirdweb-dev/react';
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
-import { useLazyQuery } from '@apollo/client';
-import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
 import {Deposit} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
+import useActiveLendingPools from '../../hooks/useActiveLendingPools';
 
 interface ExtendDepositSummaryProps {
   depositAmountBeingExtended: ethers.BigNumber;
@@ -37,16 +36,14 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
     onBackExtend,
     onExtendDepositActionChange}) =>
 {
-  const [
+  const {
     getActiveLendingPools,
-    {
-      loading: activeLendingPoolsLoading,
-      error: activeLendingPoolsError,
-      data: activeLendingPoolsData,
-      startPolling: activeLendingPoolsStartPolling,
-      stopPolling: activeLendingPoolsStopPolling,
-    },
-  ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
+    activeLendingPoolsLoading,
+    activeLendingPoolsError,
+    activeLendingPoolsData,
+    activeLendingPoolsStartPolling,
+    activeLendingPoolsStopPolling,
+  } = useActiveLendingPools();
 
     const {store, dispatch} = useFinancialData();
   const walletAddress = useAddress();
