@@ -6,7 +6,7 @@ import {
 } from "@thirdweb-dev/react";
 import { getBlock } from "@thirdweb-dev/sdk";
 import { toEthDate, fromEthDate } from '@shrub-lend/common'
-import { chainlinkAggregatorAbi, chainlinkAggregatorAddress, usdcAddress } from '../utils/contracts';
+import { chainlinkAggregatorAbi, chainlinkAggregatorAddress } from '../utils/contracts';
 import { ethers } from 'ethers';
 import Image from "next/image";
 import { secondsInDay} from "@shrub-lend/common";
@@ -15,14 +15,19 @@ import { useLazyQuery } from "@apollo/client";
 import {useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendDepositView from './modals/ExtendDepositView';
-import {durationWad, formatLargeUsdc, formatPercentage, wadMul} from '../utils/ethMethods';
-import {BorrowObj, Deposit} from "../types/types";
+import {
+  durationWad,
+  ethInUsdc,
+  formatLargeUsdc,
+  formatPercentage,
+  wadDiv,
+  wadMul
+} from '../utils/ethMethods';
+import {BorrowObj, Deposit, DepositObj} from "../types/types";
 import ExtendBorrowView from './modals/ExtendBorrowView';
 import { oneMonth, sixMonth, threeMonth, twelveMonth, Zero } from '../constants';
 import useEthPriceFromChainlink from '../hooks/useEthPriceFromChainlink';
 import WithdrawView from './modals/WithdrawView';
-const now = new Date();
-new Date(new Date(now).setFullYear(now.getFullYear() + 1));
 export const DashboardView: FC = ({}) => {
 
   const wallet = useConnectedWallet();
@@ -62,25 +67,19 @@ export const DashboardView: FC = ({}) => {
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState(Zero);
-  const [selectedDepositBalance, setSelectedDepositBalance] = useState(Zero);
-  const [selectedDepositTermDate, setSelectedDepositTermDate] = useState<Date | null>(null);
-  const [selectedPoolShareTokenAmount, setSelectedPoolShareTokenAmount] = useState(Zero);
-  const [selectedTokenSupply, setSelectedTokenSupply] = useState(Zero);
-  const [selectedTotalEthYield, setSelectedTotalEthYield] = useState(Zero);
-  const [selectedPoolTokenId, setSelectedPoolTokenId] = useState('');
+  const [selectedDeposit, setSelectedDeposit] = useState<DepositObj | undefined>()
   const [selectedBorrow, setSelectedBorrow] = useState<BorrowObj | undefined>();
   const [lastSnapshotDate, setLastSnapshotDate] = useState(new Date(0))
-  const dummyEarningPools = "2";
 
   useEffect(() => {
     getGlobalData();
-  }, []);
+  }, [getGlobalData]);
 
   useEffect(() => {
     if (globalData) {
       setLastSnapshotDate(fromEthDate(globalData.globalData.lastSnapshotDate));
     }
-  }, [globalDataLoading]);
+  }, [globalData]);
 
   useEffect(() => {
     const handleAPYCalc = () => {
@@ -108,7 +107,7 @@ export const DashboardView: FC = ({}) => {
     // Once data is loaded, update the store
     if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
       const { borrows, deposits } = userPositionsData.user;
-      const tempDeposits: Deposit[] = deposits.map((deposit) => {
+      const tempDeposits: Deposit[] = deposits.map((deposit: Deposit) => {
           return {
               ...deposit,
               id: deposit.lendingPool.id
@@ -199,7 +198,7 @@ export const DashboardView: FC = ({}) => {
                   {/*withdraw modal*/}
                   <Modal isOpen={withdrawModalOpen} onClose={() => setWithdrawModalOpen(false)} >
                     <WithdrawView
-                      selectedDepositBalance={selectedDepositBalance}
+                      deposit={selectedDeposit}
                       onModalClose={handleWithdraw}
                       setIsModalOpen={setWithdrawModalOpen}
                      />
@@ -207,19 +206,14 @@ export const DashboardView: FC = ({}) => {
                   {/*modals deposit modal*/}
                   <Modal isOpen={extendDepositModalOpen} onClose={() => setExtendDepositModalOpen(false)} >
                     <ExtendDepositView
+                      deposit={selectedDeposit}
                       onModalClose={handleExtendDeposit}
                       timestamp={timestamp}
-                      selectedDepositBalance={selectedDepositBalance}
                       setIsModalOpen={setExtendDepositModalOpen}
                       setTimestamp={setTimestamp}
                       showAPYSection={showAPYSection}
                       estimatedAPY={estimatedAPY}
                       setShowAPYSection={setShowAPYSection}
-                      selectedDepositTermDate={selectedDepositTermDate}
-                      selectedPoolShareTokenAmount={selectedPoolShareTokenAmount}
-                      selectedTotalEthYield={selectedTotalEthYield}
-                      selectedTokenSupply={selectedTokenSupply}
-                      selectedPoolTokenId={selectedPoolTokenId}
                     />
                   </Modal>
                   {/*modals borrow modal*/}
@@ -278,33 +272,56 @@ export const DashboardView: FC = ({}) => {
                             <tbody className='text-lg'>
                             {store?.deposits?.sort((a, b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
                                 (storeDeposit, index) => {
-                                    const depositsUsdcBN = ethers.BigNumber.from(storeDeposit.depositsUsdc ? storeDeposit.depositsUsdc : Zero);
-                                    const withdrawsUsdcBN = ethers.BigNumber.from(storeDeposit.withdrawsUsdc ? storeDeposit.withdrawsUsdc : Zero);
-                                    const lendingPoolPrincipalBN = ethers.BigNumber.from(storeDeposit.lendingPool.totalPrincipal ? storeDeposit.lendingPool.totalPrincipal : Zero);
-                                    const lendingPoolUsdcInterestBN = ethers.BigNumber.from(storeDeposit.lendingPool.totalUsdcInterest ? storeDeposit.lendingPool.totalUsdcInterest : Zero);
-                                    const lendingPoolEthYieldBN = ethers.BigNumber.from(storeDeposit.lendingPool.totalEthYield ? storeDeposit.lendingPool.totalEthYield : Zero);
-                                    const tokenAmountBN = ethers.BigNumber.from(storeDeposit.amount ? storeDeposit.amount : Zero);
-                                    const tokenSupplyBN = ethers.BigNumber.from(storeDeposit.lendingPool.tokenSupply ? storeDeposit.lendingPool.tokenSupply : Zero);
-                                    const netDeposits = depositsUsdcBN.sub(withdrawsUsdcBN);
-                                    const currentBalance = tokenSupplyBN.eq(Zero) ? Zero :
-                                      (
-                                        lendingPoolPrincipalBN
-                                          .add(lendingPoolUsdcInterestBN)
-                                          .add(
-                                            ethPrice
-                                              .mul(lendingPoolEthYieldBN)
-                                              .div(ethers.utils.parseUnits('1', 20)),
-                                          )
-                                      )
-                                        .mul(tokenAmountBN)
-                                        .div(tokenSupplyBN);
-                                    const interestEarned = currentBalance.sub(netDeposits);
+                                  // console.log(storeDeposit);
+                                  let lendingPoolTokenSupply: ethers.BigNumber;
+                                  let lendingPoolTokenAmount: ethers.BigNumber;
+                                  let positionEthYield: ethers.BigNumber;
+                                  let positionUsdcInterest: ethers.BigNumber;
+                                  let positionPrincipal: ethers.BigNumber;
+                                  if (storeDeposit.amount && storeDeposit.lendingPool.tokenSupply) {
+                                    lendingPoolTokenSupply = ethers.BigNumber.from(storeDeposit.lendingPool.tokenSupply);
+                                    lendingPoolTokenAmount = ethers.BigNumber.from(storeDeposit.amount);
+                                    positionEthYield = wadDiv(
+                                      wadMul(ethers.BigNumber.from(storeDeposit.lendingPool.totalEthYield), lendingPoolTokenAmount),
+                                      lendingPoolTokenSupply
+                                    );
+                                    positionUsdcInterest = wadDiv(
+                                      wadMul(ethers.BigNumber.from(storeDeposit.lendingPool.totalUsdcInterest), lendingPoolTokenAmount),
+                                      lendingPoolTokenSupply
+                                    );
+                                    positionPrincipal = wadDiv(
+                                      wadMul(ethers.BigNumber.from(storeDeposit.lendingPool.totalPrincipal), lendingPoolTokenAmount),
+                                      lendingPoolTokenSupply
+                                    );
+                                  }
+                                  const deposit: DepositObj = {
+                                    id: storeDeposit.id,
+                                    endDate: fromEthDate(Number(storeDeposit.lendingPool.timestamp)),
+                                    // updated: fromEthDate(storeDeposit.updated),
+                                    depositsUsdc: storeDeposit.depositsUsdc ? ethers.BigNumber.from(storeDeposit.depositsUsdc) : Zero,
+                                    withdrawsUsdc: storeDeposit.withdrawsUsdc ? ethers.BigNumber.from(storeDeposit.withdrawsUsdc) : Zero,
+                                    // apy: ethers.BigNumber.from(storeDeposit.apy),
+                                    lendingPoolTokenAddress: storeDeposit.lendingPool.id,
+                                    lendingPoolTokenAmount,
+                                    positionEthYield,
+                                    positionUsdcInterest,
+                                    positionPrincipal,
+                                  };
+                                    const netDeposits = deposit.depositsUsdc.sub(deposit.withdrawsUsdc);
+                                    const currentBalance = storeDeposit.currentBalanceOverride ?
+                                      ethers.BigNumber.from(storeDeposit.currentBalanceOverride) :
+                                      deposit.positionPrincipal
+                                        .add(deposit.positionUsdcInterest)
+                                        .add(ethInUsdc(deposit.positionEthYield, ethPrice));
+                                    const interestEarned = storeDeposit.interestEarnedOverride ?
+                                      ethers.BigNumber.from(storeDeposit.interestEarnedOverride) :
+                                      currentBalance.sub(netDeposits);
                                     return (
                                   <tr key={`earnRow-${index}`} className="bg-white border-b  ">
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {wallet ? (
                                         <p>{" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
-                                          {storeDeposit.currentBalanceOverride ? formatLargeUsdc(storeDeposit.currentBalanceOverride) : formatLargeUsdc(currentBalance)} USDC
+                                          {formatLargeUsdc(currentBalance)} USDC
                                           {storeDeposit.status === 'pending' && (
                                             <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
                                           )}
@@ -329,7 +346,7 @@ export const DashboardView: FC = ({}) => {
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {
-                                          storeDeposit.interestEarnedOverride ? formatLargeUsdc(storeDeposit.interestEarnedOverride) : formatLargeUsdc(interestEarned)
+                                          formatLargeUsdc(interestEarned)
                                       }
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
@@ -351,12 +368,7 @@ export const DashboardView: FC = ({}) => {
                                                 disabled={fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).getTime() === store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime()}
                                                 onClick={() => {
                                                   setExtendDepositModalOpen(true);
-                                                  setSelectedDepositBalance(currentBalance);
-                                                  setSelectedDepositTermDate(fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)));
-                                                  setSelectedPoolShareTokenAmount(tokenAmountBN);
-                                                  setSelectedTokenSupply(tokenSupplyBN);
-                                                  setSelectedTotalEthYield(lendingPoolEthYieldBN);
-                                                  setSelectedPoolTokenId(storeDeposit.lendingPool.id);
+                                                  setSelectedDeposit(deposit);
                                                 }}>
                                           {/*Corresponding modal at the top*/}
                                           Extend
@@ -376,8 +388,6 @@ export const DashboardView: FC = ({}) => {
                                                 // disabled={}
                                                 onClick={() => {
                                                   setWithdrawModalOpen(true);
-                                                  setSelectedDepositBalance(currentBalance)
-
                                                 }}>
                                           {/*Corresponding modal at the top*/}
                                           Withdraw

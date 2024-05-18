@@ -37,6 +37,22 @@ export type BorrowObj = {
     debt: ethers.BigNumber,
 }
 
+export type DepositObj = {
+  id: string;
+  // startDate: Date;
+  endDate: Date;
+  // updated: Date;
+  depositsUsdc: ethers.BigNumber;
+  withdrawsUsdc: ethers.BigNumber;
+  // TODO: This should be coming through from subgraph
+  // apy: ethers.BigNumber;
+  lendingPoolTokenAddress: string;
+  lendingPoolTokenAmount: ethers.BigNumber;
+  positionEthYield: ethers.BigNumber;
+  positionUsdcInterest: ethers.BigNumber;
+  positionPrincipal: ethers.BigNumber;
+}
+
 
 type LendingPool = {
   id: string;
