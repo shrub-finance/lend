@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import {formatLargeUsdc, formatPercentage, fromEthDate, toEthDate, truncateEthAddress} from '../../utils/ethMethods';
+import {
+  formatLargeUsdc,
+  formatPercentage,
+  formatWad,
+  toEthDate,
+  truncateEthAddress
+} from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
 import { BigNumber, ethers } from 'ethers';
 import {
@@ -12,31 +18,25 @@ import {
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
 import { useLazyQuery } from '@apollo/client';
 import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
-import {Deposit} from "../../types/types";
+import {Deposit, DepositObj} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
 
 interface ExtendDepositSummaryProps {
-  depositAmountBeingExtended: ethers.BigNumber;
+  deposit: DepositObj;
   estimatedAPY: ethers.BigNumber;
-  oldTimestamp: Date;
   newTimestamp: Date;
-  poolShareTokenAmount: ethers.BigNumber;
-  totalEthYield: ethers.BigNumber;
-  tokenSupply: ethers.BigNumber;
   onBackExtend: () => void;
 }
 
 const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendDepositActionChange: (initiated: boolean) => void }> = (
-  { depositAmountBeingExtended,
+  {
+    deposit,
     estimatedAPY,
-    oldTimestamp,
     newTimestamp,
-    poolShareTokenAmount,
-    totalEthYield,
-    tokenSupply,
     onBackExtend,
-    onExtendDepositActionChange}) =>
-{
+    onExtendDepositActionChange
+  }
+) => {
   const [
     getActiveLendingPools,
     {
@@ -48,7 +48,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
     },
   ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
 
-    const {store, dispatch} = useFinancialData();
+  const {store, dispatch} = useFinancialData();
   const walletAddress = useAddress();
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
   const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
@@ -83,6 +83,8 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
     onExtendDepositActionChange(extendDepositActionInitiated);
   }, [extendDepositActionInitiated, onExtendDepositActionChange]);
 
+  const depositAmountBeingExtended = deposit.positionPrincipal.add(deposit.positionUsdcInterest);
+
 
   return (
     <div className="relative group mt-4 w-full min-w-[500px]">
@@ -110,11 +112,9 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
               <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
                 When you extend this deposit, <span className='font-bold'>{formatLargeUsdc(depositAmountBeingExtended)} USDC</span> will be
                 moved from the old lending pool ending<span
-                className='font-bold'> {oldTimestamp?.toLocaleString()}</span> to the new lending pool ending <span
-                className='font-bold'>{newTimestamp?.toLocaleString()}</span>. You will collect earned ETH yield of <span className='font-bold'>
-                  {
-                    poolShareTokenAmount && ethers.utils.formatUnits(ethers.BigNumber.from(poolShareTokenAmount).mul(totalEthYield).div(tokenSupply), 6)
-                  }
+                className='font-bold'> {deposit.endDate.toLocaleString()}</span> to the new lending pool ending <span
+                className='font-bold'>{newTimestamp.toLocaleString()}</span>. You will collect earned ETH yield of <span className='font-bold'>
+                  {formatWad(deposit.positionEthYield, 8)}
               </span>.</p>
             </div>
 
@@ -125,7 +125,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
               <div className='mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
                 <div className='flex flex-row  justify-between'>
                   <span className=''>Previous End Date</span>
-                  <span>{oldTimestamp?.toDateString()}</span>
+                  <span>{deposit.endDate.toDateString()}</span>
                 </div>
                 <div className="flex flex-row  justify-between cursor-pointer" onClick={onBackExtend}>
                   <span className="">New End Date</span>
@@ -202,9 +202,9 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                          {
                            // @ts-ignore
                              return await lendingPlatform?.contractWrapper?.writeContract?.extendDeposit(
-                               toEthDate(oldTimestamp),
+                               toEthDate(deposit.endDate),
                                toEthDate(newTimestamp),
-                               ethers.utils.formatUnits(poolShareTokenAmount, 0)
+                               deposit.lendingPoolTokenAmount
                              );
                          }
                      }
@@ -217,7 +217,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                            }
                            const filteredLendingPools =
                                activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
-                                   item => item.timestamp === toEthDate(oldTimestamp).toString(),
+                                   item => item.timestamp === toEthDate(deposit.endDate).toString(),
                                );
                            const matchedLendingPool =
                                filteredLendingPools.length > 0
@@ -239,7 +239,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                    totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
                                    __typename: matchedLendingPool.__typename,
                                },
-                               timestamp: toEthDate(oldTimestamp),
+                               timestamp: toEthDate(deposit.endDate),
                                updated: Math.floor(Date.now() / 1000),
                              tempData: true
                            };

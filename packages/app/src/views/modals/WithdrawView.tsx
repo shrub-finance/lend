@@ -1,27 +1,23 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { formatLargeUsdc, fromEthDate, truncateEthAddress } from '../../utils/ethMethods';
+import {formatLargeUsdc, formatWad, truncateEthAddress} from '../../utils/ethMethods';
 import { lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
 import { ethers } from 'ethers';
-import {
-  useAddress, Web3Button,
-} from '@thirdweb-dev/react';
-import {useFinancialData} from "../../components/FinancialDataContext";
+import { Web3Button } from '@thirdweb-dev/react';
+import {DepositObj} from "../../types/types";
 
 interface WithdrawViewProps {
+  deposit: DepositObj
   setIsModalOpen: (isOpen: boolean) => void;
-  selectedDepositBalance: ethers.BigNumber;
 }
 
 const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) => void }> = (
   {onModalClose,
-    selectedDepositBalance,
+    deposit,
     setIsModalOpen
     }) =>
 {
 
-  const {store, dispatch} = useFinancialData();
-  const walletAddress = useAddress();
   const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
   const handleExtendDepositActionChange = (initiated) => {
     setExtendDepositActionInitiated(initiated);
@@ -29,6 +25,8 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
   const closeModalAndPassData = () => {
     setIsModalOpen(false);
   };
+
+  const selectedDepositBalance = deposit.positionPrincipal.add(deposit.positionUsdcInterest);
 
 
 
@@ -73,7 +71,7 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                 </div>
                 <div className="flex flex-row  justify-between cursor-pointer" >
                   <span className="">ETH to receive</span>
-                  <span>{} ETH
+                  <span>{formatWad(deposit.positionEthYield, 6)} ETH
                       </span>
                 </div>
                 <div className="flex flex-row  justify-between">
@@ -95,6 +93,7 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
               action={
                 async (usdc) =>
               {
+                // @ts-ignore
                 return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
               }}>
                 Withdraw Deposit
