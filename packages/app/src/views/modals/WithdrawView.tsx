@@ -49,7 +49,6 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
     })}, [walletAddress, getActiveLendingPools]);
   const selectedDepositBalance = deposit.positionPrincipal.add(deposit.positionUsdcInterest);
 
-
   useEffect(() => {
     if (activeLendingPoolsLoading) {
       return;
@@ -123,6 +122,7 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                               setLocalError('');
                               // @ts-ignore
                               // @ts-ignore
+                // @ts-ignore
                 return await lendingPlatform.contractWrapper.writeContract.withdraw(toEthDate(deposit.endDate),selectedPoolShareTokenAmount);
                             }}
                           onSuccess={
