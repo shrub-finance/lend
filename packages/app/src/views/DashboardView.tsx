@@ -203,7 +203,7 @@ export const DashboardView: FC = ({}) => {
                       setIsModalOpen={setWithdrawModalOpen}
                      />
                   </Modal>
-                  {/*modals deposit modal*/}
+                  {/*deposit modal*/}
                   <Modal isOpen={extendDepositModalOpen} onClose={() => setExtendDepositModalOpen(false)} >
                     <ExtendDepositView
                       deposit={selectedDeposit}
@@ -216,7 +216,7 @@ export const DashboardView: FC = ({}) => {
                       setShowAPYSection={setShowAPYSection}
                     />
                   </Modal>
-                  {/*modals borrow modal*/}
+                  {/*borrow modal*/}
                   <Modal isOpen={extendBorrowModalOpen} onClose={() => setExtendBorrowModalOpen(false)} >
                     <ExtendBorrowView
                       onModalClose={handleExtendBorrow}
@@ -337,6 +337,12 @@ export const DashboardView: FC = ({}) => {
                                             {storeDeposit.status === 'extended' && (
                                                 <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>Extended</span>
                                             )}
+                                          {storeDeposit.status === 'withdrawing' && (
+                                            <span className=" ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full"><span className="w-2 h-2 me-1 bg-pink-500 rounded-full"></span>Withdrawing</span>
+                                          )}
+                                          {storeDeposit.status === 'withdrawn' && (
+                                            <span className=" ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full"><span className="w-2 h-2 me-1 bg-pink-500 rounded-full"></span>Withdrawn</span>
+                                          )}
                                         </p>
                                       ) : (
                                         <p className="text-sm">
@@ -373,6 +379,7 @@ export const DashboardView: FC = ({}) => {
                                           {/*Corresponding modal at the top*/}
                                           Extend
                                         </button>
+                                        {!storeDeposit.lendingPool.finalized ?
                                         <a onMouseOver={() => setCurrentHovered(index)}
                                            onMouseOut={() => setCurrentHovered(null)} href='https://app.uniswap.org/'
                                            target='_blank' type='button'
@@ -381,18 +388,19 @@ export const DashboardView: FC = ({}) => {
                                                  className='mr-2' /> :
                                           <Image src='/up-right-arrow.svg' alt='down arrow' width={20} height={20}
                                                  className='mr-2' />} Trade</a>
-                                        {/*{item.lendingPool.finalized && */}
+                                       :
                                           <button type='button'
                                                   style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
                                                 // disabled={}
                                                 onClick={() => {
                                                   setWithdrawModalOpen(true);
+                                                  setSelectedDeposit(deposit);
                                                 }}>
                                           {/*Corresponding modal at the top*/}
                                           Withdraw
                                         </button>
-                                         {/*}*/}
+                                         }
                                       </div>
                                     </td>
                                   </tr>
@@ -515,7 +523,7 @@ export const DashboardView: FC = ({}) => {
                                       </button>
                                       <button type="button"
                                               style={{ visibility: storeBorrow.tempData || storeBorrow.status  ? 'hidden' : 'visible' }}
-                                              className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5      ">
+                                              className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5">
                                         Repay
                                       </button>
                                     </div>

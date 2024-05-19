@@ -28,7 +28,7 @@ const Deposit: NextPage = (props) => {
   return (
     <>
       <Head>
-        <title>Shrub Deposit - Deposit</title>
+        <title>Shrub Lend - Deposit</title>
         <meta
           name="description"
           content="Deposit"

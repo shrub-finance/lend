@@ -16,10 +16,9 @@ import {
   Web3Button
 } from '@thirdweb-dev/react';
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
-import { useLazyQuery } from '@apollo/client';
-import { ACTIVE_LENDINGPOOLS_QUERY } from '../../constants/queries';
 import {Deposit, DepositObj} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
+import useActiveLendingPools from '../../hooks/useActiveLendingPools';
 
 interface ExtendDepositSummaryProps {
   deposit: DepositObj;
@@ -37,18 +36,16 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
     onExtendDepositActionChange
   }
 ) => {
-  const [
+  const {
     getActiveLendingPools,
-    {
-      loading: activeLendingPoolsLoading,
-      error: activeLendingPoolsError,
-      data: activeLendingPoolsData,
-      startPolling: activeLendingPoolsStartPolling,
-      stopPolling: activeLendingPoolsStopPolling,
-    },
-  ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
+    activeLendingPoolsLoading,
+    activeLendingPoolsError,
+    activeLendingPoolsData,
+    activeLendingPoolsStartPolling,
+    activeLendingPoolsStopPolling,
+  } = useActiveLendingPools();
 
-  const {store, dispatch} = useFinancialData();
+  const {dispatch} = useFinancialData();
   const walletAddress = useAddress();
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
   const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
@@ -65,19 +62,16 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
     error: errorAllowance
   } = useContractRead(usdc, "allowance", [walletAddress, lendingPlatformAddress]);
 
-
   useEffect(() => {
     if (!walletAddress) return;
     getActiveLendingPools().then().catch(error => {
       console.error("Failed to fetch active lending pools:", error);
     })}, [walletAddress, getActiveLendingPools]);
 
-
   useEffect(() => {
     if (activeLendingPoolsLoading) {
         return;
     }}, [activeLendingPoolsLoading]);
-
 
   useEffect(() => {
     onExtendDepositActionChange(extendDepositActionInitiated);
@@ -197,7 +191,6 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                        isDisabled={extendDepositActionInitiated}
                        className="web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
                        action={
-
                          async (lendingPlatform) =>
                          {
                            // @ts-ignore
@@ -318,10 +311,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                    },
                                });
                            }
-
                            setExtendDepositActionInitiated(true)
-
-
                        }}
                        onError={(e) => {
                          handleErrorMessages({err: e});

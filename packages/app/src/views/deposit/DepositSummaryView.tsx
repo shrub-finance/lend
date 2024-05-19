@@ -1,5 +1,5 @@
 import {FC, useEffect, useState} from "react"
-import {useAddress, useBalance, useContract, useContractRead, useContractWrite, Web3Button} from "@thirdweb-dev/react"
+import {useAddress, useBalance, useContract, useContractRead, Web3Button} from "@thirdweb-dev/react"
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts"
 import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods"
 import {BigNumber, ethers} from "ethers"
@@ -7,9 +7,8 @@ import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages"
 import Image from "next/image";
 import {useRouter} from "next/router"
 import { useFinancialData } from '../../components/FinancialDataContext'
-import { useLazyQuery } from '@apollo/client'
-import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries'
 import { Deposit } from '../../types/types'
+import useActiveLendingPools from "hooks/useActiveLendingPools"
 
 
 interface LendSummaryViewProps {
@@ -26,16 +25,14 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const handleViewDash = async () => {
     await router.push('/dashboard');
   };
-  const [
+  const {
     getActiveLendingPools,
-    {
-      loading: activeLendingPoolsLoading,
-      error: activeLendingPoolsError,
-      data: activeLendingPoolsData,
-      startPolling: activeLendingPoolsStartPolling,
-      stopPolling: activeLendingPoolsStopPolling,
-    },
-  ] = useLazyQuery(ACTIVE_LENDINGPOOLS_QUERY);
+    activeLendingPoolsLoading,
+    activeLendingPoolsError,
+    activeLendingPoolsData,
+    activeLendingPoolsStartPolling,
+    activeLendingPoolsStopPolling,
+  } = useActiveLendingPools();
 
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);

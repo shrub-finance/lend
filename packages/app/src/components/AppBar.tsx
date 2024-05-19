@@ -21,11 +21,11 @@ export const AppBar: React.FC = () => {
         </div>
         <div className="navbar-start">
           <div className="hidden md:inline-flex align-items-center justify-items gap-4">
-            <NavElement
-              label="Dashboard"
-              href="/dashboard"
-              navigationStarts={() => setIsNavOpen(false)}
-            />
+            {/*<NavElement*/}
+            {/*  label="Dashboard"*/}
+            {/*  href="/dashboard"*/}
+            {/*  navigationStarts={() => setIsNavOpen(false)}*/}
+            {/*/>*/}
         <NavElement
           label="Deposit"
           href="/deposit"
