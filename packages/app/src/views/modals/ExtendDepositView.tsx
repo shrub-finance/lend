@@ -5,32 +5,24 @@ import ExtendDepositSummaryView from './ExtendDepositSummaryView';
 import {ethers} from "ethers";
 import {formatLargeUsdc, formatPercentage} from "../../utils/ethMethods";
 import {useFinancialData} from "../../components/FinancialDataContext";
+import {DepositObj} from "../../types/types";
 
 interface ExtendDepositViewProps {
+  deposit: DepositObj;
   timestamp: number;
   setTimestamp: (timestamp: number) => void;
   showAPYSection: boolean;
   setShowAPYSection: (show: boolean) => void;
-  selectedDepositBalance: ethers.BigNumber;
-  selectedDepositTermDate: Date;
-  selectedPoolShareTokenAmount: ethers.BigNumber;
-  selectedTokenSupply: ethers.BigNumber;
-  selectedTotalLendingPoolEthYield: ethers.BigNumber;
   estimatedAPY: ethers.BigNumber;
   setIsModalOpen: (isOpen: boolean) => void;
-  selectedPoolTokenId: string;
 }
 
 const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date: Date) => void }> = ({
+                                                  deposit,
                                                  timestamp,
                                                  setTimestamp,
                                                  showAPYSection,
                                                  setShowAPYSection,
-                                                 selectedDepositBalance,
-                                                 selectedDepositTermDate,
-                                                 selectedPoolShareTokenAmount,
-                                                 selectedTokenSupply,
-                                                 selectedTotalLendingPoolEthYield,
                                                  estimatedAPY,
                                                  setIsModalOpen,
                                                  onModalClose
@@ -41,7 +33,7 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
     setShowSummary(false)
   };
   const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
-  const handleExtendDepositActionChange = (initiated) => {
+  const handleExtendDepositActionChange = (initiated: boolean) => {
     setExtendDepositActionInitiated(initiated);
   };
   const closeModalAndPassData = () => {
@@ -74,7 +66,7 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
                 <span className="label-text text-shrub-blue">Amount Being Extended</span>
               </label>
               <div className='w-full text-xl font-semibold flex flex-row'>
-                <span className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(selectedDepositBalance)} USDC</span>
+                <span className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(deposit.positionPrincipal.add(deposit.positionUsdcInterest))} USDC</span>
                 <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10} height={10} />
               </div>
             </div>
@@ -84,7 +76,7 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
               <span className="label-text text-shrub-blue">New Lockup Period</span>
             </label>
             <ul className="flex flex-row">
-              {store.activePoolTimestamps.filter(activePoolTimestamp => activePoolTimestamp > selectedDepositTermDate).map((activePoolTimestamp) => (
+              {store.activePoolTimestamps.filter(activePoolTimestamp => activePoolTimestamp > deposit.endDate).map((activePoolTimestamp) => (
                 <li key={activePoolTimestamp.toISOString()} className="mr-4">
                   <input
                     type="radio"
@@ -136,13 +128,9 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
   </div>
         :
       <ExtendDepositSummaryView
-        depositAmountBeingExtended={selectedDepositBalance}
+        deposit={deposit}
         estimatedAPY={estimatedAPY}
         newTimestamp={fromEthDate(timestamp)}
-        oldTimestamp={selectedDepositTermDate}
-        poolShareTokenAmount={selectedPoolShareTokenAmount}
-        totalLendingPoolEthYield={selectedTotalLendingPoolEthYield}
-        tokenSupply={selectedTokenSupply}
         onBackExtend={handleExtendDepositBack}
         onExtendDepositActionChange={handleExtendDepositActionChange}
       />

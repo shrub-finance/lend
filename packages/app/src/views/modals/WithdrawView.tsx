@@ -4,48 +4,35 @@ import {
   formatLargeUsdc,
   formatPercentage,
   formatWad,
-  fromEthDate,
   toEthDate,
   truncateEthAddress,
 } from '../../utils/ethMethods';
-import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
-import { ethers } from 'ethers';
-import {
-  useAddress, useContract, Web3Button,
-} from '@thirdweb-dev/react';
-import {useFinancialData} from "../../components/FinancialDataContext";
+import { lendingPlatformAbi, lendingPlatformAddress} from '../../utils/contracts';
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
 import { Deposit } from '../../types/types';
 import useActiveLendingPools from '../../hooks/useActiveLendingPools';
+import { useAddress, Web3Button } from '@thirdweb-dev/react';
+import {DepositObj} from "../../types/types";
+import { useFinancialData } from '../../components/FinancialDataContext';
 
 interface WithdrawViewProps {
+  deposit: DepositObj
   setIsModalOpen: (isOpen: boolean) => void;
-  selectedDepositBalance: ethers.BigNumber;
-  selectedDepositTermDate: Date;
-  selectedPoolShareTokenAmount: ethers.BigNumber;
-  selectedYieldEarned: ethers.BigNumber;
-  estimatedAPY: ethers.BigNumber;
 }
 
 const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) => void }> = (
   {
-    selectedDepositBalance,
-    setIsModalOpen,
-    selectedDepositTermDate,
-    selectedPoolShareTokenAmount,
-    selectedYieldEarned,
-    estimatedAPY
+    deposit,
+    setIsModalOpen
     }) =>
 {
 
-  const {store, dispatch} = useFinancialData();
+  const closeModalAndPassData = () => {setIsModalOpen(false);};
   const walletAddress = useAddress();
-  const closeModalAndPassData = () => {
-    setIsModalOpen(false);
-  };
   const [localError, setLocalError] = useState('');
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [withdrawActionInitiated, setWithdrawActionInitiated] = useState(false);
+  const {dispatch} = useFinancialData();
   const {
     getActiveLendingPools,
     activeLendingPoolsLoading,
@@ -54,21 +41,20 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
     activeLendingPoolsStartPolling,
     activeLendingPoolsStopPolling,
   } = useActiveLendingPools();
-
+  const estimatedAPY = "5"
   useEffect(() => {
     if (!walletAddress) return;
     getActiveLendingPools().then().catch(error => {
       console.error("Failed to fetch active lending pools:", error);
     })}, [walletAddress, getActiveLendingPools]);
+  const selectedDepositBalance = deposit.positionPrincipal.add(deposit.positionUsdcInterest);
+
 
   useEffect(() => {
     if (activeLendingPoolsLoading) {
       return;
     }}, [activeLendingPoolsLoading]);
 
-  console.log(toEthDate(selectedDepositTermDate).toString());
-  console.log(selectedDepositTermDate.toLocaleString());
-  console.log(activeLendingPoolsData);
 
   return (
     <>
@@ -95,8 +81,8 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                      height='40' />
             </div>
             <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-              Withdraw will exchange your, <span className='font-bold'>{formatWad(selectedPoolShareTokenAmount, 6)}</span>  pool share token from the <span className='font-bold'>{}</span> lending pool date of <span
-              className='font-bold'>{selectedDepositTermDate.toLocaleString()} </span> for <span className='font-bold'>{formatLargeUsdc(selectedDepositBalance)} USDC</span>, and <span className='font-bold'>{formatWad(selectedYieldEarned, 6)} ETH
+              Withdraw will exchange your, <span className='font-bold'>{formatWad(deposit.lendingPoolTokenAmount, 6)}</span>  pool share token from the <span className='font-bold'>{}</span> lending pool date of <span
+              className='font-bold'>{deposit.endDate.toLocaleString()} </span> for <span className='font-bold'>{formatLargeUsdc(selectedDepositBalance)} USDC</span>, and <span className='font-bold'>{formatWad(deposit.positionEthYield, 6)} ETH
               </span>.</p>
             </div>
 
@@ -109,9 +95,9 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                   <span className=''>USDC to receive</span>
                   <span>{formatLargeUsdc(selectedDepositBalance)} USDC</span>
                 </div>
-                <div className='flex flex-row  justify-between cursor-pointer'>
-                  <span className=''>ETH to receive</span>
-                  <span>{formatWad(selectedYieldEarned, 6)} ETH
+                <div className="flex flex-row  justify-between cursor-pointer" >
+                  <span className="">ETH to receive</span>
+                  <span>{formatWad(deposit.positionEthYield, 6)} ETH
                       </span>
                 </div>
                 <div className='flex flex-row  justify-between'>
@@ -123,7 +109,7 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                 </div>
                 <div className='flex flex-row  justify-between'>
                   <span className=''>End Date</span>
-                  <span >{selectedDepositTermDate.toLocaleString()}</span>
+                  <span >{deposit.endDate.toLocaleString()}</span>
                 </div>
 
               </div>
@@ -136,14 +122,15 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                             async (lendingPlatform) => {
                               setLocalError('');
                               // @ts-ignore
-                              return await lendingPlatform.contractWrapper.writeContract.withdraw(toEthDate(selectedDepositTermDate),selectedPoolShareTokenAmount);
+                              // @ts-ignore
+                return await lendingPlatform.contractWrapper.writeContract.withdraw(toEthDate(deposit.endDate),selectedPoolShareTokenAmount);
                             }}
                           onSuccess={
                             async (tx) => {
                               setLocalError("");
                               const filteredLendingPools =
                                 activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
-                                  item => item.timestamp === toEthDate(selectedDepositTermDate).toString(),
+                                  item => item.timestamp === toEthDate(deposit.endDate).toString(),
                                 );
                               const matchedLendingPool =
                                 filteredLendingPools.length > 0
@@ -165,7 +152,7 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                                   totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
                                   __typename: matchedLendingPool.__typename,
                                 },
-                                timestamp: toEthDate(selectedDepositTermDate),
+                                timestamp: toEthDate(deposit.endDate),
                                 updated: Math.floor(Date.now() / 1000),
                                 tempData: true
                               };
@@ -219,7 +206,7 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                             console.log(activeLendingPoolsData);
                             const filteredLendingPools =
                               activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
-                                item => item.timestamp === toEthDate(selectedDepositTermDate).toString(),
+                                item => item.timestamp === toEthDate(deposit.endDate).toString(),
                               );
                             const matchedLendingPool =
                               filteredLendingPools.length > 0
