@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import {et} from "date-fns/locale";
 
 
-export type PendingStatuses = "pending" | "confirmed" | "failed" | "extending" | "extended";
+export type PendingStatuses = "pending" | "confirmed" | "failed" | "extending" | "extended" |"withdrawing" | "withdrawn";
 
 export type Borrow = {
   id?: string,

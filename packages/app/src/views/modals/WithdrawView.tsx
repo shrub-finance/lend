@@ -24,35 +24,28 @@ interface WithdrawViewProps {
   selectedDepositTermDate: Date;
   selectedPoolShareTokenAmount: ethers.BigNumber;
   selectedYieldEarned: ethers.BigNumber;
+  estimatedAPY: ethers.BigNumber;
 }
 
 const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) => void }> = (
-  {onModalClose,
+  {
     selectedDepositBalance,
     setIsModalOpen,
     selectedDepositTermDate,
     selectedPoolShareTokenAmount,
-    selectedYieldEarned
+    selectedYieldEarned,
+    estimatedAPY
     }) =>
 {
 
   const {store, dispatch} = useFinancialData();
   const walletAddress = useAddress();
-  const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
-  const handleExtendDepositActionChange = (initiated) => {
-    setExtendDepositActionInitiated(initiated);
-  };
   const closeModalAndPassData = () => {
     setIsModalOpen(false);
   };
   const [localError, setLocalError] = useState('');
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [withdrawActionInitiated, setWithdrawActionInitiated] = useState(false);
-  const {
-    contract: lendingPlatform,
-    isLoading: lendingPlatformIsLoading,
-    error: lendingPlatformError,
-  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
   const {
     getActiveLendingPools,
     activeLendingPoolsLoading,
@@ -61,6 +54,21 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
     activeLendingPoolsStartPolling,
     activeLendingPoolsStopPolling,
   } = useActiveLendingPools();
+
+  useEffect(() => {
+    if (!walletAddress) return;
+    getActiveLendingPools().then().catch(error => {
+      console.error("Failed to fetch active lending pools:", error);
+    })}, [walletAddress, getActiveLendingPools]);
+
+  useEffect(() => {
+    if (activeLendingPoolsLoading) {
+      return;
+    }}, [activeLendingPoolsLoading]);
+
+  console.log(toEthDate(selectedDepositTermDate).toString());
+  console.log(selectedDepositTermDate.toLocaleString());
+  console.log(activeLendingPoolsData);
 
   return (
     <>
@@ -135,7 +143,7 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                               setLocalError("");
                               const filteredLendingPools =
                                 activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
-                                  item => item.timestamp === toEthDate(oldTimestamp).toString(),
+                                  item => item.timestamp === toEthDate(selectedDepositTermDate).toString(),
                                 );
                               const matchedLendingPool =
                                 filteredLendingPools.length > 0
@@ -144,9 +152,9 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                               const newDepositWithdraw: Deposit = {
                                 id: `${matchedLendingPool.id}-withdraw`,
                                 status: "pending",
-                                depositsUsdc: depositAmountBeingExtended.mul(-1).toString(),
+                                depositsUsdc: selectedDepositBalance.mul(-1).toString(),
                                 apy: formatPercentage(estimatedAPY),
-                                currentBalanceOverride: depositAmountBeingExtended.mul(-1).toString(),
+                                currentBalanceOverride: selectedDepositBalance.mul(-1).toString(),
                                 interestEarnedOverride: "0",
                                 lendingPool: {
                                   id: matchedLendingPool.id,
@@ -157,21 +165,67 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                                   totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
                                   __typename: matchedLendingPool.__typename,
                                 },
-                                timestamp: toEthDate(oldTimestamp),
+                                timestamp: toEthDate(selectedDepositTermDate),
                                 updated: Math.floor(Date.now() / 1000),
                                 tempData: true
                               };
+                              dispatch({
+                                type: "ADD_LEND_POSITION",
+                                payload: newDepositWithdraw,
+                              });
+                              dispatch({
+                                type: "UPDATE_LEND_POSITION_STATUS",
+                                payload: {
+                                  id: matchedLendingPool.id,
+                                  status: "withdrawing",
+                                  tempData: true
+                                },
+                              });
                               try {
                                 const receipt = await tx.wait();
                                 if(!receipt.status) {
                                   throw new Error("Transaction failed")
                                 }
+                                dispatch({
+                                  type: "UPDATE_LEND_POSITION_STATUS",
+                                  payload: {
+                                    id: `${matchedLendingPool.id}-withdraw`,
+                                    status: "confirmed",
+                                    tempData: true
+                                  },
+                                });
+                                dispatch({
+                                  type: "UPDATE_LEND_POSITION_STATUS",
+                                  payload: {
+                                    id: matchedLendingPool.id,
+                                    status: "withdrawn",
+                                    tempData: true
+                                  },
+                                });
                               } catch (e) {
-                                console.log("Transaction failed:", e)
+                                console.log("Transaction failed:", e);
+                                dispatch({
+                                  type: "UPDATE_LEND_POSITION_STATUS",
+                                  payload: {
+                                    id: `${matchedLendingPool.id}-withdraw`,
+                                    status: "failed",
+                                    tempData: true
+                                  },
+                                });
                               }
                               setWithdrawActionInitiated(true);
                             }}
                           onError={(e) => {
+                            console.log(activeLendingPoolsData);
+                            const filteredLendingPools =
+                              activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
+                                item => item.timestamp === toEthDate(selectedDepositTermDate).toString(),
+                              );
+                            const matchedLendingPool =
+                              filteredLendingPools.length > 0
+                                ? filteredLendingPools[0]
+                                : null;
+                            console.log(filteredLendingPools , matchedLendingPool);
                             handleErrorMessages({err: e});
                           }}>
                 {!withdrawActionInitiated ?'Begin Withdraw': 'Withdraw Order Submitted'}

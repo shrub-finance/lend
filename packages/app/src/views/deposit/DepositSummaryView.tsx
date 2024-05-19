@@ -1,5 +1,5 @@
 import {FC, useEffect, useState} from "react"
-import {useAddress, useBalance, useContract, useContractRead, useContractWrite, Web3Button} from "@thirdweb-dev/react"
+import {useAddress, useBalance, useContract, useContractRead, Web3Button} from "@thirdweb-dev/react"
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts"
 import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods"
 import {BigNumber, ethers} from "ethers"

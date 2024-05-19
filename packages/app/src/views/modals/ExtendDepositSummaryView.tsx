@@ -45,7 +45,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
     activeLendingPoolsStopPolling,
   } = useActiveLendingPools();
 
-    const {store, dispatch} = useFinancialData();
+  const {dispatch} = useFinancialData();
   const walletAddress = useAddress();
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
   const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
@@ -62,19 +62,16 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
     error: errorAllowance
   } = useContractRead(usdc, "allowance", [walletAddress, lendingPlatformAddress]);
 
-
   useEffect(() => {
     if (!walletAddress) return;
     getActiveLendingPools().then().catch(error => {
       console.error("Failed to fetch active lending pools:", error);
     })}, [walletAddress, getActiveLendingPools]);
 
-
   useEffect(() => {
     if (activeLendingPoolsLoading) {
         return;
     }}, [activeLendingPoolsLoading]);
-
 
   useEffect(() => {
     onExtendDepositActionChange(extendDepositActionInitiated);
