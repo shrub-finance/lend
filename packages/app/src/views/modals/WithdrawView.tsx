@@ -123,7 +123,7 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                               // @ts-ignore
                               // @ts-ignore
                 // @ts-ignore
-                return await lendingPlatform.contractWrapper.writeContract.withdraw(toEthDate(deposit.endDate),selectedPoolShareTokenAmount);
+                return await lendingPlatform.contractWrapper.writeContract.withdraw(toEthDate(deposit.endDate),deposit.lendingPoolTokenAmount);
                             }}
                           onSuccess={
                             async (tx) => {

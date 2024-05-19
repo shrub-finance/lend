@@ -169,8 +169,6 @@ export const DashboardView: FC = ({}) => {
   //   (newlyAddedDeposit.lendingPool.totalPrincipal + newlyAddedDeposit.lendingPool.totalUsdcInterest +
   //     (newlyAddedDeposit.lendingPool.totalEthYield * ethPrice));
 
-  console.log(store);
-
   return (
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col ">
