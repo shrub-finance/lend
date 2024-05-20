@@ -272,7 +272,6 @@ export const DashboardView: FC = ({}) => {
                             <tbody className='text-lg'>
                             {store?.deposits?.sort((a, b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
                                 (storeDeposit, index) => {
-                                  // console.log(storeDeposit);
                                   let lendingPoolTokenSupply: ethers.BigNumber;
                                   let lendingPoolTokenAmount: ethers.BigNumber;
                                   let positionEthYield: ethers.BigNumber;
@@ -351,9 +350,7 @@ export const DashboardView: FC = ({}) => {
                                       )}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
-                                      {
-                                          formatLargeUsdc(interestEarned)
-                                      }
+                                      {formatLargeUsdc(interestEarned)}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold">
                                       {formatLargeUsdc(netDeposits)}{" "} USDC
@@ -369,9 +366,9 @@ export const DashboardView: FC = ({}) => {
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className='flex items-center justify-center space-x-2 h-full p-2'>
                                         <button type='button'
-                                                style={{ visibility: storeDeposit.amount && !['extending', 'extended', 'failed'].includes(storeDeposit.status) ? 'visible' : 'hidden' }}
+                                                style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
-                                                disabled={fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).getTime() === store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime()}
+                                                disabled={storeDeposit.lendingPool.timestamp && fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).getTime() === store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime()}
                                                 onClick={() => {
                                                   setExtendDepositModalOpen(true);
                                                   setSelectedDeposit(deposit);
@@ -383,16 +380,19 @@ export const DashboardView: FC = ({}) => {
                                         <a onMouseOver={() => setCurrentHovered(index)}
                                            onMouseOut={() => setCurrentHovered(null)} href='https://app.uniswap.org/'
                                            target='_blank' type='button'
-                                           className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5      '>{currentHovered === index ?
+                                           className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5'
+                                           style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
+                                        >
+                                          {currentHovered === index ?
                                           <Image src='/up-right-arrow-light.svg' alt='down arrow' width={20} height={20}
                                                  className='mr-2' /> :
                                           <Image src='/up-right-arrow.svg' alt='down arrow' width={20} height={20}
-                                                 className='mr-2' />} Trade</a>
+                                                 className='mr-2' />}
+                                          Trade</a>
                                        :
                                           <button type='button'
                                                   style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
-                                                // disabled={}
                                                 onClick={() => {
                                                   setWithdrawModalOpen(true);
                                                   setSelectedDeposit(deposit);
