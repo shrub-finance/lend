@@ -40,10 +40,12 @@ export function createLendingPool(
 
 export function lendingPoolDeposit(
     lendingPool: LendingPool,
-    amount: BigInt
+    principalAmount: BigInt,
+    interestAmount: BigInt,
 ): LendingPool {
-    lendingPool.totalPrincipal = lendingPool.totalPrincipal.plus(amount);
-    lendingPool.save()
+    lendingPool.totalPrincipal = lendingPool.totalPrincipal.plus(principalAmount);
+    lendingPool.totalUsdcInterest = lendingPool.totalUsdcInterest.plus(interestAmount);
+    lendingPool.save();
     return lendingPool;
 }
 
