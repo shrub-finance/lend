@@ -456,16 +456,20 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint40 _timestamp,
         uint256 _poolShareTokenAmount
     ) external nonReentrant {
+        console.log("running withdraw - _timestamp: %s, _poolShareTokenAmount: %s", _timestamp, _poolShareTokenAmount);
         require(lendingPools[_timestamp].finalized, "Pool must be finalized before withdraw");
-        withdrawUnchecked(_timestamp, _poolShareTokenAmount);
+        (uint usdcWithdrawn, uint usdcInterest, uint ethWithdrawn) = withdrawUnchecked(_timestamp, _poolShareTokenAmount);
+        console.log("usdcWithdrawn: %s, usdcInterest: %s, ethWithdrawn: %s", usdcWithdrawn, usdcInterest, ethWithdrawn);
+        usdc.transfer(msg.sender, usdcInterest + usdcWithdrawn);
+        wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
     }
 
     function withdrawUnchecked(
         uint40 _timestamp,
         uint256 _poolShareTokenAmount
-    ) private returns (uint usdcWithdrawn, uint ethWithdrawn) {
+    ) private returns (uint usdcWithdrawn, uint usdcInterest, uint ethWithdrawn) {
         console.log("running withdrawUnchecked");
-        DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
+        DataTypes.LendingPool memory lendingPool = lendingPools[_timestamp];
 //        require(lendingPool.finalized, "Pool must be finalized before withdraw");
         require(
             _poolShareTokenAmount > 0,
@@ -504,16 +508,20 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // Burn the pool share tokens
         lendingPool.poolShareToken.burn(msg.sender, _poolShareTokenAmount);
 
-        // Update the total liquidity in the pool
+        // Update the lending pool amounts
         lendingPool.principal -= ShrubLendMath.usdcToWad(usdcPrincipalAmount);
         lendingPool.accumInterest -= ShrubLendMath.usdcToWad(usdcInterestAmount);
+        lendingPool.accumYield -= aethWithdrawalAmount;
 
-        // Transfer USDC and aETH to the user
-        usdc.transfer(msg.sender, usdcInterestAmount + usdcPrincipalAmount);
-        wrappedTokenGateway.withdrawETH(address(0), aethWithdrawalAmount, msg.sender);
+        // Save lendingPool to storage
+        lendingPools[_timestamp] = lendingPool;
+
+        // Transfer USDC principal and aETH yield to the user
+        // Actual transfer to happen in calling function
+//        wrappedTokenGateway.withdrawETH(address(0), aethWithdrawalAmount, msg.sender);
         emit Withdraw(msg.sender, address(lendingPool.poolShareToken), _poolShareTokenAmount, aethWithdrawalAmount, usdcPrincipalAmount, usdcInterestAmount);
 //        event Withdraw(address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcAmount);
-        return (usdcInterestAmount + usdcPrincipalAmount, aethWithdrawalAmount);
+        return (usdcPrincipalAmount, usdcInterestAmount, aethWithdrawalAmount);
     }
 
     // This runs after the collateralProvider has sent aETH to Shrub
@@ -747,9 +755,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // Check that newTimestamp is after currentTimestamp
         require(newTimestamp > currentTimestamp, "newTimestamp must be greater than currentTimestamp");
         // essentially perform a withdraw - the poolShareTokens are burned - aETH is sent to user
-        (uint usdcWithdrawn, uint ethWithdrawn) = withdrawUnchecked(currentTimestamp, tokenAmount);
+        (uint usdcWithdrawn, uint usdcInterest, uint ethWithdrawn) = withdrawUnchecked(currentTimestamp, tokenAmount);
         // essentially perform a deposit - USDC proceeds from the withdraw are deposited to the future timestamp
         deposit(newTimestamp, usdcWithdrawn);
+        // USDC interest needs to be contributed to the new lendingPool
+        lendingPools[newTimestamp].accumInterest += usdcInterest;
+        // Send ETH Yield to user
+        wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
     }
 
     function extendBorrow(
