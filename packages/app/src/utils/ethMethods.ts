@@ -60,12 +60,6 @@ export const timestamps = {
  * @return USDC as a formatted string
  */
 export function formatLargeUsdc(usdcInWad: ethers.BigNumberish) {
-    // const usdcInWadBN = ethers.BigNumber.from(usdcInWad)
-    // const divisionFactor = ethers.BigNumber.from(10).pow(12)
-    // const roundAmount = usdcInWadBN.gte(Zero) ?
-    //     ethers.BigNumber.from(5).mul(divisionFactor).div(10) :
-    //     ethers.BigNumber.from(5).mul(divisionFactor).div(10).mul(-1);
-    // return ethers.utils.formatUnits(usdcInWadBN.add(roundAmount).div(divisionFactor), 6)
   return formatWad(usdcInWad, 6);
 }
 

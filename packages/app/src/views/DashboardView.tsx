@@ -28,6 +28,7 @@ import ExtendBorrowView from './modals/ExtendBorrowView';
 import { oneMonth, sixMonth, threeMonth, twelveMonth, Zero } from '../constants';
 import useEthPriceFromChainlink from '../hooks/useEthPriceFromChainlink';
 import WithdrawView from './modals/WithdrawView';
+import RepayView from './modals/RepayView';
 export const DashboardView: FC = ({}) => {
 
   const wallet = useConnectedWallet();
@@ -69,7 +70,14 @@ export const DashboardView: FC = ({}) => {
   const [estimatedAPY, setEstimatedAPY] = useState(Zero);
   const [selectedDeposit, setSelectedDeposit] = useState<DepositObj | undefined>()
   const [selectedBorrow, setSelectedBorrow] = useState<BorrowObj | undefined>();
-  const [lastSnapshotDate, setLastSnapshotDate] = useState(new Date(0))
+  const [lastSnapshotDate, setLastSnapshotDate] = useState(new Date(0));
+  const [repayModalOpen, setRepayModalOpen] = useState(false);
+  const [selectedBorrowForRepay, setSelectedBorrowForRepay] = useState<BorrowObj | undefined>();
+
+
+  const handleRepay = () => {
+    setRepayModalOpen(false);
+  };
 
   useEffect(() => {
     getGlobalData();
@@ -195,6 +203,14 @@ export const DashboardView: FC = ({}) => {
                       </Link>
                     </span>
                   </div>
+                  {/* repay modal */}
+                  <Modal isOpen={repayModalOpen} onClose={() => setRepayModalOpen(false)} >
+                    <RepayView
+                      borrow={selectedBorrowForRepay}
+                      onModalClose={handleRepay}
+                      setIsModalOpen={setRepayModalOpen}
+                    />
+                  </Modal>
                   {/*withdraw modal*/}
                   <Modal isOpen={withdrawModalOpen} onClose={() => setWithdrawModalOpen(false)} >
                     <WithdrawView
@@ -486,6 +502,12 @@ export const DashboardView: FC = ({}) => {
                                         {storeBorrow.status === 'extended' && (
                                           <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>Extended</span>
                                         )}
+                                        {storeBorrow.status === 'repaying' && (
+                                          <span className="ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full"><span className="w-2 h-2 me-1 bg-pink-500 rounded-full"></span>Repaying</span>
+                                        )}
+                                        {storeBorrow.status === 'repaid' && (
+                                          <span className="ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full"><span className="w-2 h-2 me-1 bg-pink-500 rounded-full"></span>Repaid</span>
+                                        )}
                                       </p>
                                     ) : (
                                       <p className="text-sm">
@@ -522,6 +544,10 @@ export const DashboardView: FC = ({}) => {
                                         Extend
                                       </button>
                                       <button type="button"
+                                              onClick={() => {
+                                                setRepayModalOpen(true);
+                                                setSelectedBorrowForRepay(borrow);
+                                              }}
                                               style={{ visibility: storeBorrow.tempData || storeBorrow.status  ? 'hidden' : 'visible' }}
                                               className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5">
                                         Repay

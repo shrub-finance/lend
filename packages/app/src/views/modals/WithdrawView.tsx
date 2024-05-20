@@ -13,7 +13,7 @@ import { Deposit } from '../../types/types';
 import { useAddress, Web3Button } from '@thirdweb-dev/react';
 import {DepositObj} from "../../types/types";
 import { useFinancialData } from '../../components/FinancialDataContext';
-import { useLazyQuery, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { GET_LENDINGPOOL_QUERY } from '../../constants/queries';
 
 interface WithdrawViewProps {
