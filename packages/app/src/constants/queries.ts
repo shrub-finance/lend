@@ -63,6 +63,19 @@ export const ACTIVE_LENDINGPOOLS_QUERY = gql`
     }
 `;
 
+export const GET_LENDINGPOOL_QUERY = gql`
+    query GetLendingPool($lendingPool: ID!) {
+        lendingPool(id: $lendingPool) {
+            id
+            timestamp
+            totalPrincipal
+            totalEthYield
+            totalUsdcInterest
+            tokenSupply  
+        }
+    }
+`;
+
 export const GLOBAL_DATA_QUERY = gql`
     query GetGlobalData {
         globalData(id:1){

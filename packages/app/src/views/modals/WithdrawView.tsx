@@ -10,10 +10,11 @@ import {
 import { lendingPlatformAbi, lendingPlatformAddress} from '../../utils/contracts';
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
 import { Deposit } from '../../types/types';
-import useActiveLendingPools from '../../hooks/useActiveLendingPools';
 import { useAddress, Web3Button } from '@thirdweb-dev/react';
 import {DepositObj} from "../../types/types";
 import { useFinancialData } from '../../components/FinancialDataContext';
+import { useLazyQuery, useQuery } from '@apollo/client';
+import { GET_LENDINGPOOL_QUERY } from '../../constants/queries';
 
 interface WithdrawViewProps {
   deposit: DepositObj
@@ -33,26 +34,22 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [withdrawActionInitiated, setWithdrawActionInitiated] = useState(false);
   const {dispatch} = useFinancialData();
-  const {
-    getActiveLendingPools,
-    activeLendingPoolsLoading,
-    activeLendingPoolsError,
-    activeLendingPoolsData,
-    activeLendingPoolsStartPolling,
-    activeLendingPoolsStopPolling,
-  } = useActiveLendingPools();
-  const estimatedAPY = "5"
-  useEffect(() => {
-    if (!walletAddress) return;
-    getActiveLendingPools().then().catch(error => {
-      console.error("Failed to fetch active lending pools:", error);
-    })}, [walletAddress, getActiveLendingPools]);
   const selectedDepositBalance = deposit.positionPrincipal.add(deposit.positionUsdcInterest);
+  const estimatedAPY = "5"
+  const {
+        loading: lendingPoolLoading,
+        error: lendingPoolError,
+        data: lendingPoolData
+      }
+     = useQuery(GET_LENDINGPOOL_QUERY, {
+    variables: {
+      lendingPool: deposit.lendingPoolTokenAddress,
+    },
+  });
 
   useEffect(() => {
-    if (activeLendingPoolsLoading) {
-      return;
-    }}, [activeLendingPoolsLoading]);
+    console.log(lendingPoolData);
+  }, [lendingPoolData]);
 
 
   return (
@@ -115,34 +112,29 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
 
               <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
               <Web3Button contractAddress={lendingPlatformAddress} contractAbi={lendingPlatformAbi}
-                          isDisabled={withdrawActionInitiated}
+                          isDisabled={withdrawActionInitiated || lendingPoolLoading || !!lendingPoolError}
                           className='!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
                           action={
                             async (lendingPlatform) => {
                               setLocalError('');
                               // @ts-ignore
-                              // @ts-ignore
-                // @ts-ignore
-                return await lendingPlatform.contractWrapper.writeContract.withdraw(toEthDate(deposit.endDate),deposit.lendingPoolTokenAmount);
+                              return await lendingPlatform.contractWrapper.writeContract.withdraw(toEthDate(deposit.endDate),deposit.lendingPoolTokenAmount);
                             }}
                           onSuccess={
                             async (tx) => {
                               setLocalError("");
-                              const filteredLendingPools =
-                                activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
-                                  item => item.timestamp === toEthDate(deposit.endDate).toString(),
-                                );
-                              const matchedLendingPool =
-                                filteredLendingPools.length > 0
-                                  ? filteredLendingPools[0]
-                                  : null;
+                              if(!lendingPoolData  || !lendingPoolData.lendingPool) {
+                                return
+                              }
+                              const matchedLendingPool = lendingPoolData && lendingPoolData.lendingPool;
                               const newDepositWithdraw: Deposit = {
                                 id: `${matchedLendingPool.id}-withdraw`,
                                 status: "pending",
-                                depositsUsdc: selectedDepositBalance.mul(-1).toString(),
+                                depositsUsdc: deposit.depositsUsdc.mul(-1).toString(),
+                                withdrawsUsdc: deposit.withdrawsUsdc.mul(-1).toString(),
                                 apy: formatPercentage(estimatedAPY),
                                 currentBalanceOverride: selectedDepositBalance.mul(-1).toString(),
-                                interestEarnedOverride: "0",
+                                interestEarnedOverride: deposit.positionUsdcInterest.mul(-1).toString(),
                                 lendingPool: {
                                   id: matchedLendingPool.id,
                                   timestamp: matchedLendingPool.timestamp,
@@ -203,16 +195,6 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                               setWithdrawActionInitiated(true);
                             }}
                           onError={(e) => {
-                            console.log(activeLendingPoolsData);
-                            const filteredLendingPools =
-                              activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
-                                item => item.timestamp === toEthDate(deposit.endDate).toString(),
-                              );
-                            const matchedLendingPool =
-                              filteredLendingPools.length > 0
-                                ? filteredLendingPools[0]
-                                : null;
-                            console.log(filteredLendingPools , matchedLendingPool);
                             handleErrorMessages({err: e});
                           }}>
                 {!withdrawActionInitiated ?'Begin Withdraw': 'Withdraw Order Submitted'}
