@@ -37,33 +37,31 @@ export function handlePoolCreated(event: PoolCreated): void {
 }
 
 export function handleNewDeposit(event: NewDeposit): void {
-    log.info("NewDeposit: timestamp: {}, depositor: {}, amount: {}, tokenAmount: {}", [
-        event.params.timestamp.toString(),
+    log.info("NewDeposit: depositor: {}, principalAmount: {}, interestAmount: {}, tokenAmount: {}, poolShareTokenAddress: {}", [
         event.params.depositor.toHexString(),
-        event.params.amount.toString(),
-        event.params.tokenAmount.toString()
+        event.params.principalAmount.toString(),
+        event.params.interestAmount.toString(),
+        event.params.tokenAmount.toString(),
+        event.params.poolShareTokenAddress.toHexString()
     ]);
     let depositor = event.params.depositor;
-    let amount = event.params.amount.times(UsdcToWadRatio);
-    let timestamp = event.params.timestamp;
+    let principalAmount = event.params.principalAmount.times(UsdcToWadRatio);
+    let interestAmount = event.params.interestAmount.times(UsdcToWadRatio);
     let poolShareTokenAddress = event.params.poolShareTokenAddress;
     let tokenAmount = event.params.tokenAmount;
     // event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
     // Create User
     getUser(depositor);
     // Update Lending Pool with new USDC amounts
-        // totalUsdc
-        // usdcAvailable
-        // tokenSupply
     let lendingPool = getLendingPool(poolShareTokenAddress);
-    lendingPoolDeposit(lendingPool, amount);
+    lendingPoolDeposit(lendingPool, principalAmount, interestAmount);
 
     // Logic for handling the deposit part
     // Increment the totalSupply of tokens for the lendingPool
     lendingPoolIncrementTokenSupply(lendingPool, tokenAmount);
     // // Increment the number of tokens for the to
     let deposit = getDeposit(depositor, lendingPool);
-    incrementDeposit(deposit, amount, tokenAmount);
+    incrementDeposit(deposit, principalAmount.plus(interestAmount), tokenAmount);
 }
 
 export function handleNewBorrow(event: NewBorrow): void {

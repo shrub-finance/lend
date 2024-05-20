@@ -48,7 +48,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     address shrubTreasury;
 
-    event NewDeposit(uint40 timestamp, address poolShareTokenAddress, address depositor, uint256 amount, uint256 tokenAmount);
+    event NewDeposit(address poolShareTokenAddress, address depositor, uint256 principalAmount, uint256 interestAmount, uint256 tokenAmount);
     event NewBorrow(uint tokenId, uint40 timestamp, address borrower, uint256 collateral, uint256 principal, uint40 startDate, uint16 apy);
     event PartialRepayBorrow(uint tokenId, uint repaymentAmount, uint principalReduction);
     event RepayBorrow(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
@@ -388,6 +388,70 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         return true;
     }
 
+
+/**
+    * @notice internal logic to deposit funds into Shrub Lend platform
+    * @dev depositInternal runs all the calculations and the lendingPool modifications - calling functions are responsible for transfers
+    * @param timestamp - uint256 - the date until which the USDC deposit will be locked
+    * @param principalWad - uint256 - the amount of USDC (in Wad) which will be locked until the timestamp
+    * @param interestWad - uint256 - the amount of USDC (in Wad) which will be moved to the interest component of the lending Pool
+    * @return poolShareTokenAmount - uint256 - amount of poolShareTokens that were minted related to the deposit
+*/
+    function depositInternal(uint40 timestamp, uint256 principalWad, uint256 interestWad) internal returns (uint256 poolShareTokenAmount){
+        console.log("running depositInternal: timestamp: %s, principalWad: %s, interestWad: %s", timestamp, principalWad, interestWad);
+        require(validPool(timestamp), "Invalid pool");
+
+        // Transfers happen in calling functions
+
+//        uint256 poolShareTokenAmount;
+//        uint256 principalWad = ShrubLendMath.usdcToWad(principalAmount);
+//        uint256 interestWad = ShrubLendMath.usdcToWad(interestAmount);
+
+        DataTypes.LendingPool memory lendingPool = lendingPools[timestamp];
+
+        // Calculate total value of the pool in terms of USDC
+        uint256 accumYieldValueInUsdc = WadRayMath.wadMul(
+            lendingPool.accumYield,
+            getEthPrice()
+        );  // expressed in USDC (Wad)
+        console.log(
+            "lendingPool before values - principal: %s, accumInterest: %s, accumYieldValueInUsdc: %s",
+            lendingPool.principal,
+            lendingPool.accumInterest,
+            accumYieldValueInUsdc
+        );
+        uint256 totalPoolValue = lendingPool.principal + lendingPool.accumInterest + accumYieldValueInUsdc;  // expressed in USDC (Wad)
+
+        // If the pool does not exist or totalLiquidity is 0, user gets 1:1 poolShareTokens
+        console.log(
+            "totalPoolValue: %s, lpt.totalSupply(): %s",
+            totalPoolValue,
+            lendingPool.poolShareToken.totalSupply()
+        );
+        if (totalPoolValue == 0) {
+            poolShareTokenAmount = principalWad + interestWad;
+            console.log("PATH 1 - NEW");
+        } else {
+            // If the pool exists and has liquidity, calculate poolShareTokens based on the proportion of deposit to total pool value
+            console.log("PATH 2 - ESTABLISHED");
+            poolShareTokenAmount =
+                WadRayMath.wadDiv(
+                    WadRayMath.wadMul(
+                        principalWad + interestWad,
+                        lendingPool.poolShareToken.totalSupply()
+                    ),
+                    totalPoolValue
+                );
+        }
+        console.log("poolShareTokenAmount: %s", poolShareTokenAmount);
+        lendingPool.principal += principalWad;
+        lendingPool.accumInterest += interestWad;
+        lendingPool.poolShareToken.mint(msg.sender, poolShareTokenAmount);
+
+        // commit changes to storage
+        lendingPools[timestamp] = lendingPool;
+    }
+
 /**
     * @notice deposit funds into Shrub Lend platform
     * @dev USDC funds are locked in the shrub platform until the specified timestamp.
@@ -404,50 +468,14 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // Transfer USDC from sender to this contract
         usdc.transferFrom(msg.sender, address(this), _amount);
 
-        uint256 poolShareTokenAmount;
-        uint256 amountWad = ShrubLendMath.usdcToWad(_amount);
+        uint256 principalWad = ShrubLendMath.usdcToWad(_amount);
+        uint256 poolShareTokenAmount = depositInternal(_timestamp, principalWad, 0);
 
-        // Calculate total value of the pool in terms of USDC
-        uint256 accumYieldValueInUsdc = WadRayMath.wadMul(
-            lendingPools[_timestamp].accumYield,
-            getEthPrice()
-        );  // expressed in USDC (Wad)
-        console.log(
-            "lendingPool before values - principal: %s, accumInterest: %s, accumYieldValueInUsdc: %s",
-            lendingPools[_timestamp].principal,
-            lendingPools[_timestamp].accumInterest,
-            accumYieldValueInUsdc
-        );
-        uint256 totalPoolValue = lendingPools[_timestamp].principal + lendingPools[_timestamp].accumInterest + accumYieldValueInUsdc;  // expressed in USDC (Wad)
-
-        // If the pool does not exist or totalLiquidity is 0, user gets 1:1 poolShareTokens
-        console.log("totalPoolValue, _amount, lpt.totalSupply(), poolShareTokenAmount");
-        console.log(totalPoolValue);
-        console.log(_amount);
-        console.log(lendingPools[_timestamp].poolShareToken.totalSupply());
-        if (totalPoolValue == 0) {
-            poolShareTokenAmount = amountWad;
-            console.log("PATH 1 - NEW");
-        } else {
-            // If the pool exists and has liquidity, calculate poolShareTokens based on the proportion of deposit to total pool value
-            console.log("PATH 2 - ESTABLISHED");
-            poolShareTokenAmount =
-                WadRayMath.wadDiv(
-                    WadRayMath.wadMul(
-                        amountWad,
-                        lendingPools[_timestamp].poolShareToken.totalSupply()
-                    ),
-                    totalPoolValue
-                );
-        }
-        console.log(poolShareTokenAmount);
-        lendingPools[_timestamp].principal += amountWad;
-        lendingPools[_timestamp].poolShareToken.mint(msg.sender, poolShareTokenAmount);
         emit NewDeposit(
-            _timestamp,
             address(lendingPools[_timestamp].poolShareToken),
-            _msgSender(),
+            msg.sender,
             _amount,
+            0,
             poolShareTokenAmount
         );
     }
@@ -757,11 +785,19 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // essentially perform a withdraw - the poolShareTokens are burned - aETH is sent to user
         (uint usdcWithdrawn, uint usdcInterest, uint ethWithdrawn) = withdrawUnchecked(currentTimestamp, tokenAmount);
         // essentially perform a deposit - USDC proceeds from the withdraw are deposited to the future timestamp
-        deposit(newTimestamp, usdcWithdrawn);
-        // USDC interest needs to be contributed to the new lendingPool
-        lendingPools[newTimestamp].accumInterest += usdcInterest;
+        uint256 principalWad = ShrubLendMath.usdcToWad(usdcWithdrawn);
+        uint256 interestWad = ShrubLendMath.usdcToWad(usdcInterest);
+        uint256 poolShareTokenAmount = depositInternal(newTimestamp, principalWad, interestWad);
         // Send ETH Yield to user
         wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
+//        event NewDeposit(address poolShareTokenAddress, address depositor, uint256 principalAmount, uint256 interestAmount, uint256 tokenAmount);
+        emit NewDeposit(
+            address(lendingPools[newTimestamp].poolShareToken),
+            msg.sender,
+            usdcWithdrawn,
+            usdcInterest,
+            poolShareTokenAmount
+        );
     }
 
     function extendBorrow(

@@ -34,6 +34,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       allowUnlimitedContractSize: true,
       chainId: 1337,
+      gasPrice: 80e9,
       // chainId: 1337,
       // mining: {
       //   auto: false,
