@@ -59,6 +59,8 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
   const [approveAETHActionInitiated, setApproveAETHActionInitiated] = useState(false);
   const [extendBorrowActionInitiated, setExtendBorrowActionInitiated] = useState(false);
   const [erc20ApprovalNeeded, setErc20ApprovalNeeded] = useState('');
+  const [localError, setLocalError] = useState('');
+  const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
@@ -69,13 +71,6 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     isLoading: aethIsLoading,
     error: aethError,
   } = useContract(aethAddress, aethAbi);
-  const {
-    contract: lendingPlatform,
-    isLoading: lendingPlatformIsLoading,
-    error: lendingPlatformError,
-  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
-  const [localError, setLocalError] = useState('');
-  const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const {
     data: usdcAllowance,
     isLoading: usdcAllowanceIsLoading,
@@ -89,6 +84,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
   const ltv = borrow.collateral.isZero() || !ethPrice || ethPrice.isZero() ?
     BigNumber.from(0) :
     calcLtv(borrow.debt, borrow.collateral, ethPrice);
+
   useEffect(() => {
     console.log('running allowance useEffect');
     if (
@@ -253,8 +249,6 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                       </Web3Button>
                     )
                   }
-
-
                   {erc20ApprovalNeeded === 'none'
                     && (
                       <Web3Button contractAddress={lendingPlatformAddress} contractAbi={lendingPlatformAbi}
