@@ -41,6 +41,8 @@ import {Constants} from '../libraries/configuration/Constants.sol';
         uint16 SHRUB_INTEREST_FEE;  // Percentage of interest paid by the borrower that is allocated to Shrub Treasury (percentage)
         uint16 SHRUB_YIELD_FEE;  // Percentage of yield earned on aETH collateral that is allocated to Shrub Treasury (percentage)
         uint40 DEPOSIT_CUTOFF_THRESHOLD;  // Deposits to a Lending Pool must be made at least this much time before the endDate (duration seconds)
+        uint40 EARLY_REPAYMENT_THRESHOLD;  // Threshold before the endDate of a borrow when full repayment can be made with no penalty
+        uint16 EARLY_REPAYMENT_APY;  // APY for calculating the penalty of an early repayment
     }
 
 contract PlatformConfig is Ownable {
@@ -55,6 +57,8 @@ contract PlatformConfig is Ownable {
         config.MAX_LTV_FOR_EXTEND = 8000;
         config.LIQUIDATION_THRESHOLD = 8500;
         config.LIQUIDATION_BONUS = 1000;
+        config.EARLY_REPAYMENT_THRESHOLD = Constants.DAY * 30;
+        config.EARLY_REPAYMENT_APY = 500;
         config.SHRUB_INTEREST_FEE = 10;
         config.SHRUB_YIELD_FEE = 10;
         config.DEPOSIT_CUTOFF_THRESHOLD = Constants.DAY;

@@ -592,6 +592,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         bd.startDate = params.startDate;
         bd.endDate = params.timestamp;
         bd.principal = params.principal;
+        bd.originalPrincipal = params.originalPrincipal;
         bd.collateral = params.collateral;
         bd.apy = apy;
         uint tokenId = bpt.mint(params.borrower, bd);
@@ -653,6 +654,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
         borrowInternal(DataTypes.BorrowInternalParams({
             principal: _principal,
+            originalPrincipal: _principal,
             collateral: _collateral,
             ltv: _ltv,
             timestamp: _timestamp,
@@ -691,10 +693,21 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         emit PartialRepayBorrow(tokenId, repaymentAmount, principalReduction);
     }
 
+/**
+    * @notice internal function to repay a borrow
+    * @dev takes USDC payment to repay loan (debt+penalty), burns BPT, and updates accounting
+    * @dev collateral must be handled by calling functions
+    * @param tokenId - uint256 - tokenId of the BPT
+    * @param repayer - address - address of the account repaying the borrow
+    * @param beneficiary - address - address of the account to receive the collateral (only used for event)
+    * @param isExtend - bool - whether calling function is an extend - if it is there is no earlyRepaymentPenalty
+    * @return freedCollateral - uint256 - amount of collateral that is unlocked by this repayment
+*/
     function repayBorrowInternal(
         uint tokenId,
         address repayer,
-        address beneficiary
+        address beneficiary,
+        bool isExtend
     ) internal returns (uint freedCollateral) {
         console.log("Running repayBorrowInternal");
         // Check that repayer owns the bpt
@@ -707,6 +720,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        bd.collateral = _collateral;
 //        bd.apy = apy;
         uint interest = getBorrowInterest(tokenId);
+        uint earlyRepaymentPenalty = isExtend ? 0 : calcEarlyRepaymentPenalty(tokenId);
         console.log("interest: %s", interest);
         console.log("bd.principal: %s", bd.principal);
         console.log("msg.sender: %s has a balance of %s USDC", msg.sender, usdc.balanceOf(msg.sender));
@@ -717,7 +731,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         usdc.transferFrom(
             repayer,
             address(this),
-            bd.principal + interest
+            bd.principal + interest + earlyRepaymentPenalty
         );
         // Burn the BPT - NOTE: it must be also removed from tokensByTimestamp - This is done in other contract
         console.log("about to burn tokenId: %s", tokenId);
@@ -757,7 +771,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         address beneficiary
     ) public onlyBptOwner(tokenId) nonReentrant {
         // Convert collateral amount of aETH to ETH and Transfer ETH to the beneficiary
-        uint freedCollateral = repayBorrowInternal(tokenId, msg.sender, beneficiary);
+        uint freedCollateral = repayBorrowInternal(tokenId, msg.sender, beneficiary, false);
         wrappedTokenGateway.withdrawETH(address(0), freedCollateral, beneficiary);
         console.log("sending %s ETH to %s", freedCollateral, beneficiary);
     }
@@ -767,9 +781,27 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         address beneficiary
     ) public onlyBptOwner(tokenId) nonReentrant {
         // Convert collateral amount of aETH to ETH and Transfer ETH to the beneficiary
-        uint freedCollateral = repayBorrowInternal(tokenId, msg.sender, beneficiary);
+        uint freedCollateral = repayBorrowInternal(tokenId, msg.sender, beneficiary, false);
         aeth.transfer(beneficiary, freedCollateral);
         console.log("sending %s aETH to %s", freedCollateral, beneficiary);
+    }
+
+/**
+    * @notice Calculates the current earlyRepaymentPenalty in USDC for a borrow based on the lastSnapshotDate
+    * @dev USDC is transferred to the beneficiary in the amount of principal
+    * @dev EARLY_REPAYMENT_THRESHOLD and EARLY_REPAYMENT_APY from config are used in calculation
+    * @param tokenId - uint256 - tokenId of the BPT
+    * @return penalty - uint256 - amount of USDC (if any) owed as a penalty to fully repay a borrow
+*/
+    function calcEarlyRepaymentPenalty(uint tokenId) public view returns (uint penalty) {
+        DataTypes.BorrowData memory bd = bpt.getBorrow(tokenId);
+        if (lastSnapshotDate + config.EARLY_REPAYMENT_THRESHOLD >= bd.endDate) {
+            return 0;
+        }
+        penalty = PercentageMath.percentMul(
+            bd.originalPrincipal * (bd.endDate - lastSnapshotDate - config.EARLY_REPAYMENT_THRESHOLD),
+            config.EARLY_REPAYMENT_APY
+        ) / Constants.YEAR;
     }
 
     function extendDeposit(
@@ -847,6 +879,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        borrowInternal(newPrincipal, newCollateral, _ltv, newTimestamp, uint40(lastSnapshotDate), msg.sender, msg.sender);
         borrowInternal(DataTypes.BorrowInternalParams({
             principal: newPrincipal,
+            originalPrincipal: bd.originalPrincipal,
             collateral: newCollateral,
             ltv: _ltv,
             timestamp: newTimestamp,
@@ -857,7 +890,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         console.log("4 - platform aETH balance: %s", aeth.balanceOf(address(this)));
 //        borrow{value: newCollateral}(newPrincipal, newCollateral, _ltv, newTimestamp);
         console.log("extendBorrow-before-repay-loan eth: %s usdc: %s aeth: %s", msg.sender.balance, usdc.balanceOf(msg.sender), aeth.balanceOf(msg.sender));
-        uint freedCollateral = repayBorrowInternal(tokenId, msg.sender, msg.sender);
+        uint freedCollateral = repayBorrowInternal(tokenId, msg.sender, msg.sender, true);
         console.log("5 - platform aETH balance: %s", aeth.balanceOf(address(this)));
         console.log("msg.sender: %s, freedCollateral: %s, sender-aETH-balance: %s",
             msg.sender,
@@ -915,9 +948,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         aeth.transferFrom(msg.sender, address(this), newCollateral);
         borrowInternal(DataTypes.BorrowInternalParams({
             principal: debt,
+            originalPrincipal: loanDetails.originalPrincipal,
             collateral: newCollateral,
-        // TODO: ltv should be calculated to be the smallest valid
-        // TODO: the LTV to be provided to this method needs to be calculated - probably by a reusable method
             ltv: calculateSmallestValidLtv(getLtv(tokenId), true),
             timestamp: getNextActivePool(loanDetails.endDate),
             startDate: lastSnapshotDate,
@@ -930,7 +962,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint freedCollateral = repayBorrowInternal(
             tokenId,
             msg.sender,
-            msg.sender
+            msg.sender,
+            true
         );
         aeth.transfer(msg.sender, freedCollateral);
         if (flashLoanAmount > 0) {
