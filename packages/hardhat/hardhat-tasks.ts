@@ -290,7 +290,14 @@ task("repayBorrow", "add USDC to a lending pool")
         const beneficiary = taskArgs.beneficiary || borrowerAccount.address;
         // const parsedUsdc = ethers.parseUnits(repaymentAmount.toString(), 6);
 
-        const debt = await lendingPlatform.getBorrowDebt(tokenId);
+        const borrowDebt = await lendingPlatform.getBorrowDebt(tokenId);
+        const earlyRepaymentPenalty = await lendingPlatform.calcEarlyRepaymentPenalty(tokenId);
+      const debt = borrowDebt + earlyRepaymentPenalty;
+        console.log(`
+        Debt: ${ethers.formatUnits(borrowDebt, 6)}
+        Early Repayment Penalty: ${ethers.formatUnits(earlyRepaymentPenalty, 6)}
+        Total USDC Payment Due: ${ethers.formatUnits(debt, 6)}
+        `);
 
         // Check balance of account to ensure that it is sufficient
         const usdcBalance = await usdc.balanceOf(borrowerAccount);

@@ -157,7 +157,7 @@ task("testLendingPlatform3", "Setup an environment for development")
         }
 
         async function partE() {
-            await env.run('distributeUsdc', { to: account4, amount: 3 });
+            await env.run('distributeUsdc', { to: account4, amount: 6 });
             await env.run('repayBorrow', { account: account4, tokenId: 2 })
             await env.run('takeSnapshot', { account: deployer });
             // await env.run('getBorrow', {tokenid: 0});
