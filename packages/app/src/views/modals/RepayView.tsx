@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
-  formatLargeUsdc, toEthDate,
+  formatLargeUsdc, formatWad, toEthDate,
   truncateEthAddress,
 } from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
@@ -70,7 +70,8 @@ const RepayView: React.FC<RepayViewProps & { onModalClose: () => void }> = (
                   <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
                 </div>
                 <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-                  Repaying will end the loan of <span className='font-bold'>{formatLargeUsdc(borrowDebt)}</span> USDC with due date <span className='font-bold'>{borrow.endDate.toLocaleString()}.</span>
+                  Repaying will end the loan of <span className='font-bold'>{formatLargeUsdc(borrowDebt)}</span> USDC and return back to you the collateral <span className='font-bold'>{formatWad(borrow.collateral, 6)} ETH</span> with
+                  due date <span className='font-bold'>{borrow.endDate.toLocaleString()}.</span>
                 </p>
               </div>
 
@@ -82,6 +83,10 @@ const RepayView: React.FC<RepayViewProps & { onModalClose: () => void }> = (
                   <div className='flex flex-row justify-between'>
                     <span className=''>USDC to repay</span>
                     <span>{formatLargeUsdc(borrowDebt)} USDC</span>
+                  </div>
+                  <div className='flex flex-row justify-between'>
+                    <span className=''>Collateral to receive</span>
+                    <span>{formatWad(borrow.collateral, 6)} ETH</span>
                   </div>
                   <div className='flex flex-row justify-between'>
                     <span className=''>Contract Address</span>

@@ -1,4 +1,4 @@
-import {FC, useEffect, useState} from "react";
+import React, {FC, useEffect, useState} from "react";
 import Link from "next/link";
 import {
   useConnectedWallet,
@@ -19,9 +19,9 @@ import {
   durationWad,
   ethInUsdc,
   formatLargeUsdc,
-  formatPercentage,
+  formatPercentage, formatWad,
   wadDiv,
-  wadMul
+  wadMul,
 } from '../utils/ethMethods';
 import {BorrowObj, Deposit, DepositObj} from "../types/types";
 import ExtendBorrowView from './modals/ExtendBorrowView';
@@ -438,7 +438,7 @@ export const DashboardView: FC = ({}) => {
                               className='text-xs bg-shrub-grey-light  border border-shrub-grey-light2'>
                             <tr>
                               <th scope='col' className='px-6 py-3 text-shrub-grey font-medium'>Current Balance</th>
-
+                              <th scope='col' className='px-6 py-3 text-shrub-grey font-medium'>Collateral Locked</th>
                               <th scope='col' className='px-6 py-3 text-shrub-grey font-medium'>
                                 Amount Paid Back
                               </th>
@@ -478,84 +478,100 @@ export const DashboardView: FC = ({}) => {
                                 const timeLeft = daysFromNow(borrow.endDate);
 
                                 return (
-                                <tr
-                                  key={`borrowRow-${index}`}
-                                  className="bg-white border-b  "
-                                >
-                                  <td className="px-6 py-4 text-sm font-bold">
-                                    {wallet ? (
-                                      <p>
-                                        {" "}<Image src="/usdc-logo.svg" alt="usdc logo" className="w-6 mr-2 inline align-middle" width="40" height="40"/>
-                                        {formatLargeUsdc(borrow.debt)} USDC
-                                        {storeBorrow.status === 'pending' && (
-                                          <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>Pending</span>
-                                        )}
-                                        {storeBorrow.status === 'failed' && (
-                                          <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>Failed</span>
-                                        )}
-                                        {storeBorrow.status === 'confirmed' && (
-                                          <span className=" ml-2 inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>Confirmed</span>
-                                        )}
-                                        {storeBorrow.status === 'extending' && (
-                                          <span className=" ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-amber-500 rounded-full"></span>Extending</span>
-                                        )}
-                                        {storeBorrow.status === 'extended' && (
-                                          <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full  "><span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>Extended</span>
-                                        )}
-                                        {storeBorrow.status === 'repaying' && (
-                                          <span className="ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full"><span className="w-2 h-2 me-1 bg-pink-500 rounded-full"></span>Repaying</span>
-                                        )}
-                                        {storeBorrow.status === 'repaid' && (
-                                          <span className="ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full"><span className="w-2 h-2 me-1 bg-pink-500 rounded-full"></span>Repaid</span>
-                                        )}
-                                      </p>
-                                    ) : (
-                                      <p className="text-sm">
-                                        Loading ETH balance...
-                                      </p>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4 text-sm font-bold">
-                                    {formatLargeUsdc(borrow.paid)}
-                                  </td>
-                                  <td className="px-6 py-4 text-sm font-bold">
-                                    {timeLeft}
-                                  </td>
-                                  <td>
-                                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full  ">{`${formatPercentage(borrow.apy)}%`}</span>
-                                  </td>
-                                  <td className="px-6 py-4 text-sm font-bold">
-                                    {formatLargeUsdc(borrow.originalPrincipal)} USDC
-                                  </td>
-                                  <td className="px-6 py-4 text-sm font-bold">
-                                    {borrow.endDate.toLocaleString()}
-                                  </td>
-                                  <td className="px-1 py-4 text-sm font-bold">
-                                    <div className="flex items-center justify-center space-x-2 h-full p-2">
-                                      <button type="button"
-                                              style={{ visibility: storeBorrow.tempData || storeBorrow.status  ? 'hidden' : 'visible' }}
-                                              className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"
-                                              disabled={store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime()}
-                                              onClick={() => {
-                                                setExtendBorrowModalOpen(true);
-                                                setSelectedBorrow(borrow);
-                                              }}>
-                                        {/*Corresponding modal at the top*/}
-                                        Extend
-                                      </button>
-                                      <button type="button"
-                                              onClick={() => {
-                                                setRepayModalOpen(true);
-                                                setSelectedBorrowForRepay(borrow);
-                                              }}
-                                              style={{ visibility: storeBorrow.tempData || storeBorrow.status  ? 'hidden' : 'visible' }}
-                                              className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5">
-                                        Repay
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                                )})}
+                                  <tr key={`borrowRow-${index}`} className='bg-white border-b'>
+                                    <td className='px-6 py-4 text-sm font-bold'>
+                                      {wallet ? (
+                                        <p>
+                                          {' '}
+                                          <Image src='/usdc-logo.svg' alt='usdc logo' className='w-6 mr-2 inline align-middle' width='40' height='40' />
+                                          {formatLargeUsdc(borrow.debt)} USDC
+                                          {storeBorrow.status === 'pending' && (
+                                            <span
+                                              className=' ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full  '><span
+                                              className='w-2 h-2 me-1 bg-yellow-500 rounded-full'></span>Pending</span>
+                                          )}
+                                          {storeBorrow.status === 'failed' && (
+                                            <span
+                                              className=' ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full  '><span
+                                              className='w-2 h-2 me-1 bg-red-500 rounded-full'></span>Failed</span>
+                                          )}
+                                          {storeBorrow.status === 'confirmed' && (
+                                            <span
+                                              className=' ml-2 inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full  '><span
+                                              className='w-2 h-2 me-1 bg-green-500 rounded-full'></span>Confirmed</span>
+                                          )}
+                                          {storeBorrow.status === 'extending' && (
+                                            <span
+                                              className=' ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full  '><span
+                                              className='w-2 h-2 me-1 bg-amber-500 rounded-full'></span>Extending</span>
+                                          )}
+                                          {storeBorrow.status === 'extended' && (
+                                            <span
+                                              className=' ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full  '><span
+                                              className='w-2 h-2 me-1 bg-blue-500 rounded-full'></span>Extended</span>
+                                          )}
+                                          {storeBorrow.status === 'repaying' && (
+                                            <span
+                                              className='ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full'><span
+                                              className='w-2 h-2 me-1 bg-pink-500 rounded-full'></span>Repaying</span>
+                                          )}
+                                          {storeBorrow.status === 'repaid' && (
+                                            <span
+                                              className='ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full'><span
+                                              className='w-2 h-2 me-1 bg-pink-500 rounded-full'></span>Repaid</span>
+                                          )}
+                                        </p>
+                                      ) : (
+                                        <p className='text-sm'>
+                                          Loading ETH balance... </p>
+                                      )}
+                                    </td>
+                                    <td className='px-6 py-4 text-sm font-bold'>
+                                      <Image alt="ETH logo" src="/eth-logo.svg" className="w-4 inline align-middle" width="16" height="24"/>
+                                      {" "}{formatWad(borrow.collateral, 6)} ETH
+                                    </td>
+                                    <td className='px-6 py-4 text-sm font-bold'>
+                                      {formatLargeUsdc(borrow.paid)}
+                                    </td>
+                                    <td className='px-6 py-4 text-sm font-bold'>
+                                      {timeLeft}
+                                    </td>
+                                    <td>
+                                      <span
+                                        className='bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full  '>{`${formatPercentage(borrow.apy)}%`}</span>
+                                    </td>
+                                    <td className='px-6 py-4 text-sm font-bold'>
+                                      {formatLargeUsdc(borrow.originalPrincipal)} USDC
+                                    </td>
+                                    <td className='px-6 py-4 text-sm font-bold'>
+                                      {borrow.endDate.toLocaleString()}
+                                    </td>
+                                    <td className='px-1 py-4 text-sm font-bold'>
+                                      <div className='flex items-center justify-center space-x-2 h-full p-2'>
+                                        <button type='button'
+                                                style={{ visibility: storeBorrow.tempData || storeBorrow.status ? 'hidden' : 'visible' }}
+                                                className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100'
+                                                disabled={store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime()}
+                                                onClick={() => {
+                                                  setExtendBorrowModalOpen(true);
+                                                  setSelectedBorrow(borrow);
+                                                }}>
+                                          {/*Corresponding modal at the top*/}
+                                          Extend
+                                        </button>
+                                        <button type='button' onClick={() => {
+                                          setRepayModalOpen(true);
+                                          setSelectedBorrowForRepay(borrow);
+                                        }}
+                                                style={{ visibility: storeBorrow.tempData || storeBorrow.status ? 'hidden' : 'visible' }}
+                                                className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5'>
+                                          Repay
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )
+                              })}
                             </tbody>
                           </table>
                         </div>
