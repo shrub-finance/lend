@@ -35,6 +35,7 @@ contract BorrowPositionToken is ERC721, Ownable {
     mapping(uint256 => DataTypes.BorrowData) borrowDatas;
     mapping(uint40 => uint256[]) public tokensByTimestamp;  // mapping of the timestamp to tokenIds with that endDate
     mapping(uint40 => uint256[]) public removedTokens; // Tracking of takens that have been burned (keyed by endDate) - this will be used during the snapshot to clean up
+    mapping(uint256 => uint256) private earlyRepaymentMade; // Mapping of tokenId of burned token to the earlyRepaymentMade for the purposes of accounting with snapshot
 
     modifier checkExists(uint tokenId) {
         console.log("running checkExists for tokenId: %s - result: %s", tokenId, _exists(tokenId));
@@ -128,15 +129,20 @@ contract BorrowPositionToken is ERC721, Ownable {
         _burn(tokenId);
     }
 
-    function cleanUpByTimestamp(uint40 timestamp) external onlyOwner {
+    function cleanUpByTimestamp(uint40 timestamp) external onlyOwner returns (uint earlyRepaymentPenalties) {
         // Cleanup tokensByTimestamp as this isn't done during the burn
         console.log("running cleanUpByTimestamp for timestamp: %s", timestamp);
+        earlyRepaymentPenalties = 0;
         for (uint i = 0; i < tokensByTimestamp[timestamp].length; i++) {
             for (uint j = 0; j < removedTokens[timestamp].length; j++) {
                 console.log("i: %s, j: %s", i, j);
                 console.log("tokenByTimestamp[i]: %s, removedTokens[j]: %s", tokensByTimestamp[timestamp][i], removedTokens[timestamp][j]);
                 if (tokensByTimestamp[timestamp][i] == removedTokens[timestamp][j]) {
                     console.log("Match - removing");
+                    // Calculate the earlyRepaymentPenalty that was paid for this token
+                    earlyRepaymentPenalties+= earlyRepaymentMade[tokensByTimestamp[timestamp][i]];
+                    // Delete to save on storage
+                    delete earlyRepaymentMade[tokensByTimestamp[timestamp][i]];
                     // First remove from tokensByTimestamp
                     uint lastIndex = tokensByTimestamp[timestamp].length - 1;
                     console.log("lastIndex: %s", lastIndex);
@@ -152,7 +158,7 @@ contract BorrowPositionToken is ERC721, Ownable {
                     // If there is only 1 left, that means that we just got it and now we can return
                     if (removedTokens[timestamp].length == 1) {
                         delete removedTokens[timestamp];
-                        return;
+                        return earlyRepaymentPenalties;
                     }
                     // Then remove from removedTokens
                     uint lastIndex2 = removedTokens[timestamp].length - 1;
