@@ -551,7 +551,7 @@ export const DashboardView: FC = ({}) => {
                                         <button type='button'
                                                 style={{ visibility: storeBorrow.tempData || storeBorrow.status ? 'hidden' : 'visible' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100'
-                                                disabled={store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime()}
+                                                disabled={store.activePoolTimestamps.length && store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime()}
                                                 onClick={() => {
                                                   setExtendBorrowModalOpen(true);
                                                   setSelectedBorrow(borrow);

@@ -121,8 +121,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
         <div className='card w-full'>
           <div className='card-body'>
             <div className='w-full text-xl font-semibold flex flex-row'>
-              <span
-                className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(borrow.debt)} USDC</span>
+              <span className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(borrow.debt)} USDC</span>
               <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40'
                      height='40'/>
             </div>
