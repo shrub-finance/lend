@@ -121,12 +121,13 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        Calculate accumInterest for all BP
         for (uint i = 0; i < activePools.length; i++) {
             // Cleanup paid off BPTs
-            bpt.cleanUpByTimestamp(activePools[i]);
+            // TODO: This should return the earlyRepaymentPenalty that was incurred by these pools
+            uint earlyRepaymentPenalties = bpt.cleanUpByTimestamp(activePools[i]);
             console.log("finished running cleanUpByTimestamp for %s", activePools[i]);
 //            Find the BPTs related to these timestamps
 //            bptsForPool is an array of tokenIds
             uint[] memory bptsForPool = bpt.getTokensByTimestamp(activePools[i]);
-            uint accumInterestBP = 0;
+            uint accumInterestBP = earlyRepaymentPenalties;
 //            # Loop through the BPTs in order to calculate their accumInterest
             for (uint j = 0; j < bptsForPool.length; j++) {
                 console.log("in token loop - analyzing tokenId: %s", bptsForPool[j]);
