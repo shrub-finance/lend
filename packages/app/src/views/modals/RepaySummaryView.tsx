@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
-  formatLargeUsdc, formatWad, toEthDate,
+  formatLargeUsdc, formatPercentage, formatWad, toEthDate,
   truncateEthAddress,
 } from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
@@ -46,19 +46,9 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
     }
   }, [usdcAllowance, usdcAllowanceIsLoading, approveUSDCActionInitiated, borrow.debt]);
 
+console.log(borrow);
   return (
     <>
-      <div className='flex items-center justify-between p-4 md:p-5 border-b rounded-t '>
-        <h3 className='text-xl font-semibold text-shrub-grey-900 '>Repay</h3>
-        <button type='button'
-                className='text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center  '>
-          <svg className='w-3 h-3' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 14 14'>
-            <path stroke='currentColor' strokeLinecap='round' strokeLinejoin='round' strokeWidth='2'
-                  d='m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6'></path>
-          </svg>
-          <span className='sr-only'>Close modal</span>
-        </button>
-      </div>
       <div className='relative group mt-4 w-full min-w-[500px]'>
         <div className='flex flex-col'>
           <div className='card w-full'>
@@ -79,10 +69,20 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
               {/*Receipt start*/}
               <div>
                 <div className='mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
-                  <div className='flex flex-row justify-between cursor-pointer' onClick={(e) => onBackRepay('partialRepayRequest')}>
+                  <div className='flex flex-row justify-between'>
+                    <span className=''>Principal</span>
+                    <span>{formatLargeUsdc(borrow.principal)} USDC</span>
+                  </div>
+                  <div className='flex flex-row justify-between'>
+                    <span className=''>Early Repayment Fee</span>
+                    <span>{`Fill in`}</span>
+                  </div>
+                  <div className='flex flex-row justify-between cursor-pointer'
+                       onClick={(e) => onBackRepay('partialRepayRequest')}>
                     <span>USDC to repay</span>
                     <span>{formatLargeUsdc(borrow.debt)} USDC
-                       <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' />
+                       <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20'
+                              height='20' />
                     </span>
                   </div>
                   <div className='flex flex-row justify-between'>
@@ -91,7 +91,7 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                   </div>
                   <div className='flex flex-row justify-between'>
                     <span className=''>Interest</span>
-                    <span>{formatLargeUsdc(borrow.debt)} USDC</span>
+                    <span>{formatLargeUsdc(borrow.interest)}</span>
                   </div>
                   <div className='flex flex-row justify-between'>
                     <span className=''>Contract Address</span>
