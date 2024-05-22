@@ -37,7 +37,7 @@ setIsModalOpen, borrow
   const [extendActionInitiated, setExtendBorrowActionInitiated] = useState(false);
   // const [requiredCollateralToExtendBorrow, setRequiredCollateralToExtendBorrow] = useState<ethers.BigNumber>(Zero);
   const [showExtendBorrowCollateralSection, setShowExtendBorrowCollateralSection] = useState(true);
-  const [interestEditRequested, setinterestEditRequested] = useState(false);
+  const [interestEditRequested, setInterestEditRequested] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1]));
   const [showDueDateOptions, setShowDueDateOptions] = useState(false);
   const {ethPrice, isLoading, error} = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
@@ -46,7 +46,7 @@ setIsModalOpen, borrow
   const [currentLtv, setCurrentLtv] = useState<ethers.BigNumber>()
   const [extendBorrowViewLoading, setExtendBorrowViewLoading] = useState(true);
   const handleExtendBorrowBack = (data) => {
-    setinterestEditRequested(true);
+    setInterestEditRequested(true);
     if (data === 'dateChangeRequest') {
       setShowDueDateOptions(true);
     }
@@ -63,26 +63,6 @@ setIsModalOpen, borrow
     setIsModalOpen(false);
   };
 
-  const {
-    contract: lendingPlatform,
-    isLoading: lendingPlatformIsLoading,
-    error: lendingPlatformError
-  } = useContract(lendingPlatformAddress, lendingPlatformAbi);
-
-  // useEffect(() => {
-  //   const determineRequiredCollateral = async () => {
-  //     // const ltv = interestToLTV[selectedInterestRate];
-  //     const ltv = targetLtv
-  //     const usdcUnits = ethers.utils.parseUnits(formatLargeUsdc(borrow.debt), 6);
-  //     const coll: ethers.BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);
-  //     return roundEth(coll, 6);
-  //   };
-  //   if (!targetLtv) {
-  //     determineRequiredCollateral()
-  //       .then(res => setRequiredCollateralToExtendBorrow(res))
-  //       .catch(e => console.error(e));
-  //   }
-  // }, [targetLtv, lendingPlatform, setRequiredCollateralToExtendBorrow]);
 
   useEffect(() => {
     if (!ethPrice || ethPrice.isZero()) {
@@ -102,7 +82,7 @@ setIsModalOpen, borrow
   return (
     <>
       <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t ">
-        <h3 className="text-xl font-semibold text-shrub-grey-900 ">Extending Borrow</h3>
+        <h3 className="text-xl font-semibold text-shrub-grey-900 ">Extend Borrow</h3>
         <button type="button" onClick={closeModalAndPassData} className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center  ">
           <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
             <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
@@ -120,14 +100,13 @@ setIsModalOpen, borrow
               <div className='card-body '>
                 <div className='form-control w-full'>
                   <div className='flex items-center pb-2'>
-                    <button onClick={() => setinterestEditRequested(false)}>
+                    <button onClick={() => setInterestEditRequested(false)}>
                       <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none'
                            className='w-6 grow-0 order-0 flex-none'>
                         <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='black' strokeWidth='2' strokeLinecap='round'
                               strokeLinejoin='round' />
                       </svg>
                     </button>
-                    {/*<p className='text-lg font-bold pb-2 text-left'>Back</p>*/}
                   </div>
                   <div>
                     <label className='label'>
@@ -220,7 +199,7 @@ setIsModalOpen, borrow
                   className='btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border'
                   /*  disabled={!showDueDateOptions && selectedInterestRate === '' || showDueDateOptions && selectedDuration === ''}*/
                   onClick={() => {
-                    setinterestEditRequested(false);
+                    setInterestEditRequested(false);
                     setAdditionalCollateral(ethers.utils.parseUnits(
                       formatWad(requiredAdditionalCollateral(
                         borrow.principal,
