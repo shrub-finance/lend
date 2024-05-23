@@ -205,7 +205,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                   disabled:border-shrub-grey-100
                   disabled:text-white
                   disabled:border" disabled={Number(borrowAmount) <= 0|| selectedInterestRate === ""}
-                  onClick={handleBorrowContinue}>Continue</button>
+                  onClick={handleBorrowContinue}>Confirm</button>
               </div>
             </div>
           </div>

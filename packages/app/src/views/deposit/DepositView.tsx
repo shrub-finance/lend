@@ -212,7 +212,7 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
                   disabled:border"
                   onClick={handleLendContinue}
                   disabled={Number(depositAmount) <= 0 || !timestamp || isValidationError}>
-                  Continue
+                  Confirm
                 </button>
               </div>
             </div>

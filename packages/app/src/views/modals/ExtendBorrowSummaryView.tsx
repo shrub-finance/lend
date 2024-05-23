@@ -363,7 +363,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                   onError={(e) => {
                                     handleErrorMessages({err: e});
                                   }}>
-                        {!extendBorrowActionInitiated ? 'Initiate Extend' : 'Extend Order Submitted'}
+                        {!extendBorrowActionInitiated ? 'Initiate Now' : 'Extend Order Submitted'}
                       </Web3Button>
                     )}
                 </>

@@ -95,7 +95,7 @@ setIsModalOpen, borrow
                     onClick={() => {
                       setPartialPaymentRequested(false);
                     }}>
-                    Continue
+                    Confirm
                   </button>
                 </div>
               </div>
@@ -110,3 +110,4 @@ setIsModalOpen, borrow
 };
 
 export default RepayView;
+ 
