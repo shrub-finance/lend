@@ -19,13 +19,21 @@ import {
   durationWad,
   ethInUsdc,
   formatLargeUsdc,
-  formatPercentage, formatWad,
+  formatPercentage, formatWad, percentMul,
   wadDiv,
   wadMul,
 } from '../utils/ethMethods';
 import {BorrowObj, Deposit, DepositObj} from "../types/types";
 import ExtendBorrowView from './modals/ExtendBorrowView';
-import { oneMonth, sixMonth, threeMonth, twelveMonth, Zero } from '../constants';
+import {
+  EARLY_REPAYMENT_APY,
+  EARLY_REPAYMENT_THRESHOLD,
+  oneMonth,
+  sixMonth,
+  threeMonth,
+  twelveMonth,
+  Zero
+} from '../constants';
 import useEthPriceFromChainlink from '../hooks/useEthPriceFromChainlink';
 import WithdrawView from './modals/WithdrawView';
 import RepayView from './modals/RepayView';
@@ -152,8 +160,19 @@ export const DashboardView: FC = ({}) => {
 
   function calcBorrowInterest(principal: ethers.BigNumber, apy: ethers.BigNumber, startDate: Date) {
     const duration = durationWad(startDate, lastSnapshotDate);
-    const interestPerYear = wadMul(apy, principal);
+    const interestPerYear = percentMul(principal, apy);
     return wadMul(interestPerYear, duration);
+  }
+
+  function calcEarlyRepaymentFee(originalPrincipal: ethers.BigNumber, borrowEndDate: Date, lastSnapshotDate: Date) {
+    const thresholdDate = new Date(borrowEndDate);
+    thresholdDate.setUTCMilliseconds(thresholdDate.getUTCMilliseconds() - EARLY_REPAYMENT_THRESHOLD);
+    if (lastSnapshotDate >= thresholdDate) {
+      return Zero;
+    }
+    const feeDuration = durationWad(lastSnapshotDate, thresholdDate);
+    const feePerYear = percentMul(originalPrincipal, EARLY_REPAYMENT_APY);
+    return wadMul(feeDuration, feePerYear);
   }
 
   const handleExtendDeposit = () => {
@@ -457,24 +476,29 @@ export const DashboardView: FC = ({}) => {
                             <tbody className="text-lg">
                               {store?.borrows?.map((storeBorrow, index) => {
                                 const principal = ethers.BigNumber.from(storeBorrow.principal);
+                                const originalPrincipal = ethers.BigNumber.from(storeBorrow.originalPrincipal);
+                                const endDate = fromEthDate(parseInt(storeBorrow.timestamp, 10));
                                 const apy = ethers.BigNumber.from(storeBorrow.apy);
                                 const startDate = fromEthDate(storeBorrow.startDate);
                                 const interest = calcBorrowInterest(principal, apy, startDate);
+                                const earlyRepaymentFee = calcEarlyRepaymentFee(originalPrincipal, endDate, lastSnapshotDate)
                                 const borrow: BorrowObj = {
                                     id: isNaN(Number(storeBorrow.id)) ? storeBorrow.id : ethers.BigNumber.from(storeBorrow.id),
-                                    endDate: fromEthDate(parseInt(storeBorrow.timestamp, 10)),
+                                    endDate,
                                     startDate,
                                     created: fromEthDate(storeBorrow.created),
                                     updated: fromEthDate(storeBorrow.updated),
                                     collateral: ethers.BigNumber.from(storeBorrow.collateral),
                                     principal,
-                                    originalPrincipal: ethers.BigNumber.from(storeBorrow.originalPrincipal),
+                                    originalPrincipal,
                                     paid: ethers.BigNumber.from(storeBorrow.paid),
                                     ltv: ethers.BigNumber.from(storeBorrow.ltv),
                                     apy,
                                     interest,
-                                    debt: principal.add(interest)
+                                    debt: principal.add(interest),
+                                    earlyRepaymentFee,
                                 };
+                                console.log(borrow);
                                 const timeLeft = daysFromNow(borrow.endDate);
 
                                 return (

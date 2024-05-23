@@ -607,6 +607,7 @@ task("getBorrow", "get deatils of a borrow")
         }
         const interest = await lendingPlatform.getBorrowInterest(tokenId);
         const debt = await lendingPlatform.getBorrowDebt(tokenId);
+        const earlyRepaymentPenalty = await lendingPlatform.calcEarlyRepaymentPenalty(tokenId);
         const owner = await bpt.ownerOf(tokenId);
         // console.log(res);
         console.log(`
@@ -621,6 +622,7 @@ collateral: ${ethers.formatEther(res.collateral)} ETH ($${ethers.formatUnits(res
 apy: ${ethers.formatUnits(res.apy, 2)}%
 
 total debt: ${ethers.formatUnits(debt, 6)} USDC
+early repayment penalty: ${ethers.formatUnits(earlyRepaymentPenalty, 6)} USDC
 ltv: ${ethers.formatUnits(ltv, 2)}%
 `)
     })

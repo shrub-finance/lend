@@ -74,15 +74,21 @@ console.log(borrow);
                     <span>{formatLargeUsdc(borrow.principal)} USDC</span>
                   </div>
                   <div className='flex flex-row justify-between'>
+                    <span className=''>Interest</span>
+                    <span>{formatLargeUsdc(borrow.interest)}</span>
+                  </div>
+                  <div className='flex flex-row justify-between'
+                       style={{ display: borrow.earlyRepaymentFee.isZero()  ? 'none' : 'inherit' }}
+                  >
                     <span className=''>Early Repayment Fee</span>
-                    <span>{`Fill in`}</span>
+                    <span>{formatLargeUsdc(borrow.earlyRepaymentFee)} USDC</span>
                   </div>
                   <div className='flex flex-row justify-between cursor-pointer'
                        onClick={(e) => onBackRepay('partialRepayRequest')}>
                     <span>USDC to repay</span>
-                    <span>{formatLargeUsdc(borrow.debt)} USDC
+                    <span className='font-semibold text-shrub-green-500'>{formatLargeUsdc(borrow.debt.add(borrow.earlyRepaymentFee))} USDC
                        <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20'
-                              height='20' />
+                              height='20'/>
                     </span>
                   </div>
                   <div className='flex flex-row justify-between'>
@@ -90,14 +96,10 @@ console.log(borrow);
                     <span>{formatWad(borrow.collateral, 6)} ETH</span>
                   </div>
                   <div className='flex flex-row justify-between'>
-                    <span className=''>Interest</span>
-                    <span>{formatLargeUsdc(borrow.interest)}</span>
-                  </div>
-                  <div className='flex flex-row justify-between'>
                     <span className=''>Contract Address</span>
                     <span>{truncateEthAddress(lendingPlatformAddress)}
                       <Image alt='copy icon' src='/copy.svg' className='w-6 hidden md:inline align-baseline ml-2'
-                             width='24' height='24' />
+                             width='24' height='24'/>
                     </span>
                   </div>
                   <div className='flex flex-row justify-between'>

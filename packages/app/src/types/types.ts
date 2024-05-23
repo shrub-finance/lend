@@ -4,36 +4,37 @@ import { ethers } from 'ethers'
 export type PendingStatuses = "pending" | "confirmed" | "failed" | "extending" | "extended" |"withdrawing" | "withdrawn" |"repaying" | "repaid";
 
 export type Borrow = {
-  id?: string,
-  status?: PendingStatuses,
-  collateral?: ethers.BigNumber,
-  created?: number,
-  ltv?: string,
-  originalPrincipal?: string,
-  paid?: string,
-  apy?: string,
-  principal?: string,
-  timestamp?: string,
-  startDate?: number,
-  updated?: number,
-  __typename?: string,
-  tempData : boolean
+  id?: string;
+  status?: PendingStatuses;
+  collateral?: ethers.BigNumber;
+  created?: number;
+  ltv?: string;
+  originalPrincipal?: string;
+  paid?: string;
+  apy?: string;
+  principal?: string;
+  timestamp?: string;
+  startDate?: number;
+  updated?: number;
+  __typename?: string;
+  tempData : boolean;
 };
 
 export type BorrowObj = {
-    id: ethers.BigNumber| string,
-    startDate: Date,
-    endDate: Date,
-    created: Date,
-    updated: Date,
-    collateral: ethers.BigNumber,
+    id: ethers.BigNumber| string;
+    startDate: Date;
+    endDate: Date;
+    created: Date;
+    updated: Date;
+    collateral: ethers.BigNumber;
     principal: ethers.BigNumber
-    originalPrincipal: ethers.BigNumber,
-    paid: ethers.BigNumber,
-    ltv: ethers.BigNumber,
-    apy: ethers.BigNumber,
-    interest: ethers.BigNumber,
-    debt: ethers.BigNumber,
+    originalPrincipal: ethers.BigNumber;
+    paid: ethers.BigNumber;
+    ltv: ethers.BigNumber;
+    apy: ethers.BigNumber;
+    interest: ethers.BigNumber;
+    debt: ethers.BigNumber;
+    earlyRepaymentFee: ethers.BigNumber;
 }
 
 export type DepositObj = {

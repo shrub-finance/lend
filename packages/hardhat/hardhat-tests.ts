@@ -44,21 +44,26 @@ task("testLendingPlatform2", "Setup an environment for development")
         const may2025 = toEthDate(new Date('2025-05-01T00:00:00Z'));
         const aug2025 = toEthDate(new Date('2025-08-01T00:00:00Z'));
         const jan2026 = toEthDate(new Date('2026-01-01T00:00:00Z'));
+        const feb2026 = toEthDate(new Date('2026-02-01T00:00:00Z'));
+        const mar2026 = toEthDate(new Date('2026-03-01T00:00:00Z'));
+        const apr2026 = toEthDate(new Date('2026-04-01T00:00:00Z'));
+        const may2026 = toEthDate(new Date('2026-05-01T00:00:00Z'));
+        const aug2026 = toEthDate(new Date('2026-08-01T00:00:00Z'));
+        const jan2027 = toEthDate(new Date('2027-01-01T00:00:00Z'));
 
         const {ethers, deployments, getNamedAccounts} = env;
         const { deployer, account1, account2, account3 } = await getNamedAccounts();
-        // await env.run('createPlatformPools');
-        // await env.run('distributeUsdc', { to: account1, amount: 10000 });
-        // await env.run('distributeUsdc', { to: account2, amount: 10000 });
-        // await env.run('createPool', { timestamp: feb2025});  // 1 month
-        // await env.run('createPool', { timestamp: may2025});  // 3 month
-        // await env.run('createPool', { timestamp: aug2025});  // 6 month
-        // await env.run('createPool', { timestamp: jan2026});  // 12 month
-        // await env.run('approveUsdc', { account: account1 });
-        // await env.run('setTime', {ethDate: jan2025});
-        // await env.run('setEthPrice', {ethPrice: '2000'});
-        // await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2026, account: account1});  // 12 month
-        // await env.run('provideLiquidity', { usdcAmount: 325.123456, timestamp: may2025, account: account1});  // 12 month
+        await env.run('createPool', { timestamp: feb2025});  // 1 month
+        await env.run('createPool', { timestamp: may2025});  // 3 month
+        await env.run('createPool', { timestamp: aug2025});  // 6 month
+        await env.run('createPool', { timestamp: jan2026});  // 12 month
+
+        await env.run('distributeUsdc', { to: account1, amount: 10000 });
+        await env.run('distributeUsdc', { to: account2, amount: 10000 });
+        await env.run('setTime', {ethDate: jan2025});
+        await env.run('setEthPrice', {ethPrice: '2000'});
+        await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2026, account: account1});  // 12 month
+        await env.run('provideLiquidity', { usdcAmount: 325.123456, timestamp: may2025, account: account1});  // 12 month
         await env.run('borrow', { account: account2, timestamp: jan2026, borrowAmount: 100, collateralAmount: 1, ltv: 20})
         await env.run('borrow', { account: account3, timestamp: jan2026, borrowAmount: 22, collateralAmount: 0.1, ltv: 33})
         await env.run('borrow', { account: account1, timestamp: feb2025, borrowAmount: 5.23, collateralAmount: 0.1, ltv: 25})
