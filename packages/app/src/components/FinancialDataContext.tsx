@@ -6,72 +6,99 @@ import {useQuery} from "@apollo/client";
 import {ACTIVE_LENDINGPOOLS_QUERY} from "../constants/queries";
 
 const initialState: UserFinancialDataState = {
-  borrows: [],
-  deposits: [],
-  activePoolTimestamps: []
+  userData: {},
+  platformData: {
+    activePoolTimestamps: []
+  }
 };
 
 const FinancialDataContext = createContext<{ store: UserFinancialDataState; dispatch: React.Dispatch<UserFinancialDataAction>; }>({ store: initialState, dispatch: () => null });
 
 const financialDataReducer = (store: UserFinancialDataState, action: UserFinancialDataAction): UserFinancialDataState => {
   // console.log('Dispatching action:', action.type);
-  switch (action.type) {
-    case "SET_USER_DATA":
-      const newBorrows = action.payload.borrows.filter((newBorrow) =>
-        !store.borrows.some((existingBorrow) => existingBorrow.id === newBorrow.id));
-      // Place new borrows at the beginning
-      const mergedBorrows = [...newBorrows, ...store.borrows];
-      const newDeposits = action.payload.deposits.filter((newPosition) =>
-        !store.deposits.some((existingPosition) => existingPosition.id === newPosition.id));
-      // Place new deposit positions at the beginning
-      const mergedDeposits = [...newDeposits, ...store.deposits];
-
-      return {
-        ...store,
-        borrows: mergedBorrows,
-        deposits: mergedDeposits,
-      };
-    case "CLEAR_USER_DATA":
-      return { ...initialState };
-    case "ADD_BORROW":
-      const updatedBorrow = { ...store, borrows: [action.payload, ...store.borrows] };
-      return updatedBorrow;
-    case "ADD_LEND_POSITION":
-      const updatedDeposits = { ...store, deposits: [action.payload, ...store.deposits] };
-      return updatedDeposits;
-    case "UPDATE_LEND_POSITION_STATUS":
-      // console.log("Updating deposit position status", action.payload); // Log the action payload before the update
-      const updatedState = {
-        ...store,
-        deposits: store.deposits.map(position => {
-          if (position.id === action.payload.id) {
-            // console.log("Found position to update", position); // Log the position being updated
-            return { ...position, status: action.payload.status };
-          }
-          return position;
-        }),
-      };
-      // console.log("Updated deposit positions", updatedState.deposits); // Log the updated deposit positions array
-      return updatedState;
-    case "UPDATE_BORROW_STATUS":
-      const updatedBorrowState = {
-        ...store,
-        borrows: store.borrows.map(borrow => {
-          if (borrow.id === action.payload.id) {
-            return { ...borrow, status: action.payload.status };
-          }
-          return borrow;
-        }),
-      };
-      return updatedBorrowState;
-      case "SET_ACTIVE_POOLS":
-        return {
-          ...store,
-          activePoolTimestamps: action.payload.sort((a,b) => a.getTime() - b.getTime())
-        };
-
-    default:
-      return store;
+  if (action.type === "SET_USER_DATA") {
+    const { address, borrows, deposits } = action.payload;
+    return {
+      ...store,
+      userData: {
+        ...store.userData,
+        [address]: {borrows, deposits}
+      }
+    }
+  } else if (action.type === "CLEAR_USER_DATA") {
+    return {
+      ...store,
+      userData: {},
+    };
+  } else if (action.type === "ADD_BORROW") {
+    const { address, borrow } = action.payload;
+    return {
+      ...store,
+      userData: {
+        ...store.userData,
+        [address]: {
+          ...store.userData[address],
+          borrows: [...store.userData[address].borrows, borrow]
+        }
+      }
+    }
+  } else if (action.type === "ADD_LEND_POSITION") {
+    const { address, deposit } = action.payload;
+    return {
+      ...store,
+      userData: {
+        ...store.userData,
+        [address]: {
+          ...store.userData[address],
+          deposits: [...store.userData[address].deposits, deposit]
+        }
+      }
+    }
+  } else if (action.type === "UPDATE_LEND_POSITION_STATUS") {
+    const { address, id, status } = action.payload;
+    return {
+      ...store,
+      userData: {
+        ...store.userData,
+        [address]: {
+          ...store.userData[address],
+          deposits: store.userData[address].deposits.map(deposit => {
+            if (deposit.id === id) {
+              return { ...deposit, status };
+            }
+            return deposit;
+          })
+        }
+      }
+    };
+  } else if (action.type === "UPDATE_BORROW_STATUS") {
+    const { address, id, status } = action.payload;
+    return {
+      ...store,
+      userData: {
+        ...store.userData,
+        [address]: {
+          ...store.userData[address],
+          borrows: store.userData[address].borrows.map(borrow => {
+            if (borrow.id === id) {
+              return { ...borrow, status };
+            }
+            return borrow;
+          })
+        }
+      }
+    };
+  } else if (action.type === "SET_ACTIVE_POOLS") {
+    const { activePoolTimestamps } = action.payload;
+    console.log(activePoolTimestamps);
+    return {
+      ...store,
+      platformData: {
+        activePoolTimestamps: activePoolTimestamps.sort((a,b) => a.getTime() - b.getTime())
+      }
+    };
+  } else {
+    return {...store};
   }
 };
 
@@ -83,14 +110,6 @@ export const FinancialDataProvider: React.FC<{children: ReactNode; userData: Use
     data: activeLendingPoolsData,
   } = useQuery(ACTIVE_LENDINGPOOLS_QUERY);
 
-  // Initialize the store with user data
-useEffect(() => {
-  // Only initialize the store with userData if borrows and deposits are empty
-  if (store.borrows.length === 0 && store.deposits.length === 0) {
-    dispatch({ type: "SET_USER_DATA", payload: userData });
-  }
-  }, [userData]);
-
   useEffect(() => {
     if (!activeLendingPoolsData) {
       return;
@@ -98,9 +117,9 @@ useEffect(() => {
     const activePoolTimestamps = activeLendingPoolsData.lendingPools.map(lendingPool => fromEthDate(lendingPool.timestamp));
     dispatch({
       type: "SET_ACTIVE_POOLS",
-      payload: activePoolTimestamps
+      payload: { activePoolTimestamps }
     })
-  }, [activeLendingPoolsLoading]);
+  }, [activeLendingPoolsData]);
 
 
   return (
@@ -109,6 +128,13 @@ useEffect(() => {
     </FinancialDataContext.Provider>
   );
 };
+
+export function getUserData(store: UserFinancialDataState, walletAddress: string): { deposits: Deposit[], borrows: Borrow[] } {
+  if (!walletAddress || !store || !store.userData[walletAddress]) {
+    return { deposits: [], borrows: [] };
+  }
+  return store.userData[walletAddress];
+}
 
 // Custom hook to use financial data context
 export const useFinancialData = () => useContext(FinancialDataContext);

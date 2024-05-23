@@ -82,18 +82,24 @@ type LendingPool = {
 
 
 export type UserFinancialDataState = {
-  borrows: Borrow[]
-  deposits: Deposit[];
-  activePoolTimestamps: Date[]
+  userData: {
+    [address: string]: {
+      borrows: Borrow[];
+      deposits: Deposit[];
+    }
+  };
+  platformData: {
+    activePoolTimestamps: Date[];
+  };
 };
 
 export type UserFinancialDataAction =
-  | { type: "SET_USER_DATA"; payload: { borrows: Borrow[]; deposits: Deposit[] }; }
+  | { type: "SET_USER_DATA"; payload: { address: string; borrows: Borrow[]; deposits: Deposit[] }; }
   | { type: "CLEAR_USER_DATA" }
-  | { type: "ADD_BORROW"; payload: Borrow }
-  | { type: "ADD_LEND_POSITION"; payload: Deposit }
-  | { type: "UPDATE_LEND_POSITION_STATUS"; payload: Deposit }
-  | { type: "UPDATE_BORROW_STATUS"; payload: Borrow }
-  | { type: "SET_ACTIVE_POOLS"; payload: Date[] };
+  | { type: "ADD_BORROW"; payload: { address: string; borrow: Borrow } }
+  | { type: "ADD_LEND_POSITION"; payload: { address: string; deposit: Deposit } }
+  | { type: "UPDATE_LEND_POSITION_STATUS"; payload: { address: string; id: string; status: PendingStatuses; } }
+  | { type: "UPDATE_BORROW_STATUS"; payload: { address: string; id: string; status: PendingStatuses; } }
+  | { type: "SET_ACTIVE_POOLS"; payload: { activePoolTimestamps: Date[]} };
 
 

@@ -150,14 +150,15 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                               };
                               dispatch({
                                 type: "ADD_LEND_POSITION",
-                                payload: newDepositWithdraw,
+                                payload: { address: walletAddress, deposit: newDepositWithdraw }
                               });
                               dispatch({
                                 type: "UPDATE_LEND_POSITION_STATUS",
                                 payload: {
+                                  address: walletAddress,
                                   id: matchedLendingPool.id,
                                   status: "withdrawing",
-                                  tempData: true
+                                  // tempData: true
                                 },
                               });
                               try {
@@ -168,17 +169,19 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                                 dispatch({
                                   type: "UPDATE_LEND_POSITION_STATUS",
                                   payload: {
+                                    address: walletAddress,
                                     id: `${matchedLendingPool.id}-withdraw`,
                                     status: "confirmed",
-                                    tempData: true
+                                    // tempData: true
                                   },
                                 });
                                 dispatch({
                                   type: "UPDATE_LEND_POSITION_STATUS",
                                   payload: {
+                                    address: walletAddress,
                                     id: matchedLendingPool.id,
                                     status: "withdrawn",
-                                    tempData: true
+                                    // tempData: true
                                   },
                                 });
                               } catch (e) {
@@ -186,9 +189,10 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                                 dispatch({
                                   type: "UPDATE_LEND_POSITION_STATUS",
                                   payload: {
+                                    address: walletAddress,
                                     id: `${matchedLendingPool.id}-withdraw`,
                                     status: "failed",
-                                    tempData: true
+                                    // tempData: true
                                   },
                                 });
                               }
