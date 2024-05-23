@@ -387,7 +387,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
 
                               }}
                             >
-                              {latestDeposit?.status === "pending"? "Deposit Order Submitted":"Initiate Deposit"}
+                              {latestDeposit?.status === "pending"? "Deposit Order Submitted":"Initiate Now"}
                             </Web3Button>
                           )}
                       </>

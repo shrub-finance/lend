@@ -94,7 +94,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                   disabled:border-shrub-grey-100
                   disabled:text-white
                   disabled:border">
-                  Continue
+                  Confirm
                 </button>
               </div>
             </div>

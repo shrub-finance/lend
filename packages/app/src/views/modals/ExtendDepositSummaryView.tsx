@@ -317,7 +317,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                          handleErrorMessages({err: e});
                        }}
                      >
-                       {!extendDepositActionInitiated ?'Initiate Extend': 'Extend Order Submitted'}
+                       {!extendDepositActionInitiated ?'Initiate Now': 'Extend Order Submitted'}
                      </Web3Button>
                    )}
                </>
