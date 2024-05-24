@@ -248,18 +248,18 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                            };
                            dispatch({
                                type: "ADD_LEND_POSITION",
-                               payload: newDepositWithdraw,
+                               payload: { address: walletAddress, deposit: newDepositWithdraw },
                            });
                            dispatch({
                                type: "ADD_LEND_POSITION",
-                               payload: newDepositDeposit,
+                               payload: { address: walletAddress, deposit: newDepositDeposit },
                            });
                            dispatch({
                                type: "UPDATE_LEND_POSITION_STATUS",
                                payload: {
+                                  address: walletAddress,
                                    id: matchedLendingPool.id,
                                    status: "extending",
-                                 tempData: true
                                },
                            });
 
@@ -271,25 +271,25 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
+                                     address: walletAddress,
                                        id: `${matchedLendingPool.id}-deposit`,
                                        status: "confirmed",
-                                     tempData: true
                                    },
                                });
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
+                                     address: walletAddress,
                                        id: `${matchedLendingPool.id}-withdraw`,
                                        status: "confirmed",
-                                     tempData: true
                                    },
                                });
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
+                                     address: walletAddress,
                                        id: matchedLendingPool.id,
                                        status: "extended",
-                                     tempData: true
                                    },
                                });
                            } catch (e) {
@@ -297,17 +297,17 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
+                                     address: walletAddress,
                                        id: `${matchedLendingPool.id}-deposit`,
                                        status: "failed",
-                                     tempData: true
                                    },
                                });
                                dispatch({
                                    type: "UPDATE_LEND_POSITION_STATUS",
                                    payload: {
+                                     address: walletAddress,
                                        id: `${matchedLendingPool.id}-withdraw`,
                                        status: "failed",
-                                     tempData: true
                                    },
                                });
                            }

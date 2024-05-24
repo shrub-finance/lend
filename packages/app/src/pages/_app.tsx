@@ -54,7 +54,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
         }}
       >
         <ApolloProvider client={client}>
-          <FinancialDataProvider userData={userFinancialData}>
+          <FinancialDataProvider>
             <div className="flex flex-col h-screen">
               <AppBar />
               <MobileMenu>

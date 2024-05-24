@@ -124,12 +124,12 @@ export const DashboardView: FC = ({}) => {
     dispatch: ${dispatch}`);
     if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
       const { borrows, deposits } = userPositionsData.user;
-      // const tempDeposits: Deposit[] = deposits.map((deposit: Deposit) => {
-      //     return {
-      //         ...deposit,
-      //         id: deposit.lendingPool.id
-      //     }
-      // });
+
+      const userData = getUserData(store, walletAddress);
+      if (userData.borrows.length || userData.deposits.length) {
+        console.log(`userData already exists for address ${walletAddress}, skipping SET_USER_DATA`);
+        return;
+      }
       dispatch({
         type: "SET_USER_DATA",
         payload: {
@@ -146,6 +146,11 @@ export const DashboardView: FC = ({}) => {
         // console.log('running block useEffect')
         getBlockTest()
     }, [walletAddress]);
+
+  useEffect(() => {
+    console.log("This is the store");
+    console.log(store);
+  }, [store]);
 
   async function getBlockTest() {
         const block = await getBlock({
@@ -198,7 +203,7 @@ export const DashboardView: FC = ({}) => {
   //   (newlyAddedDeposit.lendingPool.totalPrincipal + newlyAddedDeposit.lendingPool.totalUsdcInterest +
   //     (newlyAddedDeposit.lendingPool.totalEthYield * ethPrice));
 
-  console.log(store);
+  // console.log(store);
 
   return (
     <div className="md:hero mx-auto p-4">

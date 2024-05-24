@@ -35,10 +35,9 @@ setIsModalOpen, borrow
   const { store, dispatch } = useFinancialData();
   // const [selectedInterestRate, setSelectedInterestRate] = useState('8');
   const [extendActionInitiated, setExtendBorrowActionInitiated] = useState(false);
-  // const [requiredCollateralToExtendBorrow, setRequiredCollateralToExtendBorrow] = useState<ethers.BigNumber>(Zero);
   const [showExtendBorrowCollateralSection, setShowExtendBorrowCollateralSection] = useState(true);
   const [interestEditRequested, setInterestEditRequested] = useState(false);
-  const [selectedDuration, setSelectedDuration] = useState(toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1]));
+  const [selectedDuration, setSelectedDuration] = useState(toEthDate(store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1]));
   const [showDueDateOptions, setShowDueDateOptions] = useState(false);
   const {ethPrice, isLoading, error} = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
   const [targetLtv, setTargetLtv] = useState<ethers.BigNumber>();
@@ -127,7 +126,7 @@ setIsModalOpen, borrow
                       <span className='label-text text-shrub-blue'>Due Date</span>
                     </label>
                     <ul className='flex flex-col gap-4'>
-                      {store.activePoolTimestamps.filter(activePoolTimestamp => activePoolTimestamp > borrow.endDate).map((activePoolTimestamp) => (
+                      {store.platformData.activePoolTimestamps.filter(activePoolTimestamp => activePoolTimestamp > borrow.endDate).map((activePoolTimestamp) => (
                         <li className='mr-4' key={activePoolTimestamp.toISOString()}>
                           <input type='radio' id={activePoolTimestamp.toISOString()} name='borrow' value={toEthDate(activePoolTimestamp)} className='hidden peer'
                                  required onChange={(e) => {

@@ -15,7 +15,10 @@ const initialState: UserFinancialDataState = {
 const FinancialDataContext = createContext<{ store: UserFinancialDataState; dispatch: React.Dispatch<UserFinancialDataAction>; }>({ store: initialState, dispatch: () => null });
 
 const financialDataReducer = (store: UserFinancialDataState, action: UserFinancialDataAction): UserFinancialDataState => {
-  // console.log('Dispatching action:', action.type);
+  console.log(`Dispatching Action:
+    type: ${action.type}
+    payload: ${action.type !== "CLEAR_USER_DATA" ? JSON.stringify(action.payload,null, 2) : ""}`
+  );
   if (action.type === "SET_USER_DATA") {
     const { address, borrows, deposits } = action.payload;
     return {
@@ -102,7 +105,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
   }
 };
 
-export const FinancialDataProvider: React.FC<{children: ReactNode; userData: UserFinancialDataState}> = ({ children, userData }) => {
+export const FinancialDataProvider: React.FC<{children: ReactNode}> = ({ children}) => {
   const [store, dispatch] = useReducer(financialDataReducer, initialState);
   const {
     loading: activeLendingPoolsLoading,

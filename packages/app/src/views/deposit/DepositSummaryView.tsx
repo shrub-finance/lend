@@ -315,8 +315,10 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                               isDisabled={latestDeposit?.status === "pending"}
                               className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
                               action={
-                              async (lendingPlatform) =>
-                              {
+                              async (lendingPlatform) => {
+                                console.log(`Contract Args:
+                                timestamp: ${timestamp}
+                                depositAmount: ${ethers.utils.parseUnits(depositAmount, 6)}`);
                                 setLocalError('');
                                 // @ts-ignore
                                 return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(depositAmount, 6))
@@ -373,7 +375,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                           address: walletAddress,
                                           id: matchedLendingPool.id,
                                           status: "confirmed",
-                                          // tempData: true
                                         },
                                       });
                                   } catch (e) {
@@ -384,7 +385,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                         address: walletAddress,
                                         id: matchedLendingPool.id,
                                         status: "failed",
-                                        // tempData: true
                                       },
                                     });
                                   }

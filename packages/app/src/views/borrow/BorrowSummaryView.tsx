@@ -5,7 +5,7 @@ import {fromEthDate, interestToLTV, truncateEthAddress} from "../../utils/ethMet
 import { ethers } from 'ethers'
 import {useRouter} from "next/router";
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
-import {useFinancialData} from "../../components/FinancialDataContext";
+import {getUserData, useFinancialData} from "../../components/FinancialDataContext";
 import Image from 'next/image'
 import { Borrow } from '../../types/types'
 
@@ -46,10 +46,10 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
 
-  const latestBorrow = store.borrows.reduce((latest, current) => {
+  const latestBorrow = getUserData(store, walletAddress).borrows.reduce((latest, current) => {
       return current.updated > latest.updated ? current : latest;
     }
-    , store.borrows[0] || { tempData: false });
+    , getUserData(store, walletAddress).borrows[0] || { tempData: false });
 
   useEffect(() => {
     if (localError) {
@@ -220,7 +220,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                 };
                                 dispatch({
                                   type: "ADD_BORROW",
-                                  payload: newBorrow,
+                                  payload: { address: walletAddress, borrow: newBorrow },
                                 });
 
 
@@ -232,9 +232,9 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   dispatch({
                                     type: "UPDATE_BORROW_STATUS",
                                     payload: {
+                                      address: walletAddress,
                                       id: tx.hash,
                                       status: "confirmed",
-                                      tempData : true
                                     },
                                   });
                                 } catch (e) {
@@ -242,9 +242,9 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   dispatch({
                                     type: "UPDATE_BORROW_STATUS",
                                     payload: {
+                                      address: walletAddress,
                                       id: tx.hash,
                                       status: "failed",
-                                      tempData: true
                                     },
                                   });
                                 }
