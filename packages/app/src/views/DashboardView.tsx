@@ -11,8 +11,8 @@ import { ethers } from 'ethers';
 import Image from "next/image";
 import { secondsInDay} from "@shrub-lend/common";
 import {USER_POSITIONS_QUERY, GLOBAL_DATA_QUERY} from "../constants/queries";
-import { useLazyQuery } from "@apollo/client";
-import {useFinancialData} from "../components/FinancialDataContext";
+import {useLazyQuery, useQuery} from "@apollo/client";
+import {getUserData, useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendDepositView from './modals/ExtendDepositView';
 import {
@@ -46,16 +46,13 @@ export const DashboardView: FC = ({}) => {
   const { store, dispatch } = useFinancialData();
   const walletAddress = useAddress();
   const [blockchainTime, setBlockchainTime] = useState(0);
-  const [
-    getGlobalData,
-    {
+  const {
       loading: globalDataLoading,
       error: globalDataError,
       data: globalData,
       startPolling: globalDataStartPolling,
       stopPolling: globalDataStopPolling,
-    }
-  ] = useLazyQuery(GLOBAL_DATA_QUERY);
+    } = useQuery(GLOBAL_DATA_QUERY);
   const [
     getUserPositions,
     {
@@ -88,10 +85,6 @@ export const DashboardView: FC = ({}) => {
   };
 
   useEffect(() => {
-    getGlobalData();
-  }, [getGlobalData]);
-
-  useEffect(() => {
     if (globalData) {
       setLastSnapshotDate(fromEthDate(globalData.globalData.lastSnapshotDate));
     }
@@ -110,40 +103,54 @@ export const DashboardView: FC = ({}) => {
       handleAPYCalc();
     }
   }, [timestamp]);
+
   useEffect(() => {
-    // console.log("running walletAddress useEffect");
+    console.log("running walletAddress useEffect");
     if (!walletAddress) {return}
     getUserPositions();
-  }, [walletAddress, getUserPositions]);
+  }, [walletAddress]);
+
   useEffect(() => {
-    // console.log("running userPositionsDataLoading useEffect");
+    console.log("running userPositionsDataLoading useEffect");
     if (userPositionsDataLoading) {return}
   }, [userPositionsDataLoading]);
+
   useEffect(() => {
     // Once data is loaded, update the store
+    console.log("running setUserData dispatch useEffect");
+    console.log(`
+    userPositionsDataLoading: ${userPositionsDataLoading}
+    userPositionsData: ${userPositionsData}
+    dispatch: ${dispatch}`);
     if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
       const { borrows, deposits } = userPositionsData.user;
-      const tempDeposits: Deposit[] = deposits.map((deposit: Deposit) => {
-          return {
-              ...deposit,
-              id: deposit.lendingPool.id
-          }
-      });
+
+      const userData = getUserData(store, walletAddress);
+      if (userData.borrows.length || userData.deposits.length) {
+        console.log(`userData already exists for address ${walletAddress}, skipping SET_USER_DATA`);
+        return;
+      }
       dispatch({
         type: "SET_USER_DATA",
         payload: {
+          address: walletAddress,
           borrows,
-          deposits: tempDeposits,
+          deposits
         },
       });
     }
-  }, [userPositionsDataLoading, userPositionsData, dispatch]);
+  }, [userPositionsData]);
 
 
   useEffect(() => {
         // console.log('running block useEffect')
         getBlockTest()
-    }, [userPositionsDataLoading]);
+    }, [walletAddress]);
+
+  useEffect(() => {
+    console.log("This is the store");
+    console.log(store);
+  }, [store]);
 
   async function getBlockTest() {
         const block = await getBlock({
@@ -195,6 +202,8 @@ export const DashboardView: FC = ({}) => {
   //   (newlyAddedDeposit.depositsUsdc * newlyAddedDeposit.lendingPool.tokenSupply) /
   //   (newlyAddedDeposit.lendingPool.totalPrincipal + newlyAddedDeposit.lendingPool.totalUsdcInterest +
   //     (newlyAddedDeposit.lendingPool.totalEthYield * ethPrice));
+
+  // console.log(store);
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -305,7 +314,8 @@ export const DashboardView: FC = ({}) => {
                             </tr>
                             </thead>
                             <tbody className='text-lg'>
-                            {store?.deposits?.sort((a, b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
+                            {/*Making a copy of store so that it can be sorted (store is read-only)*/}
+                            {[...getUserData(store, walletAddress).deposits].sort((a, b) => parseInt(a.lendingPool.timestamp) - parseInt(b.lendingPool.timestamp)).map(  // Sort by timestamp before mapping
                                 (storeDeposit, index) => {
                                   let lendingPoolTokenSupply: ethers.BigNumber;
                                   let lendingPoolTokenAmount: ethers.BigNumber;
@@ -403,7 +413,7 @@ export const DashboardView: FC = ({}) => {
                                         <button type='button'
                                                 style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
-                                                disabled={storeDeposit.lendingPool.timestamp && fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).getTime() === store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime()}
+                                                disabled={storeDeposit.lendingPool.timestamp && fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).getTime() === store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1].getTime()}
                                                 onClick={() => {
                                                   setExtendDepositModalOpen(true);
                                                   setSelectedDeposit(deposit);
@@ -474,7 +484,7 @@ export const DashboardView: FC = ({}) => {
                             </tr>
                             </thead>
                             <tbody className="text-lg">
-                              {store?.borrows?.map((storeBorrow, index) => {
+                              {getUserData(store, walletAddress).borrows.map((storeBorrow, index) => {
                                 const principal = ethers.BigNumber.from(storeBorrow.principal);
                                 const originalPrincipal = ethers.BigNumber.from(storeBorrow.originalPrincipal);
                                 const endDate = fromEthDate(parseInt(storeBorrow.timestamp, 10));
@@ -498,7 +508,6 @@ export const DashboardView: FC = ({}) => {
                                     debt: principal.add(interest),
                                     earlyRepaymentFee,
                                 };
-                                console.log(borrow);
                                 const timeLeft = daysFromNow(borrow.endDate);
 
                                 return (
@@ -575,7 +584,7 @@ export const DashboardView: FC = ({}) => {
                                         <button type='button'
                                                 style={{ visibility: storeBorrow.tempData || storeBorrow.status ? 'hidden' : 'visible' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100'
-                                                disabled={store.activePoolTimestamps.length && store.activePoolTimestamps[store.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime()}
+                                                disabled={store.platformData.activePoolTimestamps.length && store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime()}
                                                 onClick={() => {
                                                   setExtendBorrowModalOpen(true);
                                                   setSelectedBorrow(borrow);

@@ -167,14 +167,14 @@ console.log(borrow);
                                     };
                                     dispatch({
                                       type: 'ADD_BORROW',
-                                      payload: newBorrowRepay,
+                                      payload: { address: walletAddress, borrow: newBorrowRepay },
                                     });
                                     dispatch({
                                       type: "UPDATE_BORROW_STATUS",
                                       payload: {
+                                        address: walletAddress,
                                         id: borrow.id.toString(),
                                         status: "repaying",
-                                        tempData: true
                                       },
                                     });
                                     try {
@@ -185,17 +185,17 @@ console.log(borrow);
                                       dispatch({
                                         type: "UPDATE_BORROW_STATUS",
                                         payload: {
+                                          address: walletAddress,
                                           id: `${tx.hash}-repay`,
                                           status: 'confirmed',
-                                          tempData: true,
                                         },
                                       });
                                       dispatch({
                                         type: "UPDATE_BORROW_STATUS",
                                         payload: {
+                                          address: walletAddress,
                                           id: borrow.id.toString(),
                                           status: "repaid",
-                                          tempData: true
                                         },
                                       });
                                     } catch (e) {
@@ -203,17 +203,17 @@ console.log(borrow);
                                       dispatch({
                                         type: 'UPDATE_BORROW_STATUS',
                                         payload: {
+                                          address: walletAddress,
                                           id: `${tx.hash}-repay`,
                                           status: 'failed',
-                                          tempData: true,
                                         },
                                       });
                                       dispatch({
                                         type: 'UPDATE_BORROW_STATUS',
                                         payload: {
+                                          address: walletAddress,
                                           id: borrow.id.toString(),
                                           status: 'failed',
-                                          tempData: true,
                                         },
                                       });
                                     }

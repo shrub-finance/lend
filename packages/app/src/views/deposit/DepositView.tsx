@@ -141,7 +141,7 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
                   </label>
                   <ul className="flex flex-row">
                     {
-                      store.activePoolTimestamps.map((activePoolTimestamp) => (
+                      store.platformData.activePoolTimestamps.map((activePoolTimestamp) => (
                       // const activePoolTimestampId = toEthDate(activePoolTimestamp).toString();
                       <li key={activePoolTimestamp.toISOString()} className="mr-4">
                         <input
