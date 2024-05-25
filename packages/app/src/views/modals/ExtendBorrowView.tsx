@@ -99,18 +99,18 @@ setIsModalOpen, borrow
             <div className="card w-full text-left">
               <div className='card-body '>
                 <div className='form-control w-full'>
-                  <div className='flex items-center pb-2'>
+                  <div className='flex items-center pb-4'>
                     <button onClick={() => setInterestEditRequested(false)}>
                       <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none'
                            className='w-6 grow-0 order-0 flex-none'>
-                        <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='black' strokeWidth='2' strokeLinecap='round'
+                        <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='#98A2B3' strokeWidth='2' strokeLinecap='round'
                               strokeLinejoin='round' />
                       </svg>
                     </button>
                   </div>
                   <div>
                     <label className='label'>
-                      <span className='label-text text-shrub-blue'>Extend Amount</span>
+                      <span className='label-text text-shrub-blue'></span>
                     </label>
                     <div className='w-full text-xl font-semibold flex flex-row'>
                       <span
@@ -122,7 +122,7 @@ setIsModalOpen, borrow
                 </div>
                 {/*due date*/}
                 {showDueDateOptions ?
-                  <div className='form-control w-full mt-4'>
+                  <div className='form-control w-full mt-8'>
                     <label className='label'>
                       <span className='label-text text-shrub-blue'>Due Date</span>
                     </label>

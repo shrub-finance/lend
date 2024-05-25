@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
-  formatLargeUsdc, formatPercentage, formatWad, toEthDate,
+  formatLargeUsdc, formatWad, toEthDate,
   truncateEthAddress,
 } from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
 import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
-import { Borrow, BorrowObj, DepositObj } from '../../types/types';
+import { Borrow, BorrowObj } from '../../types/types';
 import { useAddress, useContract, useContractRead, Web3Button } from '@thirdweb-dev/react';
 import { useFinancialData } from '../../components/FinancialDataContext';
 import { ethers } from 'ethers';
@@ -46,7 +46,6 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
     }
   }, [usdcAllowance, usdcAllowanceIsLoading, approveUSDCActionInitiated, borrow.debt]);
 
-console.log(borrow);
   return (
     <>
       <div className='relative group mt-4 w-full min-w-[500px]'>
@@ -84,7 +83,7 @@ console.log(borrow);
                     <span>{formatLargeUsdc(borrow.earlyRepaymentFee)} USDC</span>
                   </div>
                   <div className='flex flex-row justify-between cursor-pointer'
-                       onClick={(e) => onBackRepay('partialRepayRequest')}>
+                       onClick={() => onBackRepay('partialRepayRequest')}>
                     <span>USDC to repay</span>
                     <span className='font-semibold text-shrub-green-500'>{formatLargeUsdc(borrow.debt.add(borrow.earlyRepaymentFee))} USDC
                        <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20'

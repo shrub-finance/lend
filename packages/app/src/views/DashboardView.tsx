@@ -498,7 +498,6 @@ export const DashboardView: FC = ({}) => {
                                     debt: principal.add(interest),
                                     earlyRepaymentFee,
                                 };
-                                console.log(borrow);
                                 const timeLeft = daysFromNow(borrow.endDate);
 
                                 return (
