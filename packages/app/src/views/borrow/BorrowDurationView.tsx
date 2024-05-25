@@ -14,7 +14,7 @@ interface BorrowDurationViewProps {
 export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDuration, requiredCollateral, onDurationChange }) => {
 
   const { store, dispatch } = useFinancialData();
-  const [timestamp, setTimestamp] = useState(store.activePoolTimestamps[0] ? toEthDate(store.activePoolTimestamps[0]) : 0);
+  const [timestamp, setTimestamp] = useState(store.platformData.activePoolTimestamps[0] ? toEthDate(store.platformData.activePoolTimestamps[0]) : 0);
 
   const handleDurationContinue = () => {
     onDurationChange(timestamp);
@@ -61,7 +61,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({ onBackDu
                   </label>
                   <div>
                     <ul className="flex flex-col gap-4">
-                      {store.activePoolTimestamps.map((activePoolTimestamp) => (
+                      {store.platformData.activePoolTimestamps.map((activePoolTimestamp) => (
                         <li className="mr-4" key={activePoolTimestamp.toISOString()}>
                           <input
                             type="radio"

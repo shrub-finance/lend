@@ -76,7 +76,7 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
               <span className="label-text text-shrub-blue">New Lockup Period</span>
             </label>
             <ul className="flex flex-row">
-              {store.activePoolTimestamps.filter(activePoolTimestamp => activePoolTimestamp > deposit.endDate).map((activePoolTimestamp) => (
+              {store.platformData.activePoolTimestamps.filter(activePoolTimestamp => activePoolTimestamp > deposit.endDate).map((activePoolTimestamp) => (
                 <li key={activePoolTimestamp.toISOString()} className="mr-4">
                   <input
                     type="radio"

@@ -6,7 +6,7 @@ import {BigNumber, ethers} from "ethers"
 import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages"
 import Image from "next/image";
 import {useRouter} from "next/router"
-import { useFinancialData } from '../../components/FinancialDataContext'
+import {getUserData, useFinancialData} from '../../components/FinancialDataContext'
 import { Deposit } from '../../types/types'
 import useActiveLendingPools from "hooks/useActiveLendingPools"
 
@@ -42,10 +42,15 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const walletAddress = useAddress();
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
-  const latestDeposit: Deposit = store?.deposits?.reduce((latest, current) => {
+
+  const latestDeposit: Deposit = getUserData(store, walletAddress).deposits.reduce((latest, current) => {
       return current.updated > latest.updated ? current : latest;
     }
-    , store?.deposits[0] || { tempData: false });
+    , getUserData(store, walletAddress).deposits[0] || { tempData: false });
+  // const latestDeposit: Deposit = store?.deposits?.reduce((latest, current) => {
+  //     return current.updated > latest.updated ? current : latest;
+  //   }
+  //   , store?.deposits[0] || { tempData: false });
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
@@ -180,6 +185,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                       <div className="flex flex-row justify-between cursor-pointer" onClick={backOnDeposit}>
                         <span className="">Lockup ends</span>
                         <span>
+                          {timestamp}
                           {endDate.toDateString()}
                           <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>
                         </span>
@@ -309,8 +315,10 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                               isDisabled={latestDeposit?.status === "pending"}
                               className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
                               action={
-                              async (lendingPlatform) =>
-                              {
+                              async (lendingPlatform) => {
+                                console.log(`Contract Args:
+                                timestamp: ${timestamp}
+                                depositAmount: ${ethers.utils.parseUnits(depositAmount, 6)}`);
                                 setLocalError('');
                                 // @ts-ignore
                                 return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(depositAmount, 6))
@@ -353,7 +361,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                   };
                                   dispatch({
                                     type: "ADD_LEND_POSITION",
-                                    payload: newDeposit,
+                                    payload: { address: walletAddress, deposit: newDeposit }
                                   });
 
                                   try {
@@ -364,9 +372,9 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                       dispatch({
                                         type: "UPDATE_LEND_POSITION_STATUS",
                                         payload: {
+                                          address: walletAddress,
                                           id: matchedLendingPool.id,
                                           status: "confirmed",
-                                          tempData: true
                                         },
                                       });
                                   } catch (e) {
@@ -374,9 +382,9 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                     dispatch({
                                       type: "UPDATE_LEND_POSITION_STATUS",
                                       payload: {
+                                        address: walletAddress,
                                         id: matchedLendingPool.id,
                                         status: "failed",
-                                        tempData: true
                                       },
                                     });
                                   }

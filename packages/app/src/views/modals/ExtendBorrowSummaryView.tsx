@@ -130,7 +130,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
               <span className='font-bold'>{' '}{formatLargeUsdc(borrow.debt)} USDC</span>, your
               existing borrow position
               token will be burnt and a new one will be minted reflecting the new date <span
-              className='font-bold'>{newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1])}</span>.
+              className='font-bold'>{newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1])}</span>.
             </p>
             <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
             {/*receipt start*/}
@@ -159,7 +159,7 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                      onClick={(e) => onBackExtend('dateChangeRequest')}>
                   <span>New Due Date ✨</span>
                   <span className='font-semibold text-shrub-green-500'>
-                    {newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.activePoolTimestamps[store.activePoolTimestamps.length - 1])}<Image
+                    {newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1])}<Image
                     alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' /></span>
                 </div>
                 <div className='flex flex-row  justify-between cursor-pointer'
@@ -296,18 +296,18 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                       };
                                       dispatch({
                                         type: 'ADD_BORROW',
-                                        payload: newBorrowRepay,
+                                        payload: { address: walletAddress, borrow: newBorrowRepay },
                                       });
                                       dispatch({
                                         type: 'ADD_BORROW',
-                                        payload: newBorrow,
+                                        payload: { address: walletAddress, borrow: newBorrow },
                                       });
                                       dispatch({
                                         type: 'UPDATE_BORROW_STATUS',
                                         payload: {
+                                          address: walletAddress,
                                           id: borrow.id.toString(),
                                           status: 'extending',
-                                          tempData: true
                                         },
                                       });
                                       try {
@@ -318,25 +318,25 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         dispatch({
                                           type: 'UPDATE_BORROW_STATUS',
                                           payload: {
+                                            address: walletAddress,
                                             id: `${tx.hash}-borrow`,
                                             status: 'confirmed',
-                                            tempData: true
                                           },
                                         });
                                         dispatch({
                                           type: 'UPDATE_BORROW_STATUS',
                                           payload: {
+                                            address: walletAddress,
                                             id: `${tx.hash}-repay`,
                                             status: 'confirmed',
-                                            tempData: true
                                           },
                                         });
                                         dispatch({
                                           type: 'UPDATE_BORROW_STATUS',
                                           payload: {
+                                            address: walletAddress,
                                             id: borrow.id.toString(),
                                             status: 'extended',
-                                            tempData: true
                                           },
                                         });
                                       } catch (e) {
@@ -344,17 +344,17 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         dispatch({
                                           type: 'UPDATE_BORROW_STATUS',
                                           payload: {
+                                            address: walletAddress,
                                             id: `${tx.hash}-borrow`,
                                             status: 'failed',
-                                            tempData: true
                                           },
                                         });
                                         dispatch({
                                           type: 'UPDATE_BORROW_STATUS',
                                           payload: {
+                                            address: walletAddress,
                                             id: `${tx.hash}-repay`,
                                             status: 'failed',
-                                            tempData: true
                                           },
                                         });
                                       }
