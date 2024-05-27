@@ -7,6 +7,9 @@ import {calculateLockupPeriod} from "@shrub-lend/common";
 import Image from 'next/image';
 import { oneMonth, sixMonth, threeMonth, twelveMonth } from '../../constants';
 import {useFinancialData} from "../../components/FinancialDataContext";
+import { useValidation } from '../../hooks/useValidation';
+import ErrorDisplay from '../../components/ErrorDisplay';
+
 
 
 interface DepositViewProps {
@@ -20,11 +23,11 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
   const [depositAmount, setDepositAmount] = useState("");
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
+  const { errors: depositErrors, setError: setDepositError, clearError: clearDepositError } = useValidation();
   const [timestamp, setTimestamp] = useState(0);
   const [showLendAPYSection, setShowLendAPYSection] = useState(false);
   const [continueButtonEnabled, setContinueButtonEnabled] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
-  const [isValidationError, setIsValidationError] = useState(false);
 
   const { store, dispatch } = useFinancialData();
 
@@ -39,21 +42,25 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
 
   const handleDepositAmountChange = (event) => {
     const inputValue = event.target.value.trim();
-    // Update the state with the current input value
     setDepositAmount(inputValue);
 
-    // Check if the input value is empty 
     if (inputValue === '') {
-      setIsValidationError(false);
+      clearDepositError('deposit');
       setShowLendAPYSection(false);
       return;
     }
 
-    // Continue with validation for non-empty inputs
     const isValidInput = /^([0-9]+(\.[0-9]{1,6})?|\.[0-9]{1,6})$/.test(inputValue);
     const parsedValue = parseFloat(inputValue);
     const isInvalidOrZero = !isValidInput || isNaN(parsedValue) || parsedValue === 0;
-    setIsValidationError(isInvalidOrZero);
+
+    if (isInvalidOrZero) {
+      setDepositError('deposit', 'Amount must be a valid number and greater than zero');
+      setShowLendAPYSection(false);
+    } else {
+      clearDepositError('deposit');
+      setShowLendAPYSection(true);
+    }
   };
 
   useEffect(() => {
@@ -73,7 +80,7 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
     }
   }, [timestamp]); // Removed handleAPYCalc from dependencies
 
-
+  const isValidationError = !!depositErrors.deposit;
 
   const handleLendContinue = () => {
     onDepositViewChange(estimatedAPY, timestamp, depositAmount);
@@ -119,11 +126,7 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
                          className="input input-bordered w-full h-[70px] bg-white border-solid border border-shrub-grey-light2 text-lg
                          focus:outline-none focus:shadow-shrub-thin focus:border-shrub-green-50" onChange={handleDepositAmountChange}
                          value={format(depositAmount)}/>
-                  {isValidationError && (
-                    <p className="mt-2 text-sm text-red-600 ">
-                      Invalid USDC amount (numeric and maximum 6 decimals)
-                    </p>
-                  )}
+                  <ErrorDisplay errors={depositErrors} />
                   <label className="label">
                     <span className="label-text-alt text-shrub-grey-200 text-sm font-light">Wallet balance: {!usdcBalanceIsLoading &&
                       <span>{usdcBalance.displayValue} USDC</span>}
