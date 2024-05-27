@@ -135,14 +135,13 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
                 </div>
 
                 {/*interest rate control*/}
-                <div className="form-control w-full  ">
+                <div className="form-control w-full">
                   <label className="label">
                     <span className="label-text text-shrub-blue">Lockup period</span>
                   </label>
                   <ul className="flex flex-row">
                     {
                       store.platformData.activePoolTimestamps.map((activePoolTimestamp) => (
-                      // const activePoolTimestampId = toEthDate(activePoolTimestamp).toString();
                       <li key={activePoolTimestamp.toISOString()} className="mr-4">
                         <input
                           type="radio"
@@ -174,7 +173,7 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
                 {/*divider*/}
                 <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
 
-                {/*Simple spinner svg*/}
+                {/*SPINNER*/}
                 {/*<div className="hero-content flex-col mb-3">*/}
                 {/*  <div role="status">*/}
                 {/*    <svg aria-hidden="true"*/}

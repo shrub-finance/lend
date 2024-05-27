@@ -91,7 +91,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                 <button onClick={onBackExtend}>
               <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none'
                    className='w-6 grow-0 order-0 flex-none'>
-                <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='black' strokeWidth='2' strokeLinecap='round'
+                <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='#98A2B3' strokeWidth='2' strokeLinecap='round'
                       strokeLinejoin='round' />
               </svg>
             </button>
