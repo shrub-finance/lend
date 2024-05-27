@@ -12,6 +12,10 @@ export const interestRates = [
 
 export const Zero = ethers.constants.Zero;
 
+export const HOUR = 60 * 60 * 1000;
+export const DAY = 24 * HOUR;
+
 // TODO: These should come from subgraph GlobalData - they are specified in the contract PlatformConfig
-export const EARLY_REPAYMENT_THRESHOLD = 30 * 24 * 60 * 60 * 1000;
+export const EARLY_REPAYMENT_THRESHOLD = 30 * DAY; // 30 Days
+export const LENDING_POOL_UNLOCK_BUFFER = 6 * HOUR; // 6 Hours
 export const EARLY_REPAYMENT_APY = ethers.BigNumber.from("500");
