@@ -6,11 +6,15 @@ export function getUser(
     address: Address
 ): User {
     let id = address.toHexString();
-    let user = User.load(id);
-    if (user !== null) {
-        return user;
-    }
-    return createUser(id);
+    return getUserById(id);
+}
+
+export function getUserById(id: string): User {
+  let user = User.load(id);
+  if (user !== null) {
+    return user;
+  }
+  return createUser(id);
 }
 
 // Private Methods

@@ -11,7 +11,7 @@ import {
     lendingPoolDeposit, lendingPoolFinalize,
     lendingPoolIncrementTokenSupply, lendingPoolUpdateYield, lendingPoolWithdraw
 } from "./entities/lending-pool";
-import {getUser} from "./entities/user";
+import {getUser, getUserById} from "./entities/user";
 import {
     addBorrowToPool,
     getBorrowingPool,
@@ -23,6 +23,12 @@ import {PoolShareToken} from "../generated/templates";
 import {getDeposit, incrementDeposit, lendPostionWithdraw} from "./entities/deposit";
 import {UsdcToWadRatio} from "./constants";
 import {updateLastSnapshotDate} from "./entities/global-data";
+import {
+  createLogBorrow,
+  createLogDeposit,
+  createLogPartialRepayBorrow,
+  createLogRepayBorrow, createLogWithdraw
+} from "./entities/user-log";
 
 
 export function handlePoolCreated(event: PoolCreated): void {
@@ -51,7 +57,7 @@ export function handleNewDeposit(event: NewDeposit): void {
     let tokenAmount = event.params.tokenAmount;
     // event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
     // Create User
-    getUser(depositor);
+    let user = getUser(depositor);
     // Update Lending Pool with new USDC amounts
     let lendingPool = getLendingPool(poolShareTokenAddress);
     lendingPoolDeposit(lendingPool, principalAmount, interestAmount);
@@ -62,6 +68,7 @@ export function handleNewDeposit(event: NewDeposit): void {
     // // Increment the number of tokens for the to
     let deposit = getDeposit(depositor, lendingPool);
     incrementDeposit(deposit, principalAmount.plus(interestAmount), tokenAmount);
+    createLogDeposit(user, principalAmount, interestAmount, tokenAmount, deposit, event.transaction, event.block);
 }
 
 export function handleNewBorrow(event: NewBorrow): void {
@@ -75,16 +82,18 @@ export function handleNewBorrow(event: NewBorrow): void {
         event.params.apy.toString()
     ])
     // get the user for depositor
-    getUser(event.params.borrower);
+    let user = getUser(event.params.borrower);
     // get/create the borrowing pool
     let borrowingPool = getBorrowingPool(event.params.timestamp, event.block);
     // create a new borrow
+    let principal = event.params.principal.times(UsdcToWadRatio);
+    let collateral = event.params.collateral;
     let borrow = getBorrow(
         event.params.tokenId,
         event.params.borrower,
         event.params.apy,
-        event.params.principal.times(UsdcToWadRatio),
-        event.params.collateral,
+        principal,
+        collateral,
         event.params.timestamp,
         event.params.startDate,
         event.block
@@ -93,6 +102,7 @@ export function handleNewBorrow(event: NewBorrow): void {
     // TODO: What was the point of borrow-position again?
     // update the borrowing pool with the borrow
     addBorrowToPool(borrowingPool, borrow);
+    createLogBorrow(user, principal, collateral, borrow, event.transaction, event.block);
 }
 
 export function handleLendingPoolYield(event: LendingPoolYield): void {
@@ -122,8 +132,10 @@ export function handlePartialRepayBorrow(event: PartialRepayBorrow): void {
 
     let borrow = getBorrowByTokenId(tokenId);
     let borrowingPool = getBorrowingPool(borrow.timestamp, event.block);
+    let user = getUserById(borrow.user);
     partialRepayBorrowingPool(borrowingPool, principalReduction);
     partialRepayBorrow(tokenId, repaymentAmount, principalReduction, event.block);
+    createLogPartialRepayBorrow(user, repaymentAmount, principalReduction, borrow, event.transaction, event.block);
 }
 
 export function handleRepayBorrow(event: RepayBorrow): void {
@@ -140,9 +152,13 @@ export function handleRepayBorrow(event: RepayBorrow): void {
     let beneficiary = event.params.beneficiary;
 
     let borrow = getBorrowByTokenId(tokenId);
+    let principalPaid = borrow.principal;
     let borrowingPool = getBorrowingPool(borrow.timestamp, event.block);
+    let user = getUserById(borrow.user);
+    let beneficiaryUser = getUser(beneficiary);
     removeBorrowFromPool(borrowingPool, borrow);
     repayBorrow(tokenId, repaymentAmount, collateralReturned, beneficiary, event.block);
+    createLogRepayBorrow(user, beneficiaryUser, repaymentAmount, principalPaid, collateralReturned, borrow, event.transaction, event.block);
 }
 
 export function handleWithdraw(event: Withdraw): void {
@@ -162,6 +178,8 @@ export function handleWithdraw(event: Withdraw): void {
     let usdcPrincipal = event.params.usdcPrincipal.times(UsdcToWadRatio);
     let usdcInterest = event.params.usdcInterest.times(UsdcToWadRatio);
 
+    let user = getUser(userAddress);
+
     // Update Lending Pool
     let lendingPool = getLendingPool(poolShareTokenAddress);
     lendingPool = lendingPoolWithdraw(lendingPool, usdcPrincipal, usdcInterest, ethAmount, tokenAmount);
@@ -169,6 +187,7 @@ export function handleWithdraw(event: Withdraw): void {
     let deposit = getDeposit(userAddress, lendingPool);
     let withdrawsUsdc = usdcPrincipal.plus(usdcInterest);
     lendPostionWithdraw(deposit, withdrawsUsdc, ethAmount, tokenAmount);
+    createLogWithdraw(user, usdcPrincipal, usdcInterest, tokenAmount, ethAmount, deposit, event.transaction, event.block);
 }
 
 export function handleFinalizeLendingPool(event: FinalizeLendingPool): void {
