@@ -28,6 +28,7 @@ import ExtendBorrowView from './modals/ExtendBorrowView';
 import {
   EARLY_REPAYMENT_APY,
   EARLY_REPAYMENT_THRESHOLD,
+  LENDING_POOL_UNLOCK_BUFFER,
   oneMonth,
   sixMonth,
   threeMonth,
@@ -351,6 +352,8 @@ export const DashboardView: FC = ({}) => {
                                     positionUsdcInterest,
                                     positionPrincipal,
                                   };
+                                    const endDatePlusBuffer = new Date(deposit.endDate);
+                                    endDatePlusBuffer.setUTCMilliseconds(endDatePlusBuffer.getUTCMilliseconds() + LENDING_POOL_UNLOCK_BUFFER);
                                     const netDeposits = deposit.depositsUsdc.sub(deposit.withdrawsUsdc);
                                     const currentBalance = storeDeposit.currentBalanceOverride ?
                                       ethers.BigNumber.from(storeDeposit.currentBalanceOverride) :
@@ -406,7 +409,7 @@ export const DashboardView: FC = ({}) => {
                                       </span>
                                     </td>
                                     <td className='px-6 py-4 text-sm font-bold'>
-                                      {fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).toLocaleString()}
+                                      {endDatePlusBuffer.toLocaleString()}
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className='flex items-center justify-center space-x-2 h-full p-2'>
