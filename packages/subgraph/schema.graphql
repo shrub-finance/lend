@@ -72,3 +72,21 @@ type Deposit @entity {
     withdrawsUsdc: BigInt!
     withdrawsEth: BigInt!
 }
+
+type UserLog @entity {
+    "txid-index"
+    id: ID!
+    timestamp: BigInt!
+    block: BigInt!
+    type: String!
+    user: User!
+    principal: BigInt
+    interest: BigInt
+    collateral: BigInt
+    tokenAmount: BigInt
+    lendingPool: LendingPool
+    borrowingPool: BorrowingPool
+    deposit: Deposit
+    borrow: Borrow
+
+}

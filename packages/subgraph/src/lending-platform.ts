@@ -23,6 +23,7 @@ import {PoolShareToken} from "../generated/templates";
 import {getDeposit, incrementDeposit, lendPostionWithdraw} from "./entities/deposit";
 import {UsdcToWadRatio} from "./constants";
 import {updateLastSnapshotDate} from "./entities/global-data";
+import {createLogBorrow, createLogDeposit} from "./entities/user-log";
 
 
 export function handlePoolCreated(event: PoolCreated): void {
@@ -51,7 +52,7 @@ export function handleNewDeposit(event: NewDeposit): void {
     let tokenAmount = event.params.tokenAmount;
     // event NewDeposit(uint256 timestamp, address depositor, uint256 amount);
     // Create User
-    getUser(depositor);
+    let user = getUser(depositor);
     // Update Lending Pool with new USDC amounts
     let lendingPool = getLendingPool(poolShareTokenAddress);
     lendingPoolDeposit(lendingPool, principalAmount, interestAmount);
@@ -62,6 +63,7 @@ export function handleNewDeposit(event: NewDeposit): void {
     // // Increment the number of tokens for the to
     let deposit = getDeposit(depositor, lendingPool);
     incrementDeposit(deposit, principalAmount.plus(interestAmount), tokenAmount);
+    createLogDeposit(user, principalAmount, interestAmount, deposit, event.transaction, event.block);
 }
 
 export function handleNewBorrow(event: NewBorrow): void {
@@ -75,16 +77,18 @@ export function handleNewBorrow(event: NewBorrow): void {
         event.params.apy.toString()
     ])
     // get the user for depositor
-    getUser(event.params.borrower);
+    let user = getUser(event.params.borrower);
     // get/create the borrowing pool
     let borrowingPool = getBorrowingPool(event.params.timestamp, event.block);
     // create a new borrow
+    let principal = event.params.principal.times(UsdcToWadRatio);
+    let collateral = event.params.collateral;
     let borrow = getBorrow(
         event.params.tokenId,
         event.params.borrower,
         event.params.apy,
-        event.params.principal.times(UsdcToWadRatio),
-        event.params.collateral,
+        principal,
+        collateral,
         event.params.timestamp,
         event.params.startDate,
         event.block
@@ -93,6 +97,7 @@ export function handleNewBorrow(event: NewBorrow): void {
     // TODO: What was the point of borrow-position again?
     // update the borrowing pool with the borrow
     addBorrowToPool(borrowingPool, borrow);
+    createLogBorrow(user, principal, collateral, borrow, event.transaction, event.block);
 }
 
 export function handleLendingPoolYield(event: LendingPoolYield): void {
