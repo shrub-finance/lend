@@ -76,6 +76,36 @@ export const GET_LENDINGPOOL_QUERY = gql`
     }
 `;
 
+export const GET_USER_LOGS_QUERY = gql`
+    query GetUserLogs($user: ID!) {
+        userLogs(
+            where: { user: $user }
+            orderBy: timestamp
+            orderDirection: desc
+        ) {
+            id
+            timestamp
+            block
+            type
+            principal
+            interest
+            ethYield
+            collateral
+            tokenAmount
+            deposit{
+                id
+                lendingPool{ timestamp }
+            }
+            borrow{
+                id
+                timestamp
+            }
+            beneficiary {
+                id
+            }
+        }
+    }`;
+
 export const GLOBAL_DATA_QUERY = gql`
     query GetGlobalData {
         globalData(id:1){
@@ -83,4 +113,4 @@ export const GLOBAL_DATA_QUERY = gql`
             lastSnapshotDate
         }
     }
-`
+`;

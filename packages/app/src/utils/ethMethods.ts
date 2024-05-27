@@ -17,6 +17,19 @@ const MAX_LTV_FOR_EXTEND = ethers.BigNumber.from(5000);
 
 export {toEthDate, fromEthDate};
 
+export function formatShortDate(date: Date) {
+  // Get the user's locale
+  const userLocale = navigator.language;
+
+// Use toLocaleDateString to format the date based on the user's locale
+  const formattedDate = date.toLocaleDateString(userLocale, {
+    year: '2-digit',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  return formattedDate;
+}
+
 export function truncateEthAddress (address) {
     if(address) {
         const truncateRegex = /^(0x[a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/;
