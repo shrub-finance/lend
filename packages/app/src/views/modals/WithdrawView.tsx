@@ -8,7 +8,7 @@ import {
   truncateEthAddress,
 } from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress} from '../../utils/contracts';
-import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
+import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
 import { Deposit } from '../../types/types';
 import { useAddress, Web3Button } from '@thirdweb-dev/react';
 import {DepositObj} from "../../types/types";

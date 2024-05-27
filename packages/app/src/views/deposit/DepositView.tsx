@@ -1,5 +1,5 @@
 import {FC, useEffect, useState} from "react";
-import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
+import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages";
 import {useBalance} from "@thirdweb-dev/react";
 import {usdcAddress} from "../../utils/contracts";
 import {toEthDate} from '@shrub-lend/common';

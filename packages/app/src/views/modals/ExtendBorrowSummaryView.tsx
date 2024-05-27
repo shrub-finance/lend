@@ -26,7 +26,7 @@ import {
   useContractRead,
   Web3Button,
 } from '@thirdweb-dev/react';
-import {handleErrorMessagesFactory} from '../../utils/handleErrorMessages';
+import {handleErrorMessagesFactory} from '../../components/HandleErrorMessages';
 import {useLazyQuery} from '@apollo/client';
 import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries';
 import {useFinancialData} from '../../components/FinancialDataContext';

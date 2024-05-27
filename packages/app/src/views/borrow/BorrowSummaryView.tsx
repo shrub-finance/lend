@@ -4,7 +4,7 @@ import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts"
 import {fromEthDate, interestToLTV, truncateEthAddress} from "../../utils/ethMethods";
 import { ethers } from 'ethers'
 import {useRouter} from "next/router";
-import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
+import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages";
 import {getUserData, useFinancialData} from "../../components/FinancialDataContext";
 import Image from 'next/image'
 import { Borrow } from '../../types/types'

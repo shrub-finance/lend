@@ -5,7 +5,7 @@ import {
   truncateEthAddress,
 } from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
-import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
+import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
 import { Borrow, BorrowObj } from '../../types/types';
 import { useAddress, useContract, useContractRead, Web3Button } from '@thirdweb-dev/react';
 import { useFinancialData } from '../../components/FinancialDataContext';
