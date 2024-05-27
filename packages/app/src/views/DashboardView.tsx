@@ -38,6 +38,7 @@ import {
 import useEthPriceFromChainlink from '../hooks/useEthPriceFromChainlink';
 import WithdrawView from './modals/WithdrawView';
 import RepayView from './modals/RepayView';
+import {UserHistoryView} from "./user-history/UserHistoryView";
 export const DashboardView: FC = ({}) => {
 
   const wallet = useConnectedWallet();
@@ -63,7 +64,6 @@ export const DashboardView: FC = ({}) => {
       startPolling: userPositionsDataStartPolling,
       stopPolling: userPositionsDataStopPolling,
     },
-
   ] = useLazyQuery(USER_POSITIONS_QUERY, {
     variables: {
       user: walletAddress && walletAddress.toLowerCase(),
@@ -79,7 +79,6 @@ export const DashboardView: FC = ({}) => {
   const [lastSnapshotDate, setLastSnapshotDate] = useState(new Date(0));
   const [repayModalOpen, setRepayModalOpen] = useState(false);
   const [selectedBorrowForRepay, setSelectedBorrowForRepay] = useState<BorrowObj | undefined>();
-
 
   const handleRepay = () => {
     setRepayModalOpen(false);
@@ -141,7 +140,6 @@ export const DashboardView: FC = ({}) => {
       });
     }
   }, [userPositionsData]);
-
 
   useEffect(() => {
         // console.log('running block useEffect')
@@ -612,6 +610,7 @@ export const DashboardView: FC = ({}) => {
                           </table>
                         </div>
                       </li>
+                      <UserHistoryView/>
                     </ul>
                   </div>
                 </div>
