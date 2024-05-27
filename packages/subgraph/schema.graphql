@@ -58,7 +58,7 @@ type Borrow @entity {
     startDate: BigInt!
     ltv: Int!
     apy: Int!
-    user: User
+    user: User!
     beneficiary: User
 }
 
@@ -80,13 +80,12 @@ type UserLog @entity {
     block: BigInt!
     type: String!
     user: User!
+    beneficiary: User
     principal: BigInt
     interest: BigInt
+    ethYield: BigInt
     collateral: BigInt
     tokenAmount: BigInt
-    lendingPool: LendingPool
-    borrowingPool: BorrowingPool
     deposit: Deposit
     borrow: Borrow
-
 }
