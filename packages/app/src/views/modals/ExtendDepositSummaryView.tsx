@@ -15,7 +15,7 @@ import {
   useContractRead,
   Web3Button
 } from '@thirdweb-dev/react';
-import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
+import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
 import {Deposit, DepositObj} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
 import useActiveLendingPools from '../../hooks/useActiveLendingPools';

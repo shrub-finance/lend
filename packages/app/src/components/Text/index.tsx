@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import React from 'react';
-import { cn } from 'utils';
+
 
 /**
  * Properties for a card component.
@@ -43,6 +43,9 @@ const variants = {
  * @param className Custom classes to be applied to the element.
  * @param children Child elements to be rendered within the component.
  */
+// Concatenates classes into a single className string
+export const cn = (...args: string[]) => args.join(' ');
+
 const Text = ({ variant, className, href, children }: TextProps) => (
     <p className={cn(className, variants[variant])}>
         {href ? (

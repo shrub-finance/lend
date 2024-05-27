@@ -3,7 +3,7 @@ import {useAddress, useBalance, useContract, useContractRead, Web3Button} from "
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts"
 import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods"
 import {BigNumber, ethers} from "ethers"
-import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages"
+import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages"
 import Image from "next/image";
 import {useRouter} from "next/router"
 import {getUserData, useFinancialData} from '../../components/FinancialDataContext'

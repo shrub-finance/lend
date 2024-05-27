@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
-  formatLargeUsdc, formatWad, toEthDate,
+  formatLargeUsdc, formatPercentage, formatWad, toEthDate,
   truncateEthAddress,
 } from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
-import { handleErrorMessagesFactory } from '../../utils/handleErrorMessages';
+import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
 import { Borrow, BorrowObj } from '../../types/types';
 import { useAddress, useContract, useContractRead, Web3Button } from '@thirdweb-dev/react';
 import { useFinancialData } from '../../components/FinancialDataContext';
@@ -14,10 +14,16 @@ import { ethers } from 'ethers';
 interface RepaySummaryViewProps {
   borrow: BorrowObj;
   onBackRepay: (data?) => void;
+  repayAmount: string;
+  newLtv: ethers.BigNumber;
 }
 
 const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: (initiated: boolean) => void }> = (
-  { borrow, onBackRepay }
+  { borrow,
+    onBackRepay,
+    repayAmount,
+    newLtv
+  }
 ) => {
 
   const walletAddress = useAddress();
@@ -46,6 +52,12 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
     }
   }, [usdcAllowance, usdcAllowanceIsLoading, approveUSDCActionInitiated, borrow.debt]);
 
+  const displayRepayAmount = repayAmount || formatLargeUsdc(borrow.debt);
+  const totalRepayAmount = repayAmount
+    ? repayAmount
+    : formatLargeUsdc(borrow.debt.add(borrow.earlyRepaymentFee));
+
+
   return (
     <>
       <div className='relative group mt-4 w-full min-w-[500px]'>
@@ -54,11 +66,11 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
             <div className='card-body'>
               <div>
                 <div className='w-full text-xl font-semibold flex flex-row'>
-                  <span className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(borrow.debt)} USDC</span>
+                  <span className='text-4xl font-medium text-left w-[500px]'>{displayRepayAmount} USDC</span>
                   <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
                 </div>
                 <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-                  Repaying will end the loan of <span className='font-bold'>{formatLargeUsdc(borrow.debt)}</span> USDC and return back to you the collateral <span className='font-bold'>{formatWad(borrow.collateral, 6)} ETH</span> with
+                  Repaying will end the loan of <span className='font-bold'>{displayRepayAmount}</span> USDC and return back to you the collateral <span className='font-bold'>{formatWad(borrow.collateral, 6)} ETH</span> with
                   due date of <span className='font-bold'>{borrow.endDate.toLocaleString()}.</span>
                 </p>
               </div>
@@ -68,6 +80,24 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
               {/*Receipt start*/}
               <div>
                 <div className='mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
+                  <div className='flex flex-row justify-between cursor-pointer'
+                       onClick={() => onBackRepay('partialRepayRequest')}>
+                    <span>USDC to repay</span>
+                    <span
+                      className='font-semibold text-shrub-green-500'>{totalRepayAmount} USDC
+                       <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20'
+                              height='20' />
+                    </span>
+                  </div>
+                  {newLtv && <div className='flex flex-row justify-between cursor-pointer'
+                       onClick={() => onBackRepay('partialRepayRequest')}>
+                    <span>New LTV ✨</span>
+                    <span
+                      className='font-semibold text-shrub-green-500'>{formatPercentage(newLtv)} %
+                       <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20'
+                              height='20' />
+                    </span>
+                  </div>}
                   <div className='flex flex-row justify-between'>
                     <span className=''>Principal</span>
                     <span>{formatLargeUsdc(borrow.principal)} USDC</span>
@@ -77,18 +107,9 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                     <span>{formatLargeUsdc(borrow.interest)}</span>
                   </div>
                   <div className='flex flex-row justify-between'
-                       style={{ display: borrow.earlyRepaymentFee.isZero()  ? 'none' : 'inherit' }}
-                  >
+                       style={{ display: borrow.earlyRepaymentFee.isZero() ? 'none' : 'inherit' }}>
                     <span className=''>Early Repayment Fee</span>
                     <span>{formatLargeUsdc(borrow.earlyRepaymentFee)} USDC</span>
-                  </div>
-                  <div className='flex flex-row justify-between cursor-pointer'
-                       onClick={() => onBackRepay('partialRepayRequest')}>
-                    <span>USDC to repay</span>
-                    <span className='font-semibold text-shrub-green-500'>{formatLargeUsdc(borrow.debt.add(borrow.earlyRepaymentFee))} USDC
-                       <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20'
-                              height='20'/>
-                    </span>
                   </div>
                   <div className='flex flex-row justify-between'>
                     <span className=''>Collateral to receive</span>
@@ -98,7 +119,7 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                     <span className=''>Contract Address</span>
                     <span>{truncateEthAddress(lendingPlatformAddress)}
                       <Image alt='copy icon' src='/copy.svg' className='w-6 hidden md:inline align-baseline ml-2'
-                             width='24' height='24'/>
+                             width='24' height='24' />
                     </span>
                   </div>
                   <div className='flex flex-row justify-between'>

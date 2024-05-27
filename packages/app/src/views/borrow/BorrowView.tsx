@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 
-import {handleErrorMessagesFactory} from "../../utils/handleErrorMessages";
+import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages";
 import {useBalance, useContract} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
@@ -8,6 +8,8 @@ import {EXCHANGE_RATE_BUFFER, interestToLTV, ONE_HUNDRED_PERCENT, percentMul, ro
 import {BigNumber, ethers} from "ethers";
 import Image from 'next/image'
 import { interestRates } from '../../constants';
+import { useValidation } from '../../hooks/useValidation';
+import ErrorDisplay from '../../components/ErrorDisplay';
 
 interface BorrowViewProps {
   onBorrowViewChange: (interestRate, amount) => void;
@@ -21,6 +23,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [showBorrowAPYSection, setShowBorrowAPYSection] = useState(false);
+  const { errors: borrowErrors, setError: setBorrowError, clearError: clearBorrowError } = useValidation();
 
 
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
@@ -36,9 +39,6 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
   const format = (val: string) => val;
-  const [isValidationError, setIsValidationError] = useState(false);
-
-
 
   async function fillMax() {
     if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading) {
@@ -50,20 +50,23 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
     }
   }
 
-
   const handleAmountChange = (event) => {
     const inputValue = event.target.value.trim();
     setBorrowAmount(inputValue);
     if (inputValue === '') {
-      setIsValidationError(false);
+      clearBorrowError('borrow');
       return;
     }
     const isValidInput = /^[0-9]+(\.[0-9]*)?$/.test(inputValue);
     const parsedValue = parseFloat(inputValue);
     const isInvalidOrZero = !isValidInput || isNaN(parsedValue) || parsedValue === 0;
-
-    setIsValidationError(isInvalidOrZero);
+    if (isInvalidOrZero) {
+      setBorrowError('borrow', 'Amount must be a valid number and greater than zero');
+    } else {
+      clearBorrowError('borrow');
+    }
   };
+
 
   useEffect(() => {
       const determineRequiredCollateral = async () => {
@@ -142,10 +145,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                          className="input input-bordered w-full h-[70px] bg-white border-solid border border-shrub-grey-50 text-lg focus:outline-none focus:shadow-shrub-thin focus:border-shrub-green-50"
                          onChange={handleAmountChange}
                          value={format(borrowAmount)}/>
-                  {isValidationError && (
-                    <p className="mt-2 text-sm text-red-600 ">
-                      Amount must be a number
-                    </p>)}
+                  <ErrorDisplay errors={borrowErrors} />
                   <label className="label">
                     <span className="label-text-alt text-shrub-grey-200 text-sm font-light">Wallet balance:  {!ethBalanceIsLoading &&
                         <span>
