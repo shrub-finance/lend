@@ -2,8 +2,9 @@
 import React, {createContext, useReducer, useContext, ReactNode, useEffect} from 'react'
 import { UserFinancialDataState, UserFinancialDataAction, Borrow, Deposit } from '../types/types'
 import {fromEthDate} from "@shrub-lend/common";
-import {useQuery} from "@apollo/client";
-import {ACTIVE_LENDINGPOOLS_QUERY} from "../constants/queries";
+import {useLazyQuery, useQuery} from "@apollo/client";
+import {ACTIVE_LENDINGPOOLS_QUERY, USER_POSITIONS_QUERY} from "../constants/queries";
+import {useAddress} from "@thirdweb-dev/react";
 
 const initialState: UserFinancialDataState = {
   userData: {},
@@ -19,6 +20,22 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
     type: ${action.type}
     payload: ${action.type !== "CLEAR_USER_DATA" ? JSON.stringify(action.payload,null, 2) : ""}`
   );
+  if (action.type === "CLEAR_USER_DATA") {
+    return {
+      ...store,
+      userData: {},
+    };
+  }
+  if (action.type === "SET_ACTIVE_POOLS") {
+    const { activePoolTimestamps } = action.payload;
+    console.log(activePoolTimestamps);
+    return {
+      ...store,
+      platformData: {
+        activePoolTimestamps: activePoolTimestamps.sort((a,b) => a.getTime() - b.getTime())
+      }
+    };
+  }
   if (action.type === "SET_USER_DATA") {
     const { address, borrows, deposits } = action.payload;
     return {
@@ -28,12 +45,8 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         [address]: {borrows, deposits}
       }
     }
-  } else if (action.type === "CLEAR_USER_DATA") {
-    return {
-      ...store,
-      userData: {},
-    };
-  } else if (action.type === "ADD_BORROW") {
+  }
+  if (action.type === "ADD_BORROW") {
     const { address, borrow } = action.payload;
     return {
       ...store,
@@ -45,7 +58,8 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         }
       }
     }
-  } else if (action.type === "ADD_LEND_POSITION") {
+  }
+  if (action.type === "ADD_LEND_POSITION") {
     const { address, deposit } = action.payload;
     return {
       ...store,
@@ -57,7 +71,8 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         }
       }
     }
-  } else if (action.type === "UPDATE_LEND_POSITION_STATUS") {
+  }
+  if (action.type === "UPDATE_LEND_POSITION_STATUS") {
     const { address, id, status } = action.payload;
     return {
       ...store,
@@ -74,7 +89,8 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         }
       }
     };
-  } else if (action.type === "UPDATE_BORROW_STATUS") {
+  }
+  if (action.type === "UPDATE_BORROW_STATUS") {
     const { address, id, status } = action.payload;
     return {
       ...store,
@@ -91,27 +107,32 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         }
       }
     };
-  } else if (action.type === "SET_ACTIVE_POOLS") {
-    const { activePoolTimestamps } = action.payload;
-    console.log(activePoolTimestamps);
-    return {
-      ...store,
-      platformData: {
-        activePoolTimestamps: activePoolTimestamps.sort((a,b) => a.getTime() - b.getTime())
-      }
-    };
-  } else {
-    return {...store};
   }
+  return {...store};
 };
 
 export const FinancialDataProvider: React.FC<{children: ReactNode}> = ({ children}) => {
   const [store, dispatch] = useReducer(financialDataReducer, initialState);
+  const walletAddress = useAddress();
   const {
     loading: activeLendingPoolsLoading,
     error: activeLendingPoolsError,
     data: activeLendingPoolsData,
   } = useQuery(ACTIVE_LENDINGPOOLS_QUERY);
+  const [
+    getUserPositions,
+    {
+      loading: userPositionsDataLoading,
+      error: userPositionsDataError,
+      data: userPositionsData,
+      startPolling: userPositionsDataStartPolling,
+      stopPolling: userPositionsDataStopPolling,
+    },
+  ] = useLazyQuery(USER_POSITIONS_QUERY, {
+    variables: {
+      user: walletAddress && walletAddress.toLowerCase(),
+    },
+  });
 
   useEffect(() => {
     if (!activeLendingPoolsData) {
@@ -123,6 +144,40 @@ export const FinancialDataProvider: React.FC<{children: ReactNode}> = ({ childre
       payload: { activePoolTimestamps }
     })
   }, [activeLendingPoolsData]);
+
+  useEffect(() => {
+    console.log("running walletAddress useEffect");
+    if (!walletAddress) {
+      return;
+    }
+    getUserPositions();
+  }, [walletAddress]);
+
+  useEffect(() => {
+    // Once data is loaded, update the store
+    console.log("running setUserData dispatch useEffect");
+    console.log(`
+    userPositionsDataLoading: ${userPositionsDataLoading}
+    userPositionsData: ${userPositionsData}
+    dispatch: ${dispatch}`);
+    if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
+      const { borrows, deposits } = userPositionsData.user;
+
+      const userData = getUserData(store, walletAddress);
+      if (userData.borrows.length || userData.deposits.length) {
+        console.log(`userData already exists for address ${walletAddress}, skipping SET_USER_DATA`);
+        return;
+      }
+      dispatch({
+        type: "SET_USER_DATA",
+        payload: {
+          address: walletAddress,
+          borrows,
+          deposits
+        },
+      });
+    }
+  }, [userPositionsData]);
 
 
   return (

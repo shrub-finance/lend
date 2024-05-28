@@ -4,7 +4,14 @@ import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages";
 import {useBalance, useContract} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
-import {EXCHANGE_RATE_BUFFER, interestToLTV, ONE_HUNDRED_PERCENT, percentMul, roundEth} from "../../utils/ethMethods";
+import {
+  EXCHANGE_RATE_BUFFER,
+  interestToLTV,
+  isInvalidOrZero,
+  ONE_HUNDRED_PERCENT,
+  percentMul,
+  roundEth
+} from "../../utils/ethMethods";
 import {BigNumber, ethers} from "ethers";
 import Image from 'next/image'
 import { interestRates } from '../../constants';
@@ -57,15 +64,13 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
       clearBorrowError('borrow');
       return;
     }
-    const isValidInput = /^[0-9]+(\.[0-9]*)?$/.test(inputValue);
-    const parsedValue = parseFloat(inputValue);
-    const isInvalidOrZero = !isValidInput || isNaN(parsedValue) || parsedValue === 0;
-    if (isInvalidOrZero) {
+    if (isInvalidOrZero(inputValue)) {
       setBorrowError('borrow', 'Amount must be a valid number and greater than zero');
     } else {
       clearBorrowError('borrow');
     }
   };
+
 
 
   useEffect(() => {
@@ -77,7 +82,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
       return roundEth(percentMul(coll, ONE_HUNDRED_PERCENT.add(EXCHANGE_RATE_BUFFER)), 6);
     };
 
-    if (selectedInterestRate !== "" && borrowAmount !== "0") {
+    if (selectedInterestRate !== "" && borrowAmount !== "0" && !isInvalidOrZero(borrowAmount)) {
       determineRequiredCollateral()
         .then(res => setRequiredCollateral(res))
         .catch(e => console.error(e));
