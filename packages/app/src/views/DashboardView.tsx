@@ -55,20 +55,6 @@ export const DashboardView: FC = ({}) => {
       startPolling: globalDataStartPolling,
       stopPolling: globalDataStopPolling,
     } = useQuery(GLOBAL_DATA_QUERY);
-  const [
-    getUserPositions,
-    {
-      loading: userPositionsDataLoading,
-      error: userPositionsDataError,
-      data: userPositionsData,
-      startPolling: userPositionsDataStartPolling,
-      stopPolling: userPositionsDataStopPolling,
-    },
-  ] = useLazyQuery(USER_POSITIONS_QUERY, {
-    variables: {
-      user: walletAddress && walletAddress.toLowerCase(),
-    },
-  });
   const { ethPrice, isLoading, error } = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
   const [currentHovered, setCurrentHovered] = useState<number | null>(null);
   const [timestamp, setTimestamp] = useState(0);
@@ -103,43 +89,6 @@ export const DashboardView: FC = ({}) => {
       handleAPYCalc();
     }
   }, [timestamp]);
-
-  useEffect(() => {
-    console.log("running walletAddress useEffect");
-    if (!walletAddress) {return}
-    getUserPositions();
-  }, [walletAddress]);
-
-  useEffect(() => {
-    console.log("running userPositionsDataLoading useEffect");
-    if (userPositionsDataLoading) {return}
-  }, [userPositionsDataLoading]);
-
-  useEffect(() => {
-    // Once data is loaded, update the store
-    console.log("running setUserData dispatch useEffect");
-    console.log(`
-    userPositionsDataLoading: ${userPositionsDataLoading}
-    userPositionsData: ${userPositionsData}
-    dispatch: ${dispatch}`);
-    if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
-      const { borrows, deposits } = userPositionsData.user;
-
-      const userData = getUserData(store, walletAddress);
-      if (userData.borrows.length || userData.deposits.length) {
-        console.log(`userData already exists for address ${walletAddress}, skipping SET_USER_DATA`);
-        return;
-      }
-      dispatch({
-        type: "SET_USER_DATA",
-        payload: {
-          address: walletAddress,
-          borrows,
-          deposits
-        },
-      });
-    }
-  }, [userPositionsData]);
 
   useEffect(() => {
         // console.log('running block useEffect')
