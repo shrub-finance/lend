@@ -92,8 +92,10 @@ export const DashboardView: FC = ({}) => {
 
   useEffect(() => {
         // console.log('running block useEffect')
-        getBlockTest()
-    }, [walletAddress]);
+    if (walletAddress) {
+      getBlockTest()
+    }
+  }, [walletAddress]);
 
   useEffect(() => {
     console.log("This is the store");

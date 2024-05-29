@@ -254,7 +254,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                               onError={(e) => {
                                   handleErrorMessages({err: e});
                               }}>
-                    {latestBorrow?.status === "pending"? "Borrow Order Submitted":"Initiate Now"}
+                    {latestBorrow?.status === "pending"? "Borrow Order Submitted":"Borrow"}
                   </Web3Button>
                 </div>
                 }

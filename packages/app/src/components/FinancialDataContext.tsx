@@ -156,7 +156,6 @@ export const FinancialDataProvider: React.FC<{children: ReactNode}> = ({ childre
   }, [activeLendingPoolsData]);
 
   useEffect(() => {
-    console.log("running walletAddress useEffect");
     if (!walletAddress) {
       return;
     }
@@ -189,6 +188,12 @@ export const FinancialDataProvider: React.FC<{children: ReactNode}> = ({ childre
     }
   }, [userPositionsData]);
 
+  useEffect(() => {
+    if (!userPositionsDataError) {
+      return;
+    }
+    console.error(userPositionsDataError)
+  }, [userPositionsDataError]);
 
   return (
     <FinancialDataContext.Provider value={{ store, dispatch }}>
