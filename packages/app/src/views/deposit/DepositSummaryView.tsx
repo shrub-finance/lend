@@ -43,7 +43,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
 
-  const latestDeposit: Deposit = getUserData(store, walletAddress).deposits.reduce((latest, current) => {
+  const latestDeposit: Deposit = walletAddress && getUserData(store, walletAddress).deposits.reduce((latest, current) => {
     if (!current.updated) {
       return latest;
     }
@@ -63,14 +63,11 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
     error: allowanceError
   } = useContractRead(usdc, "allowance", [walletAddress, lendingPlatformAddress]);
 
-
   useEffect(() => {
-    if (!walletAddress) return;
     getActiveLendingPools().then().catch(error => {
       console.error("Failed to fetch active lending pools:", error);
     });
-  }, [walletAddress, getActiveLendingPools]);
-
+  }, [getActiveLendingPools]);
 
   useEffect(() => {
     // console.log("running userPositionsDataLoading useEffect");
@@ -85,7 +82,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     }
   }, [localError]);
-
 
 
   return (
@@ -186,7 +182,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                       <div className="flex flex-row justify-between cursor-pointer" onClick={backOnDeposit}>
                         <span className="">Lockup ends</span>
                         <span>
-                          {timestamp}
                           {endDate.toDateString()}
                           <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>
                         </span>
@@ -245,162 +240,130 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     </div>
 
                     {/*approve and deposit*/}
-                    {(allowanceIsLoading) ? (
-                      <p>Loading balance...</p>
-                    ) : (
-                      <>
-                        {/* Check for insufficient balance */}
-                        {usdcBalanceData &&
-                          BigNumber.from(usdcBalanceData.value).lt(
-                            ethers.utils.parseUnits(depositAmount, 6),
-                          ) && (
-                            <button
-                              disabled={true}
-                              className="btn btn-block border-0 normal-case text-xl mb-4 disabled:!text-shrub-grey-200 disabled:!bg-shrub-grey-50"
-                            >
-                              Insufficient Balance
-                            </button>
-                          )}
-                        {/* Approve if allowance is insufficient, and balance is enough */}
-                        {!allowance ||
-                        BigNumber.from(allowance).lt(
-                          ethers.utils.parseUnits(depositAmount, 6),
-                        )
-                          ? usdcBalanceData &&
-                            !BigNumber.from(usdcBalanceData.value).lt(
-                              ethers.utils.parseUnits(depositAmount, 6),
-                            ) && (
-                              <Web3Button
-                                contractAddress={usdcAddress}
-                                contractAbi={usdcAbi}
-                                isDisabled={approveUSDCActionInitiated}
-                                className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
-                                action={
-                                  async (usdc) =>
-                                  {
-                                    setLocalError('');
-                                    // @ts-ignore
-                                    return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
-                                  }}
-                                onSuccess={
-                                async (tx) => {
-                                  setLocalError("");
-                                  try {
-                                    const receipt = await tx.wait();
-                                    if(!receipt.status) {throw new Error("Transaction failed")}
-                                  } catch (e) {console.log("Transaction failed:", e)}
-                                  setApproveUSDCActionInitiated(true);
-                                }}
-                                onError={(e) => {
-                                  handleErrorMessages({err: e});
-                                }}
-                              >
-                                {!approveUSDCActionInitiated ?'Approve USDC': 'USDC Approval Submitted'}
-                              </Web3Button>
-                            )
-                          : null}
-
-                        {allowance &&
-                          !BigNumber.from(allowance).lt(
-                            ethers.utils.parseUnits(depositAmount, 6),
-                          ) &&
-                          !(
-                            usdcBalanceData &&
-                            BigNumber.from(usdcBalanceData.value).lt(
-                              ethers.utils.parseUnits(depositAmount, 6),
-                            )
-                          ) && (
+                    {
+                      !usdcBalanceData || !allowance || BigNumber.from(allowance).lt(ethers.utils.parseUnits(depositAmount, 6)) ? (
+                        <>
+                          <Web3Button
+                            contractAddress={usdcAddress}
+                            contractAbi={usdcAbi}
+                            isDisabled={approveUSDCActionInitiated}
+                            className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
+                            action={
+                              async (usdc) =>
+                              {
+                                setLocalError('');
+                                // @ts-ignore
+                                return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
+                              }}
+                            onSuccess={
+                            async (tx) => {
+                              setLocalError("");
+                              try {
+                                const receipt = await tx.wait();
+                                if(!receipt.status) {throw new Error("Transaction failed")}
+                              } catch (e) {console.log("Transaction failed:", e)}
+                              setApproveUSDCActionInitiated(true);
+                            }}
+                            onError={(e) => {
+                              handleErrorMessages({err: e});
+                            }}
+                          >
+                            {!approveUSDCActionInitiated ?'Approve USDC': 'USDC Approval Submitted'}
+                          </Web3Button>
+                        </>
+                        ) : (
+                          <>
                             <Web3Button
                               contractAddress={lendingPlatformAddress}
                               contractAbi = {lendingPlatformAbi}
                               isDisabled={latestDeposit?.status === "pending"}
                               className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
                               action={
-                              async (lendingPlatform) => {
-                                console.log(`Contract Args:
-                                timestamp: ${timestamp}
-                                depositAmount: ${ethers.utils.parseUnits(depositAmount, 6)}`);
-                                setLocalError('');
-                                // @ts-ignore
-                                return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(depositAmount, 6))
-                              }}
-                              onSuccess={async (tx) => {
+                                async (lendingPlatform) => {
+                                  console.log(`Contract Args:
+                                  timestamp: ${timestamp}
+                                  depositAmount: ${ethers.utils.parseUnits(depositAmount, 6)}`);
                                   setLocalError('');
-                                  if(activeLendingPoolsError) {
-                                    handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
-                                    return
-                                  }
-                                  const filteredLendingPools =
-                                    activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
-                                      (item) =>
-                                        item.timestamp === timestamp.toString(),
-                                    );
+                                  // @ts-ignore
+                                  return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(depositAmount, 6))
+                                }}
+                              onSuccess={async (tx) => {
+                                setLocalError('');
+                                if(activeLendingPoolsError) {
+                                  handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
+                                  return
+                                }
+                                const filteredLendingPools =
+                                  activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
+                                    (item) =>
+                                      item.timestamp === timestamp.toString(),
+                                  );
 
-                                  const matchedLendingPool =
-                                    filteredLendingPools.length > 0
-                                      ? filteredLendingPools[0]
-                                      : null;
-                                  const newDeposit: Deposit = {
+                                const matchedLendingPool =
+                                  filteredLendingPools.length > 0
+                                    ? filteredLendingPools[0]
+                                    : null;
+                                const newDeposit: Deposit = {
+                                  id: matchedLendingPool.id,
+                                  status: "pending",
+                                  depositsUsdc: (ethers.utils.parseEther(depositAmount)).toString(),
+                                  apy: estimatedAPY,
+                                  currentBalanceOverride: (ethers.utils.parseEther(depositAmount)).toString(),
+                                  interestEarnedOverride: "0",
+                                  lendingPool: {
                                     id: matchedLendingPool.id,
-                                    status: "pending",
-                                    depositsUsdc: (ethers.utils.parseEther(depositAmount)).toString(),
-                                    apy: estimatedAPY,
-                                    currentBalanceOverride: (ethers.utils.parseEther(depositAmount)).toString(),
-                                    interestEarnedOverride: "0",
-                                    lendingPool: {
-                                      id: matchedLendingPool.id,
-                                      timestamp: matchedLendingPool.timestamp,
-                                      tokenSupply: matchedLendingPool.tokenSupply,
-                                      totalEthYield: matchedLendingPool.totalEthYield,
-                                      totalPrincipal: matchedLendingPool.totalPrincipal,
-                                      totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
-                                      __typename: matchedLendingPool.__typename,
-                                    },
-                                    timestamp: timestamp,
-                                    updated: Math.floor(Date.now() / 1000),
-                                    tempData: true
-                                  };
-                                  dispatch({
-                                    type: "ADD_LEND_POSITION",
-                                    payload: { address: walletAddress, deposit: newDeposit }
-                                  });
+                                    timestamp: matchedLendingPool.timestamp,
+                                    tokenSupply: matchedLendingPool.tokenSupply,
+                                    totalEthYield: matchedLendingPool.totalEthYield,
+                                    totalPrincipal: matchedLendingPool.totalPrincipal,
+                                    totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
+                                    __typename: matchedLendingPool.__typename,
+                                  },
+                                  timestamp: timestamp,
+                                  updated: Math.floor(Date.now() / 1000),
+                                  tempData: true
+                                };
+                                dispatch({
+                                  type: "ADD_LEND_POSITION",
+                                  payload: { address: walletAddress, deposit: newDeposit }
+                                });
 
-                                  try {
-                                    const receipt = await tx.wait();
-                                    if(!receipt.status) {
-                                      throw new Error("Transaction failed")
-                                    }
-                                      dispatch({
-                                        type: "UPDATE_LEND_POSITION_STATUS",
-                                        payload: {
-                                          address: walletAddress,
-                                          id: matchedLendingPool.id,
-                                          status: "confirmed",
-                                        },
-                                      });
-                                  } catch (e) {
-                                    console.log("Transaction failed:", e);
-                                    dispatch({
-                                      type: "UPDATE_LEND_POSITION_STATUS",
-                                      payload: {
-                                        address: walletAddress,
-                                        id: matchedLendingPool.id,
-                                        status: "failed",
-                                      },
-                                    });
+                                try {
+                                  const receipt = await tx.wait();
+                                  if(!receipt.status) {
+                                    throw new Error("Transaction failed")
                                   }
-                                  setLendActionInitiated(true);
+                                  dispatch({
+                                    type: "UPDATE_LEND_POSITION_STATUS",
+                                    payload: {
+                                      address: walletAddress,
+                                      id: matchedLendingPool.id,
+                                      status: "confirmed",
+                                    },
+                                  });
+                                } catch (e) {
+                                  console.log("Transaction failed:", e);
+                                  dispatch({
+                                    type: "UPDATE_LEND_POSITION_STATUS",
+                                    payload: {
+                                      address: walletAddress,
+                                      id: matchedLendingPool.id,
+                                      status: "failed",
+                                    },
+                                  });
+                                }
+                                setLendActionInitiated(true);
                               }}
                               onError={(e) => {
                                 handleErrorMessages({err: e});
 
                               }}
                             >
-                              {latestDeposit?.status === "pending"? "Deposit Order Submitted":"Initiate Now"}
+                              {latestDeposit?.status === "pending"? "Deposit Order Submitted":"Deposit USDC"}
                             </Web3Button>
-                          )}
-                      </>
-                    )}
+                          </>
+                        )
+                    }
                   </div>
                 )}
 
