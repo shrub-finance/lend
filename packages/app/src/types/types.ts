@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 
 
-export type PendingStatuses = "pending" | "confirmed" | "failed" | "extending" | "extended" |"withdrawing" | "withdrawn" |"repaying" | "repaid";
+export type PendingStatuses = "pending" | "confirmed" | "failed" | "extending" | "extended" |"withdrawing" | "withdrawn" |"repaying" | "repaid" |"partialPaying" | "partialPaid";
 
 export type Borrow = {
   id?: string;

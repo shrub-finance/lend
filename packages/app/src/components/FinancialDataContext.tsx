@@ -16,10 +16,10 @@ const initialState: UserFinancialDataState = {
 const FinancialDataContext = createContext<{ store: UserFinancialDataState; dispatch: React.Dispatch<UserFinancialDataAction>; }>({ store: initialState, dispatch: () => null });
 
 const financialDataReducer = (store: UserFinancialDataState, action: UserFinancialDataAction): UserFinancialDataState => {
-  console.log(`Dispatching Action:
-    type: ${action.type}
-    payload: ${action.type !== "CLEAR_USER_DATA" ? JSON.stringify(action.payload,null, 2) : ""}`
-  );
+  // console.log(`Dispatching Action:
+  //   type: ${action.type}
+  //   payload: ${action.type !== "CLEAR_USER_DATA" ? JSON.stringify(action.payload,null, 2) : ""}`
+  // );
   if (action.type === "CLEAR_USER_DATA") {
     return {
       ...store,
@@ -107,8 +107,18 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         }
       }
     };
+  } else if (action.type === "SET_ACTIVE_POOLS") {
+    const { activePoolTimestamps } = action.payload;
+    // console.log(activePoolTimestamps);
+    return {
+      ...store,
+      platformData: {
+        activePoolTimestamps: activePoolTimestamps.sort((a,b) => a.getTime() - b.getTime())
+      }
+    };
+  } else {
+    return {...store};
   }
-  return {...store};
 };
 
 export const FinancialDataProvider: React.FC<{children: ReactNode}> = ({ children}) => {

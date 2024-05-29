@@ -44,14 +44,9 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const endDate = fromEthDate(timestamp);
 
   const latestDeposit: Deposit = getUserData(store, walletAddress).deposits.reduce((latest, current) => {
-    if (!current.updated) {
-      return latest;
-    }
-    if (current.updated && !latest.updated) {
-      return current;
-    }
-    return current.updated > latest.updated ? current : latest;
+      return current.updated > latest.updated ? current : latest;
     }, getUserData(store, walletAddress).deposits[0] || { tempData: false });
+
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
@@ -85,7 +80,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     }
   }, [localError]);
-
 
 
   return (
@@ -186,7 +180,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                       <div className="flex flex-row justify-between cursor-pointer" onClick={backOnDeposit}>
                         <span className="">Lockup ends</span>
                         <span>
-                          {timestamp}
                           {endDate.toDateString()}
                           <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>
                         </span>
