@@ -275,7 +275,6 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                                         status: 'pending',
                                         collateral: borrow.collateral,
                                         created: Math.floor(Date.now() / 1000),
-                                        ltv: borrow.ltv.toString(),
                                         originalPrincipal: borrow.originalPrincipal.mul(-1).toString(),
                                         paid: "0",
                                         apy: borrow.apy.toString(),

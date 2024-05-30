@@ -206,7 +206,6 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   status: "pending",
                                   collateral: requiredCollateral,
                                   created: Math.floor(Date.now() / 1000),
-                                  ltv: interestToLTV[interestRate].toString(),
                                   originalPrincipal: (ethers.utils.parseEther(amount)).toString(),
                                   paid: "0",
                                   apy: ethers.utils.parseUnits(interestRate,2).toString(),

@@ -60,7 +60,6 @@ function createBorrow(
     borrow.user = userObj.id;
     // borrow.owner = owner.toHexString();
     borrow.apy = apy;
-    borrow.ltv = 0;  // This is complicated and would need to be calculated after price changes at some interval - leaving as 0 for now
     borrow.principal = principal;
     borrow.originalPrincipal = principal;
     borrow.paid = Zero;
@@ -116,14 +115,3 @@ export function repayBorrow(
     borrow.save()
     return borrow;
 }
-
-// type Borrow @entity(immutable: true) {
-//     id: ID!
-//     created: Int!
-//     createdBlock: Int!
-//     principal: BigInt!
-//     collateral: BigInt!
-//     ltv: Int!
-//     apy: Int!
-//     owner: User
-// }

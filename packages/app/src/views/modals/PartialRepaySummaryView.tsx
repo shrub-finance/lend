@@ -181,7 +181,6 @@ const PartialRepaySummaryView: React.FC<PartialRepaySummaryViewProps> = (
                       status: 'pending',
                       collateral: borrow.collateral,
                       created: Math.floor(Date.now() / 1000),
-                      ltv: borrow.ltv.toString(),
                       originalPrincipal: borrow.originalPrincipal.toString(),
                       paid: repayAmount.toString(),
                       apy: borrow.apy.toString(),
