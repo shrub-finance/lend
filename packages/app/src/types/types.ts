@@ -13,6 +13,7 @@ export type Borrow = {
   paid?: string;
   apy?: string;
   principal?: string;
+  currentBalanceOverride?: string;
   timestamp?: string;
   startDate?: number;
   updated?: number;

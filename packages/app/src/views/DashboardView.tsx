@@ -471,7 +471,9 @@ export const DashboardView: FC = ({}) => {
                                         <p>
                                           {' '}
                                           <Image src='/usdc-logo.svg' alt='usdc logo' className='w-6 mr-2 inline align-middle' width='40' height='40' />
-                                          {formatLargeUsdc(borrow.debt)} USDC
+
+                                          {storeBorrow.currentBalanceOverride ? storeBorrow.currentBalanceOverride : formatLargeUsdc(borrow.debt)} USDC
+
                                           {storeBorrow.status === 'pending' && (
                                             <span
                                               className=' ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full  '><span
