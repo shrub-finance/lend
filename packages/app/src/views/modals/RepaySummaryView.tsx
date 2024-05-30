@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
-  formatLargeUsdc, formatPercentage, formatWad, toEthDate,
+  formatLargeUsdc,
+  formatShortDate,
+  formatWad,
+  toEthDate,
   truncateEthAddress,
 } from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
@@ -15,14 +18,14 @@ interface RepaySummaryViewProps {
   borrow: BorrowObj;
   onBackRepay: (data?) => void;
   repayAmount: string;
-  newLtv: ethers.BigNumber;
+
 }
 
 const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: (initiated: boolean) => void }> = (
   { borrow,
     onBackRepay,
     repayAmount,
-    newLtv
+
   }
 ) => {
 
@@ -70,8 +73,7 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                   <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
                 </div>
                 <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-                  Repaying will end the loan of <span className='font-bold'>{displayRepayAmount}</span> USDC and return back to you the collateral <span className='font-bold'>{formatWad(borrow.collateral, 6)} ETH</span> with
-                  due date of <span className='font-bold'>{borrow.endDate.toLocaleString()}.</span>
+                  Repaying will end the loan of <span className='font-bold'>{displayRepayAmount} USDC </span> and return back to you the collateral <span className='font-bold'>{formatWad(borrow.collateral, 6)} ETH</span> with due date of <span className='font-bold'>{formatShortDate(borrow.endDate)}.</span>
                 </p>
               </div>
 
@@ -80,31 +82,20 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
               {/*Receipt start*/}
               <div>
                 <div className='mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
-                  <div className='flex flex-row justify-between cursor-pointer'
-                       onClick={() => onBackRepay('partialRepayRequest')}>
-                    <span>USDC to repay</span>
-                    <span
-                      className='font-semibold text-shrub-green-500'>{totalRepayAmount} USDC
-                       <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20'
-                              height='20' />
-                    </span>
-                  </div>
-                  {newLtv && <div className='flex flex-row justify-between cursor-pointer'
-                       onClick={() => onBackRepay('partialRepayRequest')}>
-                    <span>New LTV ✨</span>
-                    <span
-                      className='font-semibold text-shrub-green-500'>{formatPercentage(newLtv)} %
-                       <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20'
-                              height='20' />
-                    </span>
-                  </div>}
                   <div className='flex flex-row justify-between'>
                     <span className=''>Principal</span>
                     <span>{formatLargeUsdc(borrow.principal)} USDC</span>
                   </div>
                   <div className='flex flex-row justify-between'>
                     <span className=''>Interest</span>
-                    <span>{formatLargeUsdc(borrow.interest)}</span>
+                    <span>{formatLargeUsdc(borrow.interest)} USDC</span>
+                  </div>
+                  <div className='flex flex-row justify-between cursor-pointer' onClick={() => onBackRepay()}>
+                    <span>USDC to repay</span>
+                    <span
+                      className='font-semibold text-shrub-green-500'>{totalRepayAmount} USDC
+                       <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' />
+                    </span>
                   </div>
                   <div className='flex flex-row justify-between'
                        style={{ display: borrow.earlyRepaymentFee.isZero() ? 'none' : 'inherit' }}>
@@ -118,8 +109,7 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                   <div className='flex flex-row justify-between'>
                     <span className=''>Contract Address</span>
                     <span>{truncateEthAddress(lendingPlatformAddress)}
-                      <Image alt='copy icon' src='/copy.svg' className='w-6 hidden md:inline align-baseline ml-2'
-                             width='24' height='24' />
+                      <Image alt='copy icon' src='/copy.svg' className='w-6 hidden md:inline align-baseline ml-2' width='24' height='24' />
                     </span>
                   </div>
                   <div className='flex flex-row justify-between'>
@@ -164,8 +154,8 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                                   className='!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
                                   action={async (lendingPlatform) => {
                                     setLocalError('');
-                                    // @ts-ignore
-                                    return await lendingPlatform.contractWrapper.writeContract.repayBorrow(borrow.id, walletAddress);
+                                      // @ts-ignore
+                                     return  await lendingPlatform.contractWrapper.writeContract.repayBorrow(borrow.id, walletAddress);
                                   }}
                                   onSuccess={async (tx) => {
                                     setLocalError("");
@@ -242,7 +232,7 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                                   onError={(e) => {
                                     handleErrorMessages({ err: e });
                                   }}>
-                        {!repayActionInitiated ? 'Proceed to Repay' : 'Repay Order Submitted'}
+                        {!repayActionInitiated ? 'Initiate Now' : 'Repay Order Submitted'}
                       </Web3Button>
                     )}
                   </>
