@@ -14,7 +14,7 @@ import {
 } from "../../utils/ethMethods";
 import {BigNumber, ethers} from "ethers";
 import Image from 'next/image'
-import { interestRates } from '../../constants';
+import { interestRates, Zero } from '../../constants';
 import { useValidation } from '../../hooks/useValidation';
 import ErrorDisplay from '../../components/ErrorDisplay';
 
@@ -85,7 +85,10 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
     if (selectedInterestRate !== "" && borrowAmount !== "0" && !isInvalidOrZero(borrowAmount)) {
       determineRequiredCollateral()
         .then(res => setRequiredCollateral(res))
-        .catch(e => console.error(e));
+        .catch((e) => {
+          console.error(e)
+          handleErrorMessages({customMessage: "Unable to determine required collateral"})
+        });
     }
   }, [borrowAmount, selectedInterestRate, lendingPlatform, setRequiredCollateral]);
 
@@ -209,7 +212,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                 <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl text-white disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
                   disabled:text-white
-                  disabled:border" disabled={Number(borrowAmount) <= 0|| selectedInterestRate === ""}
+                  disabled:border" disabled={Number(borrowAmount) <= 0|| selectedInterestRate === "" || requiredCollateral.lte(Zero)}
                   onClick={handleBorrowContinue}>Confirm</button>
               </div>
             </div>

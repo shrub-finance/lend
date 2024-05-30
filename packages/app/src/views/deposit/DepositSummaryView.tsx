@@ -233,10 +233,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                         <span className="">Current USDC balance</span>
                         <span>{usdcBalanceData?.displayValue} USDC</span>
                       </div>
-                      <div className="flex flex-row justify-between">
-                        <span className="">Gas Cost</span>
-                        <span>0.0012 ETH</span>
-                      </div>
                     </div>
 
                     {/*approve and deposit*/}
