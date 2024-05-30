@@ -43,7 +43,6 @@ export const USER_POSITIONS_QUERY = gql`
                 updated
                 updatedBlock
                 paid
-                ltv
                 apy
             }
         }

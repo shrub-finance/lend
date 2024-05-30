@@ -8,7 +8,6 @@ export type Borrow = {
   status?: PendingStatuses;
   collateral?: ethers.BigNumber;
   created?: number;
-  ltv?: string;
   originalPrincipal?: string;
   paid?: string;
   apy?: string;
@@ -31,7 +30,6 @@ export type BorrowObj = {
     principal: ethers.BigNumber
     originalPrincipal: ethers.BigNumber;
     paid: ethers.BigNumber;
-    ltv: ethers.BigNumber;
     apy: ethers.BigNumber;
     interest: ethers.BigNumber;
     debt: ethers.BigNumber;

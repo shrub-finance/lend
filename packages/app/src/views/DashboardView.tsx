@@ -456,7 +456,6 @@ export const DashboardView: FC = ({}) => {
                                     principal,
                                     originalPrincipal,
                                     paid: ethers.BigNumber.from(storeBorrow.paid),
-                                    ltv: ethers.BigNumber.from(storeBorrow.ltv),
                                     apy,
                                     interest,
                                     debt: principal.add(interest),
