@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { formatLargeUsdc, formatPercentage, formatWad, toEthDate, truncateEthAddress, } from '../../utils/ethMethods';
+import {
+  formatLargeUsdc,
+  formatShortDate,
+  formatWad,
+  toEthDate,
+  truncateEthAddress,
+} from '../../utils/ethMethods';
 import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
 import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
 import { Borrow, BorrowObj } from '../../types/types';
@@ -67,7 +73,7 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                   <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
                 </div>
                 <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-                  Repaying will end the loan of <span className='font-bold'>{displayRepayAmount}</span> USDC and return back to you the collateral <span className='font-bold'>{formatWad(borrow.collateral, 6)} ETH</span> with due date of <span className='font-bold'>{borrow.endDate.toLocaleString()}.</span>
+                  Repaying will end the loan of <span className='font-bold'>{displayRepayAmount} USDC </span> and return back to you the collateral <span className='font-bold'>{formatWad(borrow.collateral, 6)} ETH</span> with due date of <span className='font-bold'>{formatShortDate(borrow.endDate)}.</span>
                 </p>
               </div>
 
@@ -82,7 +88,7 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                   </div>
                   <div className='flex flex-row justify-between'>
                     <span className=''>Interest</span>
-                    <span>{formatLargeUsdc(borrow.interest)} %</span>
+                    <span>{formatLargeUsdc(borrow.interest)} USDC</span>
                   </div>
                   <div className='flex flex-row justify-between cursor-pointer' onClick={() => onBackRepay()}>
                     <span>USDC to repay</span>

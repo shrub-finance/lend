@@ -23,7 +23,7 @@ import {
   wadDiv,
   wadMul,
 } from '../utils/ethMethods';
-import {BorrowObj, Deposit, DepositObj} from "../types/types";
+import {BorrowObj, DepositObj} from "../types/types";
 import ExtendBorrowView from './modals/ExtendBorrowView';
 import {
   EARLY_REPAYMENT_APY,
@@ -98,8 +98,8 @@ export const DashboardView: FC = ({}) => {
   }, [walletAddress]);
 
   useEffect(() => {
-    console.log("This is the store");
-    console.log(store);
+    // console.log("This is the store");
+    // console.log(store);
   }, [store]);
 
   async function getBlockTest() {
@@ -117,6 +117,9 @@ export const DashboardView: FC = ({}) => {
 
   function calcBorrowInterest(principal: ethers.BigNumber, apy: ethers.BigNumber, startDate: Date) {
     const duration = durationWad(startDate, lastSnapshotDate);
+    if(duration.lte(Zero)) {
+      return Zero;
+    }
     const interestPerYear = percentMul(principal, apy);
     return wadMul(interestPerYear, duration);
   }
@@ -153,7 +156,6 @@ export const DashboardView: FC = ({}) => {
   //   (newlyAddedDeposit.lendingPool.totalPrincipal + newlyAddedDeposit.lendingPool.totalUsdcInterest +
   //     (newlyAddedDeposit.lendingPool.totalEthYield * ethPrice));
 
-  // console.log(store);
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -505,12 +507,12 @@ export const DashboardView: FC = ({}) => {
                                               className='ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full'><span
                                               className='w-2 h-2 me-1 bg-pink-500 rounded-full'></span>Repaid</span>
                                           )}
-                                          {storeBorrow.status === 'partialPaying' && (
+                                          {storeBorrow.status === 'partialRepaying' && (
                                             <span
                                               className='ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full'><span
                                               className='w-2 h-2 me-1 bg-pink-500 rounded-full'></span>Partial Paying</span>
                                           )}
-                                          {storeBorrow.status === 'partialPaid' && (
+                                          {storeBorrow.status === 'partialRepaid' && (
                                             <span
                                               className='ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full'><span
                                               className='w-2 h-2 me-1 bg-pink-500 rounded-full'></span>Partial Paid</span>

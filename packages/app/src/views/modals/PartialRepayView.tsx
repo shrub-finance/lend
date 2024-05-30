@@ -1,9 +1,9 @@
   import React, { useState, useEffect } from 'react';
   import Image from "next/image";
   import {
-    calcLtv, formatLargeUsdc, formatPercentage,
+  calcLtv, formatLargeUsdc, formatPercentage, isInvalidOrZero,
 
-  } from '../../utils/ethMethods';
+} from '../../utils/ethMethods';
   import PartialRepaySummaryView from './PartialRepaySummaryView';
   import { BorrowObj } from "../../types/types";
   import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
@@ -26,50 +26,8 @@
     const [repayActionInitiated, setRepayActionInitiated] = useState(false);
     const [repayAmount, setRepayAmount] = useState(formatLargeUsdc(borrow.debt));
     const [newLtv, setNewLtv] = useState<ethers.BigNumber>();
-    const { errors: repayErrors, setError: setRepayError, clearError: clearRepayError } = useValidation();
-
-
-    const handleRepayActionChange = (initiated) => {
-      setRepayActionInitiated(initiated);
-    };
-
-    const format = (val: string) => val;
-
-    const handleBackRepay = (data?) => {
-      setPartialPaymentRequested(false)
-    };
-
-    const handleRepayAmountChange = (event) => {
-      const inputValue = event.target.value.trim();
-      const parsedValue = parseFloat(inputValue);
-      setRepayAmount(inputValue);
-      if (inputValue === '') {
-        clearRepayError('validation');
-        clearRepayError('exceeding');
-        setNewLtv(Zero);
-        return;
-      }
-      const isValidInput = /^[0-9]+(\.[0-9]*)?$/.test(inputValue);
-      const isInvalidOrZero = !isValidInput || isNaN(parsedValue) || parsedValue === 0;
-      if (isInvalidOrZero) {
-        setRepayError('validation', 'Amount must be a number');
-      } else {
-        clearRepayError('validation');
-      }
-      if (parsedValue > parseFloat(formatLargeUsdc(borrow.debt))) {
-        setRepayError('exceeding', 'Amount exceeds repayment amount');
-      } else {
-        clearRepayError('exceeding');
-      }
-      if (!isInvalidOrZero && parsedValue <= parseFloat(formatLargeUsdc(borrow.debt)) && ethPrice && !ethPrice.isZero()) {
-        const newDebt = borrow.debt.sub(ethers.utils.parseEther(parsedValue.toString()));
-        setNewLtv(calcLtv(newDebt, borrow.collateral, ethPrice));
-      } else {
-        setNewLtv(Zero);
-      }
-    };
-
-
+    const { errors: repayErrors, setError: setError, clearError: clearError } = useValidation();
+    
     useEffect(() => {
       if (isFullPay) {
         setRepayAmount(formatLargeUsdc(borrow.debt));
@@ -77,12 +35,44 @@
     }, [isFullPay, borrow.debt]);
 
     useEffect(() => {
-      if (!ethPrice || ethPrice.isZero()) {
+      if (!ethPrice || ethPrice.isZero() || repayAmount !== formatLargeUsdc(borrow.debt)) {
         return;
       }
       setNewLtv(calcLtv(borrow.debt, borrow.collateral, ethPrice));
 
     }, [ethPrice]);
+
+    const handleRepayAmountChange = (event) => {
+      const inputValue = event.target.value.trim();
+      const parsedValue = parseFloat(inputValue);
+      setRepayAmount(inputValue);
+      if (inputValue === '') {
+        clearError('validation');
+        clearError('exceeding');
+        setNewLtv(Zero);
+        return;
+      }
+      if (isInvalidOrZero(inputValue)) {
+        setError('validation', 'Amount must be a number');
+      } else {
+        clearError('validation');
+      }
+      if (parsedValue > parseFloat(formatLargeUsdc(borrow.debt))) {
+        setError('exceeding', 'Amount exceeds repayment amount');
+      } else {
+        clearError('exceeding');
+      }
+      if (!isInvalidOrZero(inputValue) && parsedValue <= parseFloat(formatLargeUsdc(borrow.debt)) && ethPrice && !ethPrice.isZero()) {
+        const newDebt = borrow.debt.sub(ethers.utils.parseEther(parsedValue.toString()));
+        setNewLtv(calcLtv(newDebt, borrow.collateral, ethPrice));
+      } else {
+        setNewLtv(Zero);
+      }
+    };
+
+    function handleBackRepay() {
+      setPartialPaymentRequested(false)
+    }
 
     return (
       <>
@@ -100,7 +90,7 @@
                       </label>
                       <input type='text' placeholder='Amount' name='amount' id='amount'
                              className='input input-bordered w-full h-[70px] bg-white border-solid border !border-shrub-grey-50 text-lg focus:outline-none focus:shadow-shrub-thin focus:border-shrub-green-50'
-                             onChange={handleRepayAmountChange} value={format(repayAmount)} />
+                             onChange={handleRepayAmountChange} value={repayAmount} />
                       <ErrorDisplay errors={repayErrors} />
                     </div>
                   {/*divider*/}
@@ -130,9 +120,8 @@
          :
           <PartialRepaySummaryView
             onBackRepay={handleBackRepay}
-            onRepayActionChange={handleRepayActionChange}
             borrow={borrow}
-            repayAmount={repayAmount}
+            repayAmount={ethers.utils.parseEther(repayAmount)}
             newLtv={newLtv}/>
         }
 

@@ -28,7 +28,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
   }
   if (action.type === "SET_ACTIVE_POOLS") {
     const { activePoolTimestamps } = action.payload;
-    console.log(activePoolTimestamps);
+    // console.log(activePoolTimestamps);
     return {
       ...store,
       platformData: {
@@ -164,17 +164,17 @@ export const FinancialDataProvider: React.FC<{children: ReactNode}> = ({ childre
 
   useEffect(() => {
     // Once data is loaded, update the store
-    console.log("running setUserData dispatch useEffect");
-    console.log(`
-    userPositionsDataLoading: ${userPositionsDataLoading}
-    userPositionsData: ${userPositionsData}
-    dispatch: ${dispatch}`);
+    // console.log("running setUserData dispatch useEffect");
+    // console.log(`
+    // userPositionsDataLoading: ${userPositionsDataLoading}
+    // userPositionsData: ${userPositionsData}
+    // dispatch: ${dispatch}`);
     if (!userPositionsDataLoading && userPositionsData && userPositionsData.user) {
       const { borrows, deposits } = userPositionsData.user;
 
       const userData = getUserData(store, walletAddress);
       if (userData.borrows.length || userData.deposits.length) {
-        console.log(`userData already exists for address ${walletAddress}, skipping SET_USER_DATA`);
+        // console.log(`userData already exists for address ${walletAddress}, skipping SET_USER_DATA`);
         return;
       }
       dispatch({

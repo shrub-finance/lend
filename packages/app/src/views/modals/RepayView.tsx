@@ -3,9 +3,6 @@
   import { formatLargeUsdc } from '../../utils/ethMethods';
   import RepaySummaryView from './RepaySummaryView';
   import { BorrowObj } from "../../types/types";
-  import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
-  import { chainlinkAggregatorAbi, chainlinkAggregatorAddress } from '../../utils/contracts';
-  import { useValidation } from '../../hooks/useValidation';
   import PartialRepayView from './PartialRepayView';
 
   interface RepayViewProps {
@@ -61,9 +58,9 @@
                 <div className='card-body'>
                   {!partialPaymentRequested &&
                   <div className='form-control w-full'>
+                    {/*back arrow*/}
                     {/*<div className='flex items-center pb-4'>*/}
                     {/*  <button onClick={() => setRePayEditRequested(false)}>*/}
-                    {/*    /!*back arrow*!/*/}
                     {/*    <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none' className='w-6 grow-0 order-0 flex-none'>*/}
                     {/*      <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='#98A2B3' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' />*/}
                     {/*    </svg>*/}
