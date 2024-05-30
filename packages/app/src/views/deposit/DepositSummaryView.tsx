@@ -44,9 +44,14 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const endDate = fromEthDate(timestamp);
 
   const latestDeposit: Deposit = walletAddress && getUserData(store, walletAddress).deposits.reduce((latest, current) => {
-      return current.updated > latest.updated ? current : latest;
+    if (!current.updated) {
+      return latest;
+    }
+    if (current.updated && !latest.updated) {
+      return current;
+    }
+    return current.updated > latest.updated ? current : latest;
     }, getUserData(store, walletAddress).deposits[0] || { tempData: false });
-
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
