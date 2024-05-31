@@ -38,7 +38,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const {store, dispatch} = useFinancialData();
 
   const [borrowActionInitiated, setBorrowActionInitiated] = useState(false);
-
+  const [latestBorrowId, setLatestBorrowId] = useState<string>()
 
   const walletAddress = useAddress();
 
@@ -46,10 +46,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
 
-  const latestBorrow = getUserData(store, walletAddress).borrows.reduce((latest, current) => {
-      return current.updated > latest.updated ? current : latest;
-    }
-    , getUserData(store, walletAddress).borrows[0] || { tempData: false });
+  const latestBorrow = getUserData(store, walletAddress).borrows.find(borrow => borrow.id === latestBorrowId && borrow.tempData);
 
   useEffect(() => {
     if (localError) {
@@ -220,6 +217,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   type: "ADD_BORROW",
                                   payload: { address: walletAddress, borrow: newBorrow },
                                 });
+                                setLatestBorrowId(tx.hash);
 
 
                                 try {
