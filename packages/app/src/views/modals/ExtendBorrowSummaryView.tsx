@@ -32,6 +32,7 @@ import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries';
 import {useFinancialData} from '../../components/FinancialDataContext';
 import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
 import { Borrow, BorrowObj } from '../../types/types';
+import { Zero } from '../../constants';
 
 interface ExtendBorrowSummaryProps {
   onBackExtend: (data?) => void,
@@ -166,14 +167,17 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                     alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' /></span>
                 </div>
               </div>
-
+              {/*divider*/}
               <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
-              <div className='mb-6 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
-                <div className='flex flex-row  justify-between'>
-                  <span className=''>Additional Collateral</span>
-                  <span>{ethers.utils.formatEther(additionalCollateral)} ETH</span>
+              { additionalCollateral.gt(Zero) &&
+                <div className='mb-6 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
+                  <div className='flex flex-row justify-between'>
+                    <span>Additional Collateral</span>
+                    <span>{ethers.utils.formatEther(additionalCollateral)} ETH</span>
+                  </div>
                 </div>
-              </div>
+              }
+
               {/*approve and modals deposit*/}
               {(usdcAllowanceIsLoading || aethAllowanceIsLoading) ? (
                 <p>Loading balance...</p>
