@@ -35,6 +35,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   } = useActiveLendingPools();
 
   const [localError, setLocalError] = useState("");
+  const [latestDepositId, setLatestDepositId] = useState<string>()
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [lendActionInitiated, setLendActionInitiated] = useState(false);
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
@@ -43,15 +44,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
 
-  const latestDeposit: Deposit = walletAddress && getUserData(store, walletAddress).deposits.reduce((latest, current) => {
-    if (!current.updated) {
-      return latest;
-    }
-    if (current.updated && !latest.updated) {
-      return current;
-    }
-    return current.updated > latest.updated ? current : latest;
-    }, getUserData(store, walletAddress).deposits[0] || { tempData: false });
+  const latestDeposit = getUserData(store, walletAddress).deposits.find(deposit => deposit.id === latestDepositId && deposit.tempData);
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
@@ -82,7 +75,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     }
   }, [localError]);
-
 
   return (
     <div className="md:hero mx-auto p-4">
@@ -327,6 +319,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                   type: "ADD_LEND_POSITION",
                                   payload: { address: walletAddress, deposit: newDeposit }
                                 });
+                                setLatestDepositId(matchedLendingPool.id);
 
                                 try {
                                   const receipt = await tx.wait();

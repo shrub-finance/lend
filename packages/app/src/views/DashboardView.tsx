@@ -98,8 +98,8 @@ export const DashboardView: FC = ({}) => {
   }, [walletAddress]);
 
   useEffect(() => {
-    // console.log("This is the store");
-    // console.log(store);
+    console.log("This is the store");
+    console.log(store);
   }, [store]);
 
   async function getBlockTest() {
