@@ -61,11 +61,18 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
     const inputValue = event.target.value.trim();
     setBorrowAmount(inputValue);
     if (inputValue === '') {
+      setLocalError('');
       clearBorrowError('borrow');
       return;
     }
-    if (isInvalidOrZero(inputValue)) {
-      setBorrowError('borrow', 'Amount must be a valid number and greater than zero');
+    // Validates inputValue as a number:
+    // - Integer (e.g., "123")
+    // - Float with up to 6 decimals (e.g., "123.456789" or ".456789")
+    const isValidInput = /^([0-9]+(\.[0-9]{1,6})?|\.[0-9]{1,6})$/.test(inputValue);
+    const parsedValue = parseFloat(inputValue);
+    const isInvalidOrZero = !isValidInput || isNaN(parsedValue) || parsedValue === 0;
+    if (isInvalidOrZero) {
+      setBorrowError('borrow', 'Must be a valid number, greater than 0, less than 6 decimal places');
     } else {
       clearBorrowError('borrow');
     }
