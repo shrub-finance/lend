@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {DataTypes} from '../libraries/types/DataTypes.sol';
+import {DataTypes} from '../libraries/data-structures/DataTypes.sol';
 
 interface IBorrowPositionToken is IERC721 {
     function mint(address account, DataTypes.BorrowData calldata borrowData) external returns (uint);

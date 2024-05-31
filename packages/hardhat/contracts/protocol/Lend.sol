@@ -16,7 +16,8 @@ import "../configuration/PlatformConfig.sol";
 import "../interfaces/IAETH.sol";
 
 import {USDCoin} from "../dependencies/USDCoin.sol";
-import {DataTypes} from '../libraries/types/DataTypes.sol';
+import {DataTypes} from '../libraries/data-structures/DataTypes.sol';
+import {LendingPlatformEvents} from '../libraries/data-structures/LendingPlatformEvents.sol';
 import {Configuration} from "../libraries/configuration/Configuration.sol";
 
 import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
@@ -48,15 +49,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     address shrubTreasury;
 
-    event NewDeposit(address poolShareTokenAddress, address depositor, uint256 principalAmount, uint256 interestAmount, uint256 tokenAmount);
-    event NewBorrow(uint tokenId, uint40 timestamp, address borrower, uint256 collateral, uint256 principal, uint40 startDate, uint16 apy);
-    event PartialRepayBorrow(uint tokenId, uint repaymentAmount, uint principalReduction);
-    event RepayBorrow(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
-    event Withdraw(address user, address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcPrincipal, uint usdcInterest);
-    event PoolCreated(uint40 timestamp, address poolShareTokenAddress);
-    event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
-    event FinalizeLendingPool(address poolShareTokenAddress, uint shrubInterest, uint shrubYield);
-
     // Interfaces for USDC and aETH
     IERC20 public usdc;
     IAETH public aeth;
@@ -79,21 +71,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
     // --- Admin Functions ---
     function createPool(uint40 _timestamp) public onlyOwner {
         address poolShareTokenAddress = AdminLogic.executeCreatePool(lendingPools, activePoolIndex, activePools, _timestamp);
-        emit PoolCreated(_timestamp, poolShareTokenAddress);
     }
 
     function finalizeLendingPool(uint40 _timestamp) public onlyOwner {
-        DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
-        require(lendingPool.poolShareToken != PoolShareToken(address(0)), "Pool does not exist");
-        require(!lendingPool.finalized, "Pool already finalized");
-        require(HelpersLogic.currentTimestamp() >= _timestamp + 6 * 60 * 60, "Must wait until six hours after endDate for finalization"); // Time must be greater than six hours since pool expiration
-        // TODO: Insert extra logic for ensuring everything is funded
-        lendingPool.finalized = true;
-        // Send funds to Shrub
-        console.log("timestamp: %s, shrubYield: %s, shrubInterest: %s", _timestamp, lendingPool.shrubYield, lendingPool.shrubInterest);
-        aeth.transfer(shrubTreasury, lendingPool.shrubYield);
-        usdc.transfer(shrubTreasury, ShrubLendMath.wadToUsdc(lendingPool.shrubInterest));
-        emit FinalizeLendingPool(address(lendingPool.poolShareToken), lendingPool.shrubInterest, lendingPool.shrubYield);
+        AdminLogic.finalizeLendingPool(lendingPools, _timestamp, shrubTreasury, aeth, usdc);
     }
 
     function takeSnapshot() public onlyOwner {
@@ -175,7 +156,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
             console.log("lendingPools[activePools[j]] - j: %s, accumInterest: %s, accumYield: %s", j, lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
             lendingPools[activePools[j]] = lendingPoolsTemp[j];
             console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
-            emit LendingPoolYield(
+            emit LendingPlatformEvents.LendingPoolYield(
                 address(lendingPools[activePools[j]].poolShareToken),
                 lendingPools[activePools[j]].accumInterest,
                 lendingPools[activePools[j]].accumYield
@@ -472,7 +453,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         uint256 principalWad = ShrubLendMath.usdcToWad(_amount);
         uint256 poolShareTokenAmount = depositInternal(_timestamp, principalWad, 0);
 
-        emit NewDeposit(
+        emit LendingPlatformEvents.NewDeposit(
             address(lendingPools[_timestamp].poolShareToken),
             msg.sender,
             _amount,
@@ -548,7 +529,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // Transfer USDC principal and aETH yield to the user
         // Actual transfer to happen in calling function
 //        wrappedTokenGateway.withdrawETH(address(0), aethWithdrawalAmount, msg.sender);
-        emit Withdraw(msg.sender, address(lendingPool.poolShareToken), _poolShareTokenAmount, aethWithdrawalAmount, usdcPrincipalAmount, usdcInterestAmount);
+        emit LendingPlatformEvents.Withdraw(msg.sender, address(lendingPool.poolShareToken), _poolShareTokenAmount, aethWithdrawalAmount, usdcPrincipalAmount, usdcInterestAmount);
 //        event Withdraw(address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcAmount);
         return (usdcPrincipalAmount, usdcInterestAmount, aethWithdrawalAmount);
     }
@@ -633,7 +614,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 //        console.log(_amount);
 //        console.log(loan.APY);
 //        console.log("-------");
-        emit NewBorrow(tokenId, params.timestamp, params.beneficiary, params.collateral, params.principal, params.startDate, apy);
+        emit LendingPlatformEvents.NewBorrow(tokenId, params.timestamp, params.beneficiary, params.collateral, params.principal, params.startDate, apy);
 
     }
 
@@ -691,7 +672,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         DataTypes.BorrowingPool storage borrowingPool = borrowingPools[bpt.getEndDate(tokenId)];
         borrowingPool.principal -= principalReduction;
 
-        emit PartialRepayBorrow(tokenId, repaymentAmount, principalReduction);
+        emit LendingPlatformEvents.PartialRepayBorrow(tokenId, repaymentAmount, principalReduction);
     }
 
 /**
@@ -764,7 +745,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // Write borrowing pool back to storage
         borrowingPools[bd.endDate] = tempBorrowingPool;
         // Emit event for tracking/analytics/subgraph
-        emit RepayBorrow(tokenId, bd.principal + interest, freedCollateral, beneficiary);
+        emit LendingPlatformEvents.RepayBorrow(tokenId, bd.principal + interest, freedCollateral, beneficiary);
     }
 
     function repayBorrow(
@@ -824,7 +805,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
         // Send ETH Yield to user
         wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
 //        event NewDeposit(address poolShareTokenAddress, address depositor, uint256 principalAmount, uint256 interestAmount, uint256 tokenAmount);
-        emit NewDeposit(
+        emit LendingPlatformEvents.NewDeposit(
             address(lendingPools[newTimestamp].poolShareToken),
             msg.sender,
             usdcWithdrawn,

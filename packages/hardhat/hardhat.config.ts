@@ -5,6 +5,9 @@ import "hardhat-abi-exporter";
 import "./hardhat-tasks";
 import "./hardhat-tests";
 
+import dotenv from "dotenv";
+dotenv.config();
+
 extendEnvironment((hre) => {
 // @ts-ignore
     hre.init = async() =>  {
@@ -43,11 +46,19 @@ extendEnvironment((hre) => {
 });
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.18",
+  solidity: {
+    version: "0.8.18",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      allowUnlimitedContractSize: true,
+      // allowUnlimitedContractSize: true,
       chainId: 1337,
       gasPrice: 80e9,
       // chainId: 1337,
@@ -59,13 +70,13 @@ const config: HardhatUserConfig = {
   },
   namedAccounts: {
     deployer: 0,
-    account1: 1,
-    account2: 2,
-    account3: 3,
-    account4: 4,
-    account5: 5,
-    account6: 6,
-    shrubTreasury: 7
+    shrubTreasury: 1,
+    account1: 2,
+    account2: 3,
+    account3: 4,
+    account4: 5,
+    account5: 6,
+    account6: 7,
   },
     abiExporter: {
         path: "../subgraph/abis",
@@ -75,5 +86,20 @@ const config: HardhatUserConfig = {
         only: ["LendingPlatform", "USDCoin", "PoolShareToken"]
     }
 };
+
+if (
+  process.env.HOLESKY_SECRET_KEY &&
+  process.env.HOLESKY_TREASURY_SECRET_KEY &&
+  config.networks
+) {
+  config.networks.holesky = {
+    url: "https://rpc.holesky.ethpandaops.io",
+    chainId: 17000,
+    accounts: [
+      process.env.HOLESKY_SECRET_KEY,
+      process.env.HOLESKY_TREASURY_SECRET_KEY
+    ]
+  };
+}
 
 export default config;

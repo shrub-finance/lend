@@ -3,8 +3,14 @@ pragma solidity ^0.8.18;
 
 import "../../tokenization/PoolShareToken.sol";
 
-import {DataTypes} from '../types/DataTypes.sol';
+import {DataTypes} from '../data-structures/DataTypes.sol';
 import {HelpersLogic} from "./HelpersLogic.sol";
+import {ShrubLendMath} from "../math/ShrubLendMath.sol";
+import {LendingPlatformEvents} from '../data-structures/LendingPlatformEvents.sol';
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../interfaces/IAETH.sol";
+
 
 import "hardhat/console.sol";
 
@@ -35,8 +41,7 @@ library AdminLogic {
         // Make sure to keep the pool sorted
         insertIntoSortedArr(_activePoolIndex, _activePools, _timestamp);
         poolShareTokenAddress = address(_lendingPools[_timestamp].poolShareToken);
-//        console.log("executeCreatePool - poolsShareTokenAddress: %s", poolShareTokenAddress);
-//        emit PoolCreated(_timestamp, poolShareTokenAddress);
+        emit LendingPlatformEvents.PoolCreated(_timestamp, poolShareTokenAddress);
     }
 
     function insertIntoSortedArr(
@@ -84,6 +89,26 @@ library AdminLogic {
         for (uint i = 0; i < _activePools.length; i++) {
             _activePoolIndex[_activePools[i]] = i;
         }
+    }
+
+    function finalizeLendingPool(
+        mapping(uint40 => DataTypes.LendingPool) storage lendingPools,
+        uint40 _timestamp,
+        address shrubTreasury,
+        IAETH aeth,
+        IERC20 usdc
+    ) external {
+        DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
+        require(lendingPool.poolShareToken != PoolShareToken(address(0)), "Pool does not exist");
+        require(!lendingPool.finalized, "Pool already finalized");
+        require(HelpersLogic.currentTimestamp() >= _timestamp + 6 * 60 * 60, "Must wait until six hours after endDate for finalization"); // Time must be greater than six hours since pool expiration
+        // TODO: Insert extra logic for ensuring everything is funded
+        lendingPool.finalized = true;
+        // Send funds to Shrub
+        console.log("timestamp: %s, shrubYield: %s, shrubInterest: %s", _timestamp, lendingPool.shrubYield, lendingPool.shrubInterest);
+        aeth.transfer(shrubTreasury, lendingPool.shrubYield);
+        usdc.transfer(shrubTreasury, ShrubLendMath.wadToUsdc(lendingPool.shrubInterest));
+        emit LendingPlatformEvents.FinalizeLendingPool(address(lendingPool.poolShareToken), lendingPool.shrubInterest, lendingPool.shrubYield);
     }
 
 }

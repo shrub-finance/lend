@@ -11,7 +11,7 @@ import "hardhat/console.sol";
 import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 
-import {DataTypes} from '../libraries/types/DataTypes.sol';
+import {DataTypes} from '../libraries/data-structures/DataTypes.sol';
 import {Constants} from '../libraries/configuration/Constants.sol';
 import {ShrubLendMath} from "../libraries/math/ShrubLendMath.sol";
 import {HelpersLogic} from '../libraries/logic/HelpersLogic.sol';
