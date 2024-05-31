@@ -7,11 +7,11 @@ import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 import {
   EXCHANGE_RATE_BUFFER,
   interestToLTV,
-  isInvalidOrZero,
+  isInvalidOrZero, ltvToInterest,
   ONE_HUNDRED_PERCENT,
   percentMul,
-  roundEth
-} from "../../utils/ethMethods";
+  roundEth,
+} from '../../utils/ethMethods';
 import {BigNumber, ethers} from "ethers";
 import Image from 'next/image'
 import { interestRates, Zero } from '../../constants';
@@ -38,7 +38,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
 
   const [maxBorrow, setMaxBorrow] = useState(ethers.utils.parseEther('0'));
   const [borrowAmount, setBorrowAmount] = useState('');
-  const [selectedInterestRate, setSelectedInterestRate] = useState("");
+  const [selectedInterestRate, setSelectedInterestRate] = useState("8");
   const {
     contract: lendingPlatform,
     isLoading: lendingPlatformIsLoading,
@@ -111,14 +111,13 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
   const handleBorrowContinue = () => {
     onBorrowViewChange(selectedInterestRate, borrowAmount);
   };
+  console.log(selectedInterestRate);
 
   return (
     <div className="md:hero mx-auto p-4">
-
       <div className="md:hero-content flex flex-col">
         {/*alert*/}
         <div className='mt-6 self-start'>
-
           {localError && (
             <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50   flex items-center" role="alert">
               <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24">
@@ -151,7 +150,9 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                   </label>
                   <input type="text" placeholder="Enter amount" name="amount" id="amount"
                          className="input input-bordered w-full h-[70px] bg-white border-solid border border-shrub-grey-50 text-lg focus:outline-none focus:shadow-shrub-thin focus:border-shrub-green-50"
-                         onChange={handleAmountChange}
+                         onChange={(e) => {
+                           handleAmountChange(e)
+                           setShowBorrowAPYSection(true)}}
                          value={format(borrowAmount)}/>
                   <ErrorDisplay errors={borrowErrors} />
                   <label className="label">
@@ -174,9 +175,10 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                     <ul className="flex flex-row ">
                       {interestRates.map(({ id, rate }) => (
                         <li className="mr-4" key={id}>
-                          <input type="radio" id={id} name="borrow" value={id} className="hidden peer" onChange={() =>
+                          <input type="radio" id={id} name="borrow" value={id} className="hidden peer"
+                                 checked={rate === selectedInterestRate}
+                                 onChange={() =>
                           { setSelectedInterestRate(rate)
-                            setShowBorrowAPYSection(true)
                           }} required/>
                           <label htmlFor={id}
                                  className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer    peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50    select-none">

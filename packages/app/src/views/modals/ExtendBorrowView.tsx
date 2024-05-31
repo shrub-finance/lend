@@ -154,7 +154,6 @@ setIsModalOpen, borrow
                             <input type='radio' id={id} name='loan' value={id} className='hidden peer' checked={rate === ltvToInterest[targetLtv.toString()]}
                              onChange={() => {
                                setTargetLtv(ethers.BigNumber.from(interestToLTV[rate]));
-                              // setSelectedInterestRate(rate);
                               setShowExtendBorrowCollateralSection(true);
                             }} required />
                             <label htmlFor={id}
