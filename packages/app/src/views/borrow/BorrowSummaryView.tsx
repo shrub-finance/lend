@@ -176,10 +176,6 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       <span className="">Due today</span>
                       <span>{ethers.utils.formatEther(requiredCollateral)} ETH</span>
                     </div>
-                    <div className="flex flex-row justify-between">
-                      <span className="">Gas Cost</span>
-                      <span>0.0012 ETH</span>
-                    </div>
                   </div>
                   <Web3Button contractAddress={lendingPlatformAddress}
                               isDisabled={latestBorrow?.status === "pending"}

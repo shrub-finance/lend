@@ -49,13 +49,15 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
       setShowLendAPYSection(false);
       return;
     }
-
+    // Validates inputValue as a number:
+    // - Integer (e.g., "123")
+    // - Float with up to 6 decimals (e.g., "123.456789" or ".456789")
     const isValidInput = /^([0-9]+(\.[0-9]{1,6})?|\.[0-9]{1,6})$/.test(inputValue);
     const parsedValue = parseFloat(inputValue);
     const isInvalidOrZero = !isValidInput || isNaN(parsedValue) || parsedValue === 0;
 
     if (isInvalidOrZero) {
-      setDepositError('deposit', 'Amount must be a valid number and greater than zero');
+      setDepositError('deposit', 'Must be a valid number, greater than 0, less than 6 decimal places');
       setShowLendAPYSection(false);
     } else {
       clearDepositError('deposit');

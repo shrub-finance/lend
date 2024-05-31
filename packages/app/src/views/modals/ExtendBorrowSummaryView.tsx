@@ -5,7 +5,7 @@ import {
   calcPercentage,
   ethInUsdc,
   formatLargeUsdc,
-  formatPercentage, formatWad,
+  formatPercentage, formatShortDate, formatWad,
   fromEthDate, interestToLTV, ltvToInterest,
   toEthDate,
 } from '../../utils/ethMethods';
@@ -32,6 +32,7 @@ import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries';
 import {useFinancialData} from '../../components/FinancialDataContext';
 import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
 import { Borrow, BorrowObj } from '../../types/types';
+import { Zero } from '../../constants';
 
 interface ExtendBorrowSummaryProps {
   onBackExtend: (data?) => void,
@@ -126,11 +127,8 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                      height='40'/>
             </div>
             <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-              When you extend this borrow of
-              <span className='font-bold'>{' '}{formatLargeUsdc(borrow.debt)} USDC</span>, your
-              existing borrow position
-              token will be burnt and a new one will be minted reflecting the new date <span
-              className='font-bold'>{newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1])}</span>.
+              When you extend this borrow of {formatLargeUsdc(borrow.debt)} USDC, your
+              existing borrow position token will be burnt and a new one will be minted reflecting the new date {newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1])}.
             </p>
             <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
             {/*receipt start*/}
@@ -145,9 +143,16 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                   <span>{formatLargeUsdc(borrow.principal)} USDC</span>
                 </div>
                 <div className='flex flex-row  justify-between'>
-                  <span className=''>Old Due Date</span>
-                  <span>{borrow.endDate.toLocaleString()}
+                  <span className=''>Current Due Date</span>
+                  <span>{borrow.endDate.toDateString()}
                   </span>
+                </div>
+                <div className='flex flex-row  justify-between cursor-pointer'
+                     onClick={(e) => onBackExtend('dateChangeRequest')}>
+                  <span>New Due Date ✨</span>
+                  <span className='font-semibold text-shrub-green-500'>
+                    {newEndDate ? fromEthDate(newEndDate).toDateString() : toEthDate(store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1])}<Image
+                    alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' /></span>
                 </div>
                 <div className='flex flex-row  justify-between'>
                   <span className=''>Current LTV</span>
@@ -156,27 +161,23 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
                   </span>
                 </div>
                 <div className='flex flex-row  justify-between cursor-pointer'
-                     onClick={(e) => onBackExtend('dateChangeRequest')}>
-                  <span>New Due Date ✨</span>
-                  <span className='font-semibold text-shrub-green-500'>
-                    {newEndDate ? fromEthDate(newEndDate).toLocaleString() : toEthDate(store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1])}<Image
-                    alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' /></span>
-                </div>
-                <div className='flex flex-row  justify-between cursor-pointer'
                      onClick={(e) => onBackExtend('ltvChangeRequest')}>
                   <span className=''>Interest Rate</span>
                   <span className='font-semibold text-shrub-green-500'> {ltvToInterest[targetLtv.toString()]}%<Image
                     alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20' height='20' /></span>
                 </div>
               </div>
-
+              {/*divider*/}
               <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
-              <div className='mb-6 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
-                <div className='flex flex-row  justify-between'>
-                  <span className=''>Additional Collateral</span>
-                  <span>{ethers.utils.formatEther(additionalCollateral)} ETH</span>
+              { additionalCollateral.gt(Zero) &&
+                <div className='mb-6 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
+                  <div className='flex flex-row justify-between'>
+                    <span>Additional Collateral</span>
+                    <span>{ethers.utils.formatEther(additionalCollateral)} ETH</span>
+                  </div>
                 </div>
-              </div>
+              }
+
               {/*approve and modals deposit*/}
               {(usdcAllowanceIsLoading || aethAllowanceIsLoading) ? (
                 <p>Loading balance...</p>
