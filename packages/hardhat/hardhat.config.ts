@@ -1,6 +1,7 @@
 import {extendEnvironment, HardhatUserConfig} from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
+import "hardhat-contract-sizer";
 import "hardhat-abi-exporter";
 import "./hardhat-tasks";
 import "./hardhat-tests";
@@ -51,14 +52,14 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
+        runs: 1 
       }
     }
   },
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      // allowUnlimitedContractSize: true,
+//       allowUnlimitedContractSize: true,
       chainId: 1337,
       gasPrice: 80e9,
       // chainId: 1337,
