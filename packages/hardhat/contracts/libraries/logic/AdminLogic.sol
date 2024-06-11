@@ -258,7 +258,7 @@ library AdminLogic {
     }
 
 
-    function calcLPIncreases(MethodParams.calcLPIncreasesParams memory params) internal returns (MethodResults.calcLPIncreasesResult memory) {
+    function calcLPIncreases(MethodParams.calcLPIncreasesParams memory params) internal pure returns (MethodResults.calcLPIncreasesResult memory) {
         console.log("running calcLPIncreases");
         uint lendingPoolRatio = WadRayMath.wadDiv(params.lendingPoolPrincipal, params.contributionDenominator);
         uint LPaEthDistribution = WadRayMath.wadMul(params.aEthYieldDistribution, lendingPoolRatio);
