@@ -36,8 +36,18 @@ import "../interfaces/IMockAaveV3.sol";
 
 import "hardhat/console.sol";
 
-contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
-//    using Strings for uint256;
+contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
+
+    // Declaring Events here so they get in the ABI
+    // TODO: Find a way to not have to do this as they are all defined in the LendingPlatformEvents Library
+    event NewDeposit(address poolShareTokenAddress, address depositor, uint256 principalAmount, uint256 interestAmount, uint256 tokenAmount);
+    event NewBorrow(uint tokenId, uint40 timestamp, address borrower, uint256 collateral, uint256 principal, uint40 startDate, uint16 apy);
+    event PartialRepayBorrow(uint tokenId, uint repaymentAmount, uint principalReduction);
+    event RepayBorrow(uint tokenId, uint repaymentAmount, uint collateralReturned, address beneficiary);
+    event Withdraw(address user, address poolShareTokenAddress, uint tokenAmount, uint ethAmount, uint usdcPrincipal, uint usdcInterest);
+    event PoolCreated(uint40 timestamp, address poolShareTokenAddress);
+    event LendingPoolYield(address poolShareTokenAddress, uint accumInterest, uint accumYield);
+    event FinalizeLendingPool(address poolShareTokenAddress, uint shrubInterest, uint shrubYield);
 
     mapping(uint40 => DataTypes.LendingPool) public lendingPools; // where the uint256 key is a timestamp
     mapping(uint40 => DataTypes.BorrowingPool) public borrowingPools; // mapping of timestamp of borrow endDate => BorrowingPool
@@ -74,7 +84,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig {
 
     // --- Admin Functions ---
     function createPool(uint40 _timestamp) public onlyOwner {
-        address poolShareTokenAddress = AdminLogic.executeCreatePool(lendingPools, activePoolIndex, activePools, _timestamp);
+        AdminLogic.executeCreatePool(lendingPools, activePoolIndex, activePools, _timestamp);
     }
 
     function finalizeLendingPool(uint40 _timestamp) public onlyOwner {
