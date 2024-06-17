@@ -32,7 +32,7 @@ export const UserHistoryView: React.FC<UserHistoryViewProps> = ({}) => {
 
   useEffect(() => {
     if (userLogs) {
-      console.log(userLogs);
+      // console.log(userLogs);
     }
   }, [userLogs]);
 

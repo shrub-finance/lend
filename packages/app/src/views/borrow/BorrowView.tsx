@@ -118,7 +118,6 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
   const handleBorrowContinue = () => {
     onBorrowViewChange(selectedInterestRate, borrowAmount);
   };
-  console.log(selectedInterestRate);
 
   return (
     <div className="md:hero mx-auto p-4">
