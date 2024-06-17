@@ -54,7 +54,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         ...store.userData,
         [address]: {
           ...store.userData[address],
-          borrows: [...store.userData[address].borrows, borrow]
+          borrows: store.userData[address] ? [...store.userData[address].borrows, borrow] : [borrow]
         }
       }
     }
@@ -67,7 +67,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         ...store.userData,
         [address]: {
           ...store.userData[address],
-          deposits: [...store.userData[address].deposits, deposit]
+          deposits: store.userData[address] ? [...store.userData[address].deposits, deposit] : [deposit]
         }
       }
     }

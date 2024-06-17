@@ -10,8 +10,8 @@ import { chainlinkAggregatorAbi, chainlinkAggregatorAddress } from '../utils/con
 import { ethers } from 'ethers';
 import Image from "next/image";
 import { secondsInDay} from "@shrub-lend/common";
-import {USER_POSITIONS_QUERY, GLOBAL_DATA_QUERY} from "../constants/queries";
-import {useLazyQuery, useQuery} from "@apollo/client";
+import {GLOBAL_DATA_QUERY} from "../constants/queries";
+import {useQuery} from "@apollo/client";
 import {getUserData, useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
 import ExtendDepositView from './modals/ExtendDepositView';
@@ -92,13 +92,12 @@ export const DashboardView: FC = ({}) => {
 
   useEffect(() => {
         // console.log('running block useEffect')
-    if (walletAddress) {
+    if (walletAddress && process.env.NEXT_PUBLIC_ENVIRONMENT==='development') {
       getBlockTest()
     }
   }, [walletAddress]);
 
   useEffect(() => {
-    console.log("This is the store");
     console.log(store);
   }, [store]);
 
