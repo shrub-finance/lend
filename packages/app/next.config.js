@@ -3,6 +3,7 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+    trailingSlash: true,
   webpack: (config, options) => {
     // Add the common folder to the compilation.
     // This will make sure it's transpiled.
