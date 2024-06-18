@@ -4,6 +4,18 @@ import {getPlatformDates, toEthDate} from "@shrub-lend/common"
 import "./hardhat-tasks"
 
 // Tasks
+task("initializePools", "Create pools for an initial environment")
+  .setAction(async (taskArgs, env) => {
+    const { getNamedAccounts } = env;
+    const { oneMonth, threeMonth, sixMonth, twelveMonth } = getPlatformDates();
+    const { deployer} = await getNamedAccounts();
+    await env.run('createPool', { timestamp: toEthDate(oneMonth)});  // 1 month
+    await env.run('createPool', { timestamp: toEthDate(threeMonth)});  // 3 month
+    await env.run('createPool', { timestamp: toEthDate(sixMonth)});  // 6 month
+    await env.run('createPool', { timestamp: toEthDate(twelveMonth)});  // 12 month
+    await env.run('takeSnapshot', { account: deployer });
+  })
+
 task("testLendingPlatform", "Setup an environment for development")
   .setAction(async (taskArgs, env) => {
     const {ethers, deployments, getNamedAccounts} = env;

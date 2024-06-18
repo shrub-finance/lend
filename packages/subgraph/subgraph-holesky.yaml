@@ -1,0 +1,67 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Contract
+    network: holesky
+    source:
+      address: "0xCCD664E7CFbC538beF0385Cb936D88FFF0A20d46"
+      abi: LendingPlatform
+      startBlock: 1735284
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - User
+        - LendingPool
+        - BorrowingPool
+        - Borrow
+        - Deposit
+      abis:
+        - name: LendingPlatform
+          file: ./abis/LendingPlatform.json
+      eventHandlers:
+        - event: PoolCreated(uint40,address)
+          handler: handlePoolCreated
+        - event: NewDeposit(address,address,uint256,uint256,uint256)
+          handler: handleNewDeposit
+        - event: NewBorrow(uint256,uint40,address,uint256,uint256,uint40,uint16)
+          handler: handleNewBorrow
+        - event: LendingPoolYield(address,uint256,uint256)
+          handler: handleLendingPoolYield
+        - event: PartialRepayBorrow(uint256,uint256,uint256)
+          handler: handlePartialRepayBorrow
+        - event: RepayBorrow(uint256,uint256,uint256,address)
+          handler: handleRepayBorrow
+        - event: Withdraw(address,address,uint256,uint256,uint256,uint256)
+          handler: handleWithdraw
+        - event: FinalizeLendingPool(address,uint256,uint256)
+          handler: handleFinalizeLendingPool
+      file: ./src/lending-platform.ts
+templates:
+  - name: PoolShareToken
+    kind: ethereum/contract
+    network: holesky
+    source:
+      abi: PoolShareToken
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/pool-share-token.ts
+      entities:
+        - User
+      abis:
+        - name: PoolShareToken
+          file: ./abis/PoolShareToken.json
+      eventHandlers:
+#    event Transfer(address indexed from, address indexed to, uint256 value);
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+#    event Approval(address indexed owner, address indexed spender, uint256 value);
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleApproval
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred

@@ -272,5 +272,4 @@ library AdminLogic {
             deltaShrubInterest : PercentageMath.percentMul(LPinterestDistribution, params.shrubInterestFee)
         });
     }
-
 }
