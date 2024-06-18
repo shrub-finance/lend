@@ -16,3 +16,4 @@
 packages/hardhat/deployments/
 
 /packages/subgraph/subgraph.yaml
+.vercel
