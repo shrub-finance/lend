@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from "react";
-
 import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages";
 import {useBalance, useContract} from "@thirdweb-dev/react";
 import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
@@ -7,7 +6,7 @@ import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 import {
   EXCHANGE_RATE_BUFFER,
   interestToLTV,
-  isInvalidOrZero, ltvToInterest,
+  isInvalidOrZero,
   ONE_HUNDRED_PERCENT,
   percentMul,
   roundEth,
@@ -26,16 +25,11 @@ interface BorrowViewProps {
 
 export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requiredCollateral, setRequiredCollateral }) => {
 
-
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [showBorrowAPYSection, setShowBorrowAPYSection] = useState(false);
   const { errors: borrowErrors, setError: setBorrowError, clearError: clearBorrowError } = useValidation();
-
-
   const {data: ethBalance, isLoading: ethBalanceIsLoading} = useBalance(NATIVE_TOKEN_ADDRESS);
-
-
   const [maxBorrow, setMaxBorrow] = useState(ethers.utils.parseEther('0'));
   const [borrowAmount, setBorrowAmount] = useState('');
   const [selectedInterestRate, setSelectedInterestRate] = useState("8");
@@ -46,6 +40,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
   } = useContract(lendingPlatformAddress, lendingPlatformAbi);
 
   const format = (val: string) => val;
+  const isValidationError = !!borrowErrors.borrow;
 
   async function fillMax() {
     if (lendingPlatformIsLoading || lendingPlatformError || ethBalanceIsLoading) {
@@ -58,11 +53,19 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
   }
 
   const handleAmountChange = (event) => {
+    if (ethBalance.value.isZero()) {
+      setBorrowError('borrow', 'Insufficient ETH balance. Please add ETH to your wallet.');
+      return;
+    }
     const inputValue = event.target.value.trim();
     setBorrowAmount(inputValue);
     if (inputValue === '') {
       setLocalError('');
       clearBorrowError('borrow');
+      return;
+    }
+    if(requiredCollateral && requiredCollateral.gt(ethBalance.value)) {
+      setBorrowError('borrow', 'ETH balance exceeds required collateral.');
       return;
     }
     // Validates inputValue as a number:
@@ -78,9 +81,8 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
     }
   };
 
-
-
   useEffect(() => {
+
       const determineRequiredCollateral = async () => {
       const ltv = interestToLTV[selectedInterestRate];
       const usdcUnits = ethers.utils.parseUnits(borrowAmount, 6);
@@ -211,7 +213,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                       </span>
                     </div>
                     <div className="card w-full bg-teal-50 border border-shrub-green p-10">
-                      { (Number(borrowAmount))? <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{ethers.utils.formatEther(requiredCollateral)} ETH</span>:<span className="sm: text-medium text-shrub-green-500 font-bold text-center">Enter amount to calculate required collateral</span>}
+                      { (Number(borrowAmount))? <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">{ethers.utils.formatEther(requiredCollateral)} ETH</span>:<span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">---- ETH</span>}
                     </div>
                   </div>
                 )}
@@ -220,7 +222,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                 <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl text-white disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
                   disabled:text-white
-                  disabled:border" disabled={Number(borrowAmount) <= 0|| selectedInterestRate === "" || requiredCollateral.lte(Zero)}
+                  disabled:border" disabled={Number(borrowAmount) <= 0|| selectedInterestRate === "" || requiredCollateral.lte(Zero) || isValidationError}
                   onClick={handleBorrowContinue}>Confirm</button>
               </div>
             </div>
