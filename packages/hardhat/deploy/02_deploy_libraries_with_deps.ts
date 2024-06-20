@@ -16,14 +16,23 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             HelpersLogic: allDeployments.HelpersLogic.address,
         }
     });
-    await deploy("ShrubLendMath", {
-        from: deployer,
-        log: true,
-        args: [],
-        libraries: {
-            WadRayMath: allDeployments.WadRayMath.address,
-        }
-    });
+    // await deploy("ShrubLendMath", {
+    //     from: deployer,
+    //     log: true,
+    //     args: [],
+    //     libraries: {
+    //         WadRayMath: allDeployments.WadRayMath.address,
+    //     }
+    // });
+  await deploy("ExtendLogic", {
+    from: deployer,
+    log: true,
+    args: [],
+    libraries: {
+      HelpersLogic: allDeployments.HelpersLogic.address,
+      ShrubView: allDeployments.ShrubView.address,
+    }
+  });
 };
 export default func;
 func.id = "deploy_libraries_with_dep"; // id to prevent re-execution

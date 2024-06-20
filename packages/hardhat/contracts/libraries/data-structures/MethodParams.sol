@@ -6,6 +6,28 @@ import "../../interfaces/IBorrowPositionToken.sol";
 import "./DataTypes.sol";
 
 library MethodParams {
+
+    struct forceExtendBorrowParams {
+        uint tokenId;
+        uint liquidationPhase;
+        uint ethPrice;
+        IBorrowPositionToken bpt;
+        IAETH aeth;
+        IERC20 usdc;
+    }
+
+    struct extendBorrowParams {
+        uint tokenId;
+        uint40 newTimestamp;
+        uint256 additionalCollateral; // Amount of new ETH collateral with - 18 decimals
+        uint256 additionalRepayment; // Amount of new USDC to be used to repay the existing borrow - 6 decimals
+        uint16 ltv;
+        uint ethPrice;
+        IERC20 usdc;
+        IBorrowPositionToken bpt;
+        IAETH aeth;
+    }
+
     struct BorrowInternalParams {
         uint256 principal; // Amount of USDC with 6 decimal places
         uint256 originalPrincipal; // Amount of USDC with 6 decimal places
@@ -20,6 +42,15 @@ library MethodParams {
         IBorrowPositionToken bpt;
         DataTypes.LendState lendState;
         uint40[] activePools; // Sorted ascending list of timestamps of active pools
+    }
+
+    struct repayBorrowInternalParams {
+        uint tokenId;
+        address repayer;
+        address beneficiary;
+        bool isExtend;
+        IERC20 usdc;
+        IBorrowPositionToken bpt;
     }
 
     struct calcLPIncreasesParams {

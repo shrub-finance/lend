@@ -22,12 +22,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     log: true,
     libraries: {
-        HelpersLogic: allDeployments.HelpersLogic.address,
-        AdminLogic: allDeployments.AdminLogic.address,
-        PercentageMath: allDeployments.PercentageMath.address,
-        WadRayMath: allDeployments.WadRayMath.address,
-        ShrubLendMath: allDeployments.ShrubLendMath.address,
-        DepositLogic: allDeployments.DepositLogic.address,
+      HelpersLogic: allDeployments.HelpersLogic.address,
+      ShrubView: allDeployments.ShrubView.address,
+      AdminLogic: allDeployments.AdminLogic.address,
+      PercentageMath: allDeployments.PercentageMath.address,
+      WadRayMath: allDeployments.WadRayMath.address,
+      ShrubLendMath: allDeployments.ShrubLendMath.address,
+      DepositLogic: allDeployments.DepositLogic.address,
+      BorrowInternalLogic: allDeployments.BorrowInternalLogic.address,
+      ExtendLogic: allDeployments.ExtendLogic.address,
+      RepayLogic: allDeployments.RepayLogic.address,
     },
     args: [
         addresses
