@@ -524,7 +524,7 @@ export const DashboardView: FC = ({}) => {
                                       )}
                                     </td>
                                     <td className='px-6 py-4 text-sm font-bold'>
-                                      <Image alt="ETH logo" src="/eth-logo.svg" className="w-4 inline align-middle" width="16" height="24"/>
+                                      {/*<Image alt="ETH logo" src="/eth-logo.svg" className="w-4 inline align-middle" width="16" height="24"/>*/}
                                       {" "}{formatWad(borrow.collateral, 6)} ETH
                                     </td>
                                     <td className='px-6 py-4 text-sm font-bold'>
