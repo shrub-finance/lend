@@ -8,7 +8,7 @@ import {MethodParams} from '../data-structures/MethodParams.sol';
 import {MethodResults} from '../data-structures/MethodResults.sol';
 
 import "../../configuration/PlatformConfig.sol";
-import {HelpersLogic} from "./HelpersLogic.sol";
+import {HelpersLogic} from "../view/HelpersLogic.sol";
 import {ShrubLendMath} from "../math/ShrubLendMath.sol";
 import {LendingPlatformEvents} from '../data-structures/LendingPlatformEvents.sol';
 

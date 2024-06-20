@@ -3,6 +3,7 @@ pragma solidity ^0.8.18;
 
 import "../../interfaces/IAETH.sol";
 import "../../interfaces/IBorrowPositionToken.sol";
+import "./DataTypes.sol";
 
 library MethodParams {
     struct BorrowInternalParams {
@@ -14,6 +15,11 @@ library MethodParams {
         uint40 startDate;  // Start date of the borrow
         address beneficiary;  // Account to receive the USDC borrowed
         address borrower;  // Account to take passession of the BPT
+        uint256 ethPrice;
+        IERC20 usdc;
+        IBorrowPositionToken bpt;
+        DataTypes.LendState lendState;
+        uint40[] activePools; // Sorted ascending list of timestamps of active pools
     }
 
     struct calcLPIncreasesParams {
