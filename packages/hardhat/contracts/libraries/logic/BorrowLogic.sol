@@ -5,10 +5,6 @@ import {BorrowInternalLogic} from './BorrowInternalLogic.sol';
 import {DataTypes} from '../data-structures/DataTypes.sol';
 import {MethodParams} from '../data-structures/MethodParams.sol';
 import {HelpersLogic} from "../view/HelpersLogic.sol";
-import {LendingPlatformEvents} from '../data-structures/LendingPlatformEvents.sol';
-import {ShrubView} from '../view/ShrubView.sol';
-import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
-import {ShrubLendMath} from "../math/ShrubLendMath.sol";
 import {Constants} from "../configuration/Constants.sol";
 
 import "../../interfaces/IMockAaveV3.sol";
