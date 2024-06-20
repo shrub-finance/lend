@@ -127,11 +127,11 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                 {lendActionInitiated && (
                   <>
                       {/*spinner */}
-                      {/*{latestDeposit?.status === "pending" && (*/}
-                      {/*  <div class="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin">*/}
-                      {/*    <div class="w-[205px] h-[205px] rounded-full bg-white"></div>*/}
-                      {/*  </div>*/}
-                      {/*)}*/}
+                      {latestDeposit?.status === "pending" && (
+                        <div className="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin">
+                          <div className="w-[205px] h-[205px] rounded-full bg-white"></div>
+                        </div>
+                      )}
 
                       {latestDeposit?.status === "confirmed" && (
                         <>
