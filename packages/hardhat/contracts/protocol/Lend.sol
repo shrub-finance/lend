@@ -31,6 +31,8 @@ import {ShrubView} from "../libraries/view/ShrubView.sol";
 import {AdminLogic} from "../libraries/logic/AdminLogic.sol";
 import {DepositLogic} from "../libraries/logic/DepositLogic.sol";
 import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
+import {RepayLogic} from "../libraries/logic/RepayLogic.sol";
+import {ExtendLogic} from "../libraries/logic/ExtendLogic.sol";
 import {ShrubLendMath} from "../libraries/math/ShrubLendMath.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -112,102 +114,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         );
     }
 
-//     function takeSnapshot() public onlyOwner {
-//         uint aETHBalance = aeth.balanceOf(address(this));
-//         //console.log("running takeSnapshot, platformAEthBalance: %s, aEthSnapshotBalance: %s, claimedCollateralSinceSnapshot: %s", aETHBalance, aEthSnapshotBalance, claimedCollateralSinceSnapshot);
-//         //console.log("newCollateralSinceSnapshot: %s", newCollateralSinceSnapshot);
-//         //console.log(
-//             "lastSnaphot: %s, now: %s, elapsed: %s",
-//             lastSnapshotDate,
-//             HelpersLogic.currentTimestamp(),
-//             HelpersLogic.currentTimestamp() - lastSnapshotDate
-//         );
-// //        Get the current balance of bpTotalPoolShares (it is local)
-//         // calculate the accumYield for all BP (current balance - snapshot balance)
-//         uint aEthYieldSinceLastSnapshot = aeth.balanceOf(address(this)) + claimedCollateralSinceSnapshot - newCollateralSinceSnapshot - aEthSnapshotBalance;
-//         //console.log("aEthYieldSinceLastSnapshot: %s", aEthYieldSinceLastSnapshot);
-//         // An array of LendingPool to keep track of all of the increments in memory before a final write to the lending pool
-//         // The element of the array maps to the activePools timestamp
-//         DataTypes.LendingPool[] memory lendingPoolsTemp = new DataTypes.LendingPool[](activePools.length);
-//         for (uint i = 0; i < activePools.length; i++) {
-//             // Make copy of lending pools into memory
-//             lendingPoolsTemp[i] = lendingPools[activePools[i]];
-//         }
-
-// //        Calculate accumInterest for all BP
-//         for (uint i = 0; i < activePools.length; i++) {
-//             // Cleanup paid off BPTs
-//             // TODO: This should return the earlyRepaymentPenalty that was incurred by these pools
-//             uint earlyRepaymentPenalties = bpt.cleanUpByTimestamp(activePools[i]);
-//             //console.log("finished running cleanUpByTimestamp for %s", activePools[i]);
-// //            Find the BPTs related to these timestamps
-// //            bptsForPool is an array of tokenIds
-//             uint[] memory bptsForPool = bpt.getTokensByTimestamp(activePools[i]);
-//             uint accumInterestBP = earlyRepaymentPenalties;
-// //            # Loop through the BPTs in order to calculate their accumInterest
-//             for (uint j = 0; j < bptsForPool.length; j++) {
-//                 //console.log("in token loop - analyzing tokenId: %s", bptsForPool[j]);
-//                 accumInterestBP +=  bpt.interestSinceTimestamp(bptsForPool[j], lastSnapshotDate);
-//             }
-//             // Determine the amount of aETH to distribute from this borrowing pool
-//             if (borrowingPools[activePools[i]].poolShareAmount == 0) {
-//                 //console.log("poolShareAmount in borrowing pool is 0 - skipping - %s", activePools[i]);
-//                 continue;
-//             }
-//             //console.log("bpTotalPoolShares - %s", bpTotalPoolShares);
-//             //console.log(borrowingPools[activePools[i]].poolShareAmount);
-//             uint aEthYieldDistribution = WadRayMath.wadMul(
-//                 aEthYieldSinceLastSnapshot,
-//                 WadRayMath.wadDiv(borrowingPools[activePools[i]].poolShareAmount, bpTotalPoolShares)
-//             );
-//             // Loop through this and future Lending Pools to determine the contribution denominator
-//             uint contributionDenominator;
-//             for (uint j = i; j < activePools.length; j++) {
-//                 contributionDenominator += lendingPools[activePools[j]].principal;
-//             }
-//             // distribute accumInterest and accumYield to LPs based on contribution principal
-//             //console.log("contributionDenominator - %s", contributionDenominator);
-//             //console.log("aEthYieldDistribution: %s", aEthYieldDistribution);
-//             //console.log("accumInterestBP: %s", accumInterestBP);
-//             //console.log("shrubYieldFee: %s", PlatformConfig.config.SHRUB_YIELD_FEE);
-//             //console.log("shrubInterestFee: %s", PlatformConfig.config.SHRUB_INTEREST_FEE);
-//             for (uint j = i; j < activePools.length; j++) {
-//                 //console.log("in loop: lendingPool: %s, lendingPoolContribution: %s / %s", activePools[j], lendingPools[activePools[j]].principal, contributionDenominator);
-//                 MethodResults.calcLPIncreasesResult memory res = calcLPIncreases(MethodParams.calcLPIncreasesParams({
-//                     aEthYieldDistribution: aEthYieldDistribution,
-//                     accumInterestBP: accumInterestBP,
-//                     lendingPoolPrincipal: lendingPools[activePools[j]].principal,
-//                     contributionDenominator: contributionDenominator
-//                 }));
-//                 lendingPoolsTemp[j].accumYield += res.deltaAccumYield;
-//                 lendingPoolsTemp[j].shrubYield += res.deltaShrubYield;
-//                 lendingPoolsTemp[j].accumInterest += res.deltaAccumInterest;
-//                 lendingPoolsTemp[j].shrubInterest += res.deltaShrubInterest;
-//             }
-//         }
-//         // Loop through lendingPoolsIncrement and write all of the deltas to lendingPools storage
-//         for (uint j = 0; j < activePools.length; j++) {
-//             //console.log("lendingPoolsTemp[j] - j: %s, accumInterest: %s, accumYield: %s", j, lendingPoolsTemp[j].accumInterest, lendingPoolsTemp[j].accumYield);
-//             //console.log("lendingPools[activePools[j]] - j: %s, accumInterest: %s, accumYield: %s", j, lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
-//             lendingPools[activePools[j]] = lendingPoolsTemp[j];
-//             //console.log("emmitting: timestamp: %s, accumInterest: %s, accumYield: %s", activePools[j], lendingPools[activePools[j]].accumInterest, lendingPools[activePools[j]].accumYield);
-//             emit LendingPlatformEvents.LendingPoolYield(
-//                 address(lendingPools[activePools[j]].poolShareToken),
-//                 lendingPools[activePools[j]].accumInterest,
-//                 lendingPools[activePools[j]].accumYield
-//             );
-//         }
-//         // set the last snapshot date to now
-//         lastSnapshotDate = HelpersLogic.currentTimestamp();
-//         aEthSnapshotBalance = aeth.balanceOf(address(this));
-//         //console.log("aEthSnapshotBalance set to: %s", aEthSnapshotBalance);
-//         //console.log("lastSnapshotDate set to: %s", lastSnapshotDate);
-
-//         // zero out the tracking globals;
-//         newCollateralSinceSnapshot = 0;
-//         claimedCollateralSinceSnapshot = 0;
-//     }
-
     function calcLPIncreases(MethodParams.calcLPIncreasesParams memory params) internal view returns (MethodResults.calcLPIncreasesResult memory) {
         //console.log("running calcLPIncreases");
         uint lendingPoolRatio = WadRayMath.wadDiv(params.lendingPoolPrincipal, params.contributionDenominator);
@@ -278,9 +184,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         );
     }
 
-
-
-
     function getTotalLiquidity(
         uint40 _timestamp
     ) public view returns (uint256 totalLiquidity) {
@@ -300,12 +203,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         DataTypes.LendingPool memory lendingPool = lendingPools[_timestamp];
         DataTypes.PoolDetails memory poolDetails;
 
-        //console.log("getPool - timestamp: %s, poolShareTokenAddress: %s, storage: %s",
-        //     _timestamp,
-        //     address(lendingPool.poolShareToken),
-        //     address(lendingPools[_timestamp].poolShareToken)
-        // );
-
         poolDetails.lendPrincipal = lendingPool.principal;
         poolDetails.lendAccumInterest = lendingPools[_timestamp].accumInterest;
         poolDetails.lendAccumYield = lendingPools[_timestamp].accumYield;
@@ -324,22 +221,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         return poolDetails;
     }
 
-    // function validPool(uint40 _timestamp) internal view returns (bool) {
-    //     // require that the timestamp be in the future
-    //     // require that the pool has been created
-    //     if (lendingPools[_timestamp].poolShareToken == PoolShareToken(address(0))) {
-    //         return false;
-    //     }
-    //     // TODO: This needs to incorportate an offset time before closing that is set in PlatformConfig
-    //     if (_timestamp < HelpersLogic.currentTimestamp()) {
-    //         return false;
-    //     }
-    //     return true;
-    // }
-
-
-    // DepositLogicLibrary
-
+    // --------------------- DepositLogicLibrary ---------------------
 
 /**
     * @notice deposit funds into Shrub Lend platform
@@ -387,6 +269,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         );
     }
 
+    // --------------------- BorrowLogicLibrary ---------------------
+
     function borrow(
         uint256 _principal, // Amount of USDC with 6 decimal places
         uint256 _collateral, // Amount of ETH collateral with 18 decimal places
@@ -410,28 +294,79 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         );
     }
 
+    // --------------------- RepayLogicLibrary ---------------------
+
     function partialRepayBorrow(uint256 tokenId, uint256 repaymentAmount) external onlyBptOwner(tokenId) {
+        RepayLogic.partialRepayBorrow(
+            tokenId,
+            repaymentAmount,
+            usdc,
+            bpt,
+            lendState,
+            borrowingPools
+        );
     }
 
     function repayBorrow(
         uint tokenId,
         address beneficiary
     ) public onlyBptOwner(tokenId) nonReentrant {
+        RepayLogic.repayBorrow(
+            tokenId,
+            beneficiary,
+            wrappedTokenGateway,
+            usdc,
+            bpt,
+            lendState,
+            PlatformConfig.config,
+            borrowingPools
+        );
     }
 
     function repayBorrowAETH(
         uint tokenId,
         address beneficiary
     ) public onlyBptOwner(tokenId) nonReentrant {
+        RepayLogic.repayBorrowAETH(
+            tokenId,
+            beneficiary,
+            aeth,
+            usdc,
+            bpt,
+            lendState,
+            PlatformConfig.config,
+            borrowingPools
+        );
     }
+
+    // --------------------- ExtendLogicLibrary ---------------------
 
     function extendBorrow(
         uint tokenId,
         uint40 newTimestamp,
         uint256 additionalCollateral, // Amount of new ETH collateral with - 18 decimals
         uint256 additionalRepayment, // Amount of new USDC to be used to repay the existing borrow - 6 decimals
-        uint16 _ltv
-    ) external validateExtendLtv(_ltv) onlyBptOwner(tokenId) payable {
+        uint16 ltv
+    ) external validateExtendLtv(ltv) onlyBptOwner(tokenId) payable {
+        ExtendLogic.extendBorrow(
+            MethodParams.extendBorrowParams({
+                tokenId: tokenId,
+                newTimestamp: newTimestamp,
+                additionalCollateral: additionalCollateral,
+                additionalRepayment: additionalRepayment,
+                ltv: ltv,
+                ethPrice: getEthPrice(),
+                usdc: usdc,
+                bpt: bpt,
+                aeth: aeth
+            }),
+            lendState,
+            PlatformConfig.config,
+            activePools,
+            borrowingPools,
+            lendingPools,
+            activePoolIndex
+        );
     }
 
 /**
@@ -441,6 +376,22 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
     * @param liquidationPhase uint256 - liquidation phase. Must be between 0 and 2. Higher values have greater bonuses. increasing values become eligible as more time since the endDate elapses
 */
     function forceExtendBorrow(uint tokenId, uint liquidationPhase) external {
+        ExtendLogic.forceExtendBorrow(
+            MethodParams.forceExtendBorrowParams({
+                tokenId: tokenId,
+                liquidationPhase: liquidationPhase,
+                ethPrice: getEthPrice(),
+                bpt: bpt,
+                aeth: aeth,
+                usdc: usdc
+            }),
+            PlatformConfig.config,
+            lendState,
+            activePools,
+            activePoolIndex,
+            borrowingPools,
+            lendingPools
+        );
     }
 
 /**
@@ -572,18 +523,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         debt = bpt.debt(tokenId, lendState.lastSnapshotDate);
     }
 
-
-    function bytesToString(bytes memory data) public pure returns(string memory) {
-        bytes memory alphabet = "0123456789abcdef";
-
-        bytes memory str = new bytes(2 + data.length * 2);
-        str[0] = "0";
-        str[1] = "x";
-        for (uint i = 0; i < data.length; i++) {
-            str[2+i*2] = alphabet[uint(uint8(data[i] >> 4))];
-            str[3+i*2] = alphabet[uint(uint8(data[i] & 0x0f))];
-        }
-        return string(str);
+    function calcEarlyRepaymentPenalty(uint tokenId) external view returns (uint) {
+        return ShrubView.calcEarlyRepaymentPenalty(tokenId, bpt, lendState, PlatformConfig.config);
     }
 
     modifier validPool(uint40 _timestamp) {
@@ -627,6 +568,19 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
             "Invalid timestamp"
         );
         _;
+    }
+
+    function bytesToString(bytes memory data) public pure returns(string memory) {
+        bytes memory alphabet = "0123456789abcdef";
+
+        bytes memory str = new bytes(2 + data.length * 2);
+        str[0] = "0";
+        str[1] = "x";
+        for (uint i = 0; i < data.length; i++) {
+            str[2+i*2] = alphabet[uint(uint8(data[i] >> 4))];
+            str[3+i*2] = alphabet[uint(uint8(data[i] & 0x0f))];
+        }
+        return string(str);
     }
 
     fallback() external {

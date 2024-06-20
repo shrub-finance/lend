@@ -12,6 +12,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/IBorrowPositionToken.sol";
 import "../../interfaces/IAETH.sol";
 
+import "hardhat/console.sol";
+
 library BorrowLogic {
 
     function borrow(
@@ -29,7 +31,11 @@ library BorrowLogic {
         mapping(uint40 => DataTypes.LendingPool) storage lendingPools,
         mapping(uint40 => uint256) storage activePoolIndex
     ) internal {
+        console.log("msg.sender - %s", msg.sender);
+        console.log("msg.value - %s", msg.value);
         require(msg.value == _collateral, "Wrong amount of Ether provided.");
+        console.log("_principal: %s, _collateral: %s, _ltv: %s", _principal, _collateral, _ltv);
+        console.log("_timestamp: %s, ethPrice: %s", _timestamp, ethPrice);
 
         wrappedTokenGateway.depositETH{value: _collateral}(
             Constants.AAVE_AETH_POOL,  // This is the address of the Aave-v3 pool - it is not used
@@ -50,9 +56,9 @@ library BorrowLogic {
                 ethPrice: ethPrice,
                 usdc: usdc,
                 bpt: bpt,
-                lendState: lendState,
                 activePools: activePools
             }),
+            lendState,
             borrowingPools,
             lendingPools,
             activePoolIndex

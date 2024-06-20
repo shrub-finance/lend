@@ -7,6 +7,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const { deployer } = await getNamedAccounts();
 
+  // CONFIGURATION
+  await deploy("Constants", { from: deployer, log: true, args: [] });
+  await deploy("Configuration", { from: deployer, log: true, args: [] });
+
   // MATH
   await deploy("PercentageMath", { from: deployer, log: true, args: [] });
   await deploy("WadRayMath", { from: deployer, log: true, args: [] });
@@ -19,12 +23,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // LOGIC
   // await deploy("AdminLogic", { from: deployer, log: true, args: [] });
   await deploy("BorrowInternalLogic", { from: deployer, log: true, args: [] });
-    await deploy("BorrowLogic", { from: deployer, log: true, args: [] });
-    await deploy("DepositLogic", { from: deployer, log: true, args: [] });
-    await deploy("ExtendBorrowLogic", { from: deployer, log: true, args: [] });
-    await deploy("ExtendSupplyLogic", { from: deployer, log: true, args: [] });
-    await deploy("LiquidationLogic", { from: deployer, log: true, args: [] });
-    await deploy("RepayLogic", { from: deployer, log: true, args: [] });
+  await deploy("BorrowLogic", { from: deployer, log: true, args: [] });
+  await deploy("DepositLogic", { from: deployer, log: true, args: [] });
+  await deploy("ExtendBorrowLogic", { from: deployer, log: true, args: [] });
+  await deploy("ExtendSupplyLogic", { from: deployer, log: true, args: [] });
+  await deploy("LiquidationLogic", { from: deployer, log: true, args: [] });
   await deploy("SupplyLogic", { from: deployer, log: true, args: [] });
 
 };

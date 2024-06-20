@@ -40,7 +40,6 @@ library MethodParams {
         uint256 ethPrice;
         IERC20 usdc;
         IBorrowPositionToken bpt;
-        DataTypes.LendState lendState;
         uint40[] activePools; // Sorted ascending list of timestamps of active pools
     }
 

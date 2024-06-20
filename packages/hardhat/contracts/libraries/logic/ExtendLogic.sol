@@ -85,9 +85,9 @@ library ExtendLogic {
                 ethPrice: params.ethPrice,
                 usdc: params.usdc,
                 bpt: params.bpt,
-                lendState: lendState,
                 activePools: activePools
             }),
+            lendState,
             borrowingPools,
             lendingPools,
             activePoolIndex
@@ -167,9 +167,9 @@ library ExtendLogic {
                 ethPrice: params.ethPrice,
                 usdc: params.usdc,
                 bpt: params.bpt,
-                lendState: lendState,
                 activePools: activePools
             }),
+            lendState,
             borrowingPools,
             lendingPools,
             activePoolIndex

@@ -7,6 +7,7 @@ import {LendingPlatformEvents} from '../data-structures/LendingPlatformEvents.so
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
 import {Constants} from "../configuration/Constants.sol";
+import {ShrubView} from "../view/ShrubView.sol";
 
 import "../../interfaces/IMockAaveV3.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -79,7 +80,7 @@ library RepayLogic {
 //        bd.collateral = _collateral;
 //        bd.apy = apy;
         uint interest = getBorrowInterest(params.tokenId, params.bpt, lendState);
-        uint earlyRepaymentPenalty = params.isExtend ? 0 : calcEarlyRepaymentPenalty(params.tokenId, params.bpt, lendState, config);
+        uint earlyRepaymentPenalty = params.isExtend ? 0 : ShrubView.calcEarlyRepaymentPenalty(params.tokenId, params.bpt, lendState, config);
         //console.log("interest: %s", interest);
         //console.log("bd.principal: %s", bd.principal);
         //console.log("msg.sender: %s has a balance of %s USDC", msg.sender, usdc.balanceOf(msg.sender));
@@ -210,26 +211,4 @@ library RepayLogic {
         debt = bpt.debt(tokenId, lendState.lastSnapshotDate);
     }
 
-/**
-    * @notice Calculates the current earlyRepaymentPenalty in USDC for a borrow based on the lastSnapshotDate
-    * @dev USDC is transferred to the beneficiary in the amount of principal
-    * @dev EARLY_REPAYMENT_THRESHOLD and EARLY_REPAYMENT_APY from config are used in calculation
-    * @param tokenId - uint256 - tokenId of the BPT
-    * @return penalty - uint256 - amount of USDC (if any) owed as a penalty to fully repay a borrow
-*/
-    function calcEarlyRepaymentPenalty(
-        uint tokenId,
-        IBorrowPositionToken bpt,
-        DataTypes.LendState storage lendState,
-        DataTypes.PlatformConfiguration storage config
-    ) public view returns (uint penalty) {
-        DataTypes.BorrowData memory bd = bpt.getBorrow(tokenId);
-        if (lendState.lastSnapshotDate + config.EARLY_REPAYMENT_THRESHOLD >= bd.endDate) {
-            return 0;
-        }
-        penalty = PercentageMath.percentMul(
-            bd.originalPrincipal * (bd.endDate - lendState.lastSnapshotDate - config.EARLY_REPAYMENT_THRESHOLD),
-            config.EARLY_REPAYMENT_APY
-        ) / Constants.YEAR;
-    }
 }

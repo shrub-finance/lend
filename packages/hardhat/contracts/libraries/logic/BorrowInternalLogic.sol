@@ -23,6 +23,7 @@ library BorrowInternalLogic {
 */
     function borrowInternal(
         MethodParams.BorrowInternalParams memory params,
+        DataTypes.LendState storage lendState,
         mapping(uint40 => DataTypes.BorrowingPool) storage borrowingPools,
         mapping(uint40 => DataTypes.LendingPool) storage lendingPools,
         mapping(uint40 => uint256) storage activePoolIndex
@@ -67,18 +68,18 @@ library BorrowInternalLogic {
         borrowingPools[params.timestamp].collateral += params.collateral;
         uint deltaBpPoolShares;
 
-        if (params.lendState.aEthSnapshotBalance == 0) {
+        if (lendState.aEthSnapshotBalance == 0) {
             deltaBpPoolShares = params.collateral;
         } else {
             deltaBpPoolShares = WadRayMath.wadDiv(
-                WadRayMath.wadMul(params.collateral, params.lendState.bpTotalPoolShares),
-                params.lendState.aEthSnapshotBalance + params.lendState.newCollateralSinceSnapshot - params.lendState.claimedCollateralSinceSnapshot
+                WadRayMath.wadMul(params.collateral, lendState.bpTotalPoolShares),
+                lendState.aEthSnapshotBalance + lendState.newCollateralSinceSnapshot - lendState.claimedCollateralSinceSnapshot
             );
         }
 
         borrowingPools[params.timestamp].poolShareAmount += deltaBpPoolShares;
-        params.lendState.bpTotalPoolShares += deltaBpPoolShares;
-        params.lendState.newCollateralSinceSnapshot += params.collateral;  // Keep track of the collateral since the last snapshot
+        lendState.bpTotalPoolShares += deltaBpPoolShares;
+        lendState.newCollateralSinceSnapshot += params.collateral;  // Keep track of the collateral since the last snapshot
         emit LendingPlatformEvents.NewBorrow(tokenId, params.timestamp, params.beneficiary, params.collateral, params.principal, params.startDate, apy);
     }
 }
