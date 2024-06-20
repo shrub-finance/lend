@@ -1,11 +1,11 @@
 import {FC, useEffect, useState} from "react";
 import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages";
-import {useBalance} from "@thirdweb-dev/react";
+import { useAddress, useBalance } from '@thirdweb-dev/react';
 import {usdcAddress} from "../../utils/contracts";
 import {toEthDate} from '@shrub-lend/common';
 import {calculateLockupPeriod} from "@shrub-lend/common";
 import Image from 'next/image';
-import { oneMonth, sixMonth, threeMonth, twelveMonth } from '../../constants';
+import { oneMonth, sixMonth, threeMonth, twelveMonth, Zero } from '../../constants';
 import {useFinancialData} from "../../components/FinancialDataContext";
 import { useValidation } from '../../hooks/useValidation';
 import ErrorDisplay from '../../components/ErrorDisplay';
@@ -28,8 +28,8 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
   const [showLendAPYSection, setShowLendAPYSection] = useState(false);
   const [continueButtonEnabled, setContinueButtonEnabled] = useState(false);
   const [estimatedAPY, setEstimatedAPY] = useState("0");
-
   const { store, dispatch } = useFinancialData();
+
 
   async function fillMax() {
     if (!usdcBalanceIsLoading) {
@@ -41,6 +41,12 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
   }
 
   const handleDepositAmountChange = (event) => {
+    if (usdcBalance.value.isZero()) {
+      setDepositError('deposit', 'Insufficient USDC balance. Please add USDC to your wallet.');
+      setShowLendAPYSection(false);
+      return;
+    }
+
     const inputValue = event.target.value.trim();
     setDepositAmount(inputValue);
 
@@ -49,6 +55,7 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
       setShowLendAPYSection(false);
       return;
     }
+
     // Validates inputValue as a number:
     // - Integer (e.g., "123")
     // - Float with up to 6 decimals (e.g., "123.456789" or ".456789")
