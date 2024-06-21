@@ -7,6 +7,25 @@ import "./DataTypes.sol";
 
 library MethodParams {
 
+    struct shrubLiquidationParams {
+        uint tokenId;
+        uint liquidationPhase;
+        uint ethPrice;
+        address shrubTreasury;
+        IBorrowPositionToken bpt;
+        IAETH aeth;
+        IERC20 usdc;
+    }
+
+    struct borrowLiquidationParams{
+        uint tokenId;
+        uint percentage;
+        uint ethPrice;
+        IBorrowPositionToken bpt;
+        IAETH aeth;
+        IERC20 usdc;
+    }
+
     struct forceExtendBorrowParams {
         uint tokenId;
         uint liquidationPhase;

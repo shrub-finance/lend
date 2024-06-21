@@ -32,6 +32,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       BorrowInternalLogic: allDeployments.BorrowInternalLogic.address,
       ExtendLogic: allDeployments.ExtendLogic.address,
       RepayLogic: allDeployments.RepayLogic.address,
+      LiquidationLogic: allDeployments.LiquidationLogic.address,
     },
     args: [
         addresses

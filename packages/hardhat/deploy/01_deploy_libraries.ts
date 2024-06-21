@@ -27,7 +27,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await deploy("DepositLogic", { from: deployer, log: true, args: [] });
   await deploy("ExtendBorrowLogic", { from: deployer, log: true, args: [] });
   await deploy("ExtendSupplyLogic", { from: deployer, log: true, args: [] });
-  await deploy("LiquidationLogic", { from: deployer, log: true, args: [] });
   await deploy("SupplyLogic", { from: deployer, log: true, args: [] });
 
 };

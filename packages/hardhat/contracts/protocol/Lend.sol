@@ -33,6 +33,7 @@ import {DepositLogic} from "../libraries/logic/DepositLogic.sol";
 import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
 import {RepayLogic} from "../libraries/logic/RepayLogic.sol";
 import {ExtendLogic} from "../libraries/logic/ExtendLogic.sol";
+import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
 import {ShrubLendMath} from "../libraries/math/ShrubLendMath.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -62,10 +63,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
     DataTypes.LendState public lendState;
 
     uint40[] public activePools; // Sorted ascending list of timestamps of active pools
-    // uint40 lastSnapshotDate;
-    // uint aEthSnapshotBalance;
-    // uint newCollateralSinceSnapshot;
-    // uint claimedCollateralSinceSnapshot;
 
     address shrubTreasury;
 
@@ -168,20 +165,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         uint valueOfEth = WadRayMath.wadMul(ethCollateral, getEthPrice());
         uint maxBorrowWad = PercentageMath.percentMul(valueOfEth, uint256(ltv));
         return maxBorrowV = ShrubLendMath.wadToUsdc(maxBorrowWad);
-    }
-
-
-/**
-    * @notice Returns the amount of ETH that is worth a given amount of USDC
-    * @dev
-    * @param usdcAmount the amount of USDC to convert to an amount of ETH (expressed with 6 decimals)
-    * @return ethAmount the amount of ETH expressed in Wad
-*/
-    function usdcToEth(uint usdcAmount) private view returns (uint256 ethAmount) {
-        ethAmount = WadRayMath.wadDiv(
-            ShrubLendMath.usdcToWad(usdcAmount),
-            getEthPrice()
-        );
     }
 
     function getTotalLiquidity(
@@ -394,6 +377,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         );
     }
 
+    // --------------------- LiquidationLogicLibrary ---------------------
+
 /**
     * @notice Called by liquidator to force the liquidation of an expired borrow.
     * @dev Bonuses and durations for the liquidationPhase are specified in Configuration
@@ -402,36 +387,16 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
     * @param liquidationPhase uint256 - liquidation phase. Must be between 3 and 5. Higher values have greater bonuses. increasing values become eligible as more time since the endDate elapses
 */
     function forceLiquidation(uint tokenId, uint liquidationPhase) external {
-        //console.log("Running forceLiquidation - tokenId: %s, liquidationPhase: %s", tokenId, liquidationPhase);
-        DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
-        uint debt = getBorrowDebt(tokenId);
-        address borrower = bpt.ownerOf(tokenId);
-//        require(liquidationPhase > 2 && liquidationPhase < 6, "invalid claim");
-        require(PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].liquidationEligible, "liquidation not allowed in this phase");
-        uint availabilityTime = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].duration;
-        //console.log(
-        //     "currentTimestamp: %s, loan endDate: %s, availabilityTime: %s",
-        //     HelpersLogic.currentTimestamp(),
-        //     loanDetails.endDate,
-        //     availabilityTime
-        // );
-        require(HelpersLogic.currentTimestamp() > loanDetails.endDate + availabilityTime ,"loan is not eligible for liquidation");
-        uint bonusPecentage = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].bonus;
-        // The caller will be rewarded with some amount of the users' collateral. This will be based on the size of the debt to be refinanced
-        uint bonusUsdc = PercentageMath.percentMul(
-            debt,
-            10000 + bonusPecentage
+        LiquidationLogic.forceLiquidation(
+            tokenId,
+            liquidationPhase,
+            getEthPrice(),
+            bpt,
+            aeth,
+            usdc,
+            PlatformConfig.config,
+            lendState
         );
-        uint bonus = usdcToEth(bonusUsdc);
-
-        // Liquidator repays loan with usdc amount equal to the debt
-        usdc.transferFrom(msg.sender, address(this), debt);
-        // BPT borrowData is updated so that:
-        // - principal = 0
-        // - collateral -= bonus
-        bpt.fullLiquidateBorrowData(tokenId, bonus);
-        // Liquidator is sent collateral that they bought : principle * ethPrice * (1 - bonus)
-        aeth.transfer(msg.sender, bonus);
     }
 
 
@@ -442,35 +407,19 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
     * @param tokenId uint256 - tokenId of the borrow position token representing the loan
 */
     function shrubLiquidation(uint tokenId, uint liquidationPhase) external {
-        //console.log("Running shrubLiquidation - tokenId: %s, liquidationPhase: %s", tokenId, liquidationPhase);
-        DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
-        uint debt = getBorrowDebt(tokenId);
-        address borrower = bpt.ownerOf(tokenId);
-        require(PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].shrubLiquidationEligible, "shrub liquidation not allowed in this phase");
-        uint availabilityTime = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].duration;
-        //console.log(
-        //     "currentTimestamp: %s, loan endDate: %s, availabilityTime: %s",
-        //     HelpersLogic.currentTimestamp(),
-        //     loanDetails.endDate,
-        //     availabilityTime
-        // );
-        require(HelpersLogic.currentTimestamp() > loanDetails.endDate + availabilityTime ,"loan is not eligible for liquidation");
-        uint bonusPecentage = PlatformConfig.config.END_OF_LOAN_PHASES[liquidationPhase].bonus;
-        // The caller will be rewarded with some amount of the users' collateral. This will be based on the size of the debt to be refinanced
-        uint bonusUsdc = PercentageMath.percentMul(
-            debt,
-            10000 + bonusPecentage
+        LiquidationLogic.shrubLiquidation(
+            MethodParams.shrubLiquidationParams({
+                tokenId: tokenId,
+                liquidationPhase: liquidationPhase,
+                ethPrice: getEthPrice(),
+                shrubTreasury: shrubTreasury,
+                bpt: bpt,
+                aeth: aeth,
+                usdc: usdc
+            }),
+            PlatformConfig.config,
+            lendState
         );
-        uint bonus = usdcToEth(bonusUsdc);
-
-        // Liquidator repays loan with usdc amount equal to the debt
-        usdc.transferFrom(shrubTreasury, address(this), debt);
-        // BPT borrowData is updated so that:
-        // - principal = 0
-        // - collateral -= bonus
-        bpt.fullLiquidateBorrowData(tokenId, bonus);
-        // Liquidator is sent collateral that they bought : principle * ethPrice * (1 - bonus)
-        aeth.transfer(shrubTreasury, bonus);
     }
 
 /**
@@ -480,38 +429,19 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
     * @param tokenId uint256 - tokenId of the borrow position token representing the loan
 */
     function borrowLiquidation(uint tokenId, uint percentage) external {
-        //console.log("Running borrowLiquidation - tokenId: %s, percentage: %s", tokenId, percentage);
-        require(percentage == 5000, "Invalid Percentage");
-        require(ShrubView.getLtv(tokenId, getEthPrice(), bpt, lendState) > PlatformConfig.config.LIQUIDATION_THRESHOLD, "borrow not eligible for liquidation");
-        DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
-        uint debt = getBorrowDebt(tokenId);
-        uint interest = ShrubView.getBorrowInterest(tokenId, bpt, lendState);
-        uint ethPrice = getEthPrice();
-        address borrower = bpt.ownerOf(tokenId);
-        // TODO: for now limit the percentage to 50% - later make it so that if this would not resolve the safety factor issue that the loan may be paid off 100%
-        uint usdcToPay = PercentageMath.percentMul(debt, percentage);
-        // usdcAmount / ethPrice * (1 + bonusPecentage)
-        uint aethToReceive = PercentageMath.percentMul(
-            WadRayMath.wadDiv(
-                ShrubLendMath.usdcToWad(usdcToPay),
-                ethPrice
-            ),
-            10000 + PlatformConfig.config.LIQUIDATION_BONUS
+        LiquidationLogic.borrowLiquidation(
+            MethodParams.borrowLiquidationParams({
+                tokenId: tokenId,
+                percentage: percentage,
+                ethPrice: getEthPrice(),
+                bpt: bpt,
+                aeth: aeth,
+                usdc: usdc
+            }),
+            PlatformConfig.config,
+            lendState
         );
-        uint newPrincipal = loanDetails.principal + interest - usdcToPay;
-        uint newCollateral = loanDetails.collateral - aethToReceive;
-        require(
-            ShrubView.calcLtv(newPrincipal, 0, newCollateral, ethPrice) < PlatformConfig.config.LIQUIDATION_THRESHOLD,
-            "Liquidation insufficient to make borrow healthy"
-        );
-
-        // Liquidator repays loan with usdc amount equal to the debt
-        usdc.transferFrom(msg.sender, address(this), usdcToPay);
-        bpt.liquidateBorrowData(tokenId, newPrincipal, newCollateral);
-        // Liquidator is sent collateral that they bought : principle * ethPrice * (1 - bonus)
-        aeth.transfer(msg.sender, aethToReceive);
     }
-
 
 /**
     * @notice Returns the current debt of a borrow

@@ -33,6 +33,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ShrubView: allDeployments.ShrubView.address,
     }
   });
+  await deploy("LiquidationLogic", {
+    from: deployer,
+    log: true,
+    args: [],
+    libraries: {
+      HelpersLogic: allDeployments.HelpersLogic.address,
+      ShrubView: allDeployments.ShrubView.address,
+    }
+  });
 };
 export default func;
 func.id = "deploy_libraries_with_dep"; // id to prevent re-execution
