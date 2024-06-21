@@ -16,10 +16,10 @@ const initialState: UserFinancialDataState = {
 const FinancialDataContext = createContext<{ store: UserFinancialDataState; dispatch: React.Dispatch<UserFinancialDataAction>; }>({ store: initialState, dispatch: () => null });
 
 const financialDataReducer = (store: UserFinancialDataState, action: UserFinancialDataAction): UserFinancialDataState => {
-  console.log(`Dispatching Action:
-    type: ${action.type}
-    payload: ${action.type !== "CLEAR_USER_DATA" ? JSON.stringify(action.payload,null, 2) : ""}`
-  );
+  // console.log(`Dispatching Action:
+  //   type: ${action.type}
+  //   payload: ${action.type !== "CLEAR_USER_DATA" ? JSON.stringify(action.payload,null, 2) : ""}`
+  // );
   if (action.type === "CLEAR_USER_DATA") {
     return {
       ...store,
@@ -54,7 +54,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         ...store.userData,
         [address]: {
           ...store.userData[address],
-          borrows: [...store.userData[address].borrows, borrow]
+          borrows: store.userData[address] ? [...store.userData[address].borrows, borrow] : [borrow]
         }
       }
     }
@@ -67,7 +67,7 @@ const financialDataReducer = (store: UserFinancialDataState, action: UserFinanci
         ...store.userData,
         [address]: {
           ...store.userData[address],
-          deposits: [...store.userData[address].deposits, deposit]
+          deposits: store.userData[address] ? [...store.userData[address].deposits, deposit] : [deposit]
         }
       }
     }

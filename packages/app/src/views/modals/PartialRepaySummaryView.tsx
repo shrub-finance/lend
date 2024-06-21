@@ -83,13 +83,7 @@ const PartialRepaySummaryView: React.FC<PartialRepaySummaryViewProps> = (
             <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
           </div>
           <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-            Making a partial payment of <span className='font-bold'>{formatLargeUsdc(repayAmount)} USDC</span> to your
-            borrow will reduce the interest to <span className='font-bold'>0 USDC</span> and the principal to <span
-            className='font-bold'>{formatLargeUsdc(newPrincipal)} USDC</span>. The LTV of the loan will change
-            from <span className='font-bold'>{formatPercentage(originalBorrowLTV)}%</span> to <span
-            className='font-bold'>{formatPercentage(newLtv)}%</span>. You <span
-            className='font-bold'>will not</span> receive any collateral back, nor will this affect the APY of this
-            borrow which is <span className='font-bold'>{formatPercentage(borrow.apy)}%.</span>
+            Making a partial payment of {formatLargeUsdc(repayAmount)} USDC to your borrow will reduce the interest to 0 USDC and the principal to {formatLargeUsdc(newPrincipal)} USDC. The LTV of the loan will change from {formatPercentage(originalBorrowLTV)}% to {formatPercentage(newLtv)}%. You will not receive any collateral back, nor will this affect the APY of this borrow which is {formatPercentage(borrow.apy)}%.
           </p>
 
           <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
@@ -125,7 +119,7 @@ const PartialRepaySummaryView: React.FC<PartialRepaySummaryViewProps> = (
               </div>
               <div className='flex flex-row justify-between'>
                 <span className=''>End Date</span>
-                <span>{borrow.endDate.toLocaleString()}</span>
+                <span>{borrow.endDate.toDateString()}</span>
               </div>
               <div className='flex flex-row justify-between'>
                 <span className=''>Contract Address</span>

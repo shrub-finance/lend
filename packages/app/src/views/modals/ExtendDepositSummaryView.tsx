@@ -85,32 +85,14 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
       <div className="flex flex-col">
         <div className="card w-full">
           <div className="card-body">
-            <div>
-              {!extendDepositActionInitiated && (
-                <div className='flex items-center pb-4'>
-                <button onClick={onBackExtend}>
-              <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none'
-                   className='w-6 grow-0 order-0 flex-none'>
-                <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='#98A2B3' strokeWidth='2' strokeLinecap='round'
-                      strokeLinejoin='round' />
-              </svg>
-            </button>
-                  {/*<p className='text-lg font-bold pb-2 text-left'>Back</p>*/}
-                </div>
-              )}
-
               <div className='w-full text-xl font-semibold flex flex-row'>
-                <span className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(depositAmountBeingExtended)} USDC</span>
+                <span className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(depositAmountBeingExtended)} USDC</span>
                 <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
               </div>
               <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-                When you extend this deposit, <span className='font-bold'>{formatLargeUsdc(depositAmountBeingExtended)} USDC</span> will be
-                moved from the old lending pool ending<span
-                className='font-bold'> {deposit.endDate.toLocaleString()}</span> to the new lending pool ending <span
-                className='font-bold'>{newTimestamp.toLocaleString()}</span>. You will collect earned ETH yield of <span className='font-bold'>
-                  {formatWad(deposit.positionEthYield, 8)}
-              </span>.</p>
-            </div>
+                When you extend this deposit, {formatLargeUsdc(depositAmountBeingExtended)} USDC will be
+                moved from the old lending pool ending {deposit.endDate.toLocaleString()} to the new lending pool ending {newTimestamp.toLocaleString()}. You will collect earned ETH yield of {formatWad(deposit.positionEthYield, 8)}.</p>
+
 
             <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
 

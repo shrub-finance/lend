@@ -73,7 +73,7 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                   <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
                 </div>
                 <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-                  Repaying will end the loan of <span className='font-bold'>{displayRepayAmount} USDC </span> and return back to you the collateral <span className='font-bold'>{formatWad(borrow.collateral, 6)} ETH</span> with due date of <span className='font-bold'>{formatShortDate(borrow.endDate)}.</span>
+                  Repaying will end the loan of {displayRepayAmount} USDC and return back to you the collateral {formatWad(borrow.collateral, 6)} ETH with due date of {borrow.endDate.toLocaleString()}.
                 </p>
               </div>
 
@@ -114,7 +114,7 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
                   </div>
                   <div className='flex flex-row justify-between'>
                     <span className=''>End Date</span>
-                    <span>{borrow.endDate.toLocaleString()}</span>
+                    <span>{borrow.endDate.toDateString()}</span>
                   </div>
                 </div>
                 <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>

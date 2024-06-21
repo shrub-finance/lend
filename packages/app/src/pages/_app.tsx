@@ -9,20 +9,11 @@ import { FinancialDataProvider } from '../components/FinancialDataContext';
 
 require("../styles/globals.css");
 
-const activeChain = "localhost";
 const client = new ApolloClient({
   uri: process.env.NEXT_PUBLIC_SUBGRAPH_QUERY,
   cache: new InMemoryCache(),
   connectToDevTools: process.env.NEXT_PUBLIC_ENVIRONMENT === "development",
 });
-
-const userFinancialData = {
-  borrows: [], // initial borrows data
-  deposits: [], // initial deposits data
-  activePoolTimestamps: []
-};
-
-
 const App: FC<AppProps> = ({ Component, pageProps }) => {
   return (
     <>
@@ -31,20 +22,21 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
       </Head>
       <ThirdwebProvider
         clientId={"ea246b96599b72dedbc6ebcf0ea09c1e"}
-        activeChain={"localhost"}
-        // activeChain={{
-        //     chainId: 31337,
-        //     rpc: ['http://localhost:8545'],
-        //     nativeCurrency: {
-        //         decimals: 18,
-        //         symbol: "ETH"
-        //     },
-        //     shortName: "hardhat",
-        //     slug: "localhost",
-        //     testnet: true,
-        //     chain: "hardhat",
-        //     name: "Hardhat EVM"
-        // }}
+        // activeChain={"localhost"}
+        activeChain={{
+            chainId: 17000,
+          rpc:['https://17000.rpc.thirdweb.com'],
+            nativeCurrency: {
+                name: "ETH",
+                decimals: 18,
+                symbol: "ETH"
+            },
+            shortName: "holesky",
+            slug: "holesky",
+            testnet: true,
+            chain: "holesky",
+            name: "Holesky"
+        }}
         dAppMeta={{
           name: "Shrub Lend",
           description: "Making Lending Accessible",

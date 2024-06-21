@@ -73,13 +73,10 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
 
             <div className='w-full text-xl font-semibold flex flex-row'>
               <span className='text-4xl  font-medium text-left w-[500px]'>{formatLargeUsdc(selectedDepositBalance)} USDC</span>
-              <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40'
-                     height='40' />
+              <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
             </div>
             <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-              Withdraw will exchange your, <span className='font-bold'>{formatWad(deposit.lendingPoolTokenAmount, 6)}</span>  pool share token from the <span className='font-bold'>{}</span> lending pool date of <span
-              className='font-bold'>{deposit.endDate.toLocaleString()} </span> for <span className='font-bold'>{formatLargeUsdc(selectedDepositBalance)} USDC</span>, and <span className='font-bold'>{formatWad(deposit.positionEthYield, 6)} ETH
-              </span>.</p>
+              Withdraw will exchange your, {formatWad(deposit.lendingPoolTokenAmount, 6)} pool share token from the lending pool date of {deposit.endDate.toLocaleString()} for {formatLargeUsdc(selectedDepositBalance)} USDC, and {formatWad(deposit.positionEthYield, 6)} ETH.</p>
             </div>
 
             <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
@@ -105,7 +102,7 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
                 </div>
                 <div className='flex flex-row  justify-between'>
                   <span className=''>End Date</span>
-                  <span >{deposit.endDate.toLocaleString()}</span>
+                  <span >{deposit.endDate.toDateString()}</span>
                 </div>
 
               </div>

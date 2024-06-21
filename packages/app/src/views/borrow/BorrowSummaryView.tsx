@@ -56,6 +56,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   }, [localError]);
 
 
+
   return (
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col">
@@ -105,37 +106,44 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 </div>}
                 {borrowActionInitiated &&
                   <>
-                  {latestBorrow?.status === "confirmed" && (
-                    <>
-                      <p className="text-lg font-bold pb-2 text-left">
-                        Borrow Successful!
-                      </p>
-                      <p role="status" className="w-[250px] h-[250px] m-[108px] sm:self-center">
-                        <Image src="/checkmark.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
-                        <span className="sr-only">Loading...</span>
-                      </p>
-                    </>
+                    {/*spinner */}
+                    {latestBorrow?.status === 'pending' && (
+                      <div
+                        className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
+                        <div className='w-[205px] h-[205px] rounded-full bg-white'></div>
+                      </div>
+                    )}
+                    {latestBorrow?.status === 'confirmed' && (
+                      <>
+                        <p className='text-lg font-bold pb-2 text-left'>
+                          Borrow Successful! </p>
+                        <p role='status' className='w-[250px] h-[250px] m-[108px] sm:self-center'>
+                          <Image src='/checkmark.svg' alt='Loading' className='w-full h-full' width='250'
+                                 height='250' />
+                          <span className='sr-only'>Loading...</span>
+                        </p>
+                      </>
 
                     )}
 
-                    {latestBorrow?.status === "failed" && (
+                    {latestBorrow?.status === 'failed' && (
                       <>
-                        <p className="text-lg font-bold pb-2 text-left">
-                          Borrow Unsuccessful
-                        </p>
-                        <p role="status" className="w-[250px] h-[250px] m-[108px] sm:self-center">
-                          <Image src="/exclamation.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
-                          <span className="sr-only">Loading...</span>
+                        <p className='text-lg font-bold pb-2 text-left'>
+                          Borrow Unsuccessful </p>
+                        <p role='status' className='w-[250px] h-[250px] m-[108px] sm:self-center'>
+                          <Image src='/exclamation.svg' alt='Loading' className='w-full h-full' width='250'
+                                 height='250' />
+                          <span className='sr-only'>Loading...</span>
                         </p>
                       </>
 
                     )}
                   </>}
 
-                <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
+                <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
 
                 {/*receipt start*/}
-                {(!borrowActionInitiated || latestBorrow?.status === "pending" )&& <div>
+                {(!borrowActionInitiated || latestBorrow?.status === 'pending') && <div>
                   <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row  justify-between">
                       <span className="">Required Collateral</span>
@@ -175,10 +183,6 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     <div className="flex flex-row justify-between ">
                       <span className="">Due today</span>
                       <span>{ethers.utils.formatEther(requiredCollateral)} ETH</span>
-                    </div>
-                    <div className="flex flex-row justify-between">
-                      <span className="">Gas Cost</span>
-                      <span>0.0012 ETH</span>
                     </div>
                   </div>
                   <Web3Button contractAddress={lendingPlatformAddress}
