@@ -4,6 +4,41 @@ pragma solidity ^0.8.18;
 import "../../tokenization/PoolShareToken.sol";
 
 library DataTypes {
+    struct EndOfLoanParams {
+        uint16 bonus; // Percentage of borrow debt that liquidator gets to keep as a reward (out of the collateral) (percentage)
+        uint40 duration; // Time after the endDate of the loan this phase becomes eligible
+        bool liquidationEligible; // If liquidation is a option - if false, only ForceExtendBorrow may be called
+        bool shrubLiquidationEligible; // If liquidation from shrub is a option
+    }
+
+    struct InterestValue {
+        uint16 apy;
+        bool isValid;
+    }
+
+    struct PlatformConfiguration {
+        // LTV to APY mapping
+        uint16[5] REVERSE_SORTED_VALID_LTV; // ARRAY of valid LTV sorted in reverse order (percentage)
+        mapping(uint16 => InterestValue) LTV_TO_APY; // LTV (percentage) => InterestValue(apy (percentage), isValid (bool))
+        uint16 MAX_LTV_FOR_EXTEND; // Highest possible LTV for ExtendBorrow or ForceExtendBorrow (percentage)
+        uint16 LIQUIDATION_THRESHOLD; // LTV at which a borrow becomes eligible for liquidation (percentage)
+        uint16 LIQUIDATION_BONUS; // Bonus for liquidator performing liquidation in terms of percentage of the debt for a borrow (percentage)
+        EndOfLoanParams[7] END_OF_LOAN_PHASES;
+        uint16 SHRUB_INTEREST_FEE;  // Percentage of interest paid by the borrower that is allocated to Shrub Treasury (percentage)
+        uint16 SHRUB_YIELD_FEE;  // Percentage of yield earned on aETH collateral that is allocated to Shrub Treasury (percentage)
+        uint40 DEPOSIT_CUTOFF_THRESHOLD;  // Deposits to a Lending Pool must be made at least this much time before the endDate (duration seconds)
+        uint40 EARLY_REPAYMENT_THRESHOLD;  // Threshold before the endDate of a borrow when full repayment can be made with no penalty
+        uint16 EARLY_REPAYMENT_APY;  // APY for calculating the penalty of an early repayment
+    }
+
+    struct LendState {
+        uint40 lastSnapshotDate;
+        uint aEthSnapshotBalance;
+        uint newCollateralSinceSnapshot;
+        uint claimedCollateralSinceSnapshot;
+        uint bpTotalPoolShares; // Wad
+    }
+
     struct LendingPool {
         // uint40 endDate
         uint256 principal; // Total amount of USDC that has been contributed to the LP
@@ -59,40 +94,4 @@ library DataTypes {
         uint256 collateral;  // ETH provided as collateral (Wad)
         uint16 apy;  // Interest rate of loan (percentage)
     }
-
-    struct BorrowInternalParams {
-        uint256 principal; // Amount of USDC with 6 decimal places
-        uint256 originalPrincipal; // Amount of USDC with 6 decimal places
-        uint256 collateral; // Amount of ETH collateral with 18 decimal places
-        uint16 ltv; // ltv expressed as a percentage
-        uint40 timestamp;  // End date of the borrow
-        uint40 startDate;  // Start date of the borrow
-        address beneficiary;  // Account to receive the USDC borrowed
-        address borrower;  // Account to take passession of the BPT
-    }
-
-    struct calcLPIncreasesParams {
-        uint aEthYieldDistribution; // Amount of AETH yield since last snapshot allocated to a borrowing pool (Wad)
-        uint accumInterestBP; // Amount of accumulated USDC interest belonging to a borrowing pool (6 decimals)
-        uint lendingPoolPrincipal; // Amount of USDC principal in a lending pool (6 decimals)
-        uint contributionDenominator; // Sum of USDC principal of all lending pools eligible for a distribution from the borrowing pool
-    }
-
-    struct calcLPIncreasesResult {
-        uint deltaAccumYield; // New aETH yield to be distributed to this lending pool from this borrowing pool (Wad)
-        uint deltaShrubYield; // New aETH yield to be distributed as fees to the shrub treasury from this borrowing pool (Wad)
-        uint deltaAccumInterest; // New aETH yield to be distributed to this lending pool from this borrowing pool (Wad)
-        uint deltaShrubInterest; // New aETH yield to be distributed to this lending pool from this borrowing pool (Wad)
-    }
-
-
-//    struct ChainlinkResponse {
-//        uint80 roundId;
-//        int256 answer;
-//        uint256 startedAt;
-//        uint256 updatedAt;
-//        uint80 answeredInRound;
-//    }
-
-
 }

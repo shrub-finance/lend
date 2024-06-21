@@ -11,10 +11,10 @@ import "hardhat/console.sol";
 import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 
-import {DataTypes} from '../libraries/types/DataTypes.sol';
+import {DataTypes} from '../libraries/data-structures/DataTypes.sol';
 import {Constants} from '../libraries/configuration/Constants.sol';
 import {ShrubLendMath} from "../libraries/math/ShrubLendMath.sol";
-import {HelpersLogic} from '../libraries/logic/HelpersLogic.sol';
+import {HelpersLogic} from '../libraries/view/HelpersLogic.sol';
 
 // TODO: Index BPT by endDate so that we can find all of the borrows for a timestamp
 // NOTE: BPTs will not be indexed by owner as we can rely on external services to find this and we don't need this functionality in the smart contract itself

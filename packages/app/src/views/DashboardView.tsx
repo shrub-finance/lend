@@ -224,7 +224,7 @@ export const DashboardView: FC = ({}) => {
                     <span className="text-left">
                       <h3 className="font-normal  pb-5 text-shrub-grey">
                         {" "}
-                        Welcome back, ryan.eth!
+                        Welcome back, john.eth!
                       </h3>
                       ETH Price:{" "}
                       {ethers.utils.formatUnits(ethPrice, 8)} USDC

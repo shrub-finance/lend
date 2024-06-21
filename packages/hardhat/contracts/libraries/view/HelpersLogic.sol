@@ -38,7 +38,7 @@ library HelpersLogic {
         timestamp = uint40(block.timestamp);
     }
 
-    function timestampToString(uint40 timestamp) public view returns (string memory) {
+    function timestampToString(uint40 timestamp) public pure returns (string memory) {
         return uint256(timestamp).toString();
     }
 }
