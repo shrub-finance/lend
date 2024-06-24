@@ -159,7 +159,7 @@ export const DashboardView: FC = ({}) => {
   return (
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col ">
-        <div className="relative group mt-4 w-full bg-shrub-grey-light">
+        <div className="relative group mt-4 w-full bg-shrub-grey-light rounded-3xl">
           <div className="flex flex-col">
             <div className="card w-full text-left">
               <div className="card-body ">
@@ -378,8 +378,7 @@ export const DashboardView: FC = ({}) => {
                                         <a onMouseOver={() => setCurrentHovered(index)}
                                            onMouseOut={() => setCurrentHovered(null)} href='https://app.uniswap.org/'
                                            target='_blank' type='button'
-                                           className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5'
-                                           style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
+                                           className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5' style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
                                         >
                                           {currentHovered === index ?
                                           <Image src='/up-right-arrow-light.svg' alt='down arrow' width={20} height={20}
@@ -411,9 +410,9 @@ export const DashboardView: FC = ({}) => {
                       </li>
                       <li className='mr-4'>
                         <div className='relative overflow-x-auto border rounded-2xl'>
-                          <table className='w-full text-left text-shrub-grey  '>
+                          <table className='w-full text-left text-shrub-grey'>
                             <caption
-                              className='p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white  '>
+                              className='p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white'>
                               Borrows
                             </caption>
                             <thead
@@ -468,7 +467,7 @@ export const DashboardView: FC = ({}) => {
                                       {wallet ? (
                                         <p>
                                           {' '}
-                                          <Image src='/usdc-logo.svg' alt='usdc logo' className='w-6 mr-2 inline align-middle' width='40' height='40' />
+                                          {/*<Image src='/usdc-logo.svg' alt='usdc logo' className='w-6 mr-2 inline align-middle' width='40' height='40' />*/}
 
                                           {storeBorrow.currentBalanceOverride ? storeBorrow.currentBalanceOverride : formatLargeUsdc(borrow.debt)} USDC
 
