@@ -47,7 +47,10 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
       return;
     }
 
-    const inputValue = event.target.value.trim();
+    let inputValue = event.target.value.trim();
+    if (inputValue.startsWith('.')) {
+      inputValue = '0' + inputValue; // Prepend '0' if input starts with '.'
+    }
     setDepositAmount(inputValue);
 
     if (inputValue === '') {
