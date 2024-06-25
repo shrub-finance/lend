@@ -103,4 +103,20 @@ if (
   };
 }
 
+// On purpose using same accounts for Holesky and Sepolia
+if (
+  process.env.HOLESKY_SECRET_KEY &&
+  process.env.HOLESKY_TREASURY_SECRET_KEY &&
+  config.networks
+) {
+  config.networks.sepolia = {
+    url: "https://11155111.rpc.thirdweb.com",
+    chainId: 11155111,
+    accounts: [
+      process.env.HOLESKY_SECRET_KEY,
+      process.env.HOLESKY_TREASURY_SECRET_KEY
+    ]
+  };
+}
+
 export default config;
