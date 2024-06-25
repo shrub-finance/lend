@@ -5,7 +5,7 @@
   "scripts": {
     "compile": "npx hardhat compile",
     "console": "npx hardhat console --network localhost",
-    "test": "npx hardhat test",
+    "test": "npx hardhat test --bail",
     "hardhat": "npx hardhat --network localhost",
     "deploy": "npx hardhat node --hostname 0.0.0.0 --export deployments/deployed-contracts.json",
     "start-graph-node": "rm -rf graph-node/data; docker-compose --project-directory graph-node up",
