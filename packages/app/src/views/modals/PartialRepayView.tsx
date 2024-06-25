@@ -43,7 +43,10 @@
     }, [ethPrice]);
 
     const handleRepayAmountChange = (event) => {
-      const inputValue = event.target.value.trim();
+      let inputValue = event.target.value.trim();
+      if (inputValue.startsWith('.')) {
+        inputValue = '0' + inputValue; // Prepend '0' if input starts with '.'
+      }
       const parsedValue = parseFloat(inputValue);
       setRepayAmount(inputValue);
       if (inputValue === '') {

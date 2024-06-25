@@ -40,10 +40,10 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const [lendActionInitiated, setLendActionInitiated] = useState(false);
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
   const {data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading} = useBalance(usdcAddress);
+  const [depositButtonPressed, setDepositButtonPressed] = useState(false);
   const walletAddress = useAddress();
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
-
   const latestDeposit = getUserData(store, walletAddress).deposits.find(deposit => deposit.id === latestDepositId && deposit.tempData);
   const {
     contract: usdc,
@@ -106,7 +106,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
           <div className="flex flex-col ">
             <div className="card w-full text-left">
               <div className="card-body ">
-                {(!lendActionInitiated || latestDeposit?.status === "pending") && (
+                {!lendActionInitiated  && (
                   <div>
                     <p className="text-lg font-bold pb-2">Deposit amount</p>
                     <div className="w-full text-xl font-semibold flex flex-row">
@@ -124,34 +124,40 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                   </div>
                 )}
 
+                {/* Spinner */}
+                {(depositButtonPressed || latestDeposit?.status === "pending") && (
+                  <>
+                    {latestDeposit?.status === 'pending' && !depositButtonPressed && (
+                      <p className='text-lg font-bold pb-2 text-left'>Deposit Submitted</p>
+                    )}
+                    <div className='flex items-center justify-center p-20'>
+                      <div role='status' className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
+                        <div className='w-[205px] h-[205px] rounded-full bg-white'></div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+
                 {lendActionInitiated && (
                   <>
-                      {/*spinner */}
-                      {latestDeposit?.status === "pending" && (
-                        <div className="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin">
-                          <div className="w-[205px] h-[205px] rounded-full bg-white"></div>
-                        </div>
-                      )}
-
-                      {latestDeposit?.status === "confirmed" && (
-                        <>
-                          <p className="text-lg font-bold pb-2 text-left">
-                            Deposit Successful!
-                          </p>
-                        <div className="p-20">
-                          <div role="status" className="w-[250px] h-[250px] m-[20px]">
-                            <Image src="/checkmark.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
-                            <span className="sr-only">Loading...</span>
+                    {latestDeposit?.status === 'confirmed' && (
+                      <>
+                        <p className='text-lg font-bold pb-2 text-left'>
+                          Deposit Successful! </p>
+                        <div className='p-20'>
+                          <div role='status' className='w-[250px] h-[250px] m-[20px]'>
+                              <Image src='/checkmark.svg' alt='Loading' className='w-full h-full' width='250' height='250' />
+                              <span className='sr-only'>Loading...</span>
+                            </div>
                           </div>
-                        </div>
                         </>
                       )}
-                      {latestDeposit?.status === "failed" && (
-                        <>
-                        <p className="text-lg font-bold pb-2 text-left">
-                        Deposit Unsuccessful
-                        </p>
-                        <div className="p-20">
+                    {latestDeposit?.status === 'failed' && (
+                      <>
+                        <p className='text-lg font-bold pb-2 text-left'>
+                          Deposit Unsuccessful </p>
+                        <div className='p-20'>
                           <div role="status" className="w-[250px] h-[250px] m-[20px]">
                             <Image src="/exclamation.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
                             <span className="sr-only">Loading...</span>
@@ -163,8 +169,9 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                 )}
 
                 <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
+
                 {/*receipt start*/}
-                {(!lendActionInitiated || latestDeposit?.status === "pending") &&
+                {!lendActionInitiated && !depositButtonPressed &&
                   <div>
                     <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                       <div className="flex flex-row  justify-between">
@@ -218,7 +225,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                 }
 
                 {/*total*/}
-                {(!lendActionInitiated || latestDeposit?.status === "pending") && (
+                {!lendActionInitiated && !depositButtonPressed && (
                   <div>
                     <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                       <div className="flex flex-row justify-between ">
@@ -239,21 +246,22 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                             action={
                               async (usdc) =>
                               {
-                                setLocalError('');
+                                setLocalError('')
                                 // @ts-ignore
                                 return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
                               }}
+                            onSubmit={() => console.log('tx pending')}
                             onSuccess={
                             async (tx) => {
-                              setLocalError("");
+                              setLocalError('')
                               try {
                                 const receipt = await tx.wait();
                                 if(!receipt.status) {throw new Error("Transaction failed")}
                               } catch (e) {console.log("Transaction failed:", e)}
-                              setApproveUSDCActionInitiated(true);
+                              setApproveUSDCActionInitiated(true)
                             }}
                             onError={(e) => {
-                              handleErrorMessages({err: e});
+                              handleErrorMessages({err: e})
                             }}
                           >
                             {!approveUSDCActionInitiated ?'Approve USDC': 'USDC Approval Submitted'}
@@ -264,7 +272,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                             <Web3Button
                               contractAddress={lendingPlatformAddress}
                               contractAbi = {lendingPlatformAbi}
-                              isDisabled={latestDeposit?.status === "pending"}
+                              isDisabled={lendActionInitiated}
                               className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
                               action={
                                 async (lendingPlatform) => {
@@ -275,22 +283,23 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                   // @ts-ignore
                                   return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(depositAmount, 6))
                                 }}
-                              onSuccess={async (tx) => {
+                              onSubmit={() => {
+                                console.log(depositButtonPressed);
+                                setDepositButtonPressed(true)
+                              }
+                             }
+                              onSuccess={
+                                async (tx) => {
                                 setLocalError('');
                                 if(activeLendingPoolsError) {
                                   handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
                                   return
                                 }
-                                const filteredLendingPools =
-                                  activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
-                                    (item) =>
-                                      item.timestamp === timestamp.toString(),
-                                  );
-
-                                const matchedLendingPool =
-                                  filteredLendingPools.length > 0
-                                    ? filteredLendingPools[0]
-                                    : null;
+                                setLendActionInitiated(true);
+                                setDepositButtonPressed(false)
+                                // find pool id
+                                const matchedLendingPool = activeLendingPoolsData?.lendingPools.filter(item => item.timestamp === timestamp.toString())[0] || null;
+                                // create temp store entry
                                 const newDeposit: Deposit = {
                                   id: matchedLendingPool.id,
                                   status: "pending",
@@ -316,7 +325,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                   payload: { address: walletAddress, deposit: newDeposit }
                                 });
                                 setLatestDepositId(matchedLendingPool.id);
-
                                 try {
                                   const receipt = await tx.wait();
                                   if(!receipt.status) {
@@ -341,14 +349,14 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                     },
                                   });
                                 }
-                                setLendActionInitiated(true);
                               }}
                               onError={(e) => {
                                 handleErrorMessages({err: e});
+                                setDepositButtonPressed(false)
 
                               }}
                             >
-                              {latestDeposit?.status === "pending"? "Deposit Order Submitted":"Deposit USDC"}
+                              Deposit USDC
                             </Web3Button>
                           </>
                         )
@@ -357,26 +365,26 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                 )}
 
 
-                {(lendActionInitiated || latestDeposit?.status === "pending") && (
+                {(depositButtonPressed && !lendActionInitiated) && (
+                  <button
+                    disabled={true}
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
+                    Confirm in Wallet...
+                  </button>
+                )}
+
+                {(lendActionInitiated || latestDeposit?.status==="confirmed") &&
                   <button
                     onClick={handleViewDash}
                     className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
                     View in Dashboard
                   </button>
-                  )}
+                }
 
-                {(lendActionInitiated || latestDeposit?.status === "pending") &&  ( <button
-                  onClick={backOnDeposit}
-                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50 mt-4">
-                  Back
-                </button>
-                  )}
-
-                {(!lendActionInitiated  && latestDeposit?.status !== "pending") &&
+                {(!lendActionInitiated && !depositButtonPressed) &&
                   <button
                     onClick={backOnDeposit}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
-                  >
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
                     Cancel
                   </button>
                 }
