@@ -28,4 +28,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.id = "deploy_mock_aave_v3"; // id to prevent re-execution
+func.dependencies = ["MockErc20"];
 func.tags = ["MockAaveV3"];

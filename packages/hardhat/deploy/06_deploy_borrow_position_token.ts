@@ -29,3 +29,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func;
 func.id = "deploy_borrow_position_token"; // id to prevent re-execution
 func.tags = ["BorrowPositionToken"];
+func.dependencies = ["MockErc20", "Libraries"];

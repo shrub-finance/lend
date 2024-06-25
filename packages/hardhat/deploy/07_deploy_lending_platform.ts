@@ -52,4 +52,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.id = "deploy_lending_platform"; // id to prevent re-execution
+func.dependencies = ["Libraries", "LibrariesWithDep", "MockErc20", "MockAaveV3", "MockChainlinkAggregator", "BorrowPositionToken"];
 func.tags = ["LendingPlatform"];

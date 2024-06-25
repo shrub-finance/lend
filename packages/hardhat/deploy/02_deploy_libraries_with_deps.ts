@@ -45,4 +45,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.id = "deploy_libraries_with_dep"; // id to prevent re-execution
+func.dependencies = ["Libraries"];
 func.tags = ["LibrariesWithDep"];
