@@ -54,7 +54,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
 
   const handleAmountChange = (event) => {
     if (ethBalance.value.isZero()) {
-      setBorrowError('borrow', 'Insufficient ETH balance. Please add ETH to your wallet.');
+      setBorrowError('borrow', 'No ETH balance. Please add ETH to your wallet.');
       return;
     }
     let inputValue = event.target.value.trim();
