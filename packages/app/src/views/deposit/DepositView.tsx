@@ -59,10 +59,6 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
       setShowLendAPYSection(false);
       return;
     }
-    if (usdcBalance && usdcBalance.value.lt(ethers.utils.parseUnits(inputValue, 6))) {
-      setDepositError('deposit', 'Amount exceeds wallet balance');
-      return;
-    }
     // Validates inputValue as a number:
     // - Integer (e.g., "123")
     // - Float with up to 6 decimals (e.g., "123.456789" or ".456789")
@@ -73,6 +69,9 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
     if (isInvalidOrZero) {
       setDepositError('deposit', 'Must be a valid number, greater than 0, less than 6 decimal places');
       setShowLendAPYSection(false);
+    } else if (usdcBalance && usdcBalance.value.lt(ethers.utils.parseUnits(inputValue, 6))) {
+      setDepositError('deposit', 'Amount exceeds wallet balance');
+      return;
     } else {
       clearDepositError('deposit');
       setShowLendAPYSection(true);

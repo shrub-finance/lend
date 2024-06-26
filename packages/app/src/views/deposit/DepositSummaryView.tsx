@@ -48,6 +48,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
   const {data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading} = useBalance(usdcAddress);
   const [depositButtonPressed, setDepositButtonPressed] = useState(false);
+  const [approveButtonPressed, setApproveButtonPressed] = useState(false);
   const walletAddress = useAddress();
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
@@ -114,12 +115,12 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
           <div className="absolute -inset-1 shadow-shrub border rounded-3xl "></div>
           <div className="flex flex-col ">
             <div className="card w-full text-left">
-              <div className="card-body ">
-                {!lendActionInitiated  && (
+              <div className="card-body">
+                {!lendActionInitiated  && !approveUSDCActionInitiated && (
                   <div>
                     <p className="text-lg font-bold pb-2">Deposit amount</p>
                     <div className="w-full text-xl font-semibold flex flex-row">
-                      <span className="text-4xl  font-medium text-left w-[500px]">
+                      <span className="text-4xl font-medium text-left w-[500px]">
                         {depositAmount} USDC
                       </span>
                       <Image
@@ -133,11 +134,14 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                   </div>
                 )}
 
-                {/* Spinner */}
-                {(depositButtonPressed || latestDeposit?.status === "pending") && (
+                {/* spinner */}
+                {(approveButtonPressed || depositButtonPressed || latestDeposit?.status === "pending") && (
                   <>
                     {latestDeposit?.status === 'pending' && !depositButtonPressed && (
                       <p className='text-lg font-bold pb-2 text-left'>Deposit Submitted</p>
+                    )}
+                    {approveButtonPressed && approveUSDCActionInitiated && (
+                      <p className='text-lg font-bold pb-2 text-left'>USDC Approval Submitted</p>
                     )}
                     <div className='flex items-center justify-center p-20'>
                       <div role='status' className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
@@ -153,7 +157,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     {latestDeposit?.status === 'confirmed' && (
                       <>
                         <p className='text-lg font-bold pb-2 text-left'>
-                          Deposit Successful! </p>
+                          Deposit Successful!</p>
                         <div className='p-20'>
                           <div role='status' className='w-[250px] h-[250px] m-[20px]'>
                               <Image src='/checkmark.svg' alt='Loading' className='w-full h-full' width='250' height='250' />
@@ -165,7 +169,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     {latestDeposit?.status === 'failed' && (
                       <>
                         <p className='text-lg font-bold pb-2 text-left'>
-                          Deposit Unsuccessful </p>
+                          Deposit Unsuccessful</p>
                         <div className='p-20'>
                           <div role="status" className="w-[250px] h-[250px] m-[20px]">
                             <Image src="/exclamation.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
@@ -180,7 +184,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                 <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
 
                 {/*receipt start*/}
-                {!lendActionInitiated && !depositButtonPressed &&
+                {!lendActionInitiated && !depositButtonPressed && !approveButtonPressed &&
                   <div>
                     <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                       <div className="flex flex-row  justify-between">
@@ -215,7 +219,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                           />{" "}
                         </span>
                       </div>
-                      <div className="flex flex-row  justify-between">
+                      <div className="flex flex-row justify-between">
                         <span>Contract Address</span>
                         <span>
                           {truncateEthAddress(lendingPlatformAddress)}
@@ -234,7 +238,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                 }
 
                 {/*total*/}
-                {!lendActionInitiated && !depositButtonPressed && (
+                {!lendActionInitiated && !depositButtonPressed && !approveButtonPressed && (
                   <div>
                     <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                       <div className="flex flex-row justify-between ">
@@ -259,21 +263,32 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                 // @ts-ignore
                                 return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
                               }}
-                            onSubmit={() => console.log('tx pending')}
+                            onSubmit={() => {
+                              setApproveButtonPressed(true)
+                            }}
                             onSuccess={
                             async (tx) => {
+                              setTxHash(tx.hash)
                               setLocalError('')
+                              setApproveUSDCActionInitiated(true)
                               try {
                                 const receipt = await tx.wait();
-                                if(!receipt.status) {throw new Error("Transaction failed")}
-                              } catch (e) {console.log("Transaction failed:", e)}
-                              setApproveUSDCActionInitiated(true)
+                                setApproveUSDCActionInitiated(false)
+                                if(!receipt.status) {
+                                  throw new Error("Transaction failed")
+                                }
+                              } catch (e) {
+                                console.log("Transaction failed:", e)
+                              }
+                              setApproveButtonPressed(false)
+                              setTxHash('')
                             }}
                             onError={(e) => {
                               handleErrorMessages({err: e})
+                              setApproveButtonPressed(false)
                             }}
                           >
-                            {!approveUSDCActionInitiated ?'Approve USDC': 'USDC Approval Submitted'}
+                            {(usdcBalanceDataIsLoading || allowanceIsLoading) ? 'Loading...' : 'Approve USDC'}
                           </Web3Button>
                         </>
                         ) : (
@@ -293,10 +308,8 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                   return await lendingPlatform?.contractWrapper?.writeContract?.deposit(timestamp, ethers.utils.parseUnits(depositAmount, 6))
                                 }}
                               onSubmit={() => {
-                                console.log(depositButtonPressed);
                                 setDepositButtonPressed(true)
-                              }
-                             }
+                              }}
                               onSuccess={
                                 async (tx) => {
                                 setTxHash(tx.hash)
@@ -305,7 +318,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                   handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
                                   return
                                 }
-                                setLendActionInitiated(true);
+                                setLendActionInitiated(true)
                                 setDepositButtonPressed(false)
                                 // find pool id
                                 const matchedLendingPool = activeLendingPoolsData?.lendingPools.filter(item => item.timestamp === timestamp.toString())[0] || null;
@@ -375,13 +388,14 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
 
                 {txHash && <TransactionButton txHash={txHash} chainId={chainId} />}
 
-                {(depositButtonPressed && !lendActionInitiated) && (
+                {((depositButtonPressed && !lendActionInitiated) || (approveButtonPressed && !approveUSDCActionInitiated)) && (
                   <button
                     disabled={true}
                     className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
                     Confirm in Wallet...
                   </button>
                 )}
+
 
                 {(lendActionInitiated || latestDeposit?.status==="confirmed") &&
                   <button
@@ -391,7 +405,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                   </button>
                 }
 
-                {(!lendActionInitiated && !depositButtonPressed) &&
+                {(!lendActionInitiated && !depositButtonPressed && !approveButtonPressed) &&
                   <button
                     onClick={backOnDeposit}
                     className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
