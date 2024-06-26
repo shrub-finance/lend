@@ -21,10 +21,18 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
         <title>Shrub Lend</title>
       </Head>
       <ThirdwebProvider
+        autoConnect={true}
+        dAppMeta={{
+          name: "Shrub Lend",
+          description: "Simplified DeFi Lending and Borrowing",
+          logoUrl: "https://shrub.finance/static/media/logo-default.c2ca9b15.svg",
+          url: "https://shrub.finance",
+          isDarkMode: false,
+        }}
         clientId={"ea246b96599b72dedbc6ebcf0ea09c1e"}
         // activeChain={"localhost"}
         activeChain={{
-            chainId: 17000,
+          chainId: 17000,
           rpc:['https://17000.rpc.thirdweb.com'],
             nativeCurrency: {
                 name: "ETH",
@@ -36,13 +44,6 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
             testnet: true,
             chain: "holesky",
             name: "Holesky"
-        }}
-        dAppMeta={{
-          name: "Shrub Lend",
-          description: "Making Lending Accessible",
-          logoUrl:
-            "https://shrub.finance/static/media/logo-default.3961bf67.svg",
-          url: "https://shrub.finance",
         }}
       >
         <ApolloProvider client={client}>
