@@ -1,5 +1,12 @@
 import {FC, useEffect, useState} from "react"
-import {useAddress, useBalance, useContract, useContractRead, Web3Button} from "@thirdweb-dev/react"
+import {
+  useAddress,
+  useBalance,
+  useChainId,
+  useContract,
+  useContractRead,
+  Web3Button,
+} from '@thirdweb-dev/react';
 import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts"
 import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods"
 import {BigNumber, ethers} from "ethers"
@@ -9,6 +16,7 @@ import {useRouter} from "next/router"
 import {getUserData, useFinancialData} from '../../components/FinancialDataContext'
 import { Deposit } from '../../types/types'
 import useActiveLendingPools from "hooks/useActiveLendingPools"
+import TransactionButton from '../../components/TxButton';
 
 
 interface LendSummaryViewProps {
@@ -33,7 +41,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
     activeLendingPoolsStartPolling,
     activeLendingPoolsStopPolling,
   } = useActiveLendingPools();
-
   const [localError, setLocalError] = useState("");
   const [latestDepositId, setLatestDepositId] = useState<string>()
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
@@ -45,6 +52,8 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
   const latestDeposit = getUserData(store, walletAddress).deposits.find(deposit => deposit.id === latestDepositId && deposit.tempData);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const chainId = useChainId();
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
@@ -290,6 +299,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                              }
                               onSuccess={
                                 async (tx) => {
+                                setTxHash(tx.hash)
                                 setLocalError('');
                                 if(activeLendingPoolsError) {
                                   handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
@@ -353,7 +363,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                               onError={(e) => {
                                 handleErrorMessages({err: e});
                                 setDepositButtonPressed(false)
-
                               }}
                             >
                               Deposit USDC
@@ -364,6 +373,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                   </div>
                 )}
 
+                {txHash && <TransactionButton txHash={txHash} chainId={chainId} />}
 
                 {(depositButtonPressed && !lendActionInitiated) && (
                   <button
@@ -376,7 +386,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                 {(lendActionInitiated || latestDeposit?.status==="confirmed") &&
                   <button
                     onClick={handleViewDash}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-green hover:border-shrub-green hover:text-white normal-case text-xl border-shrub-grey-50">
                     View in Dashboard
                   </button>
                 }
