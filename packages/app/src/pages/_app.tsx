@@ -31,19 +31,33 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
         }}
         clientId={"ea246b96599b72dedbc6ebcf0ea09c1e"}
         // activeChain={"localhost"}
+        // activeChain={{
+        //   chainId: 17000,
+        //   rpc:['https://17000.rpc.thirdweb.com'],
+        //     nativeCurrency: {
+        //         name: "ETH",
+        //         decimals: 18,
+        //         symbol: "ETH"
+        //     },
+        //     shortName: "holesky",
+        //     slug: "holesky",
+        //     testnet: true,
+        //     chain: "holesky",
+        //     name: "Holesky"
+        // }}
         activeChain={{
-          chainId: 17000,
-          rpc:['https://17000.rpc.thirdweb.com'],
-            nativeCurrency: {
-                name: "ETH",
-                decimals: 18,
-                symbol: "ETH"
-            },
-            shortName: "holesky",
-            slug: "holesky",
-            testnet: true,
-            chain: "holesky",
-            name: "Holesky"
+          chainId: 11155111,
+          rpc:['https://11155111.rpc.thirdweb.com'],
+          nativeCurrency: {
+            name: "ETH",
+            decimals: 18,
+            symbol: "ETH"
+          },
+          shortName: "sepolia",
+          slug: "sepolia",
+          testnet: true,
+          chain: "sepolia",
+          name: "Sepolia"
         }}
       >
         <ApolloProvider client={client}>
