@@ -17,6 +17,7 @@ import {getUserData, useFinancialData} from '../../components/FinancialDataConte
 import { Deposit } from '../../types/types'
 import useActiveLendingPools from "hooks/useActiveLendingPools"
 import TransactionButton from '../../components/TxButton';
+import Spinner from '../../components/Spinner';
 
 
 interface LendSummaryViewProps {
@@ -98,7 +99,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
               <span>{localError}</span>
             </div>
           )}
-
           {!lendActionInitiated && (
             <h1 className="text-4xl font-medium">
               <button onClick={backOnDeposit} className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full ">
@@ -111,13 +111,13 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
           )}
         </div>
 
-        <div className="relative group mt-4 w-full">
-          <div className="absolute -inset-1 shadow-shrub border rounded-3xl "></div>
-          <div className="flex flex-col ">
+        <div className="relative group mt-4 w-full min-w-[604px] min-h-[631px]">
+          <div className="absolute -inset-1 shadow-shrub border rounded-3xl"></div>
+          <div className="flex flex-col">
             <div className="card w-full text-left">
               <div className="card-body">
-                {!lendActionInitiated  && !approveUSDCActionInitiated && (
-                  <div>
+                {!lendActionInitiated  && (
+                  <>
                     <p className="text-lg font-bold pb-2">Deposit amount</p>
                     <div className="w-full text-xl font-semibold flex flex-row">
                       <span className="text-4xl font-medium text-left w-[500px]">
@@ -131,17 +131,14 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                         height={10}
                       />
                     </div>
-                  </div>
+                  </>
                 )}
 
                 {/* spinner */}
-                {(approveButtonPressed || depositButtonPressed || latestDeposit?.status === "pending") && (
+                {(depositButtonPressed || latestDeposit?.status === "pending") && (
                   <>
                     {latestDeposit?.status === 'pending' && !depositButtonPressed && (
                       <p className='text-lg font-bold pb-2 text-left'>Deposit Submitted</p>
-                    )}
-                    {approveButtonPressed && approveUSDCActionInitiated && (
-                      <p className='text-lg font-bold pb-2 text-left'>USDC Approval Submitted</p>
                     )}
                     <div className='flex items-center justify-center p-20'>
                       <div role='status' className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
@@ -184,7 +181,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                 <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
 
                 {/*receipt start*/}
-                {!lendActionInitiated && !depositButtonPressed && !approveButtonPressed &&
+                {!lendActionInitiated && !depositButtonPressed  &&
                   <div>
                     <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                       <div className="flex flex-row  justify-between">
@@ -238,7 +235,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                 }
 
                 {/*total*/}
-                {!lendActionInitiated && !depositButtonPressed && !approveButtonPressed && (
+                {!lendActionInitiated && !depositButtonPressed  && (
                   <div>
                     <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                       <div className="flex flex-row justify-between ">
@@ -288,7 +285,12 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                               setApproveButtonPressed(false)
                             }}
                           >
-                            {(usdcBalanceDataIsLoading || allowanceIsLoading) ? 'Loading...' : 'Approve USDC'}
+                            {(usdcBalanceDataIsLoading || allowanceIsLoading) ? 'Loading...' :
+                              (approveButtonPressed && approveUSDCActionInitiated) ?
+                                <>
+                                  <Spinner />
+                                  Approving USDC...
+                                </> : 'Approve USDC'}
                           </Web3Button>
                         </>
                         ) : (
