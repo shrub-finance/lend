@@ -50,6 +50,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const {data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading} = useBalance(usdcAddress);
   const [depositButtonPressed, setDepositButtonPressed] = useState(false);
   const [approveButtonPressed, setApproveButtonPressed] = useState(false);
+  const [approvalCompleted, setApprovalCompleted] = useState(false);
   const walletAddress = useAddress();
   const currentDate = new Date();
   const endDate = fromEthDate(timestamp);
@@ -245,8 +246,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     </div>
 
                     {/*approve and deposit*/}
-                    {
-                      !usdcBalanceData || !allowance || BigNumber.from(allowance).lt(ethers.utils.parseUnits(depositAmount, 6)) ? (
+                    {!approvalCompleted && (!usdcBalanceData || !allowance || BigNumber.from(allowance).lt(ethers.utils.parseUnits(depositAmount, 6))) ?  (
                         <>
                           <Web3Button
                             contractAddress={usdcAddress}
@@ -274,6 +274,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                 if(!receipt.status) {
                                   throw new Error("Transaction failed")
                                 }
+                                setApprovalCompleted(true);
                               } catch (e) {
                                 console.log("Transaction failed:", e)
                               }
