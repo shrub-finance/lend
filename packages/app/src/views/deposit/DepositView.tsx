@@ -10,6 +10,7 @@ import {useFinancialData} from "../../components/FinancialDataContext";
 import { useValidation } from '../../hooks/useValidation';
 import ErrorDisplay from '../../components/ErrorDisplay';
 import {getChainInfo} from "../../utils/chains";
+import { ethers } from 'ethers';
 
 
 
@@ -44,13 +45,22 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
   }
 
   const handleDepositAmountChange = (event) => {
-    if (usdcBalance.value.isZero()) {
-      setDepositError('deposit', 'Insufficient USDC balance. Please add USDC to your wallet.');
+    if (!usdcBalance || !usdcBalance.value) {
+      setDepositError('deposit', 'No USDC balance. Please add USDC to your wallet.');
       setShowLendAPYSection(false);
       return;
     }
 
-    const inputValue = event.target.value.trim();
+    if (usdcBalance.value.isZero()) {
+      setDepositError('deposit', 'No USDC balance. Please add USDC to your wallet.');
+      setShowLendAPYSection(false);
+      return;
+    }
+
+    let inputValue = event.target.value.trim();
+    if (inputValue.startsWith('.')) {
+      inputValue = '0' + inputValue; // Prepend '0' if input starts with '.'
+    }
     setDepositAmount(inputValue);
 
     if (inputValue === '') {
@@ -69,6 +79,9 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
     if (isInvalidOrZero) {
       setDepositError('deposit', 'Must be a valid number, greater than 0, less than 6 decimal places');
       setShowLendAPYSection(false);
+    } else if (usdcBalance.value.lt(ethers.utils.parseUnits(inputValue, 6))) {
+      setDepositError('deposit', 'Amount exceeds wallet balance');
+      return;
     } else {
       clearDepositError('deposit');
       setShowLendAPYSection(true);

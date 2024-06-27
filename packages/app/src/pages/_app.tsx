@@ -10,7 +10,7 @@ import {getChainInfo} from "../utils/chains";
 
 require("../styles/globals.css");
 
-const {subgraphUrl} = getChainInfo();
+const {subgraphUrl, thirdwebActiveChain} = getChainInfo();
 
 const client = new ApolloClient({
   uri: subgraphUrl,
@@ -24,29 +24,16 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
         <title>Shrub Lend</title>
       </Head>
       <ThirdwebProvider
-        clientId={"ea246b96599b72dedbc6ebcf0ea09c1e"}
-        activeChain={"localhost"}
-        // activeChain={{
-        //     chainId: 17000,
-        //   rpc:['https://17000.rpc.thirdweb.com'],
-        //     nativeCurrency: {
-        //         name: "ETH",
-        //         decimals: 18,
-        //         symbol: "ETH"
-        //     },
-        //     shortName: "holesky",
-        //     slug: "holesky",
-        //     testnet: true,
-        //     chain: "holesky",
-        //     name: "Holesky"
-        // }}
+        autoConnect={true}
         dAppMeta={{
           name: "Shrub Lend",
-          description: "Making Lending Accessible",
-          logoUrl:
-            "https://shrub.finance/static/media/logo-default.3961bf67.svg",
+          description: "Simplified DeFi Lending and Borrowing",
+          logoUrl: "https://shrub.finance/static/media/logo-default.c2ca9b15.svg",
           url: "https://shrub.finance",
+          isDarkMode: false,
         }}
+        clientId={"ea246b96599b72dedbc6ebcf0ea09c1e"}
+        activeChain={thirdwebActiveChain}
       >
         <ApolloProvider client={client}>
           <FinancialDataProvider>
