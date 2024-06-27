@@ -180,6 +180,22 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         return totalLiquidity;
     }
 
+    function getLendState() external view returns (DataTypes.LendState memory) {
+        return lendState;
+    }
+
+    function getLtv(uint tokenId) external view returns (uint16 ltv) {
+        ltv = ShrubView.getLtv(tokenId, getEthPrice(), bpt, lendState);
+    }
+
+    function getBorrowInterest(uint tokenId) external view returns (uint interest) {
+        interest = ShrubView.getBorrowInterest(tokenId, bpt, lendState);
+    }
+
+    function requiredCollateral(uint16 ltv, uint usdcAmount) external view returns (uint256 collateralRequired) {
+        collateralRequired = ShrubView.requiredCollateral(ltv, usdcAmount, getEthPrice());
+    }
+
     function getPool(
         uint40 _timestamp
     ) public view returns (DataTypes.PoolDetails memory) {

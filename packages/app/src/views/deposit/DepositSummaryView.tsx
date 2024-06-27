@@ -1,6 +1,6 @@
 import {FC, useEffect, useState} from "react"
 import {useAddress, useBalance, useContract, useContractRead, Web3Button} from "@thirdweb-dev/react"
-import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts"
+import { getContractAbis, getContractAddresses } from "../../utils/contracts"
 import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods"
 import {BigNumber, ethers} from "ethers"
 import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages"
@@ -9,6 +9,7 @@ import {useRouter} from "next/router"
 import {getUserData, useFinancialData} from '../../components/FinancialDataContext'
 import { Deposit } from '../../types/types'
 import useActiveLendingPools from "hooks/useActiveLendingPools"
+import {getChainInfo} from "../../utils/chains";
 
 
 interface LendSummaryViewProps {
@@ -19,6 +20,9 @@ interface LendSummaryViewProps {
 }
 
 export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, timestamp, estimatedAPY, depositAmount}) => {
+  const { chainId } = getChainInfo();
+  const {usdcAddress, lendingPlatformAddress} = getContractAddresses(chainId);
+  const {usdcAbi, lendingPlatformAbi} = getContractAbis(chainId);
 
   const router = useRouter();
   const {store, dispatch} = useFinancialData();

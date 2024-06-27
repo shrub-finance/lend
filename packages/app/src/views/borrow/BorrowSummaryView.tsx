@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from 'react';
 import {useAddress, Web3Button} from "@thirdweb-dev/react";
-import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
+import {getContractAddresses, getContractAbis} from "../../utils/contracts";
 import {fromEthDate, interestToLTV, truncateEthAddress} from "../../utils/ethMethods";
 import { ethers } from 'ethers'
 import {useRouter} from "next/router";
@@ -8,6 +8,7 @@ import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages";
 import {getUserData, useFinancialData} from "../../components/FinancialDataContext";
 import Image from 'next/image'
 import { Borrow } from '../../types/types'
+import {getChainInfo} from "../../utils/chains";
 
 interface BorrowSummaryViewProps {
   requiredCollateral: ethers.BigNumber;
@@ -54,6 +55,10 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     }
   }, [localError]);
+
+  const { chainId } = getChainInfo();
+  const {lendingPlatformAddress} = getContractAddresses(chainId);
+  const {lendingPlatformAbi} = getContractAbis(chainId);
 
 
 

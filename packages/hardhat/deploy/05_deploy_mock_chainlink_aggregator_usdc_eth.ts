@@ -2,15 +2,14 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts, ethers } = hre;
-  const { deploy } = deployments;
+  const { getNamedAccounts, deployAndVerify } = hre;
 
   const { deployer } = await getNamedAccounts();
 
   const decimals = 18;
   const initialAnswer = 434522907140495  // ETH Price - $2301.37
 
-  const deployResult = await deploy("MockChainlinkAggregator", {
+  const deployResult = await deployAndVerify("MockChainlinkAggregator", {
     from: deployer,
     log: true,
     args: [ decimals, initialAnswer, "USDC / ETH" ]

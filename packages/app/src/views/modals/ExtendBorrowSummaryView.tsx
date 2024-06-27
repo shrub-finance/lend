@@ -9,16 +9,7 @@ import {
   fromEthDate, interestToLTV, ltvToInterest,
   toEthDate,
 } from '../../utils/ethMethods';
-import {
-  chainlinkAggregatorAbi,
-  chainlinkAggregatorAddress,
-  lendingPlatformAbi,
-  lendingPlatformAddress,
-  usdcAbi,
-  usdcAddress,
-  aethAddress,
-  aethAbi,
-} from '../../utils/contracts';
+import { getContractAddresses, getContractAbis } from '../../utils/contracts';
 import {BigNumber, ethers} from 'ethers';
 import {
   useAddress,
@@ -33,6 +24,7 @@ import {useFinancialData} from '../../components/FinancialDataContext';
 import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
 import { Borrow, BorrowObj } from '../../types/types';
 import { Zero } from '../../constants';
+import {getChainInfo} from "../../utils/chains";
 
 interface ExtendBorrowSummaryProps {
   onBackExtend: (data?) => void,
@@ -53,6 +45,9 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     targetLtv,
     additionalCollateral,
   }) => {
+  const { chainId } = getChainInfo();
+  const {usdcAddress, lendingPlatformAddress, chainlinkAggregatorAddress, aethAddress} = getContractAddresses(chainId);
+  const {usdcAbi, lendingPlatformAbi, chainlinkAggregatorAbi, aethAbi} = getContractAbis(chainId);
   const {ethPrice, isLoading, error} = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
   const {store, dispatch} = useFinancialData();
   const walletAddress = useAddress();

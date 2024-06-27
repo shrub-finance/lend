@@ -101,4 +101,8 @@ export type UserFinancialDataAction =
   | { type: "UPDATE_BORROW_STATUS"; payload: { address: string; id: string; status: PendingStatuses; } }
   | { type: "SET_ACTIVE_POOLS"; payload: { activePoolTimestamps: Date[]} };
 
-
+export type ChainInfo = {
+  chainId: number;
+  subgraphUrl: string;
+  rpcUrl: string;
+}

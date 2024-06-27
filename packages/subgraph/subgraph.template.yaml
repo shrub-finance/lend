@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: Contract
-    network: mainnet
+    network: {{NETWORK_NAME}}
     source:
       address: "{{LENDING_PLATFORM_ADDRESS}}"
       abi: LendingPlatform
-      startBlock: 1
+      startBlock: {{START_BLOCK}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -43,7 +43,7 @@ dataSources:
 templates:
   - name: PoolShareToken
     kind: ethereum/contract
-    network: mainnet
+    network: {{NETWORK_NAME}}
     source:
       abi: PoolShareToken
     mapping:

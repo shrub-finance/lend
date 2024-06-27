@@ -7,12 +7,13 @@ import {
   toEthDate,
   truncateEthAddress,
 } from '../../utils/ethMethods';
-import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
+import { getContractAbis, getContractAddresses } from '../../utils/contracts';
 import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
 import { Borrow, BorrowObj } from '../../types/types';
-import { useAddress, useContract, useContractRead, Web3Button } from '@thirdweb-dev/react';
+import {useAddress, useContract, useContractRead, Web3Button} from '@thirdweb-dev/react';
 import { useFinancialData } from '../../components/FinancialDataContext';
 import { ethers } from 'ethers';
+import {getChainInfo} from "../../utils/chains";
 
 interface RepaySummaryViewProps {
   borrow: BorrowObj;
@@ -28,6 +29,9 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
 
   }
 ) => {
+  const { chainId } = getChainInfo();
+  const {usdcAddress, lendingPlatformAddress, chainlinkAggregatorAddress, aethAddress} = getContractAddresses(chainId);
+  const {usdcAbi, lendingPlatformAbi, chainlinkAggregatorAbi, aethAbi} = getContractAbis(chainId);
 
   const walletAddress = useAddress();
   const [localError, setLocalError] = useState('');

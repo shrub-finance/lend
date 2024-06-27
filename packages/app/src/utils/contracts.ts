@@ -1,10 +1,25 @@
-import contracts from "../../../hardhat/deployments/deployed-contracts.json"
+import deployedContracts from "../../../hardhat/deployments/deployed-contracts.json"
 
-export const usdcAddress = contracts.contracts.USDCoin.address;
-export const usdcAbi = contracts.contracts.USDCoin.abi;
-export const aethAddress = contracts.contracts.AETH.address;
-export const aethAbi = contracts.contracts.AETH.abi;
-export const lendingPlatformAddress = contracts.contracts.LendingPlatform.address;
-export const lendingPlatformAbi = contracts.contracts.LendingPlatform.abi;
-export const chainlinkAggregatorAbi = contracts.contracts.MockChainlinkAggregator.abi;
-export const chainlinkAggregatorAddress = contracts.contracts.MockChainlinkAggregator.address;
+function chainData(chainId: number) {
+  return deployedContracts[chainId.toString()].find(o => o.chainId === chainId.toString());
+}
+
+export function getContractAddresses(chainId: number) {
+  const data = chainData(chainId);
+  return {
+    usdcAddress: data.contracts.USDCoin.address,
+    aethAddress: data.contracts.AETH.address,
+    lendingPlatformAddress: data.contracts.LendingPlatform.address,
+    chainlinkAggregatorAddress: data.contracts.MockChainlinkAggregator.address,
+  }
+}
+
+export function getContractAbis(chainId: number) {
+  const data = chainData(chainId);
+  return {
+    usdcAbi: data.contracts.USDCoin.abi,
+    aethAbi: data.contracts.AETH.abi,
+    lendingPlatformAbi: data.contracts.LendingPlatform.abi,
+    chainlinkAggregatorAbi: data.contracts.MockChainlinkAggregator.abi,
+  }
+}

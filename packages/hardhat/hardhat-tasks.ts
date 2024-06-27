@@ -567,7 +567,8 @@ task("getPool", "get deatils of a lending pool")
         const {ethers, deployments, getNamedAccounts} = env;
         const {lendingPlatform} = await getDeployedContracts(env);
         const res = await lendingPlatform.getPool(ethDate);
-        const bpTotalPoolShares = await lendingPlatform.bpTotalPoolShares();
+        const lendState = await lendingPlatform.getLendState();
+        const bpTotalPoolShares = lendState.bpTotalPoolShares;
         console.log(`
 Lending Pool: ${ethDate} - ${fromEthDate(ethDate).toISOString().split('T')[0]}
 ============
