@@ -93,7 +93,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                 When you extend this deposit, {formatLargeUsdc(depositAmountBeingExtended)} USDC will be
                 moved from the old lending pool ending {deposit.endDate.toLocaleString()} to the new lending pool ending {newTimestamp.toLocaleString()}. You will collect earned ETH yield of {formatWad(deposit.positionEthYield, 8)}.</p>
 
-
+            {/*divider*/}
             <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
 
             {/*receipt start*/}
@@ -120,9 +120,9 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                       </span>
                 </div>
               </div>
-
+            {/*divider*/}
               <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
-             {/*approve and modals deposit*/}
+             {/*approve and deposit modals*/}
              {(allowanceIsLoading) ? (
                <p>Loading balance...</p>
              ) : (

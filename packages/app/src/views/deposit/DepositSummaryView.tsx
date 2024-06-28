@@ -156,7 +156,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                       <>
                         <p className='text-lg font-bold pb-2 text-left'>
                           Deposit Successful!</p>
-                        <div className='p-20'>
+                        <div className='flex items-center justify-center p-20'>
                           <div role='status' className='w-[250px] h-[250px] m-[20px]'>
                               <Image src='/checkmark.svg' alt='Loading' className='w-full h-full' width='250' height='250' />
                               <span className='sr-only'>Loading...</span>
@@ -168,7 +168,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                       <>
                         <p className='text-lg font-bold pb-2 text-left'>
                           Deposit Unsuccessful</p>
-                        <div className='p-20'>
+                        <div className='flex items-center justify-center p-20'>
                           <div role="status" className="w-[250px] h-[250px] m-[20px]">
                             <Image src="/exclamation.svg" alt="Loading" className="w-full h-full" width="250" height="250"/>
                             <span className="sr-only">Loading...</span>
@@ -238,17 +238,16 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                 {/*total section*/}
                 {!lendActionInitiated && !depositButtonPressed  && (
                   <div>
-                    <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
-                      <div className="flex flex-row justify-between ">
-                        <span className="">Current USDC balance</span>
+                    <div className='flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light'>
+                      <div className='flex flex-row justify-between '>
+                        <span className=''>Current USDC balance</span>
                         <span>{usdcBalanceData?.displayValue} USDC</span>
                       </div>
                     </div>
 
                     {/*approve and deposit buttons*/}
-                    {!approvalCompleted && (!usdcBalanceData || !allowance || BigNumber.from(allowance).lt(ethers.utils.parseUnits(depositAmount, 6))) ?  (
-                        <>
-                          <Web3Button
+                    {!approvalCompleted && (!usdcBalanceData || !allowance || BigNumber.from(allowance).lt(ethers.utils.parseUnits(depositAmount, 6))) ? (
+                     <Web3Button
                             contractAddress={usdcAddress}
                             contractAbi={usdcAbi}
                             isDisabled={approveUSDCActionInitiated}
@@ -293,9 +292,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                                   Approving USDC...
                                 </> : 'Approve USDC'}
                           </Web3Button>
-                        </>
                         ) : (
-                          <>
                             <Web3Button contractAddress={lendingPlatformAddress}
                               contractAbi = {lendingPlatformAbi}
                               isDisabled={lendActionInitiated}
@@ -382,7 +379,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                             >
                               Deposit USDC
                             </Web3Button>
-                          </>
+
                         )
                     }
                   </div>
