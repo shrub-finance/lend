@@ -65,7 +65,9 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   return (
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col">
+        {/*outer card content*/}
         <div className='mt-6 self-start'>
+          {/*errors*/}
           {localError && (
             <div
               className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50   flex items-center"
@@ -78,7 +80,8 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
               <span>{localError}</span>
             </div>
           )}
-          <h1 className=" text-4xl font-medium ">
+          {/*back button*/}
+          <h1 className=" text-4xl font-medium">
             <button
               className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full " onClick={backtoBorrowDuration}>
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
@@ -91,15 +94,16 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
             Summary
           </h1>
         </div>
+        {/*card starts*/}
         <div className="relative group mt-4 w-full min-w-[500px]">
-          <div className="absolute -inset-1 shadow-shrub border rounded-3xl "></div>
+          <div className="absolute -inset-1 shadow-shrub border rounded-3xl"></div>
           <div className="flex flex-col ">
             <div className="card w-full">
-              <div className="card-body ">
-                {!borrowActionInitiated && <div>
-                  <p className="text-lg font-bold pb-2 text-left">
-                    Borrow
-                  </p>
+              <div className="card-body">
+                {/*header*/}
+                {!borrowActionInitiated &&
+                  <div>
+                  <p className="text-lg font-bold pb-2 text-left">Borrow</p>
                   <div className="w-full text-xl font-semibold flex flex-row">
                     <span className="text-4xl  font-medium text-left w-[500px]">{amount} USDC</span>
                     <Image alt="usdc icon" src="/usdc-logo.svg" className="w-10 inline align-baseline" width="40" height="40"/>
@@ -108,7 +112,9 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     are borrowing <strong>{amount} USDC</strong> and
                     giving <strong>{ethers.utils.formatEther(requiredCollateral)} ETH</strong> as collateral. The collateral will be locked until
                     the borrow is fully paid, and then returned to you.</p>
-                </div>}
+                </div>
+                }
+                {/*success and failure states*/}
                 {borrowActionInitiated &&
                   <>
                     {/*spinner */}
@@ -128,9 +134,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                           <span className='sr-only'>Loading...</span>
                         </p>
                       </>
-
                     )}
-
                     {latestBorrow?.status === 'failed' && (
                       <>
                         <p className='text-lg font-bold pb-2 text-left'>
@@ -141,14 +145,14 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                           <span className='sr-only'>Loading...</span>
                         </p>
                       </>
-
                     )}
                   </>}
-
+                {/*divider*/}
                 <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
 
                 {/*receipt start*/}
-                {(!borrowActionInitiated || latestBorrow?.status === 'pending') && <div>
+                {(!borrowActionInitiated || latestBorrow?.status === 'pending') &&
+                  <div>
                   <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row  justify-between">
                       <span className="">Required Collateral</span>
@@ -183,13 +187,14 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   </div>
                   {/*divider*/}
                   <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
-                  {/*total*/}
+                  {/*total section*/}
                   <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row justify-between ">
                       <span className="">Due today</span>
                       <span>{ethers.utils.formatEther(requiredCollateral)} ETH</span>
                     </div>
                   </div>
+                  {/*approve and borrow buttons*/}
                   <Web3Button contractAddress={lendingPlatformAddress}
                               isDisabled={latestBorrow?.status === "pending"}
                               contractAbi={lendingPlatformAbi}
@@ -263,19 +268,18 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   </Web3Button>
                 </div>
                 }
-
+                {/*view in dashboard button*/}
                 {(borrowActionInitiated || latestBorrow?.status === "pending") && <button onClick={handleViewDash}
                                           className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View
                   in Dashboard
                 </button>}
-
+                {/*cancel button*/}
                 {!borrowActionInitiated && latestBorrow?.status !== "pending" && <button onClick={onCancel}
                                            className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel</button>}
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
 

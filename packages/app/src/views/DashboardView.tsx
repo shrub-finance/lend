@@ -368,9 +368,9 @@ export const DashboardView: FC = ({}) => {
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className='flex items-center justify-center space-x-2 h-full p-2'>
                                         <button type='button'
-                                                style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
+                                                // style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
-                                                disabled={storeDeposit.lendingPool.timestamp && fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).getTime() === store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1].getTime()}
+                                                disabled={storeDeposit.lendingPool.timestamp && fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).getTime() === store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1].getTime() || !!storeDeposit.tempData || !!storeDeposit.status }
                                                 onClick={() => {
                                                   setExtendDepositModalOpen(true);
                                                   setSelectedDeposit(deposit);
@@ -380,9 +380,17 @@ export const DashboardView: FC = ({}) => {
                                         </button>
                                         {!storeDeposit.lendingPool.finalized ?
                                         <a onMouseOver={() => setCurrentHovered(index)}
-                                           onMouseOut={() => setCurrentHovered(null)} href='https://app.uniswap.org/'
-                                           target='_blank' type='button'
-                                           className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5' style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
+                                           onMouseOut={() => setCurrentHovered(null)}
+                                           href='https://app.uniswap.org/'
+                                           target='_blank'
+                                           type='button'
+                                           // style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
+                                           className={`flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 ${storeDeposit.tempData || storeDeposit.status ? 'pointer-events-none opacity-50 cursor-not-allowed' : ''}`}
+                                           onClick={(e) => {
+                                             if (storeDeposit.tempData || storeDeposit.status) {
+                                               e.preventDefault();
+                                             }
+                                           }}
                                         >
                                           {currentHovered === index ?
                                           <Image src='/up-right-arrow-light.svg' alt='down arrow' width={20} height={20}
@@ -392,8 +400,9 @@ export const DashboardView: FC = ({}) => {
                                           Trade</a>
                                        :
                                           <button type='button'
-                                                  style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
-                                                className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100      '
+                                                // style={{ visibility: storeDeposit.tempData || storeDeposit.status  ? 'hidden' : 'visible' }}
+                                                className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100'
+                                                disabled={!!storeDeposit.tempData || !!storeDeposit.status}
                                                 onClick={() => {
                                                   setWithdrawModalOpen(true);
                                                   setSelectedDeposit(deposit);
@@ -549,9 +558,9 @@ export const DashboardView: FC = ({}) => {
                                     <td className='px-1 py-4 text-sm font-bold'>
                                       <div className='flex items-center justify-center space-x-2 h-full p-2'>
                                         <button type='button'
-                                                style={{ visibility: storeBorrow.tempData || storeBorrow.status ? 'hidden' : 'visible' }}
+                                                // style={{ visibility: storeBorrow.tempData || storeBorrow.status ? 'hidden' : 'visible' }}
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100'
-                                                disabled={store.platformData.activePoolTimestamps.length && store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime()}
+                                                disabled={store.platformData.activePoolTimestamps.length && store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime() || !!storeBorrow.tempData || !!storeBorrow.status}
                                                 onClick={() => {
                                                   setExtendBorrowModalOpen(true);
                                                   setSelectedBorrow(borrow);
@@ -563,8 +572,9 @@ export const DashboardView: FC = ({}) => {
                                           setRepayModalOpen(true);
                                           setSelectedBorrowForRepay(borrow);
                                         }}
-                                                style={{ visibility: storeBorrow.tempData || storeBorrow.status ? 'hidden' : 'visible' }}
-                                                className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5'>
+                                        // style={{ visibility: storeBorrow.tempData || storeBorrow.status ? 'hidden' : 'visible' }}
+                                        className='flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5'
+                                        disabled={!!storeBorrow.tempData || !!storeBorrow.status}>
                                           Repay
                                         </button>
                                       </div>
