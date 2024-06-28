@@ -91,7 +91,9 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   return (
     <div className="md:hero mx-auto p-4">
       <div className="md:hero-content flex flex-col">
+        {/*outer card content*/}
         <div className="mt-6 self-start">
+          {/*errors*/}
           {localError && (
             <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50   flex items-center" role="alert">
               <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24">
@@ -100,6 +102,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
               <span>{localError}</span>
             </div>
           )}
+          {/*back button*/}
           {!lendActionInitiated && (
             <h1 className="text-4xl font-medium">
               <button onClick={backOnDeposit} className="w-[56px] h-[40px] bg-shrub-grey-light3 rounded-full ">
@@ -111,45 +114,42 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
             </h1>
           )}
         </div>
-
+        {/*card starts*/}
         <div className="relative group mt-4 w-full min-w-[604px] min-h-[631px]">
           <div className="absolute -inset-1 shadow-shrub border rounded-3xl"></div>
           <div className="flex flex-col">
             <div className="card w-full text-left">
               <div className="card-body">
+                {/*header*/}
                 {!lendActionInitiated  && (
                   <>
-                    <p className="text-lg font-bold pb-2">Deposit amount</p>
-                    <div className="w-full text-xl font-semibold flex flex-row">
-                      <span className="text-4xl font-medium text-left w-[500px]">
+                    <p className='text-lg font-bold pb-2'>Deposit amount</p>
+                    <div className='w-full text-xl font-semibold flex flex-row'>
+                      <span className='text-4xl font-medium text-left w-[500px]'>
                         {depositAmount} USDC
                       </span>
-                      <Image
-                        src="/usdc-logo.svg"
-                        className="w-10 inline align-baseline"
-                        alt={"usdc logo"}
-                        width={10}
-                        height={10}
-                      />
+                      <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10}
+                             height={10} />
                     </div>
+                    <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>You
+                      are depositing <span className="font-bold">{depositAmount} USDC</span>. The
+                      deposit will be locked until {endDate.toDateString()}, and then returned to you with the ETH yield earned at {estimatedAPY}%.</p>
                   </>
                 )}
-
-                {/* spinner */}
-                {(depositButtonPressed || latestDeposit?.status === "pending") && (
+                {/*success and failure states*/}
+                {(depositButtonPressed || latestDeposit?.status === 'pending') && (
                   <>
                     {latestDeposit?.status === 'pending' && !depositButtonPressed && (
                       <p className='text-lg font-bold pb-2 text-left'>Deposit Submitted</p>
                     )}
                     <div className='flex items-center justify-center p-20'>
+                      {/*spinner*/}
                       <div role='status' className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
                         <div className='w-[205px] h-[205px] rounded-full bg-white'></div>
                       </div>
                     </div>
                   </>
                 )}
-
-
                 {lendActionInitiated && (
                   <>
                     {latestDeposit?.status === 'confirmed' && (
@@ -178,11 +178,11 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                       )}
                   </>
                 )}
-
+                {/*divider*/}
                 <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
 
                 {/*receipt start*/}
-                {!lendActionInitiated && !depositButtonPressed  &&
+                {!lendActionInitiated && !depositButtonPressed &&
                   <div>
                     <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                       <div className="flex flex-row  justify-between">
@@ -231,11 +231,11 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                         </span>
                       </div>
                     </div>
+                    {/*divider*/}
                     <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
                   </div>
                 }
-
-                {/*total*/}
+                {/*total section*/}
                 {!lendActionInitiated && !depositButtonPressed  && (
                   <div>
                     <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
@@ -245,7 +245,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                       </div>
                     </div>
 
-                    {/*approve and deposit*/}
+                    {/*approve and deposit buttons*/}
                     {!approvalCompleted && (!usdcBalanceData || !allowance || BigNumber.from(allowance).lt(ethers.utils.parseUnits(depositAmount, 6))) ?  (
                         <>
                           <Web3Button
@@ -296,8 +296,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                         </>
                         ) : (
                           <>
-                            <Web3Button
-                              contractAddress={lendingPlatformAddress}
+                            <Web3Button contractAddress={lendingPlatformAddress}
                               contractAbi = {lendingPlatformAbi}
                               isDisabled={lendActionInitiated}
                               className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
@@ -388,9 +387,9 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     }
                   </div>
                 )}
-
+                {/*tx explorer button*/}
                 {txHash && <TransactionButton txHash={txHash} chainId={chainId} />}
-
+                {/*confirm in wallet button*/}
                 {((depositButtonPressed && !lendActionInitiated) || (approveButtonPressed && !approveUSDCActionInitiated)) && (
                   <button
                     disabled={true}
@@ -398,8 +397,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     Confirm in Wallet...
                   </button>
                 )}
-
-
+                {/*view in dashboard button*/}
                 {(lendActionInitiated || latestDeposit?.status==="confirmed") &&
                   <button
                     onClick={handleViewDash}
@@ -407,7 +405,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     View in Dashboard
                   </button>
                 }
-
+                {/*cancel button*/}
                 {(!lendActionInitiated && !depositButtonPressed && !approveButtonPressed) &&
                   <button
                     onClick={backOnDeposit}
