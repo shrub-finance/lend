@@ -7,7 +7,7 @@ import {
   toEthDate,
   truncateEthAddress
 } from '../../utils/ethMethods';
-import { lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress } from '../../utils/contracts';
+import { getContractAbis, getContractAddresses } from '../../utils/contracts';
 import { BigNumber, ethers } from 'ethers';
 import {
   useAddress,
@@ -19,6 +19,7 @@ import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages
 import {Deposit, DepositObj} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
 import useActiveLendingPools from '../../hooks/useActiveLendingPools';
+import {getChainInfo} from "../../utils/chains";
 
 interface ExtendDepositSummaryProps {
   deposit: DepositObj;
@@ -36,6 +37,9 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
     onExtendDepositActionChange
   }
 ) => {
+  const { chainId } = getChainInfo();
+  const {usdcAddress, lendingPlatformAddress} = getContractAddresses(chainId);
+  const {usdcAbi, lendingPlatformAbi} = getContractAbis(chainId);
   const {
     getActiveLendingPools,
     activeLendingPoolsLoading,

@@ -2,32 +2,29 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const { deployments, getNamedAccounts } = hre;
-    const { deploy } = deployments;
-
+    const { getNamedAccounts, deployAndVerify } = hre;
     const { deployer } = await getNamedAccounts();
 
   // CONFIGURATION
-  await deploy("Constants", { from: deployer, log: true, args: [] });
-  await deploy("Configuration", { from: deployer, log: true, args: [] });
+  const constants = await deployAndVerify("Constants", { from: deployer, log: true, args: [] });
+  const configuration = await deployAndVerify("Configuration", { from: deployer, log: true, args: [] });
 
   // MATH
-  await deploy("PercentageMath", { from: deployer, log: true, args: [] });
-  await deploy("WadRayMath", { from: deployer, log: true, args: [] });
-  await deploy("ShrubLendMath", { from: deployer, log: true, args: [] });
+  const percentageMath = await deployAndVerify("PercentageMath", { from: deployer, log: true, args: [] });
+  const wadRayMath = await deployAndVerify("WadRayMath", { from: deployer, log: true, args: [] });
+  const shrubLendMath = await deployAndVerify("ShrubLendMath", { from: deployer, log: true, args: [] });
 
   // VIEW
-  await deploy("HelpersLogic", { from: deployer, log: true, args: [] });
-  await deploy("ShrubView", { from: deployer, log: true, args: [] });
+  const helpersLogic = await deployAndVerify("HelpersLogic", { from: deployer, log: true, args: [] });
+  const shrubView = await deployAndVerify("ShrubView", { from: deployer, log: true, args: [] });
 
   // LOGIC
-  // await deploy("AdminLogic", { from: deployer, log: true, args: [] });
-  await deploy("BorrowInternalLogic", { from: deployer, log: true, args: [] });
-  await deploy("BorrowLogic", { from: deployer, log: true, args: [] });
-  await deploy("DepositLogic", { from: deployer, log: true, args: [] });
-  await deploy("ExtendBorrowLogic", { from: deployer, log: true, args: [] });
-  await deploy("ExtendSupplyLogic", { from: deployer, log: true, args: [] });
-  await deploy("SupplyLogic", { from: deployer, log: true, args: [] });
+  const borrowInternalLogic = await deployAndVerify("BorrowInternalLogic", { from: deployer, log: true, args: [] });
+  const borrowLogic = await deployAndVerify("BorrowLogic", { from: deployer, log: true, args: [] });
+  const depositLogic = await deployAndVerify("DepositLogic", { from: deployer, log: true, args: [] });
+  const extendBorrowLogic = await deployAndVerify("ExtendBorrowLogic", { from: deployer, log: true, args: [] });
+  const extendSupplyLogic = await deployAndVerify("ExtendSupplyLogic", { from: deployer, log: true, args: [] });
+  const supplyLogic = await deployAndVerify("SupplyLogic", { from: deployer, log: true, args: [] });
 
 };
 export default func;

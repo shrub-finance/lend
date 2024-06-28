@@ -2,13 +2,11 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts } = hre;
-  const { deploy } = deployments;
-
+  const { deployments, getNamedAccounts, deployAndVerify } = hre;
   const { deployer } = await getNamedAccounts();
   const allDeployments = await deployments.all();
 
-  await deploy("AdminLogic", {
+  await deployAndVerify("AdminLogic", {
     from: deployer,
     log: true,
     args: [],
@@ -16,7 +14,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       HelpersLogic: allDeployments.HelpersLogic.address,
     }
   });
-  await deploy("ExtendLogic", {
+  await deployAndVerify("ExtendLogic", {
     from: deployer,
     log: true,
     args: [],
@@ -25,7 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ShrubView: allDeployments.ShrubView.address,
     }
   });
-  await deploy("RepayLogic", {
+  await deployAndVerify("RepayLogic", {
     from: deployer,
     log: true,
     args: [],
@@ -33,7 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ShrubView: allDeployments.ShrubView.address,
     }
   });
-  await deploy("LiquidationLogic", {
+  await deployAndVerify("LiquidationLogic", {
     from: deployer,
     log: true,
     args: [],
@@ -45,4 +43,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.id = "deploy_libraries_with_dep"; // id to prevent re-execution
+func.dependencies = ["Libraries"];
 func.tags = ["LibrariesWithDep"];

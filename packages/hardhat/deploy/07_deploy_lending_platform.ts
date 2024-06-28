@@ -2,9 +2,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts, ethers } = hre;
-  const { deploy, log } = deployments;
-
+  const { deployments, getNamedAccounts, ethers, deployAndVerify } = hre;
+  const { log } = deployments;
   const { deployer, shrubTreasury } = await getNamedAccounts();
   const borrowPositionTokenDeployment = await deployments.get('BorrowPositionToken');
   const allDeployments = await deployments.all();
@@ -18,7 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       shrubTreasury
   ];
 
-  const deployResult = await deploy("LendingPlatform", {
+  const deployResult = await deployAndVerify("LendingPlatform", {
     from: deployer,
     log: true,
     libraries: {
@@ -52,4 +51,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.id = "deploy_lending_platform"; // id to prevent re-execution
+func.dependencies = [
+  "Libraries",
+  "LibrariesWithDep",
+  "MockUsdc",
+  "MockAeth",
+  "MockAaveV3",
+  "MockChainlinkAggregator",
+  "BorrowPositionToken"
+];
 func.tags = ["LendingPlatform"];

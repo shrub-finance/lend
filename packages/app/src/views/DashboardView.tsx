@@ -6,7 +6,7 @@ import {
 } from "@thirdweb-dev/react";
 import { getBlock } from "@thirdweb-dev/sdk";
 import { toEthDate, fromEthDate } from '@shrub-lend/common'
-import { chainlinkAggregatorAbi, chainlinkAggregatorAddress } from '../utils/contracts';
+import { getContractAbis, getContractAddresses } from '../utils/contracts';
 import { ethers } from 'ethers';
 import Image from "next/image";
 import { secondsInDay} from "@shrub-lend/common";
@@ -39,7 +39,11 @@ import useEthPriceFromChainlink from '../hooks/useEthPriceFromChainlink';
 import WithdrawView from './modals/WithdrawView';
 import RepayView from './modals/RepayView';
 import {UserHistoryView} from "./user-history/UserHistoryView";
+import {getChainInfo} from "../utils/chains";
 export const DashboardView: FC = ({}) => {
+  const { chainId } = getChainInfo();
+  const {chainlinkAggregatorAddress} = getContractAddresses(chainId);
+  const {chainlinkAggregatorAbi} = getContractAbis(chainId);
 
   const wallet = useConnectedWallet();
   const [extendDepositModalOpen, setExtendDepositModalOpen] = useState(false);
@@ -92,7 +96,7 @@ export const DashboardView: FC = ({}) => {
 
   useEffect(() => {
         // console.log('running block useEffect')
-    if (walletAddress && process.env.NEXT_PUBLIC_ENVIRONMENT==='development') {
+    if (walletAddress && process.env.NEXT_PUBLIC_CHAIN_NAME === 'localhost') {
       getBlockTest()
     }
   }, [walletAddress]);

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages";
 import {useBalance, useContract} from "@thirdweb-dev/react";
-import {lendingPlatformAbi, lendingPlatformAddress} from "../../utils/contracts";
+import {getContractAbis, getContractAddresses} from "../../utils/contracts";
 import {NATIVE_TOKEN_ADDRESS} from "@thirdweb-dev/sdk";
 import {
   EXCHANGE_RATE_BUFFER,
@@ -16,6 +16,7 @@ import Image from 'next/image'
 import { interestRates, Zero } from '../../constants';
 import { useValidation } from '../../hooks/useValidation';
 import ErrorDisplay from '../../components/ErrorDisplay';
+import {getChainInfo} from "../../utils/chains";
 
 interface BorrowViewProps {
   onBorrowViewChange: (interestRate, amount) => void;
@@ -24,6 +25,9 @@ interface BorrowViewProps {
 }
 
 export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requiredCollateral, setRequiredCollateral }) => {
+  const { chainId } = getChainInfo();
+  const {lendingPlatformAddress} = getContractAddresses(chainId);
+  const {lendingPlatformAbi} = getContractAbis(chainId);
 
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
@@ -84,7 +88,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
 
   useEffect(() => {
 
-      const determineRequiredCollateral = async () => {
+    async function determineRequiredCollateral () {
       const ltv = interestToLTV[selectedInterestRate];
       const usdcUnits = ethers.utils.parseUnits(borrowAmount, 6);
       const coll: BigNumber = await lendingPlatform.call('requiredCollateral', [ltv, usdcUnits]);

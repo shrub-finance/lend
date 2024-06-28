@@ -19,7 +19,7 @@
     "test": "yarn workspace @shrub-lend/hardhat test",
     "compile": "yarn workspace @shrub-lend/hardhat compile",
     "console": "yarn workspace @shrub-lend/hardhat console",
-    "contracts": "yarn workspace @shrub-lend/hardhat deploy",
+    "contracts": "yarn workspace @shrub-lend/hardhat local-node",
     "graph-node": "yarn workspace @shrub-lend/hardhat start-graph-node",
     "graph-node-restart": "yarn workspace @shrub-lend/hardhat restart-graph-node",
     "subgraph": "yarn workspace @shrub-lend/subgraph deploy-again-local",

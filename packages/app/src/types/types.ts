@@ -1,4 +1,6 @@
 import { ethers } from 'ethers'
+import {ThirdwebSDKProviderProps} from "@thirdweb-dev/react";
+import {Chain} from "@thirdweb-dev/chains";
 
 
 export type PendingStatuses = "pending" | "confirmed" | "failed" | "extending" | "extended" |"withdrawing" | "withdrawn" |"repaying" | "repaid" |"partialRepaying" | "partialRepaid";
@@ -101,4 +103,13 @@ export type UserFinancialDataAction =
   | { type: "UPDATE_BORROW_STATUS"; payload: { address: string; id: string; status: PendingStatuses; } }
   | { type: "SET_ACTIVE_POOLS"; payload: { activePoolTimestamps: Date[]} };
 
+// Extract the `activeChain` type from `ThirdwebSDKProviderProps`
+type ExtractedActiveChainType<TChains extends Chain[]> = ThirdwebSDKProviderProps<TChains>['activeChain'];
 
+// Define the ChainInfo type
+export type ChainInfo<TChains extends Chain[]> = {
+  chainId: number;
+  subgraphUrl: string;
+  rpcUrl: string;
+  thirdwebActiveChain: ExtractedActiveChainType<TChains>;
+};

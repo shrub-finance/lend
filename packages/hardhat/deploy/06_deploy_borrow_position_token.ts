@@ -1,11 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import {usdcAddress} from "@shrub-lend/app/src/utils/contracts";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts, ethers } = hre;
-  const { deploy } = deployments;
-
+  const { deployments, getNamedAccounts, deployAndVerify } = hre;
   const { deployer } = await getNamedAccounts();
   const allDeployments = await deployments.all();
 
@@ -13,7 +10,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const SYMBOL = "SBPT";
   const usdcAddress = allDeployments.USDCoin.address;
 
-  await deploy("BorrowPositionToken", {
+  await deployAndVerify("BorrowPositionToken", {
     from: deployer,
     log: true,
     args: [NAME, SYMBOL, usdcAddress],
@@ -29,3 +26,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func;
 func.id = "deploy_borrow_position_token"; // id to prevent re-execution
 func.tags = ["BorrowPositionToken"];
+func.dependencies = ["MockUsdc", "Libraries"];

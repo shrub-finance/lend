@@ -1,13 +1,6 @@
 import {FC, useEffect, useState} from "react"
-import {
-  useAddress,
-  useBalance,
-  useChainId,
-  useContract,
-  useContractRead,
-  Web3Button,
-} from '@thirdweb-dev/react';
-import {lendingPlatformAbi, lendingPlatformAddress, usdcAbi, usdcAddress} from "../../utils/contracts"
+import {useAddress, useBalance, useContract, useContractRead, Web3Button} from "@thirdweb-dev/react"
+import { getContractAbis, getContractAddresses } from "../../utils/contracts"
 import {fromEthDate, truncateEthAddress} from "../../utils/ethMethods"
 import {BigNumber, ethers} from "ethers"
 import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages"
@@ -18,6 +11,7 @@ import { Deposit } from '../../types/types'
 import useActiveLendingPools from "hooks/useActiveLendingPools"
 import TransactionButton from '../../components/TxButton';
 import Spinner from '../../components/Spinner';
+import {getChainInfo} from "../../utils/chains";
 
 
 interface LendSummaryViewProps {
@@ -28,6 +22,9 @@ interface LendSummaryViewProps {
 }
 
 export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, timestamp, estimatedAPY, depositAmount}) => {
+  const { chainId } = getChainInfo();
+  const {usdcAddress, lendingPlatformAddress} = getContractAddresses(chainId);
+  const {usdcAbi, lendingPlatformAbi} = getContractAbis(chainId);
 
   const router = useRouter();
   const {store, dispatch} = useFinancialData();
@@ -56,7 +53,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const endDate = fromEthDate(timestamp);
   const latestDeposit = getUserData(store, walletAddress).deposits.find(deposit => deposit.id === latestDepositId && deposit.tempData);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const chainId = useChainId();
   const {
     contract: usdc,
     isLoading: usdcIsLoading,

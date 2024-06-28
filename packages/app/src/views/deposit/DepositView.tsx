@@ -1,7 +1,7 @@
 import {FC, useEffect, useState} from "react";
 import {handleErrorMessagesFactory} from "../../components/HandleErrorMessages";
-import { useAddress, useBalance } from '@thirdweb-dev/react';
-import {usdcAddress} from "../../utils/contracts";
+import {useBalance} from '@thirdweb-dev/react';
+import { getContractAddresses } from "../../utils/contracts";
 import {toEthDate} from '@shrub-lend/common';
 import {calculateLockupPeriod} from "@shrub-lend/common";
 import Image from 'next/image';
@@ -9,6 +9,7 @@ import { oneMonth, sixMonth, threeMonth, twelveMonth, Zero } from '../../constan
 import {useFinancialData} from "../../components/FinancialDataContext";
 import { useValidation } from '../../hooks/useValidation';
 import ErrorDisplay from '../../components/ErrorDisplay';
+import {getChainInfo} from "../../utils/chains";
 import { ethers } from 'ethers';
 
 
@@ -18,6 +19,8 @@ interface DepositViewProps {
 }
 
 export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
+  const { chainId } = getChainInfo();
+  const {usdcAddress} = getContractAddresses(chainId);
 
   const {data: usdcBalance, isLoading: usdcBalanceIsLoading} = useBalance(usdcAddress);
   const format = (val: string) => val;

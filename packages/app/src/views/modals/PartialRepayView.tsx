@@ -7,11 +7,12 @@
   import PartialRepaySummaryView from './PartialRepaySummaryView';
   import { BorrowObj } from "../../types/types";
   import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
-  import { chainlinkAggregatorAbi, chainlinkAggregatorAddress } from '../../utils/contracts';
+  import { getContractAbis, getContractAddresses } from '../../utils/contracts';
   import { ethers } from 'ethers';
   import { Zero } from '../../constants';
   import { useValidation } from '../../hooks/useValidation';
   import ErrorDisplay from '../../components/ErrorDisplay';
+  import {getChainInfo} from "../../utils/chains";
 
   interface PartialRepayViewProps {
     borrow: BorrowObj;
@@ -21,6 +22,9 @@
   }
 
   const PartialRepayView: React.FC<PartialRepayViewProps> = ({ borrow , isFullPay, partialPaymentRequested , setPartialPaymentRequested}) => {
+    const { chainId } = getChainInfo();
+    const {chainlinkAggregatorAddress} = getContractAddresses(chainId);
+    const {chainlinkAggregatorAbi} = getContractAbis(chainId);
 
     const {ethPrice, isLoading, error} = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
     const [repayActionInitiated, setRepayActionInitiated] = useState(false);

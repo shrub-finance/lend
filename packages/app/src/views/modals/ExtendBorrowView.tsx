@@ -11,18 +11,13 @@ import {
   toEthDate
 } from '../../utils/ethMethods';
 import { interestRates, Zero } from '../../constants';
-import { useContract } from '@thirdweb-dev/react';
-import {
-  chainlinkAggregatorAbi,
-  chainlinkAggregatorAddress,
-  lendingPlatformAbi,
-  lendingPlatformAddress
-} from '../../utils/contracts';
+import { getContractAbis, getContractAddresses } from '../../utils/contracts';
 import ExtendBorrowSummaryView from './ExtendBorrowSummaryView';
 import { formatDate } from '@shrub-lend/common';
 import {BorrowObj} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
 import useEthPriceFromChainlink from "../../hooks/useEthPriceFromChainlink";
+import {getChainInfo} from "../../utils/chains";
 
 interface ExtendBorrowViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
@@ -32,6 +27,9 @@ interface ExtendBorrowViewProps {
 const ExtendBorrowView: React.FC<ExtendBorrowViewProps & { onModalClose: (date: Date) => void }> = ({
 setIsModalOpen, borrow
 })=> {
+  const { chainId } = getChainInfo();
+  const {chainlinkAggregatorAddress} = getContractAddresses(chainId);
+  const {chainlinkAggregatorAbi} = getContractAbis(chainId);
   const { store, dispatch } = useFinancialData();
   // const [selectedInterestRate, setSelectedInterestRate] = useState('8');
   const [extendActionInitiated, setExtendBorrowActionInitiated] = useState(false);

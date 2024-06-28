@@ -7,14 +7,15 @@ import {
   toEthDate,
   truncateEthAddress,
 } from '../../utils/ethMethods';
-import { lendingPlatformAbi, lendingPlatformAddress} from '../../utils/contracts';
+import { getContractAbis, getContractAddresses } from '../../utils/contracts';
 import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
 import { Deposit } from '../../types/types';
-import { useAddress, Web3Button } from '@thirdweb-dev/react';
+import {useAddress, Web3Button} from '@thirdweb-dev/react';
 import {DepositObj} from "../../types/types";
 import { useFinancialData } from '../../components/FinancialDataContext';
 import { useQuery } from '@apollo/client';
 import { GET_LENDINGPOOL_QUERY } from '../../constants/queries';
+import {getChainInfo} from "../../utils/chains";
 
 interface WithdrawViewProps {
   deposit: DepositObj
@@ -27,6 +28,9 @@ const WithdrawView: React.FC<WithdrawViewProps & { onModalClose: (date: Date) =>
     setIsModalOpen
     }) =>
 {
+  const { chainId } = getChainInfo();
+  const {lendingPlatformAddress} = getContractAddresses(chainId);
+  const {lendingPlatformAbi} = getContractAbis(chainId);
 
   const closeModalAndPassData = () => {setIsModalOpen(false);};
   const walletAddress = useAddress();

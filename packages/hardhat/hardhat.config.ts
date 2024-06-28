@@ -1,4 +1,5 @@
-import {extendEnvironment, HardhatUserConfig} from "hardhat/config";
+import {extendConfig, extendEnvironment} from "hardhat/config";
+import {HardhatConfig, HardhatUserConfig} from "hardhat/types";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
 import "hardhat-contract-sizer";
@@ -7,10 +8,10 @@ import "./hardhat-tasks";
 import "./hardhat-tests";
 
 import dotenv from "dotenv";
+import {DeployOptions} from "hardhat-deploy/dist/types";
 dotenv.config();
 
 extendEnvironment((hre) => {
-// @ts-ignore
     hre.init = async() =>  {
         const {ethers, deployments, getNamedAccounts} = hre;
         const { account1, account2, account3, account4, account5, account6, deployer, shrubTreasury } = await getNamedAccounts()
@@ -45,6 +46,23 @@ extendEnvironment((hre) => {
         global.shrubTreasury = shrubTreasury;
     }
 });
+extendEnvironment((hre) => {
+  hre.deployAndVerify = async(name: string, options: DeployOptions) => {
+    const { deployments, run, network } = hre;
+    const { deploy } = deployments;
+    const deployResult = await deploy(name, options);
+    if (process.env.ETHERSCAN_VERIFY !== "true" || ['hardhat', 'localhost'].includes(network.name)) {
+      // Skip verification if local testing
+      return deployResult;
+    }
+    await run('verify:verify', {
+      address: deployResult.address,
+      constructorArgsParams: deployResult.args,
+      libraries: deployResult.libraries
+    })
+    return deployResult;
+  }
+})
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -101,6 +119,32 @@ if (
       process.env.HOLESKY_TREASURY_SECRET_KEY
     ]
   };
+}
+
+// On purpose using same accounts for Holesky and Sepolia
+if (
+  process.env.HOLESKY_SECRET_KEY &&
+  process.env.HOLESKY_TREASURY_SECRET_KEY &&
+  config.networks
+) {
+  config.networks.sepolia = {
+    url: "https://11155111.rpc.thirdweb.com",
+    chainId: 11155111,
+    accounts: [
+      process.env.HOLESKY_SECRET_KEY,
+      process.env.HOLESKY_TREASURY_SECRET_KEY
+    ]
+  };
+}
+
+if (process.env.ETHERSCAN_SEPOLIA_KEY) {
+  if (!config.etherscan) {
+    config.etherscan = {apiKey: {sepolia: process.env.ETHERSCAN_SEPOLIA_KEY}}
+  } else if (!config.etherscan.apiKey) {
+    config.etherscan.apiKey = {sepolia: process.env.ETHERSCAN_SEPOLIA_KEY}
+  } else if (typeof config.etherscan.apiKey !== 'string') {
+    config.etherscan.apiKey = {...config.etherscan.apiKey, sepolia: process.env.ETHERSCAN_SEPOLIA_KEY}
+  }
 }
 
 export default config;
