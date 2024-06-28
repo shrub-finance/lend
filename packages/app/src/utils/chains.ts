@@ -23,7 +23,7 @@ export function getChainInfo(): ChainInfo<Chain[]> {
   if (chainName === 'sepolia') {
     return {
       chainId: 11155111,
-      subgraphUrl: 'https://api.studio.thegraph.com/query/77063/shrub-lend-sepolia/v0.0.1',
+      subgraphUrl: 'https://api.studio.thegraph.com/query/77063/shrub-lend-sepolia/2024.06.27',
       rpcUrl: 'https://11155111.rpc.thirdweb.com',
       thirdwebActiveChain: {
           chainId: 11155111,
