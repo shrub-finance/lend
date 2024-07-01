@@ -1,13 +1,19 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
+import MockAaveV3Abi from "../abis/WrappedTokenGatewayV3.json";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts, ethers, deployAndVerify } = hre;
+  const { deployments, getNamedAccounts, ethers, deployAndVerify, network } = hre;
   const { log } = deployments;
 
   const { deployer } = await getNamedAccounts();
 
   const aETHDeployment = await deployments.get('AETH');
+
+  if (network.name === 'sepolia') {
+    await deployments.save('MockAaveV3', {abi: MockAaveV3Abi, address: '0x387d311e47e80b498169e6fb51d3193167d89F7D'})
+    return;
+  }
 
   const deployResult = await deployAndVerify("MockAaveV3", {
     from: deployer,
