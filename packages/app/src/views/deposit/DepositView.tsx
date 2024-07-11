@@ -11,6 +11,7 @@ import { useValidation } from '../../hooks/useValidation';
 import ErrorDisplay from '../../components/ErrorDisplay';
 import {getChainInfo} from "../../utils/chains";
 import { ethers } from 'ethers';
+import Tooltip from "components/Tooltip";
 
 
 
@@ -232,6 +233,7 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
                   </div>
                 )}
                 {/*CTA*/}
+                <Tooltip text="Enter amount to proceed" showOnDisabled>
                 <button
                   className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
@@ -241,6 +243,7 @@ export const DepositView: FC<DepositViewProps> = ({onDepositViewChange}) => {
                   disabled={Number(depositAmount) <= 0 || !timestamp || isValidationError}>
                   Confirm
                 </button>
+                </Tooltip>
               </div>
             </div>
           </div>

@@ -17,6 +17,7 @@ import { interestRates, Zero } from '../../constants';
 import { useValidation } from '../../hooks/useValidation';
 import ErrorDisplay from '../../components/ErrorDisplay';
 import {getChainInfo} from "../../utils/chains";
+import Tooltip from '../../components/Tooltip';
 
 interface BorrowViewProps {
   onBorrowViewChange: (interestRate, amount) => void;
@@ -224,11 +225,15 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
                 )}
 
                 {/*cta*/}
+                <Tooltip text='Enter amount to proceed' showOnDisabled>
                 <button className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 normal-case text-xl text-white disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
                   disabled:text-white
                   disabled:border" disabled={Number(borrowAmount) <= 0|| selectedInterestRate === "" || requiredCollateral.lte(Zero) || isValidationError}
-                  onClick={handleBorrowContinue}>Confirm</button>
+                  onClick={handleBorrowContinue}>
+                  Confirm
+                </button>
+                </Tooltip>
               </div>
             </div>
           </div>
