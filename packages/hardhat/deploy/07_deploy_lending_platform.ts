@@ -13,8 +13,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       allDeployments.BorrowPositionToken.address,
       allDeployments.MockAaveV3.address,
       allDeployments.AETH.address,
-      allDeployments.MockChainlinkAggregator.address,
-      shrubTreasury
+      allDeployments.MockChainlinkAggregatorUsdcEth.address,
+      shrubTreasury,
+      allDeployments.MockChainlinkAggregatorEthUsd.address,
+      allDeployments.MockChainlinkAggregatorUsdcUsd.address,
   ];
 
   const deployResult = await deployAndVerify("LendingPlatform", {
@@ -32,6 +34,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ExtendLogic: allDeployments.ExtendLogic.address,
       RepayLogic: allDeployments.RepayLogic.address,
       LiquidationLogic: allDeployments.LiquidationLogic.address,
+      PriceFeedLogic: allDeployments.PriceFeedLogic.address,
     },
     args: [
         addresses
@@ -57,7 +60,9 @@ func.dependencies = [
   "MockUsdc",
   "MockAeth",
   "MockAaveV3",
-  "MockChainlinkAggregator",
+  "MockChainlinkAggregatorUsdcEth",
+  "MockChainlinkAggregatorUsdcUsd",
+  "MockChainlinkAggregatorEthUsd",
   "BorrowPositionToken"
 ];
 func.tags = ["LendingPlatform"];
