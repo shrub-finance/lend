@@ -381,7 +381,13 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                   </div>
                 )}
                 {/*tx explorer button*/}
-                {txHash && <TransactionButton txHash={txHash} chainId={chainId} />}
+                {txHash && (
+                  <TransactionButton
+                    txHash={txHash}
+                    chainId={chainId}
+                    className="btn-block bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green hover:border-shrub-green hover:text-white"
+                  />
+                )}
                 {/*confirm in wallet button*/}
                 {((depositButtonPressed && !lendActionInitiated) || (approveButtonPressed && !approveUSDCActionInitiated)) && (
                   <button
