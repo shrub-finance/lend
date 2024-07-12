@@ -50,7 +50,7 @@ export const DashboardView: FC = ({}) => {
   const [extendDepositModalOpen, setExtendDepositModalOpen] = useState(false);
   const [extendBorrowModalOpen, setExtendBorrowModalOpen] = useState(false);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
-  const { store, dispatch } = useFinancialData();
+  const { store } = useFinancialData();
   const walletAddress = useAddress();
   const [blockchainTime, setBlockchainTime] = useState(0);
   const {
@@ -70,7 +70,6 @@ export const DashboardView: FC = ({}) => {
   const [lastSnapshotDate, setLastSnapshotDate] = useState(new Date(0));
   const [repayModalOpen, setRepayModalOpen] = useState(false);
   const [selectedBorrowForRepay, setSelectedBorrowForRepay] = useState<BorrowObj | undefined>();
-
   const handleRepay = () => {
     setRepayModalOpen(false);
   };
@@ -150,6 +149,7 @@ export const DashboardView: FC = ({}) => {
   const handleWithdraw = () => {
     setWithdrawModalOpen(false);
   };
+
 
   /** Might Need Later **/
   // let newlyAddedDeposit = store.deposits.filter(item => item.hasOwnProperty('id'));
@@ -368,10 +368,13 @@ export const DashboardView: FC = ({}) => {
                                     </td>
                                     <td className="px-1 py-4 text-sm font-bold">
                                       <div className='flex items-center justify-center space-x-2 h-full p-2'>
-                                        <Tooltip text='This deposit is already for the longest time period.' showOnDisabled>
+                                        <Tooltip text="This deposit is already for the longest time period."
+                                          conditionalText="Extend feature in unavailable right at the moment."
+                                          condition={!!storeDeposit.status}
+                                        showOnDisabled>
                                         <button type='button'
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100'
-                                                disabled={storeDeposit.lendingPool.timestamp && fromEthDate(parseInt(storeDeposit.lendingPool.timestamp)).getTime() === store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1].getTime() || !!storeDeposit.tempData || !!storeDeposit.status }
+                                                disabled={storeDeposit.lendingPool.timestamp && fromEthDate(parseInt(storeDeposit.lendingPool.timestamp))?.getTime() === store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1]?.getTime() || !!storeDeposit.tempData || !!storeDeposit.status }
                                                 onClick={() => {
                                                   setExtendDepositModalOpen(true);
                                                   setSelectedDeposit(deposit);
@@ -414,8 +417,7 @@ export const DashboardView: FC = ({}) => {
                                       </div>
                                     </td>
                                   </tr>
-                                    )
-                                }
+                                    )}
                             )}
                             </tbody>
                           </table>
@@ -557,9 +559,13 @@ export const DashboardView: FC = ({}) => {
                                     </td>
                                     <td className='px-1 py-4 text-sm font-bold'>
                                       <div className='flex items-center justify-center space-x-2 h-full p-2'>
+                                        <Tooltip text="This borrow is already for the longest time period."
+                                                 conditionalText="Extend feature in unavailable right at the moment."
+                                                 condition={!!storeBorrow.status}
+                                                 showOnDisabled>
                                         <button type='button'
                                                 className='text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100'
-                                                disabled={store.platformData.activePoolTimestamps.length && store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1].getTime() === borrow.endDate.getTime() || !!storeBorrow.tempData || !!storeBorrow.status}
+                                                disabled={store.platformData.activePoolTimestamps.length && store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1]?.getTime() === borrow?.endDate?.getTime() || !!storeBorrow.tempData || !!storeBorrow.status}
                                                 onClick={() => {
                                                   setExtendBorrowModalOpen(true);
                                                   setSelectedBorrow(borrow);
@@ -567,6 +573,7 @@ export const DashboardView: FC = ({}) => {
                                           {/*Corresponding modal at the top*/}
                                           Extend
                                         </button>
+                                        </Tooltip>
                                         <button type='button' onClick={() => {
                                           setRepayModalOpen(true);
                                           setSelectedBorrowForRepay(borrow);
