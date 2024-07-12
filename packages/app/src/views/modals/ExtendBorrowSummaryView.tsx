@@ -21,10 +21,10 @@ import {handleErrorMessagesFactory} from '../../components/HandleErrorMessages';
 import {useLazyQuery} from '@apollo/client';
 import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries';
 import {useFinancialData} from '../../components/FinancialDataContext';
-import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
 import { Borrow, BorrowObj } from '../../types/types';
 import { Zero } from '../../constants';
 import {getChainInfo} from "../../utils/chains";
+import {useEthPrice} from "../../hooks/useEthPriceFromShrub";
 
 interface ExtendBorrowSummaryProps {
   onBackExtend: (data?) => void,
@@ -46,9 +46,9 @@ const ExtendBorrowSummaryView: React.FC<ExtendBorrowSummaryProps & {
     additionalCollateral,
   }) => {
   const { chainId } = getChainInfo();
-  const {usdcAddress, lendingPlatformAddress, chainlinkAggregatorAddress, aethAddress} = getContractAddresses(chainId);
-  const {usdcAbi, lendingPlatformAbi, chainlinkAggregatorAbi, aethAbi} = getContractAbis(chainId);
-  const {ethPrice, isLoading, error} = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
+  const {usdcAddress, lendingPlatformAddress, aethAddress} = getContractAddresses(chainId);
+  const {usdcAbi, lendingPlatformAbi, aethAbi} = getContractAbis(chainId);
+  const {ethPrice, isLoading, error} = useEthPrice(lendingPlatformAddress, lendingPlatformAbi);
   const {store, dispatch} = useFinancialData();
   const walletAddress = useAddress();
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);

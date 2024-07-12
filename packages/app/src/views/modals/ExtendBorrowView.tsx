@@ -16,8 +16,8 @@ import ExtendBorrowSummaryView from './ExtendBorrowSummaryView';
 import { formatDate } from '@shrub-lend/common';
 import {BorrowObj} from "../../types/types";
 import {useFinancialData} from "../../components/FinancialDataContext";
-import useEthPriceFromChainlink from "../../hooks/useEthPriceFromChainlink";
 import {getChainInfo} from "../../utils/chains";
+import {useEthPrice} from "../../hooks/useEthPriceFromShrub";
 
 interface ExtendBorrowViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
@@ -28,8 +28,8 @@ const ExtendBorrowView: React.FC<ExtendBorrowViewProps & { onModalClose: (date: 
 setIsModalOpen, borrow
 })=> {
   const { chainId } = getChainInfo();
-  const {chainlinkAggregatorAddress} = getContractAddresses(chainId);
-  const {chainlinkAggregatorAbi} = getContractAbis(chainId);
+  const {lendingPlatformAddress} = getContractAddresses(chainId);
+  const {lendingPlatformAbi} = getContractAbis(chainId);
   const { store, dispatch } = useFinancialData();
   // const [selectedInterestRate, setSelectedInterestRate] = useState('8');
   const [extendActionInitiated, setExtendBorrowActionInitiated] = useState(false);
@@ -37,7 +37,7 @@ setIsModalOpen, borrow
   const [interestEditRequested, setInterestEditRequested] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(toEthDate(store.platformData.activePoolTimestamps[store.platformData.activePoolTimestamps.length - 1]));
   const [showDueDateOptions, setShowDueDateOptions] = useState(false);
-  const {ethPrice, isLoading, error} = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
+  const {ethPrice, isLoading, error} = useEthPrice(lendingPlatformAddress, lendingPlatformAbi);
   const [targetLtv, setTargetLtv] = useState<ethers.BigNumber>();
   const [additionalCollateral, setAdditionalCollateral] = useState<ethers.BigNumber>(Zero);
   const [currentLtv, setCurrentLtv] = useState<ethers.BigNumber>()

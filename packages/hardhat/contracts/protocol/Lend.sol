@@ -148,18 +148,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
             return PriceFeedLogic.getEthPriceSingleSource(ethUsdcPriceFeed);
         }
         return PriceFeedLogic.getEthPriceDoubleSource(usdEthPriceFeed, usdUsdcPriceFeed);
-//        (
-//            uint80 roundId,
-//            int256 answer,
-//            uint256 startedAt,
-//            uint256 updatedAt,
-//            uint80 answeredInRound
-//        ) = ethUsdcPriceFeed.latestRoundData();
-//        require(answer > 0, "ETH Price out of range");
-//        // Cast answer to uint256
-//        uint256 answerWad = uint256(answer);
-//        // Invert the answer
-//        return WadRayMath.wadDiv(WadRayMath.WAD, answerWad);
     }
 
 /**
