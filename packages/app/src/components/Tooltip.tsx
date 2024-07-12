@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const Tooltip = ({ text, conditionalText, condition, children, showOnDisabled = false }) => {
+const Tooltip = ({ text, conditionalText = '', condition = false, children, showOnDisabled = false }) => {
   const [isHovered, setIsHovered] = useState(false);
   const child = React.Children.only(children);
   const isDisabled = child.props.disabled;
