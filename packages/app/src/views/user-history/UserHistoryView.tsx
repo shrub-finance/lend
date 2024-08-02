@@ -6,6 +6,8 @@ import {GET_USER_LOGS_QUERY} from "../../constants/queries";
 import {useAddress} from "@thirdweb-dev/react";
 import {formatLargeUsdc, formatShortDate, formatWad} from "../../utils/ethMethods";
 import {Zero} from "../../constants";
+import TransactionButton from '../../components/TxButton';
+import { getChainInfo } from '../../utils/chains';
 
 interface UserHistoryViewProps {}
 
@@ -23,6 +25,7 @@ export const UserHistoryView: React.FC<UserHistoryViewProps> = ({}) => {
       user: walletAddress && walletAddress.toLowerCase()
     }
   });
+  const { chainId } = getChainInfo();
 
   useEffect(() => {
     if (ethers.utils.isAddress(walletAddress)) {
@@ -37,7 +40,7 @@ export const UserHistoryView: React.FC<UserHistoryViewProps> = ({}) => {
   }, [userLogs]);
 
   function parseTxId(id: string) {
-    return ethers.utils.computeAddress(id.split('-')[0]);
+    return id.split('-')[0];
   }
 
   function getNotes(userLog) {
@@ -102,8 +105,7 @@ export const UserHistoryView: React.FC<UserHistoryViewProps> = ({}) => {
             className='p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white  '>
             History
           </caption>
-          <thead
-            className='text-xs bg-shrub-grey-light  border border-shrub-grey-light2'>
+          <thead className='text-xs bg-shrub-grey-light border border-shrub-grey-light2'>
           <tr>
             <th scope='col' className='px-6 py-3 text-shrub-grey font-medium'>Date</th>
             <th scope='col' className='px-6 py-3 text-shrub-grey font-medium'>Type</th>
@@ -116,20 +118,23 @@ export const UserHistoryView: React.FC<UserHistoryViewProps> = ({}) => {
 
           {userLogs && userLogs.userLogs ? userLogs.userLogs.map((log, index) => {
             return (
-            <tr key={`earnRow-${index}`} className="bg-white border-b  ">
-          <td className="px-6 py-4 text-sm font-bold">
-            {fromEthDate(log.timestamp).toLocaleString()}
-          </td>
-          <td className="px-6 py-4 text-sm font-bold">
-            {log.type}
-          </td>
-          <td className="px-6 py-4 text-sm font-bold">
-            {parseTxId(log.id)}
-          </td>
-              <td className="px-6 py-4 text-sm font-bold">
-                {getNotes(log)}
-              </td>
-            </tr>
+              <tr key={`earnRow-${index}`} className='bg-white border-b'>
+                <td className='px-6 py-4 text-sm font-bold'>
+                  {fromEthDate(log.timestamp).toLocaleString()}
+                </td>
+                <td className='px-6 py-4 text-sm font-bold'>
+                  {log.type}
+                </td>
+                <td className='px-6 py-4 text-sm font-bold'>
+                  <TransactionButton txHash={parseTxId(log.id)} chainId={chainId} className="normal-case border-0 hover:text-shrub-green-500">
+                    {parseTxId(log.id)}
+                  </TransactionButton>
+
+                </td>
+                <td className='px-6 py-4 text-sm font-bold'>
+                  {getNotes(log)}
+                </td>
+              </tr>
             )
           }) : <></>}
           </tbody>

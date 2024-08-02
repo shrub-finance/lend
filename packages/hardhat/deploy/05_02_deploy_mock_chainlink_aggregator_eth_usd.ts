@@ -29,6 +29,6 @@ func.id = "deploy_mock_chainlink_aggregator_eth_usd"; // id to prevent re-execut
 func.tags = [deployName];
 func.skip = async (hre: HardhatRuntimeEnvironment) => {
   const { network } = hre;
-  // skip this deployment if in sepolia
+  // skip this deployment if not in sepolia
   return singlePriceFeedNetworks.includes(network.name);
 }

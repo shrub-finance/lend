@@ -3,6 +3,9 @@ import React from 'react';
 interface TransactionButtonProps {
   txHash: string;
   chainId: number | undefined;
+  className?: string;
+  buttonText?: string;
+  children?: React.ReactNode;
 }
 
 const handleTxLink = (txHash: string, chainId: number | undefined) => {
@@ -25,9 +28,9 @@ const handleTxLink = (txHash: string, chainId: number | undefined) => {
   window.open(url, '_blank');
 };
 
-const TransactionButton: React.FC<TransactionButtonProps> = ({ txHash, chainId }) => (
-  <button onClick={() => handleTxLink(txHash, chainId)} className="btn btn-block bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green hover:border-shrub-green hover:text-white">
-    View Tx in Explorer
+const TransactionButton: React.FC<TransactionButtonProps> = ({ txHash, chainId, className = '', buttonText = 'View Tx in Explorer', children }) => (
+  <button onClick={() => handleTxLink(txHash, chainId)} className={`btn ${className}`}>
+    {children || buttonText}
   </button>
 );
 
