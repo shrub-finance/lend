@@ -132,17 +132,29 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                       deposit will be locked until {endDate.toDateString()}, and then returned to you with the ETH yield earned at {estimatedAPY}%.</p>
                   </>
                 )}
-                {/*success and failure states*/}
-                {(depositButtonPressed || latestDeposit?.status === 'pending') && (
+
+                {/*success and pending states*/}
+                {depositButtonPressed  && (
                   <>
-                    {latestDeposit?.status === 'pending' && !depositButtonPressed && (
-                      <p className='text-lg font-bold pb-2 text-left'>Deposit Submitted</p>
-                    )}
                     <div className='flex items-center justify-center p-20'>
                       {/*spinner*/}
-                      <div role='status' className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
+                      <div role='status'
+                           className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
                         <div className='w-[205px] h-[205px] rounded-full bg-white'></div>
                       </div>
+                    </div>
+                  </>
+                )}
+
+                {latestDeposit?.status === 'pending' && (
+                  <>
+                    <p className='text-lg font-bold pb-2 text-left'>Deposit Submitted</p>
+                    <div className='flex items-center justify-center p-20'>
+                      <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1}
+                           stroke='#38f6c9' className='w-[300px] h-[300px]'>
+                        <path strokeLinecap='round' strokeLinejoin='round'
+                              d='M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z' />
+                      </svg>
                     </div>
                   </>
                 )}

@@ -118,20 +118,34 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     the borrow is fully paid, and then returned to you.</p>
                 </>
                 }
-                {/*success and failure states*/}
-                {(borrowButtonPressed || latestBorrow?.status === 'pending') && (
+
+                {/*success and pending states*/}
+                {borrowButtonPressed  && (
                   <>
-                    {latestBorrow?.status === 'pending' && !borrowButtonPressed && (
-                      <p className='text-lg font-bold pb-2 text-left'>Borrow Submitted</p>
-                    )}
                     <div className='flex items-center justify-center p-20'>
                       {/*spinner*/}
-                      <div role='status' className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
+                      <div role='status'
+                           className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
                         <div className='w-[205px] h-[205px] rounded-full bg-white'></div>
                       </div>
                     </div>
                   </>
                 )}
+
+                {latestBorrow?.status === 'pending' && (
+                  <>
+                    <p className='text-lg font-bold pb-2 text-left'>Borrow Submitted</p>
+                    <div className='flex items-center justify-center p-20'>
+                      <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1}
+                           stroke='#38f6c9' className='w-[300px] h-[300px]'>
+                        <path strokeLinecap='round' strokeLinejoin='round'
+                              d='M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z' />
+                      </svg>
+                    </div>
+                  </>
+                )}
+
+
                 {borrowActionInitiated && (
                   <>
                     {latestBorrow?.status === 'confirmed' && (
