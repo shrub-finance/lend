@@ -9,6 +9,7 @@ import {getUserData, useFinancialData} from "../../components/FinancialDataConte
 import Image from 'next/image'
 import { Borrow } from '../../types/types'
 import {getChainInfo} from "../../utils/chains";
+import TransactionButton from '../../components/TxButton';
 
 interface BorrowSummaryViewProps {
   requiredCollateral: ethers.BigNumber;
@@ -39,9 +40,12 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const {store, dispatch} = useFinancialData();
 
   const [borrowActionInitiated, setBorrowActionInitiated] = useState(false);
-  const [latestBorrowId, setLatestBorrowId] = useState<string>()
+  const [borrowButtonPressed, setBorrowButtonPressed] = useState(false);
+  const [latestBorrowId, setLatestBorrowId] = useState<string>();
+  const [txHash, setTxHash] = useState<string | null>(null);
 
   const walletAddress = useAddress();
+
 
   // Calculate the end date by adding the number of months to the current date
   const currentDate = new Date();
@@ -102,8 +106,8 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
               <div className="card-body">
                 {/*header*/}
                 {!borrowActionInitiated &&
-                  <div>
-                  <p className="text-lg font-bold pb-2 text-left">Borrow</p>
+                  <>
+                  <p className="text-lg font-bold pb-2 text-left">Borrow amount</p>
                   <div className="w-full text-xl font-semibold flex flex-row">
                     <span className="text-4xl  font-medium text-left w-[500px]">{amount} USDC</span>
                     <Image alt="usdc icon" src="/usdc-logo.svg" className="w-10 inline align-baseline" width="40" height="40"/>
@@ -112,18 +116,24 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     are borrowing <strong>{amount} USDC</strong> and
                     giving <strong>{ethers.utils.formatEther(requiredCollateral)} ETH</strong> as collateral. The collateral will be locked until
                     the borrow is fully paid, and then returned to you.</p>
-                </div>
+                </>
                 }
                 {/*success and failure states*/}
-                {borrowActionInitiated &&
+                {(borrowButtonPressed || latestBorrow?.status === 'pending') && (
                   <>
-                    {/*spinner */}
-                    {latestBorrow?.status === 'pending' && (
-                      <div
-                        className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
+                    {latestBorrow?.status === 'pending' && !borrowButtonPressed && (
+                      <p className='text-lg font-bold pb-2 text-left'>Borrow Submitted</p>
+                    )}
+                    <div className='flex items-center justify-center p-20'>
+                      {/*spinner*/}
+                      <div role='status' className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
                         <div className='w-[205px] h-[205px] rounded-full bg-white'></div>
                       </div>
-                    )}
+                    </div>
+                  </>
+                )}
+                {borrowActionInitiated && (
+                  <>
                     {latestBorrow?.status === 'confirmed' && (
                       <>
                         <p className='text-lg font-bold pb-2 text-left'>
@@ -146,13 +156,15 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         </p>
                       </>
                     )}
-                  </>}
+                    </>
+                )}
+
                 {/*divider*/}
                 <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
 
                 {/*receipt start*/}
-                {(!borrowActionInitiated || latestBorrow?.status === 'pending') &&
-                  <div>
+                {(!borrowActionInitiated && !borrowButtonPressed) &&
+                  <>
                   <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row  justify-between">
                       <span className="">Required Collateral</span>
@@ -187,14 +199,18 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   </div>
                   {/*divider*/}
                   <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
+                  </>
+                }
                   {/*total section*/}
+                {(!borrowActionInitiated && !borrowButtonPressed)  && (
+                  <>
                   <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
                     <div className="flex flex-row justify-between ">
                       <span className="">Due today</span>
                       <span>{ethers.utils.formatEther(requiredCollateral)} ETH</span>
                     </div>
                   </div>
-                  {/*approve and borrow buttons*/}
+                  {/*borrow button*/}
                   <Web3Button contractAddress={lendingPlatformAddress}
                               isDisabled={latestBorrow?.status === "pending"}
                               contractAbi={lendingPlatformAbi}
@@ -209,9 +225,15 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                     value: requiredCollateral
                                   })
                               }}
-
-                              onSuccess={async (tx) => {
+                              onSubmit={() => {
+                                setBorrowButtonPressed(true)
+                              }}
+                              onSuccess={
+                                async (tx) => {
+                                setTxHash(tx.hash)
                                 setLocalError('');
+                                  setBorrowActionInitiated(true)
+                                  setBorrowButtonPressed(false)
                                 const newBorrow:Borrow = {
                                   id: tx.hash,
                                   status: "pending",
@@ -232,8 +254,6 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                   payload: { address: walletAddress, borrow: newBorrow },
                                 });
                                 setLatestBorrowId(tx.hash);
-
-
                                 try {
                                   const receipt = await tx.wait();
                                   if(!receipt.status) {
@@ -258,23 +278,39 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                                     },
                                   });
                                 }
-                                setBorrowActionInitiated(true);
                               }}
-
                               onError={(e) => {
                                   handleErrorMessages({err: e});
+                                  setBorrowButtonPressed(false)
                               }}>
-                    {latestBorrow?.status === "pending"? "Borrow Order Submitted":"Borrow"}
+                    Borrow
                   </Web3Button>
-                </div>
-                }
+                  </>
+                )}
+                {/*tx explorer button*/}
+                {txHash && (
+                  <TransactionButton
+                    txHash={txHash}
+                    chainId={chainId}
+                    className="btn-block bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green hover:border-shrub-green hover:text-white"
+                  />
+                )}
+                {/*confirm in wallet button*/}
+                {(borrowButtonPressed && !borrowActionInitiated) && (
+                  <button
+                    disabled={true}
+                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
+                    Confirm in Wallet...
+                  </button>
+                )}
                 {/*view in dashboard button*/}
-                {(borrowActionInitiated || latestBorrow?.status === "pending") && <button onClick={handleViewDash}
-                                          className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View
-                  in Dashboard
-                </button>}
+                {(borrowActionInitiated || latestBorrow?.status === "confirmed") && <button onClick={handleViewDash}
+                                          className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">View in Dashboard
+                </button>
+                }
                 {/*cancel button*/}
-                {!borrowActionInitiated && latestBorrow?.status !== "pending" && <button onClick={onCancel}
+                {!borrowActionInitiated && !borrowButtonPressed &&
+                  <button onClick={onCancel}
                                            className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">Cancel</button>}
               </div>
             </div>
