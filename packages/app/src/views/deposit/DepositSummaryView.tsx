@@ -146,6 +146,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     </div>
                   </>
                 )}
+
                 {lendActionInitiated && (
                   <>
                     {latestDeposit?.status === 'confirmed' && (
@@ -371,13 +372,10 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                               onError={(e) => {
                                 handleErrorMessages({err: e});
                                 setDepositButtonPressed(false)
-                              }}
-                            >
+                              }}>
                               Deposit USDC
                             </Web3Button>
-
-                        )
-                    }
+                        )}
                   </div>
                 )}
                 {/*tx explorer button*/}
