@@ -10,7 +10,6 @@ export function getContractAddresses(chainId: number) {
     usdcAddress: data.contracts.USDCoin.address,
     aethAddress: data.contracts.AETH.address,
     lendingPlatformAddress: data.contracts.LendingPlatform.address,
-    chainlinkAggregatorAddress: data.contracts.MockChainlinkAggregator.address,
   }
 }
 
@@ -20,6 +19,5 @@ export function getContractAbis(chainId: number) {
     usdcAbi: data.contracts.USDCoin.abi,
     aethAbi: data.contracts.AETH.abi,
     lendingPlatformAbi: data.contracts.LendingPlatform.abi,
-    chainlinkAggregatorAbi: data.contracts.MockChainlinkAggregator.abi,
   }
 }

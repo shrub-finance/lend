@@ -31,6 +31,7 @@ declare module "hardhat/types/runtime" {
   // This new field will be available in tasks' actions, scripts, and tests.
   export interface HardhatRuntimeEnvironment {
     deployAndVerify: (name: string, options: DeployOptions) => Promise<DeployResult>,
+    skipDeployIfExists: (name: string) => Promise<boolean>,
     init: () => Promise<void>
   }
 }

@@ -9,6 +9,7 @@ import "./hardhat-tests";
 
 import dotenv from "dotenv";
 import {DeployOptions} from "hardhat-deploy/dist/types";
+import {contractAddresses} from "./deploy-constants";
 dotenv.config();
 
 extendEnvironment((hre) => {
@@ -61,6 +62,18 @@ extendEnvironment((hre) => {
       libraries: deployResult.libraries
     })
     return deployResult;
+  }
+
+  hre.skipDeployIfExists = async(name: string) => {
+    const { deployments, network } = hre;
+
+    if (!contractAddresses[name].networks[network.name]) {
+      return false;
+    }
+    const { abi } = contractAddresses[name];
+    const address = contractAddresses[name].networks[network.name];
+    await deployments.save(name, { abi, address })
+    return true;
   }
 })
 

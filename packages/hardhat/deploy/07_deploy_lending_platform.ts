@@ -7,14 +7,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer, shrubTreasury } = await getNamedAccounts();
   const borrowPositionTokenDeployment = await deployments.get('BorrowPositionToken');
   const allDeployments = await deployments.all();
+  const isSingleChainlinkPriceFeed = Boolean(allDeployments.MockChainlinkAggregatorUsdcEth);
 
   const addresses = [
       allDeployments.USDCoin.address,
       allDeployments.BorrowPositionToken.address,
       allDeployments.MockAaveV3.address,
       allDeployments.AETH.address,
-      allDeployments.MockChainlinkAggregator.address,
-      shrubTreasury
+      isSingleChainlinkPriceFeed ? allDeployments.MockChainlinkAggregatorUsdcEth.address: ethers.ZeroAddress,
+      shrubTreasury,
+      isSingleChainlinkPriceFeed ? ethers.ZeroAddress : allDeployments.MockChainlinkAggregatorEthUsd.address,
+      isSingleChainlinkPriceFeed ? ethers.ZeroAddress : allDeployments.MockChainlinkAggregatorUsdcUsd.address,
   ];
 
   const deployResult = await deployAndVerify("LendingPlatform", {
@@ -32,6 +35,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ExtendLogic: allDeployments.ExtendLogic.address,
       RepayLogic: allDeployments.RepayLogic.address,
       LiquidationLogic: allDeployments.LiquidationLogic.address,
+      PriceFeedLogic: allDeployments.PriceFeedLogic.address,
     },
     args: [
         addresses
@@ -54,10 +58,12 @@ func.id = "deploy_lending_platform"; // id to prevent re-execution
 func.dependencies = [
   "Libraries",
   "LibrariesWithDep",
-  "MockUsdc",
-  "MockAeth",
+  "USDCoin",
+  "AETH",
   "MockAaveV3",
-  "MockChainlinkAggregator",
+  "MockChainlinkAggregatorUsdcEth",
+  "MockChainlinkAggregatorUsdcUsd",
+  "MockChainlinkAggregatorEthUsd",
   "BorrowPositionToken"
 ];
 func.tags = ["LendingPlatform"];

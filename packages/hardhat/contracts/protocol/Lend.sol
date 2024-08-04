@@ -34,6 +34,7 @@ import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
 import {RepayLogic} from "../libraries/logic/RepayLogic.sol";
 import {ExtendLogic} from "../libraries/logic/ExtendLogic.sol";
 import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
+import {PriceFeedLogic} from "../libraries/logic/PriceFeedLogic.sol";
 import {ShrubLendMath} from "../libraries/math/ShrubLendMath.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -71,18 +72,22 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
     IAETH public aeth;
     IBorrowPositionToken public bpt;
     IMockAaveV3 public wrappedTokenGateway;
-    AggregatorV3Interface public chainlinkAggregator;  // Chainlink interface
+    AggregatorV3Interface public ethUsdcPriceFeed;  // Chainlink interface
+    AggregatorV3Interface public usdEthPriceFeed;  // Chainlink interface
+    AggregatorV3Interface public usdUsdcPriceFeed;  // Chainlink interface
 
     // uint public bpTotalPoolShares; // Wad
 
-    constructor(address[6] memory addresses) {
+    constructor(address[8] memory addresses) {
         usdc = IERC20(addresses[0]);
         bpt = IBorrowPositionToken(addresses[1]);
         wrappedTokenGateway = IMockAaveV3(addresses[2]);
         aeth = IAETH(addresses[3]);
-        chainlinkAggregator = AggregatorV3Interface(addresses[4]);
-        lendState.lastSnapshotDate = HelpersLogic.currentTimestamp();
+        ethUsdcPriceFeed = AggregatorV3Interface(addresses[4]);
         shrubTreasury = addresses[5];
+        usdEthPriceFeed = AggregatorV3Interface(addresses[6]);
+        usdUsdcPriceFeed = AggregatorV3Interface(addresses[7]);
+        lendState.lastSnapshotDate = HelpersLogic.currentTimestamp();
     }
 
     // --- Admin Functions ---
@@ -139,18 +144,10 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
     * @return USDC/ETH as a WAD
 */
     function getEthPrice() public view returns (uint256) {
-        (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        ) = chainlinkAggregator.latestRoundData();
-        require(answer > 0, "ETH Price out of range");
-        // Cast answer to uint256
-        uint256 answerWad = uint256(answer);
-        // Invert the answer
-        return WadRayMath.wadDiv(WadRayMath.WAD, answerWad);
+        if (address(ethUsdcPriceFeed) != address(0)) {
+            return PriceFeedLogic.getEthPriceSingleSource(ethUsdcPriceFeed);
+        }
+        return PriceFeedLogic.getEthPriceDoubleSource(usdEthPriceFeed, usdUsdcPriceFeed);
     }
 
 /**

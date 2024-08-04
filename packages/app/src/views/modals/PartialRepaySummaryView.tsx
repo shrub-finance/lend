@@ -13,9 +13,9 @@ import { Borrow, BorrowObj } from '../../types/types';
 import {useAddress, useContract, useContractRead, Web3Button} from '@thirdweb-dev/react';
 import { useFinancialData } from '../../components/FinancialDataContext';
 import { ethers } from 'ethers';
-import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
 import { Zero } from '../../constants';
 import {getChainInfo} from "../../utils/chains";
+import {useEthPrice} from "../../hooks/useEthPriceFromShrub";
 
 interface PartialRepaySummaryViewProps {
   borrow: BorrowObj;
@@ -33,11 +33,11 @@ const PartialRepaySummaryView: React.FC<PartialRepaySummaryViewProps> = (
   },
 ) => {
   const { chainId } = getChainInfo();
-  const {usdcAddress, lendingPlatformAddress, chainlinkAggregatorAddress} = getContractAddresses(chainId);
-  const {usdcAbi, lendingPlatformAbi, chainlinkAggregatorAbi} = getContractAbis(chainId);
+  const {usdcAddress, lendingPlatformAddress } = getContractAddresses(chainId);
+  const {usdcAbi, lendingPlatformAbi } = getContractAbis(chainId);
 
   const walletAddress = useAddress();
-  const { ethPrice, isLoading, error } = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
+  const { ethPrice, isLoading, error } = useEthPrice(lendingPlatformAddress, lendingPlatformAbi);
   const [localError, setLocalError] = useState('');
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [partialRepayActionInitiated, setPartialRepayActionInitiated] = useState(false);

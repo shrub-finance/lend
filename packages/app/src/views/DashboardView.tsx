@@ -35,16 +35,16 @@ import {
   twelveMonth,
   Zero
 } from '../constants';
-import useEthPriceFromChainlink from '../hooks/useEthPriceFromChainlink';
 import WithdrawView from './modals/WithdrawView';
 import RepayView from './modals/RepayView';
 import {UserHistoryView} from "./user-history/UserHistoryView";
 import {getChainInfo} from "../utils/chains";
 import Tooltip from '../components/Tooltip';
+import {useEthPrice} from "../hooks/useEthPriceFromShrub";
 export const DashboardView: FC = ({}) => {
   const { chainId } = getChainInfo();
-  const {chainlinkAggregatorAddress} = getContractAddresses(chainId);
-  const {chainlinkAggregatorAbi} = getContractAbis(chainId);
+  const {lendingPlatformAddress} = getContractAddresses(chainId);
+  const {lendingPlatformAbi} = getContractAbis(chainId);
 
   const wallet = useConnectedWallet();
   const [extendDepositModalOpen, setExtendDepositModalOpen] = useState(false);
@@ -60,7 +60,7 @@ export const DashboardView: FC = ({}) => {
       startPolling: globalDataStartPolling,
       stopPolling: globalDataStopPolling,
     } = useQuery(GLOBAL_DATA_QUERY);
-  const { ethPrice, isLoading, error } = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
+  const { ethPrice, isLoading, error } = useEthPrice(lendingPlatformAddress, lendingPlatformAbi);
   const [currentHovered, setCurrentHovered] = useState<number | null>(null);
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);

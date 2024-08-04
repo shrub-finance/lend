@@ -6,13 +6,13 @@
 } from '../../utils/ethMethods';
   import PartialRepaySummaryView from './PartialRepaySummaryView';
   import { BorrowObj } from "../../types/types";
-  import useEthPriceFromChainlink from '../../hooks/useEthPriceFromChainlink';
   import { getContractAbis, getContractAddresses } from '../../utils/contracts';
   import { ethers } from 'ethers';
   import { Zero } from '../../constants';
   import { useValidation } from '../../hooks/useValidation';
   import ErrorDisplay from '../../components/ErrorDisplay';
   import {getChainInfo} from "../../utils/chains";
+  import {useEthPrice} from "../../hooks/useEthPriceFromShrub";
 
   interface PartialRepayViewProps {
     borrow: BorrowObj;
@@ -23,10 +23,10 @@
 
   const PartialRepayView: React.FC<PartialRepayViewProps> = ({ borrow , isFullPay, partialPaymentRequested , setPartialPaymentRequested}) => {
     const { chainId } = getChainInfo();
-    const {chainlinkAggregatorAddress} = getContractAddresses(chainId);
-    const {chainlinkAggregatorAbi} = getContractAbis(chainId);
+    const {lendingPlatformAddress} = getContractAddresses(chainId);
+    const {lendingPlatformAbi} = getContractAbis(chainId);
 
-    const {ethPrice, isLoading, error} = useEthPriceFromChainlink(chainlinkAggregatorAddress, chainlinkAggregatorAbi);
+    const {ethPrice, isLoading, error} = useEthPrice(lendingPlatformAddress, lendingPlatformAbi);
     const [repayActionInitiated, setRepayActionInitiated] = useState(false);
     const [repayAmount, setRepayAmount] = useState(formatLargeUsdc(borrow.debt));
     const [newLtv, setNewLtv] = useState<ethers.BigNumber>();
