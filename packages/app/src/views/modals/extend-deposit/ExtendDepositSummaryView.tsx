@@ -27,7 +27,7 @@ interface ExtendDepositSummaryProps {
   deposit: DepositObj;
   estimatedAPY: ethers.BigNumber;
   newTimestamp: Date;
-  onBackExtend: () => void;
+  onBackDepositExtend: () => void;
 }
 
 const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendDepositActionChange: (initiated: boolean) => void }> = (
@@ -35,7 +35,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
     deposit,
     estimatedAPY,
     newTimestamp,
-    onBackExtend,
+    onBackDepositExtend,
     onExtendDepositActionChange
   }
 ) => {
@@ -113,18 +113,31 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
           <div className="card-body">
             {!extendDepositActionInitiated  && (
               <>
-              <div className='w-full text-xl font-semibold flex flex-row'>
-                <span className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(depositAmountBeingExtended)} USDC</span>
-                <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
-              </div>
-              <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
-                When you extend this deposit, {formatLargeUsdc(depositAmountBeingExtended)} USDC will be
-                moved from the old lending pool ending {deposit.endDate.toLocaleString()} to the new lending pool ending {newTimestamp.toLocaleString()}. You will collect earned ETH yield of {formatWad(deposit.positionEthYield, 8)}.</p>
+                <div className='flex items-center pb-4'>
+                  <button onClick={onBackDepositExtend}>
+                    <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none'
+                         className='w-6 grow-0 order-0 flex-none'>
+                      <path d='M20 12H4M4 12L10 18M4 12L10 6' stroke='#98A2B3' strokeWidth='2' strokeLinecap='round'
+                            strokeLinejoin='round' />
+                    </svg>
+                  </button>
+                </div>
+                <div className='w-full text-xl font-semibold flex flex-row'>
+                  <span
+                    className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(depositAmountBeingExtended)} USDC</span>
+                  <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40'
+                         height='40' />
+                </div>
+                <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
+                  When you extend this deposit, {formatLargeUsdc(depositAmountBeingExtended)} USDC will be
+                  moved from the old lending pool ending {deposit.endDate.toLocaleString()} to the new lending pool
+                  ending {newTimestamp.toLocaleString()}. You will collect earned ETH yield
+                  of {formatWad(deposit.positionEthYield, 8)}.</p>
               </>
-          )}
+            )}
 
             {/*success and pending states*/}
-            {extendDepositButtonPressed  && (
+            {extendDepositButtonPressed && (
               <>
                 <div className='flex items-center justify-center p-20'>
                   {/*spinner*/}
@@ -145,7 +158,7 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                   <span className=''>Previous End Date</span>
                   <span>{deposit.endDate.toDateString()}</span>
                 </div>
-                <div className="flex flex-row  justify-between cursor-pointer" onClick={onBackExtend}>
+                <div className="flex flex-row  justify-between cursor-pointer" onClick={onBackDepositExtend}>
                   <span className="">New End Date</span>
                   <span>{newTimestamp?.toDateString()}
                     <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>

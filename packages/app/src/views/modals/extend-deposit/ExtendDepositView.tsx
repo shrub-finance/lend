@@ -131,7 +131,7 @@ const ExtendDepositView: React.FC<ExtendDepositViewProps & { onModalClose: (date
         deposit={deposit}
         estimatedAPY={estimatedAPY}
         newTimestamp={fromEthDate(timestamp)}
-        onBackExtend={handleExtendDepositBack}
+        onBackDepositExtend={handleExtendDepositBack}
         onExtendDepositActionChange={handleExtendDepositActionChange}
       />
       }
