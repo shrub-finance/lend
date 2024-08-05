@@ -30,7 +30,8 @@ interface ExtendDepositSummaryProps {
   deposit: DepositObj;
   estimatedAPY: ethers.BigNumber;
   newTimestamp: Date;
-  onBackDepositExtend: () => void;
+  onBackExtendDeposit: () => void;
+  onModalClose?: () => void;
 }
 
 const ExtendDepositSummaryView: React.FC<
@@ -41,8 +42,9 @@ const ExtendDepositSummaryView: React.FC<
   deposit,
   estimatedAPY,
   newTimestamp,
-  onBackDepositExtend,
+  onBackExtendDeposit,
   onExtendDepositActionChange,
+  onModalClose,
 }) => {
   const { chainId } = getChainInfo();
   const { usdcAddress, lendingPlatformAddress } = getContractAddresses(chainId);
@@ -65,6 +67,7 @@ const ExtendDepositSummaryView: React.FC<
     useState(false);
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] =
     useState(false);
+  const [txStatus, setTxStatus] = useState("");
   const [extendDepositActionInitiated, setExtendDepositActionInitiated] =
     useState(false);
   const [approvalCompleted, setApprovalCompleted] = useState(false);
@@ -144,7 +147,7 @@ const ExtendDepositSummaryView: React.FC<
               {!extendDepositActionInitiated && (
                 <>
                   <div className="flex items-center pb-4">
-                    <button onClick={onBackDepositExtend}>
+                    <button onClick={onBackExtendDeposit}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="26"
@@ -181,7 +184,7 @@ const ExtendDepositSummaryView: React.FC<
                     {deposit.endDate.toLocaleString()} to the new lending pool
                     ending {newTimestamp.toLocaleString()}. You will collect
                     earned ETH yield of {formatWad(deposit.positionEthYield, 8)}
-                    .
+                    .{" "}
                   </p>
                 </>
               )}
@@ -200,7 +203,80 @@ const ExtendDepositSummaryView: React.FC<
                   </div>
                 </>
               )}
-              {!extendDepositButtonPressed && (
+
+              {extendDepositActionInitiated && (
+                <>
+                  {txStatus === "" && (
+                    <>
+                      <p className="text-lg font-bold pb-2 text-left">
+                        Extend Deposit Submitted{" "}
+                      </p>
+                      <div className="flex items-center justify-center p-20">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1}
+                          stroke="#38f6c9"
+                          className="w-[300px] h-[300px]"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                          />
+                        </svg>
+                      </div>
+                    </>
+                  )}
+                  {txStatus === "success" && (
+                    <>
+                      <p className="text-lg font-bold pb-2 text-left">
+                        Extend Deposit Successful!{" "}
+                      </p>
+                      <div className="flex items-center justify-center p-20">
+                        <div
+                          role="status"
+                          className="w-[250px] h-[250px] m-[20px]"
+                        >
+                          <Image
+                            src="/checkmark.svg"
+                            alt="Loading"
+                            className="w-full h-full"
+                            width="250"
+                            height="250"
+                          />
+                          <span className="sr-only">Loading...</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {txStatus === "failed" && (
+                    <>
+                      <p className="text-lg font-bold pb-2 text-left">
+                        Extend Deposit Unsuccessful{" "}
+                      </p>
+                      <div className="flex items-center justify-center p-20">
+                        <div
+                          role="status"
+                          className="w-[250px] h-[250px] m-[20px]"
+                        >
+                          <Image
+                            src="/exclamation.svg"
+                            alt="Loading"
+                            className="w-full h-full"
+                            width="250"
+                            height="250"
+                          />
+                          <span className="sr-only">Loading...</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
+              {!extendDepositButtonPressed && !extendDepositActionInitiated && (
                 <>
                   {/*divider*/}
                   <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
@@ -212,7 +288,7 @@ const ExtendDepositSummaryView: React.FC<
                     </div>
                     <div
                       className="flex flex-row  justify-between cursor-pointer"
-                      onClick={onBackDepositExtend}
+                      onClick={onBackExtendDeposit}
                     >
                       <span className="">New End Date</span>
                       <span>
@@ -278,6 +354,7 @@ const ExtendDepositSummaryView: React.FC<
                               onSubmit={() => {
                                 setExtendApproveButtonPressed(true);
                               }}
+                              // broadcast
                               onSuccess={async (tx) => {
                                 setTxHash(tx.hash);
                                 setLocalError("");
@@ -429,6 +506,7 @@ const ExtendDepositSummaryView: React.FC<
                                   if (!receipt.status) {
                                     throw new Error("Transaction failed");
                                   }
+                                  setTxStatus("success");
                                   dispatch({
                                     type: "UPDATE_LEND_POSITION_STATUS",
                                     payload: {
@@ -455,6 +533,7 @@ const ExtendDepositSummaryView: React.FC<
                                   });
                                 } catch (e) {
                                   console.log("Transaction failed:", e);
+                                  setTxStatus("failed");
                                   dispatch({
                                     type: "UPDATE_LEND_POSITION_STATUS",
                                     payload: {
@@ -483,27 +562,35 @@ const ExtendDepositSummaryView: React.FC<
                           )}
                       </>
                     )}
-                    {txHash && (
-                      <TransactionButton
-                        txHash={txHash}
-                        chainId={chainId}
-                        className="btn-block bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green hover:border-shrub-green hover:text-white"
-                      />
-                    )}
-                    {/*confirm in wallet button*/}
-                    {((extendDepositButtonPressed &&
-                      !extendDepositActionInitiated) ||
-                      (extendApproveButtonPressed &&
-                        !approveUSDCActionInitiated)) && (
-                      <button
-                        disabled={true}
-                        className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
-                      >
-                        Confirm in Wallet...{" "}
-                      </button>
-                    )}
                   </div>
                 </>
+              )}
+              {txHash && (
+                <TransactionButton
+                  txHash={txHash}
+                  chainId={chainId}
+                  className="btn-block bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green hover:border-shrub-green hover:text-white"
+                />
+              )}
+              {/*confirm in wallet button*/}
+              {((extendDepositButtonPressed && !extendDepositActionInitiated) ||
+                (extendApproveButtonPressed &&
+                  !approveUSDCActionInitiated)) && (
+                <button
+                  disabled={true}
+                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
+                >
+                  Confirm in Wallet...{" "}
+                </button>
+              )}
+              {/*view in dashboard button*/}
+              {extendDepositActionInitiated && (
+                <button
+                  onClick={onModalClose}
+                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-green hover:border-shrub-green hover:text-white normal-case text-xl border-shrub-grey-50"
+                >
+                  View in Dashboard{" "}
+                </button>
               )}
             </div>
           </div>
