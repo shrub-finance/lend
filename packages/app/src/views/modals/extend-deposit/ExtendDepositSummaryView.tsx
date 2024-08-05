@@ -148,258 +148,242 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                 </div>
               </>
             )}
-
-            {/*divider*/}
-            <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
-
-            {/*receipt start*/}
+            { !extendDepositButtonPressed &&
+            <>
+              {/*divider*/}
+              <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
+              {/*receipt start*/}
               <div className='mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
                 <div className='flex flex-row  justify-between'>
                   <span className=''>Previous End Date</span>
                   <span>{deposit.endDate.toDateString()}</span>
                 </div>
-                <div className="flex flex-row  justify-between cursor-pointer" onClick={onBackDepositExtend}>
-                  <span className="">New End Date</span>
+                <div className='flex flex-row  justify-between cursor-pointer' onClick={onBackDepositExtend}>
+                  <span className=''>New End Date</span>
                   <span>{newTimestamp?.toDateString()}
-                    <Image alt="edit icon" src="/edit.svg" className="w-5 inline align-baseline ml-2" width="20" height="20"/>
+                    <Image alt='edit icon' src='/edit.svg' className='w-5 inline align-baseline ml-2' width='20'
+                           height='20' />
                       </span>
                 </div>
-                <div className="flex flex-row  justify-between">
-                  <span className="">Estimated Yield ✨</span>
-                  <span className="font-semibold text-shrub-green-500"> {formatPercentage(estimatedAPY)}%</span>
+                <div className='flex flex-row  justify-between'>
+                  <span className=''>Estimated Yield ✨</span>
+                  <span className='font-semibold text-shrub-green-500'> {formatPercentage(estimatedAPY)}%</span>
                 </div>
-                <div className="flex flex-row  justify-between">
-                  <span className="">Contract Address</span>
+                <div className='flex flex-row  justify-between'>
+                  <span className=''>Contract Address</span>
                   <span>{truncateEthAddress(lendingPlatformAddress)}
-                    <Image alt="copy icon" src="/copy.svg" className="w-6 hidden md:inline align-baseline ml-2" width="24" height="24"/>
+                    <Image alt='copy icon' src='/copy.svg' className='w-6 hidden md:inline align-baseline ml-2'
+                           width='24' height='24' />
                       </span>
                 </div>
-              {/*divider*/}
-              <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
+                {/*divider*/}
+                <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
 
 
-             {/*approve and deposit modals*/}
-             {(allowanceIsLoading) ? (
-               <p>Loading balance...</p>
-             ) : (
-               <>
-                 {/* Approve if allowance is insufficient */}
-                 {!approvalCompleted && !allowance ||
-                 BigNumber.from(allowance).lt(
-                   ethers.utils.parseUnits(formatLargeUsdc(depositAmountBeingExtended), 6),
-                 )
-                   && (
-                     <Web3Button
-                       contractAddress={usdcAddress}
-                       contractAbi={usdcAbi}
-                       isDisabled={approveUSDCActionInitiated}
-                       className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
-                       action={
-                         async (usdc) =>
-                         {
-                           setLocalError('')
-                           // @ts-ignore
-                           return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
-                         }}
-                       onSubmit={() => {
-                         setExtendApproveButtonPressed(true)
-                       }}
-                       onSuccess={
-                         async (tx) => {
-                           setTxHash(tx.hash)
-                           setLocalError("")
-                           setApproveUSDCActionInitiated(true)
-                           try {
-                             const receipt = await tx.wait();
-                             setApproveUSDCActionInitiated(false)
-                             if(!receipt.status) {
-                               throw new Error("Transaction failed")
-                             }
-                             setApprovalCompleted(true);
-                           } catch (e) {
-                             console.log("Transaction failed:", e)
-                           }
-                           setExtendApproveButtonPressed(false)
-                           setTxHash('')
-                         }}
-                       onError={(e) => {
-                         handleErrorMessages({err: e});
-                         setExtendApproveButtonPressed(false)
-                       }}
-                     >
-                       {allowanceIsLoading ? 'Loading...' :
-                         (extendApproveButtonPressed && approveUSDCActionInitiated) ?
-                           <>
-                             <Spinner />
-                             Approving USDC...
-                           </> : 'Approve USDC'}
-                     </Web3Button>
-                   )
-                   }
+                {/*approve and deposit modals*/}
+                {(allowanceIsLoading) ? (
+                  <p>Loading balance...</p>
+                ) : (
+                  <>
+                    {/* Approve if allowance is insufficient */}
+                    {!approvalCompleted && !allowance ||
+                      BigNumber.from(allowance).lt(
+                        ethers.utils.parseUnits(formatLargeUsdc(depositAmountBeingExtended), 6),
+                      )
+                      && (
+                        <Web3Button contractAddress={usdcAddress} contractAbi={usdcAbi}
+                                    isDisabled={approveUSDCActionInitiated}
+                                    className='!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
+                                    action={
+                                      async (usdc) => {
+                                        setLocalError('');
+                                        // @ts-ignore
+                                        return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256);
+                                      }} onSubmit={() => {
+                          setExtendApproveButtonPressed(true);
+                        }} onSuccess={
+                          async (tx) => {
+                            setTxHash(tx.hash);
+                            setLocalError('');
+                            setApproveUSDCActionInitiated(true);
+                            try {
+                              const receipt = await tx.wait();
+                              setApproveUSDCActionInitiated(false);
+                              if (!receipt.status) {
+                                throw new Error('Transaction failed');
+                              }
+                              setApprovalCompleted(true);
+                            } catch (e) {
+                              console.log('Transaction failed:', e);
+                            }
+                            setExtendApproveButtonPressed(false);
+                            setTxHash('');
+                          }} onError={(e) => {
+                          handleErrorMessages({ err: e });
+                          setExtendApproveButtonPressed(false);
+                        }}>
+                          {allowanceIsLoading ? 'Loading...' :
+                            (extendApproveButtonPressed && approveUSDCActionInitiated) ?
+                              <>
+                                <Spinner />
+                                Approving USDC... </> : 'Approve USDC'}
+                        </Web3Button>
+                      )
+                    }
 
-                 {allowance &&
-                   !BigNumber.from(allowance).lt(
-                     ethers.utils.parseUnits(formatLargeUsdc(depositAmountBeingExtended), 6),
-                   ) && (
-                     <Web3Button
-                       contractAddress={lendingPlatformAddress}
-                       contractAbi = {lendingPlatformAbi}
-                       isDisabled={extendDepositActionInitiated}
-                       className="web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
-                       action={
-                         async (lendingPlatform) =>
-                         {
-                           // @ts-ignore
-                             return await lendingPlatform?.contractWrapper?.writeContract?.extendDeposit(
-                               toEthDate(deposit.endDate),
-                               toEthDate(newTimestamp),
-                               deposit.lendingPoolTokenAmount
-                             );
-                         }
-                     }
-                       onSubmit={() => {
-                         setExtendDepositButtonPressed(true)
-                       }}
-                       onSuccess={
-                       async (tx) => {
-                         setTxHash(tx.hash);
-                         setLocalError('');
-                           if(activeLendingPoolsError) {
-                               handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
-                               return
-                           }
-                          setExtendDepositActionInitiated(true)
-                          setExtendDepositButtonPressed(false)
-                           const filteredLendingPools =
-                               activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
-                                   item => item.timestamp === toEthDate(deposit.endDate).toString(),
-                               );
-                           const matchedLendingPool =
-                               filteredLendingPools.length > 0
-                                   ? filteredLendingPools[0]
-                                   : null;
-                           const newDepositWithdraw: Deposit = {
-                               id: `${matchedLendingPool.id}-withdraw`,
-                               status: "pending",
-                               depositsUsdc: depositAmountBeingExtended.mul(-1).toString(),
-                               apy: formatPercentage(estimatedAPY),
-                               currentBalanceOverride: depositAmountBeingExtended.mul(-1).toString(),
-                               interestEarnedOverride: "0",
-                               lendingPool: {
-                                   id: matchedLendingPool.id,
-                                   timestamp: matchedLendingPool.timestamp,
-                                   tokenSupply: matchedLendingPool.tokenSupply,
-                                   totalEthYield: matchedLendingPool.totalEthYield,
-                                   totalPrincipal: matchedLendingPool.totalPrincipal,
-                                   totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
-                                   __typename: matchedLendingPool.__typename,
-                               },
-                               timestamp: toEthDate(deposit.endDate),
-                               updated: Math.floor(Date.now() / 1000),
-                             tempData: true
-                           };
-                           const newDepositDeposit = {
-                               ...newDepositWithdraw,
-                               id: `${matchedLendingPool.id}-deposit`,
-                               depositsUsdc: depositAmountBeingExtended.toString(),
-                               currentBalanceOverride: depositAmountBeingExtended.toString(),
-                               lendingPool: {
-                                   ...newDepositWithdraw.lendingPool,
-                                   timestamp: toEthDate(newTimestamp).toString()
-                               }
-                           };
-                           dispatch({
-                               type: "ADD_LEND_POSITION",
-                               payload: { address: walletAddress, deposit: newDepositWithdraw },
-                           });
-                           dispatch({
-                               type: "ADD_LEND_POSITION",
-                               payload: { address: walletAddress, deposit: newDepositDeposit },
-                           });
-                           dispatch({
-                               type: "UPDATE_LEND_POSITION_STATUS",
-                               payload: {
+                    {allowance &&
+                      !BigNumber.from(allowance).lt(
+                        ethers.utils.parseUnits(formatLargeUsdc(depositAmountBeingExtended), 6),
+                      ) && (
+                        <Web3Button contractAddress={lendingPlatformAddress} contractAbi={lendingPlatformAbi}
+                                    isDisabled={extendDepositActionInitiated}
+                                    className='web3button !btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4'
+                                    action={
+                                      async (lendingPlatform) => {
+                                        // @ts-ignore
+                                        return await lendingPlatform?.contractWrapper?.writeContract?.extendDeposit(
+                                          toEthDate(deposit.endDate),
+                                          toEthDate(newTimestamp),
+                                          deposit.lendingPoolTokenAmount,
+                                        );
+                                      }
+                                    } onSubmit={() => {
+                          setExtendDepositButtonPressed(true);
+                        }} onSuccess={
+                          async (tx) => {
+                            setTxHash(tx.hash);
+                            setLocalError('');
+                            if (activeLendingPoolsError) {
+                              handleErrorMessages({ customMessage: activeLendingPoolsError.message });
+                              return;
+                            }
+                            setExtendDepositActionInitiated(true);
+                            setExtendDepositButtonPressed(false);
+                            const filteredLendingPools =
+                              activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
+                                item => item.timestamp === toEthDate(deposit.endDate).toString(),
+                              );
+                            const matchedLendingPool =
+                              filteredLendingPools.length > 0
+                                ? filteredLendingPools[0]
+                                : null;
+                            const newDepositWithdraw: Deposit = {
+                              id: `${matchedLendingPool.id}-withdraw`,
+                              status: 'pending',
+                              depositsUsdc: depositAmountBeingExtended.mul(-1).toString(),
+                              apy: formatPercentage(estimatedAPY),
+                              currentBalanceOverride: depositAmountBeingExtended.mul(-1).toString(),
+                              interestEarnedOverride: '0',
+                              lendingPool: {
+                                id: matchedLendingPool.id,
+                                timestamp: matchedLendingPool.timestamp,
+                                tokenSupply: matchedLendingPool.tokenSupply,
+                                totalEthYield: matchedLendingPool.totalEthYield,
+                                totalPrincipal: matchedLendingPool.totalPrincipal,
+                                totalUsdcInterest: matchedLendingPool.totalUsdcInterest,
+                                __typename: matchedLendingPool.__typename,
+                              },
+                              timestamp: toEthDate(deposit.endDate),
+                              updated: Math.floor(Date.now() / 1000),
+                              tempData: true,
+                            };
+                            const newDepositDeposit = {
+                              ...newDepositWithdraw,
+                              id: `${matchedLendingPool.id}-deposit`,
+                              depositsUsdc: depositAmountBeingExtended.toString(),
+                              currentBalanceOverride: depositAmountBeingExtended.toString(),
+                              lendingPool: {
+                                ...newDepositWithdraw.lendingPool,
+                                timestamp: toEthDate(newTimestamp).toString(),
+                              },
+                            };
+                            dispatch({
+                              type: 'ADD_LEND_POSITION',
+                              payload: { address: walletAddress, deposit: newDepositWithdraw },
+                            });
+                            dispatch({
+                              type: 'ADD_LEND_POSITION',
+                              payload: { address: walletAddress, deposit: newDepositDeposit },
+                            });
+                            dispatch({
+                              type: 'UPDATE_LEND_POSITION_STATUS',
+                              payload: {
+                                address: walletAddress,
+                                id: matchedLendingPool.id,
+                                status: 'extending',
+                              },
+                            });
+
+                            try {
+                              const receipt = await tx.wait();
+                              if (!receipt.status) {
+                                throw new Error('Transaction failed');
+                              }
+                              dispatch({
+                                type: 'UPDATE_LEND_POSITION_STATUS',
+                                payload: {
                                   address: walletAddress,
-                                   id: matchedLendingPool.id,
-                                   status: "extending",
-                               },
-                           });
-
-                           try {
-                               const receipt = await tx.wait();
-                               if(!receipt.status) {
-                                   throw new Error("Transaction failed")
-                               }
-                               dispatch({
-                                   type: "UPDATE_LEND_POSITION_STATUS",
-                                   payload: {
-                                     address: walletAddress,
-                                       id: `${matchedLendingPool.id}-deposit`,
-                                       status: "confirmed",
-                                   },
-                               });
-                               dispatch({
-                                   type: "UPDATE_LEND_POSITION_STATUS",
-                                   payload: {
-                                     address: walletAddress,
-                                       id: `${matchedLendingPool.id}-withdraw`,
-                                       status: "confirmed",
-                                   },
-                               });
-                               dispatch({
-                                   type: "UPDATE_LEND_POSITION_STATUS",
-                                   payload: {
-                                     address: walletAddress,
-                                       id: matchedLendingPool.id,
-                                       status: "extended",
-                                   },
-                               });
-                           } catch (e) {
-                               console.log("Transaction failed:", e);
-                               dispatch({
-                                   type: "UPDATE_LEND_POSITION_STATUS",
-                                   payload: {
-                                     address: walletAddress,
-                                       id: `${matchedLendingPool.id}-deposit`,
-                                       status: "failed",
-                                   },
-                               });
-                               dispatch({
-                                   type: "UPDATE_LEND_POSITION_STATUS",
-                                   payload: {
-                                     address: walletAddress,
-                                       id: `${matchedLendingPool.id}-withdraw`,
-                                       status: "failed",
-                                   },
-                               });
-                           }
-                       }}
-                       onError={(e) => {
-                         handleErrorMessages({err: e});
-                         setExtendDepositButtonPressed(false)
-                       }}
-                     >
-                       Extend Order
-                     </Web3Button>
-                   )}
-               </>
-             )}
-              {txHash && (
-                <TransactionButton
-                  txHash={txHash}
-                  chainId={chainId}
-                  className="btn-block bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green hover:border-shrub-green hover:text-white"
-                />
-              )}
-              {/*confirm in wallet button*/}
-              {((extendDepositButtonPressed && !extendDepositActionInitiated) || (extendApproveButtonPressed && !approveUSDCActionInitiated)) && (
-                <button
-                  disabled={true}
-                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
-                  Confirm in Wallet...
-                </button>
-              )}
-            </div>
+                                  id: `${matchedLendingPool.id}-deposit`,
+                                  status: 'confirmed',
+                                },
+                              });
+                              dispatch({
+                                type: 'UPDATE_LEND_POSITION_STATUS',
+                                payload: {
+                                  address: walletAddress,
+                                  id: `${matchedLendingPool.id}-withdraw`,
+                                  status: 'confirmed',
+                                },
+                              });
+                              dispatch({
+                                type: 'UPDATE_LEND_POSITION_STATUS',
+                                payload: {
+                                  address: walletAddress,
+                                  id: matchedLendingPool.id,
+                                  status: 'extended',
+                                },
+                              });
+                            } catch (e) {
+                              console.log('Transaction failed:', e);
+                              dispatch({
+                                type: 'UPDATE_LEND_POSITION_STATUS',
+                                payload: {
+                                  address: walletAddress,
+                                  id: `${matchedLendingPool.id}-deposit`,
+                                  status: 'failed',
+                                },
+                              });
+                              dispatch({
+                                type: 'UPDATE_LEND_POSITION_STATUS',
+                                payload: {
+                                  address: walletAddress,
+                                  id: `${matchedLendingPool.id}-withdraw`,
+                                  status: 'failed',
+                                },
+                              });
+                            }
+                          }} onError={(e) => {
+                          handleErrorMessages({ err: e });
+                          setExtendDepositButtonPressed(false)
+                        }}>
+                          Extend Order
+                        </Web3Button>
+                      )}
+                  </>
+                )}
+                {txHash && (
+                  <TransactionButton txHash={txHash} chainId={chainId}
+                                     className='btn-block bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green hover:border-shrub-green hover:text-white' />
+                )}
+                {/*confirm in wallet button*/}
+                {((extendDepositButtonPressed && !extendDepositActionInitiated) || (extendApproveButtonPressed && !approveUSDCActionInitiated)) && (
+                  <button disabled={true}
+                          className='btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50'>
+                    Confirm in Wallet... </button>
+                )}
+              </div>
+            </>
+            }
           </div>
         </div>
       </div>
