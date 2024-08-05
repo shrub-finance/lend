@@ -58,7 +58,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
   }
 
   const handleAmountChange = (event) => {
-    if (ethBalance.value.isZero()) {
+    if (ethBalance?.value?.isZero()) {
       setBorrowError('borrow', 'No ETH balance. Please add ETH to your wallet.');
       return;
     }
@@ -72,8 +72,8 @@ export const BorrowView: React.FC<BorrowViewProps> = ({ onBorrowViewChange, requ
       clearBorrowError('borrow');
       return;
     }
-    if (requiredCollateral && requiredCollateral.gt(ethBalance.value)) {
-      setBorrowError('borrow', 'ETH balance exceeds required collateral.');
+    if (requiredCollateral && ethBalance?.value && requiredCollateral.gt(ethBalance.value)) {
+    setBorrowError('borrow', 'ETH balance exceeds required collateral.');
       return;
     }
     const isValidInput = /^([0-9]+(\.[0-9]{1,6})?|\.[0-9]{1,6})$/.test(inputValue);

@@ -44,7 +44,9 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const [lendActionInitiated, setLendActionInitiated] = useState(false);
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
-  const {data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading} = useBalance(usdcAddress);
+  const {
+    data: usdcBalanceData,
+    isLoading: usdcBalanceDataIsLoading } = useBalance(usdcAddress);
   const [depositButtonPressed, setDepositButtonPressed] = useState(false);
   const [approveButtonPressed, setApproveButtonPressed] = useState(false);
   const [approvalCompleted, setApprovalCompleted] = useState(false);
@@ -127,12 +129,9 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                       <Image src='/usdc-logo.svg' className='w-10 inline align-baseline' alt={'usdc logo'} width={10}
                              height={10} />
                     </div>
-                    <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>You
-                      are depositing <span className="font-bold">{depositAmount} USDC</span>. The
-                      deposit will be locked until {endDate.toDateString()}, and then returned to you with the ETH yield earned at {estimatedAPY}%.</p>
+                    <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>You are depositing <span className="font-bold">{depositAmount} USDC</span>. The deposit will be locked until {endDate.toDateString()}, and then returned to you with the ETH yield earned at {estimatedAPY}%.</p>
                   </>
                 )}
-
                 {/*success and pending states*/}
                 {depositButtonPressed  && (
                   <>
@@ -145,7 +144,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     </div>
                   </>
                 )}
-
                 {latestDeposit?.status === 'pending' && (
                   <>
                     <p className='text-lg font-bold pb-2 text-left'>Deposit Submitted</p>
@@ -158,7 +156,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     </div>
                   </>
                 )}
-
                 {lendActionInitiated && (
                   <>
                     {latestDeposit?.status === 'confirmed' && (
@@ -187,12 +184,13 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                       )}
                   </>
                 )}
+
                 {/*divider*/}
                 <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
 
                 {/*receipt start*/}
                 {!lendActionInitiated && !depositButtonPressed &&
-                  <div>
+                  <>
                     <div className="mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light">
                       <div className="flex flex-row  justify-between">
                         <span className="">Lockup starts</span>
@@ -242,7 +240,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                     </div>
                     {/*divider*/}
                     <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
-                  </div>
+                  </>
                 }
                 {/*total section*/}
                 {!lendActionInitiated && !depositButtonPressed  && (
@@ -253,7 +251,6 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                         <span>{usdcBalanceData?.displayValue} USDC</span>
                       </div>
                     </div>
-
                     {/*approve and deposit buttons*/}
                     {!approvalCompleted && (!usdcBalanceData || !allowance || BigNumber.from(allowance).lt(ethers.utils.parseUnits(depositAmount, 6))) ? (
                      <Web3Button
@@ -320,7 +317,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({backOnDeposit, tim
                               }}
                               onSuccess={
                                 async (tx) => {
-                                setTxHash(tx.hash)
+                                setTxHash(tx.hash);
                                 setLocalError('');
                                 if(activeLendingPoolsError) {
                                   handleErrorMessages({ customMessage: activeLendingPoolsError.message } )

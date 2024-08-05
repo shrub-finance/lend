@@ -14,7 +14,7 @@ import {GLOBAL_DATA_QUERY} from "../constants/queries";
 import {useQuery} from "@apollo/client";
 import {getUserData, useFinancialData} from "../components/FinancialDataContext";
 import Modal from "../components/Modal";
-import ExtendDepositView from './modals/ExtendDepositView';
+import ExtendDepositView from './modals/extend-deposit/ExtendDepositView';
 import {
   durationWad,
   ethInUsdc,
@@ -24,7 +24,7 @@ import {
   wadMul,
 } from '../utils/ethMethods';
 import {BorrowObj, DepositObj} from "../types/types";
-import ExtendBorrowView from './modals/ExtendBorrowView';
+import ExtendBorrowView from './modals/extend-borrow/ExtendBorrowView';
 import {
   EARLY_REPAYMENT_APY,
   EARLY_REPAYMENT_THRESHOLD,
@@ -35,8 +35,8 @@ import {
   twelveMonth,
   Zero
 } from '../constants';
-import WithdrawView from './modals/WithdrawView';
-import RepayView from './modals/RepayView';
+import WithdrawView from './modals/withdraw-deposit/WithdrawView';
+import RepayView from './modals/repay-borrow/RepayView';
 import {UserHistoryView} from "./user-history/UserHistoryView";
 import {getChainInfo} from "../utils/chains";
 import Tooltip from '../components/Tooltip';

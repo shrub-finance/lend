@@ -6,8 +6,8 @@ import {
   formatWad,
   toEthDate,
   truncateEthAddress
-} from '../../utils/ethMethods';
-import { getContractAbis, getContractAddresses } from '../../utils/contracts';
+} from '../../../utils/ethMethods';
+import { getContractAbis, getContractAddresses } from '../../../utils/contracts';
 import { BigNumber, ethers } from 'ethers';
 import {
   useAddress,
@@ -15,11 +15,13 @@ import {
   useContractRead,
   Web3Button
 } from '@thirdweb-dev/react';
-import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
-import {Deposit, DepositObj} from "../../types/types";
-import {useFinancialData} from "../../components/FinancialDataContext";
-import useActiveLendingPools from '../../hooks/useActiveLendingPools';
-import {getChainInfo} from "../../utils/chains";
+import { handleErrorMessagesFactory } from '../../../components/HandleErrorMessages';
+import {Deposit, DepositObj} from "../../../types/types";
+import useActiveLendingPools from '../../../hooks/useActiveLendingPools';
+import {getChainInfo} from "../../../utils/chains";
+import { useFinancialData } from '../../../components/FinancialDataContext';
+import TransactionButton from '../../../components/TxButton';
+import Spinner from '../../../components/Spinner';
 
 interface ExtendDepositSummaryProps {
   deposit: DepositObj;
@@ -51,15 +53,19 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
 
   const {dispatch} = useFinancialData();
   const walletAddress = useAddress();
+  const [extendDepositButtonPressed, setExtendDepositButtonPressed] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [extendApproveButtonPressed, setExtendApproveButtonPressed] = useState(false);
   const [approveUSDCActionInitiated, setApproveUSDCActionInitiated] = useState(false);
   const [extendDepositActionInitiated, setExtendDepositActionInitiated] = useState(false);
+  const [approvalCompleted, setApprovalCompleted] = useState(false);
+  const [localError, setLocalError] = useState("");
+  const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const {
     contract: usdc,
     isLoading: usdcIsLoading,
     error: usdcError
   } = useContract(usdcAddress, usdcAbi);
-  const [localError, setLocalError] = useState("");
-  const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
   const {
     data: allowance,
     isLoading: allowanceIsLoading,
@@ -80,15 +86,33 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
   useEffect(() => {
     onExtendDepositActionChange(extendDepositActionInitiated);
   }, [extendDepositActionInitiated, onExtendDepositActionChange]);
-
   const depositAmountBeingExtended = deposit.positionPrincipal.add(deposit.positionUsdcInterest);
+
+  useEffect(() => {
+    if (localError) {
+      const element = document.querySelector('.md\\:hero-content');
+      if (element) element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [localError]);
 
 
   return (
+    <div className="md:hero-content flex flex-col">
+    {/*errors*/}
+  {localError && (
+    <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 flex items-center" role="alert">
+      <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <span>{localError}</span>
+    </div>
+  )}
     <div className="relative group mt-4 w-full min-w-[500px]">
       <div className="flex flex-col">
         <div className="card w-full">
           <div className="card-body">
+            {!extendDepositActionInitiated  && (
+              <>
               <div className='w-full text-xl font-semibold flex flex-row'>
                 <span className='text-4xl font-medium text-left w-[500px]'>{formatLargeUsdc(depositAmountBeingExtended)} USDC</span>
                 <Image alt='usdc icon' src='/usdc-logo.svg' className='w-10 inline align-baseline' width='40' height='40' />
@@ -96,12 +120,26 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
               <p className='text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]'>
                 When you extend this deposit, {formatLargeUsdc(depositAmountBeingExtended)} USDC will be
                 moved from the old lending pool ending {deposit.endDate.toLocaleString()} to the new lending pool ending {newTimestamp.toLocaleString()}. You will collect earned ETH yield of {formatWad(deposit.positionEthYield, 8)}.</p>
+              </>
+          )}
+
+            {/*success and pending states*/}
+            {extendDepositButtonPressed  && (
+              <>
+                <div className='flex items-center justify-center p-20'>
+                  {/*spinner*/}
+                  <div role='status'
+                       className='flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin'>
+                    <div className='w-[205px] h-[205px] rounded-full bg-white'></div>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/*divider*/}
             <div className='divider h-0.5 w-full bg-shrub-grey-light3 my-8'></div>
 
             {/*receipt start*/}
-            <div>
               <div className='mb-2 flex flex-col gap-3 text-shrub-grey-200 text-lg font-light'>
                 <div className='flex flex-row  justify-between'>
                   <span className=''>Previous End Date</span>
@@ -123,16 +161,17 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                     <Image alt="copy icon" src="/copy.svg" className="w-6 hidden md:inline align-baseline ml-2" width="24" height="24"/>
                       </span>
                 </div>
-              </div>
-            {/*divider*/}
+              {/*divider*/}
               <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
+
+
              {/*approve and deposit modals*/}
              {(allowanceIsLoading) ? (
                <p>Loading balance...</p>
              ) : (
                <>
                  {/* Approve if allowance is insufficient */}
-                 {!allowance ||
+                 {!approvalCompleted && !allowance ||
                  BigNumber.from(allowance).lt(
                    ethers.utils.parseUnits(formatLargeUsdc(depositAmountBeingExtended), 6),
                  )
@@ -145,24 +184,42 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                        action={
                          async (usdc) =>
                          {
-                           setLocalError('');
+                           setLocalError('')
                            // @ts-ignore
                            return await usdc.contractWrapper.writeContract.approve(lendingPlatformAddress, ethers.constants.MaxUint256)
                          }}
+                       onSubmit={() => {
+                         setExtendApproveButtonPressed(true)
+                       }}
                        onSuccess={
                          async (tx) => {
-                           setLocalError("");
+                           setTxHash(tx.hash)
+                           setLocalError("")
+                           setApproveUSDCActionInitiated(true)
                            try {
                              const receipt = await tx.wait();
-                             if(!receipt.status) {throw new Error("Transaction failed")}
-                           } catch (e) {console.log("Transaction failed:", e)}
-                           setApproveUSDCActionInitiated(true);
+                             setApproveUSDCActionInitiated(false)
+                             if(!receipt.status) {
+                               throw new Error("Transaction failed")
+                             }
+                             setApprovalCompleted(true);
+                           } catch (e) {
+                             console.log("Transaction failed:", e)
+                           }
+                           setExtendApproveButtonPressed(false)
+                           setTxHash('')
                          }}
                        onError={(e) => {
                          handleErrorMessages({err: e});
+                         setExtendApproveButtonPressed(false)
                        }}
                      >
-                       {!extendDepositActionInitiated && !approveUSDCActionInitiated  ?'Approve USDC': 'USDC Approval Submitted'}
+                       {allowanceIsLoading ? 'Loading...' :
+                         (extendApproveButtonPressed && approveUSDCActionInitiated) ?
+                           <>
+                             <Spinner />
+                             Approving USDC...
+                           </> : 'Approve USDC'}
                      </Web3Button>
                    )
                    }
@@ -187,13 +244,19 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                              );
                          }
                      }
+                       onSubmit={() => {
+                         setExtendDepositButtonPressed(true)
+                       }}
                        onSuccess={
                        async (tx) => {
-                           setLocalError('');
+                         setTxHash(tx.hash);
+                         setLocalError('');
                            if(activeLendingPoolsError) {
                                handleErrorMessages({ customMessage: activeLendingPoolsError.message } )
                                return
                            }
+                          setExtendDepositActionInitiated(true)
+                          setExtendDepositButtonPressed(false)
                            const filteredLendingPools =
                                activeLendingPoolsData && activeLendingPoolsData.lendingPools.filter(
                                    item => item.timestamp === toEthDate(deposit.endDate).toString(),
@@ -297,21 +360,37 @@ const ExtendDepositSummaryView: React.FC<ExtendDepositSummaryProps & { onExtendD
                                    },
                                });
                            }
-                           setExtendDepositActionInitiated(true)
                        }}
                        onError={(e) => {
                          handleErrorMessages({err: e});
+                         setExtendDepositButtonPressed(false)
                        }}
                      >
-                       {!extendDepositActionInitiated ?'Initiate Now': 'Extend Order Submitted'}
+                       Extend Order
                      </Web3Button>
                    )}
                </>
              )}
+              {txHash && (
+                <TransactionButton
+                  txHash={txHash}
+                  chainId={chainId}
+                  className="btn-block bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green hover:border-shrub-green hover:text-white"
+                />
+              )}
+              {/*confirm in wallet button*/}
+              {((extendDepositButtonPressed && !extendDepositActionInitiated) || (extendApproveButtonPressed && !approveUSDCActionInitiated)) && (
+                <button
+                  disabled={true}
+                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50">
+                  Confirm in Wallet...
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

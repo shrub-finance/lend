@@ -2,18 +2,17 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
   formatLargeUsdc,
-  formatShortDate,
   formatWad,
   toEthDate,
   truncateEthAddress,
-} from '../../utils/ethMethods';
-import { getContractAbis, getContractAddresses } from '../../utils/contracts';
-import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
-import { Borrow, BorrowObj } from '../../types/types';
+} from '../../../utils/ethMethods';
+import { getContractAbis, getContractAddresses } from '../../../utils/contracts';
+import { handleErrorMessagesFactory } from '../../../components/HandleErrorMessages';
 import {useAddress, useContract, useContractRead, Web3Button} from '@thirdweb-dev/react';
-import { useFinancialData } from '../../components/FinancialDataContext';
+import { useFinancialData } from '../../../components/FinancialDataContext';
 import { ethers } from 'ethers';
-import {getChainInfo} from "../../utils/chains";
+import {getChainInfo} from "../../../utils/chains";
+import { Borrow, BorrowObj } from '../../../types/types';
 
 interface RepaySummaryViewProps {
   borrow: BorrowObj;
@@ -30,8 +29,8 @@ const RepaySummaryView: React.FC<RepaySummaryViewProps & { onRepayActionChange: 
   }
 ) => {
   const { chainId } = getChainInfo();
-  const {usdcAddress, lendingPlatformAddress, chainlinkAggregatorAddress, aethAddress} = getContractAddresses(chainId);
-  const {usdcAbi, lendingPlatformAbi, chainlinkAggregatorAbi, aethAbi} = getContractAbis(chainId);
+  const {usdcAddress, lendingPlatformAddress} = getContractAddresses(chainId);
+  const {usdcAbi, lendingPlatformAbi} = getContractAbis(chainId);
 
   const walletAddress = useAddress();
   const [localError, setLocalError] = useState('');

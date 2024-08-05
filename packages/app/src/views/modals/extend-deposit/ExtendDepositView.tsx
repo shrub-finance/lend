@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import Image from "next/image";
 import { calculateLockupPeriod, fromEthDate, toEthDate } from '@shrub-lend/common';
-import ExtendDepositSummaryView from './ExtendDepositSummaryView';
+import ExtendDepositSummaryView from '../extend-deposit/ExtendDepositSummaryView';
 import {ethers} from "ethers";
-import {formatLargeUsdc, formatPercentage} from "../../utils/ethMethods";
-import {useFinancialData} from "../../components/FinancialDataContext";
-import {DepositObj} from "../../types/types";
+import {formatLargeUsdc, formatPercentage} from "../../../utils/ethMethods";
+import {useFinancialData} from "../../../components/FinancialDataContext";
+import {DepositObj} from "../../../types/types";
 
 interface ExtendDepositViewProps {
   deposit: DepositObj;

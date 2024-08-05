@@ -7,17 +7,16 @@ import {
   formatLargeUsdc, formatWad,
   interestToLTV,
   ltvToInterest, requiredAdditionalCollateral,
-  roundEth,
   toEthDate
-} from '../../utils/ethMethods';
-import { interestRates, Zero } from '../../constants';
-import { getContractAbis, getContractAddresses } from '../../utils/contracts';
-import ExtendBorrowSummaryView from './ExtendBorrowSummaryView';
+} from '../../../utils/ethMethods';
+import { interestRates, Zero } from '../../../constants';
+import { getContractAbis, getContractAddresses } from '../../../utils/contracts';
+import ExtendBorrowSummaryView from '../extend-borrow/ExtendBorrowSummaryView';
 import { formatDate } from '@shrub-lend/common';
-import {BorrowObj} from "../../types/types";
-import {useFinancialData} from "../../components/FinancialDataContext";
-import {getChainInfo} from "../../utils/chains";
-import {useEthPrice} from "../../hooks/useEthPriceFromShrub";
+import {BorrowObj} from "../../../types/types";
+import {useFinancialData} from "../../../components/FinancialDataContext";
+import {getChainInfo} from "../../../utils/chains";
+import {useEthPrice} from "../../../hooks/useEthPriceFromShrub";
 
 interface ExtendBorrowViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
@@ -31,7 +30,6 @@ setIsModalOpen, borrow
   const {lendingPlatformAddress} = getContractAddresses(chainId);
   const {lendingPlatformAbi} = getContractAbis(chainId);
   const { store, dispatch } = useFinancialData();
-  // const [selectedInterestRate, setSelectedInterestRate] = useState('8');
   const [extendActionInitiated, setExtendBorrowActionInitiated] = useState(false);
   const [showExtendBorrowCollateralSection, setShowExtendBorrowCollateralSection] = useState(true);
   const [interestEditRequested, setInterestEditRequested] = useState(false);
