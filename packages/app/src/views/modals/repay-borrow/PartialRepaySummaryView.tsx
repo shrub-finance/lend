@@ -6,16 +6,16 @@ import {
   formatPercentage,
   toEthDate,
   truncateEthAddress,
-} from '../../utils/ethMethods';
-import { getContractAbis, getContractAddresses } from '../../utils/contracts';
-import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
-import { Borrow, BorrowObj } from '../../types/types';
+} from '../../../utils/ethMethods';
+import { getContractAbis, getContractAddresses } from '../../../utils/contracts';
+import { handleErrorMessagesFactory } from '../../../components/HandleErrorMessages';
+import { Borrow, BorrowObj } from '../../../types/types';
 import {useAddress, useContract, useContractRead, Web3Button} from '@thirdweb-dev/react';
-import { useFinancialData } from '../../components/FinancialDataContext';
+import { useFinancialData } from '../../../components/FinancialDataContext';
 import { ethers } from 'ethers';
-import { Zero } from '../../constants';
-import {getChainInfo} from "../../utils/chains";
-import {useEthPrice} from "../../hooks/useEthPriceFromShrub";
+import { Zero } from '../../../constants';
+import {getChainInfo} from "../../../utils/chains";
+import {useEthPrice} from "../../../hooks/useEthPriceFromShrub";
 
 interface PartialRepaySummaryViewProps {
   borrow: BorrowObj;

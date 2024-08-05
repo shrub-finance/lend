@@ -1,9 +1,9 @@
   import React, { useState, useEffect } from 'react';
   import Image from "next/image";
-  import { formatLargeUsdc } from '../../utils/ethMethods';
-  import RepaySummaryView from './RepaySummaryView';
-  import { BorrowObj } from "../../types/types";
-  import PartialRepayView from './PartialRepayView';
+  import { formatLargeUsdc } from '../../../utils/ethMethods';
+  import RepaySummaryView from '../repay-borrow/RepaySummaryView';
+  import { BorrowObj } from "../../../types/types";
+  import PartialRepayView from '../repay-borrow/PartialRepayView';
 
   interface RepayViewProps {
     setIsModalOpen: (isOpen: boolean) => void;

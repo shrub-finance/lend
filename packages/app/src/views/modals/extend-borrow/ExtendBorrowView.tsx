@@ -7,17 +7,16 @@ import {
   formatLargeUsdc, formatWad,
   interestToLTV,
   ltvToInterest, requiredAdditionalCollateral,
-  roundEth,
   toEthDate
-} from '../../utils/ethMethods';
-import { interestRates, Zero } from '../../constants';
-import { getContractAbis, getContractAddresses } from '../../utils/contracts';
-import ExtendBorrowSummaryView from './ExtendBorrowSummaryView';
+} from '../../../utils/ethMethods';
+import { interestRates, Zero } from '../../../constants';
+import { getContractAbis, getContractAddresses } from '../../../utils/contracts';
+import ExtendBorrowSummaryView from '../extend-borrow/ExtendBorrowSummaryView';
 import { formatDate } from '@shrub-lend/common';
-import {BorrowObj} from "../../types/types";
-import {useFinancialData} from "../../components/FinancialDataContext";
-import {getChainInfo} from "../../utils/chains";
-import {useEthPrice} from "../../hooks/useEthPriceFromShrub";
+import {BorrowObj} from "../../../types/types";
+import {useFinancialData} from "../../../components/FinancialDataContext";
+import {getChainInfo} from "../../../utils/chains";
+import {useEthPrice} from "../../../hooks/useEthPriceFromShrub";
 
 interface ExtendBorrowViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
@@ -31,7 +30,6 @@ setIsModalOpen, borrow
   const {lendingPlatformAddress} = getContractAddresses(chainId);
   const {lendingPlatformAbi} = getContractAbis(chainId);
   const { store, dispatch } = useFinancialData();
-  // const [selectedInterestRate, setSelectedInterestRate] = useState('8');
   const [extendActionInitiated, setExtendBorrowActionInitiated] = useState(false);
   const [showExtendBorrowCollateralSection, setShowExtendBorrowCollateralSection] = useState(true);
   const [interestEditRequested, setInterestEditRequested] = useState(false);
@@ -77,7 +75,7 @@ setIsModalOpen, borrow
   return (
     <>
       <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t ">
-        <h3 className="text-xl font-semibold text-shrub-grey-900 ">Extend</h3>
+        <h3 className="text-xl font-semibold text-shrub-grey-900 ">Extend Borrow</h3>
         <button type="button" onClick={closeModalAndPassData} className="text-shrub-grey-400 bg-transparent hover:bg-shrub-grey-100 hover:text-shrub-grey-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center  ">
           <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
             <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>

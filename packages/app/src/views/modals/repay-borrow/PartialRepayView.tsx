@@ -1,18 +1,15 @@
   import React, { useState, useEffect } from 'react';
   import Image from "next/image";
-  import {
-  calcLtv, formatLargeUsdc, formatPercentage, isInvalidOrZero,
-
-} from '../../utils/ethMethods';
-  import PartialRepaySummaryView from './PartialRepaySummaryView';
-  import { BorrowObj } from "../../types/types";
-  import { getContractAbis, getContractAddresses } from '../../utils/contracts';
+  import { calcLtv, formatLargeUsdc, formatPercentage, isInvalidOrZero} from '../../../utils/ethMethods';
+  import PartialRepaySummaryView from '../repay-borrow/PartialRepaySummaryView';
+  import { getContractAbis, getContractAddresses } from '../../../utils/contracts';
   import { ethers } from 'ethers';
-  import { Zero } from '../../constants';
-  import { useValidation } from '../../hooks/useValidation';
-  import ErrorDisplay from '../../components/ErrorDisplay';
-  import {getChainInfo} from "../../utils/chains";
-  import {useEthPrice} from "../../hooks/useEthPriceFromShrub";
+  import { Zero } from '../../../constants';
+  import { useValidation } from '../../../hooks/useValidation';
+  import ErrorDisplay from '../../../components/ErrorDisplay';
+  import {getChainInfo} from "../../../utils/chains";
+  import {useEthPrice} from "../../../hooks/useEthPriceFromShrub";
+  import { BorrowObj } from '../../../types/types';
 
   interface PartialRepayViewProps {
     borrow: BorrowObj;

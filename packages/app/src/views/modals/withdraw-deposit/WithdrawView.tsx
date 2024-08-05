@@ -6,16 +6,16 @@ import {
   formatWad,
   toEthDate,
   truncateEthAddress,
-} from '../../utils/ethMethods';
-import { getContractAbis, getContractAddresses } from '../../utils/contracts';
-import { handleErrorMessagesFactory } from '../../components/HandleErrorMessages';
-import { Deposit } from '../../types/types';
+} from '../../../utils/ethMethods';
+import { getContractAbis, getContractAddresses } from '../../../utils/contracts';
+import { handleErrorMessagesFactory } from '../../../components/HandleErrorMessages';
+import { Deposit } from '../../../types/types';
 import {useAddress, Web3Button} from '@thirdweb-dev/react';
-import {DepositObj} from "../../types/types";
-import { useFinancialData } from '../../components/FinancialDataContext';
+import {DepositObj} from "../../../types/types";
+import { useFinancialData } from '../../../components/FinancialDataContext';
 import { useQuery } from '@apollo/client';
-import { GET_LENDINGPOOL_QUERY } from '../../constants/queries';
-import {getChainInfo} from "../../utils/chains";
+import { GET_LENDINGPOOL_QUERY } from '../../../constants/queries';
+import {getChainInfo} from "../../../utils/chains";
 
 interface WithdrawViewProps {
   deposit: DepositObj

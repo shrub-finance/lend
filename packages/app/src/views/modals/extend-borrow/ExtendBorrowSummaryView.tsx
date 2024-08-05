@@ -2,14 +2,11 @@ import React, {useEffect, useState} from 'react';
 import Image from 'next/image';
 import {
   calcLtv,
-  calcPercentage,
-  ethInUsdc,
   formatLargeUsdc,
-  formatPercentage, formatShortDate, formatWad,
-  fromEthDate, interestToLTV, ltvToInterest,
+  formatPercentage, fromEthDate, ltvToInterest,
   toEthDate,
-} from '../../utils/ethMethods';
-import { getContractAddresses, getContractAbis } from '../../utils/contracts';
+} from '../../../utils/ethMethods';
+import { getContractAddresses, getContractAbis } from '../../../utils/contracts';
 import {BigNumber, ethers} from 'ethers';
 import {
   useAddress,
@@ -17,14 +14,12 @@ import {
   useContractRead,
   Web3Button,
 } from '@thirdweb-dev/react';
-import {handleErrorMessagesFactory} from '../../components/HandleErrorMessages';
-import {useLazyQuery} from '@apollo/client';
-import {ACTIVE_LENDINGPOOLS_QUERY} from '../../constants/queries';
-import {useFinancialData} from '../../components/FinancialDataContext';
-import { Borrow, BorrowObj } from '../../types/types';
-import { Zero } from '../../constants';
-import {getChainInfo} from "../../utils/chains";
-import {useEthPrice} from "../../hooks/useEthPriceFromShrub";
+import {handleErrorMessagesFactory} from '../../../components/HandleErrorMessages';
+import {useFinancialData} from '../../../components/FinancialDataContext';
+import { Borrow, BorrowObj } from '../../../types/types';
+import { Zero } from '../../../constants';
+import {getChainInfo} from "../../../utils/chains";
+import {useEthPrice} from "../../../hooks/useEthPriceFromShrub";
 
 interface ExtendBorrowSummaryProps {
   onBackExtend: (data?) => void,
