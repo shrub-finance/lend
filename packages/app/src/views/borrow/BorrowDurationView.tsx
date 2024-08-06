@@ -16,7 +16,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({
   requiredCollateral,
   onDurationChange,
 }) => {
-  const { store, dispatch } = useFinancialData();
+  const { store } = useFinancialData();
   const [timestamp, setTimestamp] = useState(
     store.platformData.activePoolTimestamps[0]
       ? toEthDate(store.platformData.activePoolTimestamps[0])
