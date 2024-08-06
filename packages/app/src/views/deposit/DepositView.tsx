@@ -145,7 +145,7 @@ export const DepositView: FC<DepositViewProps> = ({ onDepositViewChange }) => {
   };
 
   return (
-    <div className="md:hero mx-auto p-4 max-w-[600px]">
+    <div className="md:hero mx-auto p-4 max-w-[650px]">
       <div className="md:hero-content flex flex-col">
         <div className="mt-6 self-start">
           {localError && (

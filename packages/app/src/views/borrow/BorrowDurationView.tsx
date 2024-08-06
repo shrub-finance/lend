@@ -28,7 +28,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({
   };
 
   return (
-    <div className="md:hero mx-auto p-4 max-w-[600px]">
+    <div className="md:hero mx-auto p-4 max-w-[700px]">
       <div className="md:hero-content flex flex-col">
         <div className="mt-6 self-start">
           <h1 className=" text-4xl font-bold ">

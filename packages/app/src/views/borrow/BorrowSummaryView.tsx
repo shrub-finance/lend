@@ -72,7 +72,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const { lendingPlatformAbi } = getContractAbis(chainId);
 
   return (
-    <div className="md:hero mx-auto p-4 max-w-[600px]">
+    <div className="md:hero mx-auto p-4 max-w-[680px]">
       <div className="md:hero-content flex flex-col">
         {/*outer card content*/}
         <div className="mt-6 self-start">
@@ -162,7 +162,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 {/*success and pending states*/}
                 {borrowButtonPressed && (
                   <>
-                    <div className="flex items-center justify-center p-20">
+                    <div className="flex items-center justify-center p-14">
                       {/*spinner*/}
                       <div
                         role="status"
@@ -244,7 +244,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 )}
 
                 {/*divider*/}
-                <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
+                <div className="divider h-0.5 w-full bg-shrub-grey-light3"></div>
 
                 {/*receipt start*/}
                 {!borrowActionInitiated && !borrowButtonPressed && (
