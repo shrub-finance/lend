@@ -87,6 +87,24 @@ AETH: ${ethers.formatUnits(aethBalance, aethDecimals)}
 `);
 });
 
+task("enableAutomine")
+  .setAction(async (taskArgs, env) => {
+    const {network, ethers} = env;
+    await network.provider.send("evm_setAutomine", [true]);
+    // await ethers.provider.send("evm_setAutomine", [true]);
+  });
+
+task("disableAutomine")
+  .addParam("intervalLow", "lower end of the mining interval ms", null, types.int)
+  .addParam("intervalHigh", "address to send funds to", null, types.int)
+  .setAction(async (taskArgs, env) => {
+    const {network} = env;
+    const intervalLow = taskArgs.intervalLow;
+    const intervalHigh = taskArgs.intervalHigh;
+    await network.provider.send("evm_setAutomine", [false]);
+    await network.provider.send("evm_setIntervalMining", [intervalLow, intervalHigh]);
+  });
+
 task("distributeUsdc", "distribute USDC from the deployer account")
   .addParam("to", "address to send funds to", null, types.string)
   .addParam("amount", "address in USDC to send", 0, types.float)
