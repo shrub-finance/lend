@@ -22,7 +22,9 @@ async function getDeployedContracts(env: HardhatRuntimeEnvironment) {
         bpt: await ethers.getContractAt("BorrowPositionToken", (await deployments.get('BorrowPositionToken')).address),
         lendingPlatform: await ethers.getContractAt("LendingPlatform", (await deployments.get('LendingPlatform')).address),
         mockAaveV3: await ethers.getContractAt("MockAaveV3", (await deployments.get('MockAaveV3')).address),
-        // mockChainlinkAggregator: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregator')).address),
+        mockChainlinkAggregatorUsdcEth: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregatorUsdcEth')).address),
+        // mockChainlinkAggregatorEthUsd: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregatorEthUsd')).address),
+        // mockChainlinkAggregatorUsdcUsd: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregatorUsdcUsd')).address),
     }
 }
 
@@ -632,21 +634,21 @@ task("setEthPrice", "udpate the mock Chainlink Aggregator's ETH price")
     .addParam('ethPrice', 'new ETH price, with up to 8 decimals (i.e. 2123.12345678)', undefined, types.string, false)
     .setAction(async (taskArgs, env) => {
         const {ethers, deployments, getNamedAccounts} = env;
-        const {mockChainlinkAggregator} = await getDeployedContracts(env);
+        const {mockChainlinkAggregatorUsdcEth} = await getDeployedContracts(env);
         const ethDecimals = 8n;
-        const usdcPriceDecimals = await mockChainlinkAggregator.decimals();
+        const usdcPriceDecimals = await mockChainlinkAggregatorUsdcEth.decimals();
         const ethPrice = ethers.parseUnits(taskArgs.ethPrice, ethDecimals);
         const usdcPrice = ethers.parseUnits("1", usdcPriceDecimals + ethDecimals) / ethPrice;
-        await sendTransaction(mockChainlinkAggregator.updateAnswer(usdcPrice), 'updateAnswer');
+        await sendTransaction(mockChainlinkAggregatorUsdcEth.updateAnswer(usdcPrice), 'updateAnswer');
         console.log(`Update ETH / USDC pricefeed to ${ethers.formatUnits(usdcPrice, usdcPriceDecimals)}`);
     });
 
 task("getEthPrice", "Get the ETH price in USD from the Chainlink Aggregator")
     .setAction(async (taskArgs, env) => {
         const {ethers, deployments, getNamedAccounts} = env;
-        const {mockChainlinkAggregator} = await getDeployedContracts(env);
-        const decimals = await mockChainlinkAggregator.decimals();
-        const latestRoundData = await mockChainlinkAggregator.latestRoundData();
+        const {mockChainlinkAggregatorUsdcEth} = await getDeployedContracts(env);
+        const decimals = await mockChainlinkAggregatorUsdcEth.decimals();
+        const latestRoundData = await mockChainlinkAggregatorUsdcEth.latestRoundData();
         const ethPrice = latestRoundData.answer;
         // const ethPrice = ethers.parseUnits(taskArgs.ethPrice, decimals);
         // await sendTransaction(mockChainlinkAggregator.updateAnswer(ethPrice), 'updateAnswer');
