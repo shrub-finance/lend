@@ -190,19 +190,19 @@ const ExtendDepositSummaryView: React.FC<
               )}
 
               {/*success and pending states*/}
-              {extendDepositButtonPressed && (
-                <>
-                  <div className="flex items-center justify-center p-20">
-                    {/*spinner*/}
-                    <div
-                      role="status"
-                      className="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin"
-                    >
-                      <div className="w-[205px] h-[205px] rounded-full bg-white"></div>
-                    </div>
-                  </div>
-                </>
-              )}
+              {/*{extendDepositButtonPressed && (*/}
+              {/*  <>*/}
+              {/*    <div className="flex items-center justify-center p-20">*/}
+              {/*      /!*spinner*!/*/}
+              {/*      <div*/}
+              {/*        role="status"*/}
+              {/*        className="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin"*/}
+              {/*      >*/}
+              {/*        <div className="w-[205px] h-[205px] rounded-full bg-white"></div>*/}
+              {/*      </div>*/}
+              {/*    </div>*/}
+              {/*  </>*/}
+              {/*)}*/}
 
               {extendDepositActionInitiated && (
                 <>
@@ -276,7 +276,8 @@ const ExtendDepositSummaryView: React.FC<
                 </>
               )}
 
-              {!extendDepositButtonPressed && !extendDepositActionInitiated && (
+              {/*{!extendDepositButtonPressed && !extendDepositActionInitiated && (*/}
+              {!extendDepositActionInitiated && (
                 <>
                   {/*divider*/}
                   <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
