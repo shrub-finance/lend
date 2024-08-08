@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { toEthDate } from "@shrub-lend/common";
+import { calculateLockupPeriod, toEthDate } from "@shrub-lend/common";
 import { formatDate, getPlatformDates } from "@shrub-lend/common";
 import Image from "next/image";
 import { ethers } from "ethers";
@@ -93,7 +93,7 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({
                     </span>
                   </label>
                   <div>
-                    <ul className="flex flex-col gap-4">
+                    <ul className="flex flex-col gap-4 select-none">
                       {store.platformData.activePoolTimestamps.map(
                         (activePoolTimestamp) => (
                           <li
@@ -116,11 +116,18 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({
                             />
                             <label
                               htmlFor={activePoolTimestamp.toISOString()}
-                              className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey-200 bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer    peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50   "
+                              className="flex items-center justify-between w-full px-8 py-3 text-shrub-grey-200 bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50"
                             >
-                              <div className="block">
-                                <div className="w-full text-xl font-semibold">
+                              <div className="flex items-center">
+                                {/* Content on the right side */}
+                                <div className="text-base font-medium">
                                   {formatDate.long(activePoolTimestamp)}
+                                </div>
+                              </div>
+                              <div className="flex items-center">
+                                {/* Content on the left side */}
+                                <div className="text-lg font-semibold">
+                                  {calculateLockupPeriod(activePoolTimestamp)}
                                 </div>
                               </div>
                             </label>
