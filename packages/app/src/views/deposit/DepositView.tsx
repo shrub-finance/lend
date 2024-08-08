@@ -227,37 +227,59 @@ export const DepositView: FC<DepositViewProps> = ({ onDepositViewChange }) => {
                       Lockup period
                     </span>
                   </label>
-                  <ul className="flex flex-row">
-                    {store.platformData.activePoolTimestamps.map(
-                      (activePoolTimestamp) => (
-                        <li
-                          key={activePoolTimestamp.toISOString()}
-                          className="mr-4"
-                        >
-                          <input
-                            type="radio"
-                            id={activePoolTimestamp.toISOString()}
-                            name="deposit"
-                            value={toEthDate(activePoolTimestamp)}
-                            className="hidden peer"
-                            required
-                            onChange={() => {
-                              setTimestamp(toEthDate(activePoolTimestamp));
-                              setShowLendAPYSection(true);
-                            }}
-                          />
-                          <label
-                            htmlFor={activePoolTimestamp.toISOString()}
-                            className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500        select-none"
+                  <ul className="flex flex-row select-none">
+                    {store.platformData &&
+                    store.platformData.activePoolTimestamps.length ? (
+                      store.platformData.activePoolTimestamps.map(
+                        (activePoolTimestamp) => (
+                          <li
+                            key={activePoolTimestamp.toISOString()}
+                            className="mr-4"
                           >
-                            <div className="block">
-                              <div className="w-full text-lg font-semibold">
-                                {calculateLockupPeriod(activePoolTimestamp)}
+                            <input
+                              type="radio"
+                              id={activePoolTimestamp.toISOString()}
+                              name="deposit"
+                              value={toEthDate(activePoolTimestamp)}
+                              className="hidden peer"
+                              required
+                              onChange={() => {
+                                setTimestamp(toEthDate(activePoolTimestamp));
+                                setShowLendAPYSection(true);
+                              }}
+                            />
+                            <label
+                              htmlFor={activePoolTimestamp.toISOString()}
+                              className="inline-flex items-center justify-center w-full px-4 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50 peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 select-none"
+                            >
+                              <div className="block">
+                                <div className="w-full text-lg font-semibold">
+                                  {calculateLockupPeriod(activePoolTimestamp)}
+                                </div>
                               </div>
-                            </div>
-                          </label>
-                        </li>
-                      ),
+                            </label>
+                          </li>
+                        ),
+                      )
+                    ) : (
+                      <li className="mr-4">
+                        <div className="alert alert-warning justify-start mb-6">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="stroke-current shrink-0 h-6 w-6 ml-4p"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                          </svg>
+                          <span>Platform data not loading</span>
+                        </div>
+                      </li>
                     )}
                   </ul>
                 </div>
