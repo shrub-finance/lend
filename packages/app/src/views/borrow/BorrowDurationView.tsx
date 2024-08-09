@@ -118,20 +118,14 @@ export const BorrowDurationView: React.FC<BorrowDurationViewProps> = ({
                               />
                               <label
                                 htmlFor={activePoolTimestamp.toISOString()}
-                                className="flex items-center justify-between w-full px-8 py-3 text-shrub-grey-200 bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50"
+                                className="flex flex-col items-center justify-center w-full px-8 py-3 text-shrub-grey-200 bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50"
                               >
-                                <div className="flex items-center">
-                                  {/* Content on the right side */}
-                                  <div className="text-base font-medium">
-                                    {formatDate.long(activePoolTimestamp)}
-                                  </div>
+                                <div className="text-xl font-semibold">
+                                  {calculateLockupPeriod(activePoolTimestamp)}
                                 </div>
-                                <div className="flex items-center">
-                                  {/* Content on the left side */}
-                                  <div className="text-lg font-semibold">
-                                    {calculateLockupPeriod(activePoolTimestamp)}
-                                  </div>
-                                </div>
+                                {/*<div className="text-xs font-medium text-shrub-grey-400 mt-1">*/}
+                                {/*  {formatDate.long(activePoolTimestamp)}*/}
+                                {/*</div>*/}
                               </label>
                             </li>
                           ),
