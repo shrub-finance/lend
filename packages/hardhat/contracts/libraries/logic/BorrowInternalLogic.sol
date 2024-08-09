@@ -11,7 +11,6 @@ import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRay
 import "../../interfaces/IMockAaveV3.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/IBorrowPositionToken.sol";
-import "../../interfaces/IAETH.sol";
 
 library BorrowInternalLogic {
     // This runs after the collateralProvider has sent aETH to Shrub

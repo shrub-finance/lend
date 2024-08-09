@@ -88,6 +88,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         usdEthPriceFeed = AggregatorV3Interface(addresses[6]);
         usdUsdcPriceFeed = AggregatorV3Interface(addresses[7]);
         lendState.lastSnapshotDate = HelpersLogic.currentTimestamp();
+
+        aeth.approve(address(wrappedTokenGateway), type(uint256).max);
     }
 
     // --- Admin Functions ---

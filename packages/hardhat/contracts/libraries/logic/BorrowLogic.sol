@@ -10,7 +10,6 @@ import {Constants} from "../configuration/Constants.sol";
 import "../../interfaces/IMockAaveV3.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/IBorrowPositionToken.sol";
-import "../../interfaces/IAETH.sol";
 
 import "hardhat/console.sol";
 

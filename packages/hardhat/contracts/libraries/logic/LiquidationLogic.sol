@@ -34,7 +34,7 @@ library LiquidationLogic {
         IERC20 usdc,
         DataTypes.PlatformConfiguration storage config,
         DataTypes.LendState storage lendState
-    ) external {
+    ) internal {
         //console.log("Running forceLiquidation - tokenId: %s, liquidationPhase: %s", tokenId, liquidationPhase);
         DataTypes.BorrowData memory loanDetails = bpt.getBorrow(tokenId);
         uint debt = ShrubView.getBorrowDebt(tokenId, bpt, lendState);

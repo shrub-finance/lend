@@ -57,7 +57,7 @@ export const contractAddresses: {
 };
 
 // Use this to test localhost with single price feed ETH / USDC
-export const singlePriceFeedNetworks = ["ethereum", "hardhat"];
+// export const singlePriceFeedNetworks = ["ethereum", "hardhat"];
 
 // Use this to test localhost with multi price feed ETH / USD & USD / USDC
-// export const singlePriceFeedNetworks = ["ethereum"];
+export const singlePriceFeedNetworks = ["ethereum"];
