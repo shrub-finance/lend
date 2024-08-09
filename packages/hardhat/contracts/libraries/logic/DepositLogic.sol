@@ -159,7 +159,7 @@ library DepositLogic {
         uint ethPrice,
         mapping(uint40 => DataTypes.LendingPool) storage _lendingPools,
         IMockAaveV3 _wrappedTokenGateway
-    ) external {
+    ) internal {
         //console.log("running extendDeposit");
         // Check that user owns this amount on poolShareTokens
 
@@ -189,7 +189,7 @@ library DepositLogic {
         mapping(uint40 => DataTypes.LendingPool) storage _lendingPools,
         IERC20 usdc,
         IMockAaveV3 _wrappedTokenGateway
-    ) external {
+    ) internal {
         //console.log("running withdraw - _timestamp: %s, _poolShareTokenAmount: %s", _timestamp, _poolShareTokenAmount);
         require(_lendingPools[_timestamp].finalized, "Pool must be finalized before withdraw");
         (uint usdcWithdrawn, uint usdcInterest, uint ethWithdrawn) = withdrawUnchecked(_timestamp, _poolShareTokenAmount, _lendingPools);

@@ -135,7 +135,7 @@ library RepayLogic {
         DataTypes.LendState storage lendState,
         DataTypes.PlatformConfiguration storage config,
         mapping(uint40 => DataTypes.BorrowingPool) storage borrowingPools
-    ) external {
+    ) internal {
         // Convert collateral amount of aETH to ETH and Transfer ETH to the beneficiary
         uint freedCollateral = repayBorrowInternal(
             MethodParams.repayBorrowInternalParams({
@@ -163,7 +163,7 @@ library RepayLogic {
         DataTypes.LendState storage lendState,
         DataTypes.PlatformConfiguration storage config,
         mapping(uint40 => DataTypes.BorrowingPool) storage borrowingPools
-    ) external {
+    ) internal {
         // Convert collateral amount of aETH to ETH and Transfer ETH to the beneficiary
         uint freedCollateral = repayBorrowInternal(
             MethodParams.repayBorrowInternalParams({

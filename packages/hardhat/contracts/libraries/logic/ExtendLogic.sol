@@ -14,7 +14,6 @@ import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/Pe
 import "../../interfaces/IMockAaveV3.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/IBorrowPositionToken.sol";
-import "../../interfaces/IAETH.sol";
 
 library ExtendLogic {
 
