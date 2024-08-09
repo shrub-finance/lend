@@ -701,7 +701,6 @@ export const DashboardView: FC = ({}) => {
                             <tbody className="text-lg">
                               {getUserData(store, walletAddress).borrows.map(
                                 (storeBorrow, index) => {
-                                  console.log(storeBorrow);
                                   const principal = ethers.BigNumber.from(
                                     storeBorrow.principal,
                                   );
