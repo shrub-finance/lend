@@ -166,6 +166,7 @@ const RepayView: React.FC<RepayViewProps & { onModalClose: () => void }> = ({
                     isFullPay={isFullPay}
                     partialPaymentRequested={partialPaymentRequested}
                     setPartialPaymentRequested={setPartialPaymentRequested}
+                    onModalClose={closeModal}
                   />
                 )}
 

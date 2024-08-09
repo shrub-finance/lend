@@ -24,6 +24,7 @@ interface PartialRepayViewProps {
   isFullPay: boolean;
   partialPaymentRequested: boolean;
   setPartialPaymentRequested: (partialPaymentRequested: boolean) => void;
+  onModalClose: () => void;
 }
 
 const PartialRepayView: React.FC<PartialRepayViewProps> = ({
@@ -31,6 +32,7 @@ const PartialRepayView: React.FC<PartialRepayViewProps> = ({
   isFullPay,
   partialPaymentRequested,
   setPartialPaymentRequested,
+  onModalClose,
 }) => {
   const { chainId } = getChainInfo();
   const { lendingPlatformAddress } = getContractAddresses(chainId);
@@ -174,6 +176,7 @@ const PartialRepayView: React.FC<PartialRepayViewProps> = ({
           borrow={borrow}
           repayAmount={ethers.utils.parseEther(repayAmount)}
           newLtv={newLtv}
+          onModalClose={onModalClose}
         />
       )}
     </>
