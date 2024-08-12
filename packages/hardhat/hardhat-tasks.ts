@@ -22,9 +22,9 @@ async function getDeployedContracts(env: HardhatRuntimeEnvironment) {
         bpt: await ethers.getContractAt("BorrowPositionToken", (await deployments.get('BorrowPositionToken')).address),
         lendingPlatform: await ethers.getContractAt("LendingPlatform", (await deployments.get('LendingPlatform')).address),
         mockAaveV3: await ethers.getContractAt("MockAaveV3", (await deployments.get('MockAaveV3')).address),
-        mockChainlinkAggregatorUsdcEth: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregatorUsdcEth')).address),
-        // mockChainlinkAggregatorEthUsd: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregatorEthUsd')).address),
-        // mockChainlinkAggregatorUsdcUsd: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregatorUsdcUsd')).address),
+        // mockChainlinkAggregatorUsdcEth: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregatorUsdcEth')).address),
+        mockChainlinkAggregatorEthUsd: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregatorEthUsd')).address),
+        mockChainlinkAggregatorUsdcUsd: await ethers.getContractAt("MockChainlinkAggregator", (await deployments.get('MockChainlinkAggregatorUsdcUsd')).address),
     }
 }
 
