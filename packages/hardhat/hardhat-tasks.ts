@@ -648,30 +648,30 @@ ltv: ${ethers.formatUnits(ltv, 2)}%
 `)
     })
 
-task("setEthPrice", "udpate the mock Chainlink Aggregator's ETH price")
-    .addParam('ethPrice', 'new ETH price, with up to 8 decimals (i.e. 2123.12345678)', undefined, types.string, false)
-    .setAction(async (taskArgs, env) => {
-        const {ethers, deployments, getNamedAccounts} = env;
-        const {mockChainlinkAggregatorUsdcEth} = await getDeployedContracts(env);
-        const ethDecimals = 8n;
-        const usdcPriceDecimals = await mockChainlinkAggregatorUsdcEth.decimals();
-        const ethPrice = ethers.parseUnits(taskArgs.ethPrice, ethDecimals);
-        const usdcPrice = ethers.parseUnits("1", usdcPriceDecimals + ethDecimals) / ethPrice;
-        await sendTransaction(mockChainlinkAggregatorUsdcEth.updateAnswer(usdcPrice), 'updateAnswer');
-        console.log(`Update ETH / USDC pricefeed to ${ethers.formatUnits(usdcPrice, usdcPriceDecimals)}`);
-    });
-
-task("getEthPrice", "Get the ETH price in USD from the Chainlink Aggregator")
-    .setAction(async (taskArgs, env) => {
-        const {ethers, deployments, getNamedAccounts} = env;
-        const {mockChainlinkAggregatorUsdcEth} = await getDeployedContracts(env);
-        const decimals = await mockChainlinkAggregatorUsdcEth.decimals();
-        const latestRoundData = await mockChainlinkAggregatorUsdcEth.latestRoundData();
-        const ethPrice = latestRoundData.answer;
-        // const ethPrice = ethers.parseUnits(taskArgs.ethPrice, decimals);
-        // await sendTransaction(mockChainlinkAggregator.updateAnswer(ethPrice), 'updateAnswer');
-        console.log(`ethPrice: ${ethers.formatUnits(ethPrice, decimals)}`);
-    });
+// task("setEthPrice", "udpate the mock Chainlink Aggregator's ETH price")
+//     .addParam('ethPrice', 'new ETH price, with up to 8 decimals (i.e. 2123.12345678)', undefined, types.string, false)
+//     .setAction(async (taskArgs, env) => {
+//         const {ethers, deployments, getNamedAccounts} = env;
+//         const {mockChainlinkAggregatorUsdcEth} = await getDeployedContracts(env);
+//         const ethDecimals = 8n;
+//         const usdcPriceDecimals = await mockChainlinkAggregatorUsdcEth.decimals();
+//         const ethPrice = ethers.parseUnits(taskArgs.ethPrice, ethDecimals);
+//         const usdcPrice = ethers.parseUnits("1", usdcPriceDecimals + ethDecimals) / ethPrice;
+//         await sendTransaction(mockChainlinkAggregatorUsdcEth.updateAnswer(usdcPrice), 'updateAnswer');
+//         console.log(`Update ETH / USDC pricefeed to ${ethers.formatUnits(usdcPrice, usdcPriceDecimals)}`);
+//     });
+//
+// task("getEthPrice", "Get the ETH price in USD from the Chainlink Aggregator")
+//     .setAction(async (taskArgs, env) => {
+//         const {ethers, deployments, getNamedAccounts} = env;
+//         const {mockChainlinkAggregatorUsdcEth} = await getDeployedContracts(env);
+//         const decimals = await mockChainlinkAggregatorUsdcEth.decimals();
+//         const latestRoundData = await mockChainlinkAggregatorUsdcEth.latestRoundData();
+//         const ethPrice = latestRoundData.answer;
+//         // const ethPrice = ethers.parseUnits(taskArgs.ethPrice, decimals);
+//         // await sendTransaction(mockChainlinkAggregator.updateAnswer(ethPrice), 'updateAnswer');
+//         console.log(`ethPrice: ${ethers.formatUnits(ethPrice, decimals)}`);
+//     });
 
 task("setTime", "update the blockchain time for the test environment")
     .addParam('ethDate', 'valid ethereum format timestamp in the future', undefined, types.int, false)

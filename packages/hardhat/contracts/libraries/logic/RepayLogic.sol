@@ -150,6 +150,7 @@ library RepayLogic {
             config,
             borrowingPools
         );
+        // freedCollateral will always be greater than 0
         wrappedTokenGateway.withdrawETH(address(0), freedCollateral, beneficiary);
         //console.log("sending %s ETH to %s", freedCollateral, beneficiary);
     }
