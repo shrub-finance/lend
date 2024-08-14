@@ -172,7 +172,9 @@ library DepositLogic {
         uint256 interestWad = ShrubLendMath.usdcToWad(usdcInterest);
         uint256 poolShareTokenAmount = depositInternal(newTimestamp, principalWad, interestWad, _lendingPools, ethPrice);
         // Send ETH Yield to user
-        _wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
+        if (ethWithdrawn > 0) {
+            _wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
+        }
 //        event NewDeposit(address poolShareTokenAddress, address depositor, uint256 principalAmount, uint256 interestAmount, uint256 tokenAmount);
         emit LendingPlatformEvents.NewDeposit(
             address(_lendingPools[newTimestamp].poolShareToken),
@@ -195,7 +197,8 @@ library DepositLogic {
         (uint usdcWithdrawn, uint usdcInterest, uint ethWithdrawn) = withdrawUnchecked(_timestamp, _poolShareTokenAmount, _lendingPools);
         //console.log("usdcWithdrawn: %s, usdcInterest: %s, ethWithdrawn: %s", usdcWithdrawn, usdcInterest, ethWithdrawn);
         usdc.transfer(msg.sender, usdcInterest + usdcWithdrawn);
-        _wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
+        if (ethWithdrawn > 0) {
+            _wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
+        }
     }
-
 }
