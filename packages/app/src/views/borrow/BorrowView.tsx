@@ -185,7 +185,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
         <div className="mt-6 self-start">
           {localError && (
             <div
-              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50   flex items-center"
+              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 flex items-center"
               role="alert"
             >
               <svg
@@ -288,7 +288,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                           />
                           <label
                             htmlFor={id}
-                            className="inline-flex items-center justify-center w-full px-8 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer    peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50    select-none"
+                            className="inline-flex items-center justify-center w-full px-4 lg:px-8 py-3 text-shrub-grey bg-white border border-shrub-grey-light2 rounded-lg cursor-pointer    peer-checked:shadow-shrub-thin peer-checked:border-shrub-green-50 peer-checked:bg-teal-50 peer-checked:text-shrub-green-500 hover:text-shrub-green hover:border-shrub-green hover:bg-teal-50    select-none"
                           >
                             <div className="block">
                               <div className="w-full text-lg font-semibold">
