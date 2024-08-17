@@ -62,10 +62,11 @@ export const DashboardView: FC = ({}) => {
     startPolling: globalDataStartPolling,
     stopPolling: globalDataStopPolling,
   } = useQuery(GLOBAL_DATA_QUERY);
-  const { ethPrice, isLoading, error } = useEthPrice(
-    lendingPlatformAddress,
-    lendingPlatformAbi,
-  );
+  const {
+    ethPrice,
+    isLoading,
+    error: ethPriceError,
+  } = useEthPrice(lendingPlatformAddress, lendingPlatformAbi);
   const [currentHovered, setCurrentHovered] = useState<number | null>(null);
   const [timestamp, setTimestamp] = useState(0);
   const [showAPYSection, setShowAPYSection] = useState(false);
@@ -84,10 +85,14 @@ export const DashboardView: FC = ({}) => {
   };
 
   useEffect(() => {
+    if (globalDataError) {
+      console.error("Error fetching global data:", globalDataError);
+      return; // Optional: You could set some error state here.
+    }
     if (globalData) {
       setLastSnapshotDate(fromEthDate(globalData.globalData.lastSnapshotDate));
     }
-  }, [globalData]);
+  }, [globalData, globalDataError]);
 
   useEffect(() => {
     const handleAPYCalc = () => {
@@ -119,6 +124,16 @@ export const DashboardView: FC = ({}) => {
   useEffect(() => {
     console.log(store);
   }, [store]);
+
+  useEffect(() => {
+    if (ethPriceError) {
+      console.error("Error fetching ETH price:", ethPriceError);
+      return;
+    }
+    if (!isLoading) {
+      console.log("ETH Price:", ethPrice);
+    }
+  }, [ethPrice, isLoading, ethPriceError]);
 
   async function getBlockTest() {
     const block = await getBlock({
