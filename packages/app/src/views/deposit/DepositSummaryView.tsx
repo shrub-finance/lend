@@ -114,7 +114,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({
           {/*errors*/}
           {localError && (
             <div
-              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50   flex items-center"
+              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 flex items-center"
               role="alert"
             >
               <svg
@@ -161,7 +161,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({
           )}
         </div>
         {/*card starts*/}
-        <div className="relative group mt-4 w-full min-w-[604px] min-h-[631px]">
+        <div className="relative group mt-4 w-full lg:min-w-[604px] min-h-[631px]">
           <div className="absolute -inset-1 shadow-shrub border rounded-3xl"></div>
           <div className="flex flex-col">
             <div className="card w-full text-left">
