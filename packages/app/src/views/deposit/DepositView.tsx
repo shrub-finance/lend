@@ -227,7 +227,7 @@ export const DepositView: FC<DepositViewProps> = ({ onDepositViewChange }) => {
                       Lockup period
                     </span>
                   </label>
-                  <ul className="flex flex-row select-none">
+                  <ul className="flex flex-col gap-4 select-none lg:flex-row lg:gap-0">
                     {store.platformData &&
                     store.platformData.activePoolTimestamps.length ? (
                       store.platformData.activePoolTimestamps.map(
