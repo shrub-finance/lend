@@ -124,11 +124,11 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
           </h1>
         </div>
         {/*card starts*/}
-        <div className="relative group mt-4 w-full min-w-[500px]">
+        <div className="relative group mt-4 w-full lg:min-w-[500px]">
           <div className="absolute -inset-1 shadow-shrub border rounded-3xl"></div>
           <div className="flex flex-col ">
             <div className="card w-full">
-              <div className="card-body lg:w-auto w-[400px]">
+              <div className="card-body">
                 {/*header*/}
                 {!borrowActionInitiated && (
                   <>
