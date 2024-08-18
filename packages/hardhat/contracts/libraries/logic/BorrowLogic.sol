@@ -6,6 +6,7 @@ import {DataTypes} from '../data-structures/DataTypes.sol';
 import {MethodParams} from '../data-structures/MethodParams.sol';
 import {HelpersLogic} from "../view/HelpersLogic.sol";
 import {Constants} from "../configuration/Constants.sol";
+import {AaveAdapter} from '../adapters/AaveAdapter.sol';
 
 import "../../interfaces/IMockAaveV3.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -36,11 +37,12 @@ library BorrowLogic {
         console.log("_principal: %s, _collateral: %s, _ltv: %s", _principal, _collateral, _ltv);
         console.log("_timestamp: %s, ethPrice: %s", _timestamp, ethPrice);
 
-        wrappedTokenGateway.depositETH{value: _collateral}(
-            Constants.AAVE_AETH_POOL,  // This is the address of the Aave-v3 pool - it is not used
-            address(this),
-            0
-        );
+        AaveAdapter.depositEth(wrappedTokenGateway);
+//        wrappedTokenGateway.depositETH{value: _collateral}(
+//            Constants.AAVE_AETH_POOL,  // This is the address of the Aave-v3 pool - it is not used
+//            address(this),
+//            0
+//        );
 
         BorrowInternalLogic.borrowInternal(
             MethodParams.BorrowInternalParams({

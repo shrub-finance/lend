@@ -8,6 +8,7 @@ import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRay
 import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
 import {Constants} from "../configuration/Constants.sol";
 import {ShrubView} from "../view/ShrubView.sol";
+import {AaveAdapter} from '../adapters/AaveAdapter.sol';
 
 import "../../interfaces/IMockAaveV3.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -151,7 +152,8 @@ library RepayLogic {
             borrowingPools
         );
         // freedCollateral will always be greater than 0
-        wrappedTokenGateway.withdrawETH(address(0), freedCollateral, beneficiary);
+        AaveAdapter.withdrawEth(freedCollateral, msg.sender, wrappedTokenGateway);
+//        wrappedTokenGateway.withdrawETH(address(0), freedCollateral, beneficiary);
         //console.log("sending %s ETH to %s", freedCollateral, beneficiary);
     }
 
