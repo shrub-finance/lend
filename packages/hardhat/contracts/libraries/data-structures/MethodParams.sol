@@ -3,6 +3,10 @@ pragma solidity ^0.8.18;
 
 import "../../interfaces/IAETH.sol";
 import "../../interfaces/IBorrowPositionToken.sol";
+import "../../interfaces/IComet.sol";
+import "../../interfaces/IMockAaveV3.sol";
+import "../../interfaces/IWETH.sol";
+
 import "./DataTypes.sol";
 
 library MethodParams {
@@ -88,5 +92,19 @@ library MethodParams {
         IERC20 usdc;
         uint16 shrubInterestFee;  // Percentage of interest paid by the borrower that is allocated to Shrub Treasury (percentage)
         uint16 shrubYieldFee;  // Percentage of yield earned on aETH collateral that is allocated to Shrub Treasury (percentage)
+    }
+    
+    struct borrowParams {
+        uint256 principal; // Amount of USDC with 6 decimal places
+        uint256 collateral; // Amount of ETH collateral with 18 decimal places
+        uint16 ltv;
+        uint40 timestamp;
+        uint256 ethPrice;
+        uint40[] activePools; // Sorted ascending list of timestamps of active pools
+        IERC20 usdc;
+        IBorrowPositionToken bpt;
+        IMockAaveV3 wrappedTokenGateway;
+        IComet comp;
+        IWETH weth;
     }
 }
