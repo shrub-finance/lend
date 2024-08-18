@@ -9,11 +9,14 @@ import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/Pe
 import {Constants} from "../configuration/Constants.sol";
 import {ShrubView} from "../view/ShrubView.sol";
 import {AaveAdapter} from '../adapters/AaveAdapter.sol';
+import {CompoundAdapter} from "../adapters/CompoundAdapter.sol";
 
-import "../../interfaces/IMockAaveV3.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../interfaces/IMockAaveV3.sol";
 import "../../interfaces/IBorrowPositionToken.sol";
 import "../../interfaces/IAETH.sol";
+import "../../interfaces/IComet.sol";
+import "../../interfaces/IWETH.sol";
 
 library RepayLogic {
     function partialRepayBorrow(
@@ -133,6 +136,8 @@ library RepayLogic {
         IMockAaveV3 wrappedTokenGateway,
         IERC20 usdc,
         IBorrowPositionToken bpt,
+        IComet cweth,
+        IWETH weth,
         DataTypes.LendState storage lendState,
         DataTypes.PlatformConfiguration storage config,
         mapping(uint40 => DataTypes.BorrowingPool) storage borrowingPools
@@ -152,7 +157,8 @@ library RepayLogic {
             borrowingPools
         );
         // freedCollateral will always be greater than 0
-        AaveAdapter.withdrawEth(freedCollateral, msg.sender, wrappedTokenGateway);
+        CompoundAdapter.withdrawEth(freedCollateral, msg.sender, cweth, weth);
+//        AaveAdapter.withdrawEth(freedCollateral, msg.sender, wrappedTokenGateway);
 //        wrappedTokenGateway.withdrawETH(address(0), freedCollateral, beneficiary);
         //console.log("sending %s ETH to %s", freedCollateral, beneficiary);
     }

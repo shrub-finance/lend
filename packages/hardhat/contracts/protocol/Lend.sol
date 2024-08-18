@@ -365,6 +365,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
             wrappedTokenGateway,
             usdc,
             bpt,
+            cweth,
+            weth,
             lendState,
             PlatformConfig.config,
             borrowingPools
