@@ -41,6 +41,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBorrowPositionToken.sol";
 import "../interfaces/IMockAaveV3.sol";
 import "../interfaces/IAETH.sol";
+import "../interfaces/IWETH.sol";
+import "../interfaces/IComet.sol";
 
 import "hardhat/console.sol";
 
@@ -75,10 +77,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
     AggregatorV3Interface public ethUsdcPriceFeed;  // Chainlink interface
     AggregatorV3Interface public usdEthPriceFeed;  // Chainlink interface
     AggregatorV3Interface public usdUsdcPriceFeed;  // Chainlink interface
+    IWETH public weth;  // Compound V3 WETH
+    IComet public cweth;  // Compount V3
 
     // uint public bpTotalPoolShares; // Wad
 
-    constructor(address[8] memory addresses) {
+    constructor(address[10] memory addresses) {
         usdc = IERC20(addresses[0]);
         bpt = IBorrowPositionToken(addresses[1]);
         wrappedTokenGateway = IMockAaveV3(addresses[2]);
@@ -87,9 +91,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         shrubTreasury = addresses[5];
         usdEthPriceFeed = AggregatorV3Interface(addresses[6]);
         usdUsdcPriceFeed = AggregatorV3Interface(addresses[7]);
+        weth = IWETH(addresses[8]);
+        cweth = IComet(addresses[9]);
         lendState.lastSnapshotDate = HelpersLogic.currentTimestamp();
 
         aeth.approve(address(wrappedTokenGateway), type(uint256).max);
+        weth.approve(address(cweth), type(uint256).max);
     }
 
     // --- Admin Functions ---
@@ -275,17 +282,56 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         uint16 _ltv,
         uint40 _timestamp
     ) public payable validateLtv(_ltv) nonReentrant {
+
+//        struct borrowParams {
+//        uint256 principal; // Amount of USDC with 6 decimal places
+//        uint256 collateral; // Amount of ETH collateral with 18 decimal places
+//        uint16 ltv;
+//        uint40 timestamp;
+//        uint256 ethPrice;
+//        uint40[] activePools; // Sorted ascending list of timestamps of active pools
+//        IERC20 usdc;
+//        IBorrowPositionToken bpt;
+//        IMockAaveV3 wrappedTokenGateway;
+//        IComet comp;
+//        IWETH weth;
+//        }
+//        MethodParams.borrowParams memory params,
+//        DataTypes.LendState storage lendState,
+//        mapping(uint40 => DataTypes.BorrowingPool) storage borrowingPools,
+//    mapping(uint40 => DataTypes.LendingPool) storage lendingPools,
+//    mapping(uint40 => uint256) storage activePoolIndex
+
+
+
         BorrowLogic.borrow(
-            _principal, // Amount of USDC with 6 decimal places
-            _collateral, // Amount of ETH collateral with 18 decimal places
-            _ltv,
-            _timestamp,
-            getEthPrice(),
-            usdc,
-            bpt,
+            MethodParams.borrowParams({
+                principal: _principal,
+                collateral: _collateral,
+                ltv: _ltv,
+                timestamp: _timestamp,
+                ethPrice: getEthPrice(),
+                activePools: activePools,
+                usdc: usdc,
+                bpt: bpt,
+                wrappedTokenGateway: wrappedTokenGateway,
+                comp: cweth,
+                weth: weth
+//        uint256 principal; // Amount of USDC with 6 decimal places
+//        uint256 collateral; // Amount of ETH collateral with 18 decimal places
+//        uint16 ltv;
+//        uint40 timestamp;
+//        uint256 ethPrice;
+//        uint40[] activePools; // Sorted ascending list of timestamps of active pools
+//        IERC20 usdc;
+//        IBorrowPositionToken bpt;
+//        IMockAaveV3 wrappedTokenGateway;
+//        IComet comp;
+//        IWETH weth;
+
+
+            }),
             lendState,
-            wrappedTokenGateway,
-            activePools,
             borrowingPools,
             lendingPools,
             activePoolIndex
