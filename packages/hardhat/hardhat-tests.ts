@@ -141,7 +141,7 @@ async function partB(env: HardhatRuntimeEnvironment) {
   await env.run('approveUsdc', { account: shrubTreasury });
   await env.run('setTime', {ethDate: jan2026});
   await env.run('takeSnapshot', { account: deployer });
-  await env.run('setEthPrice', {ethPrice: '2000'});
+  // await env.run('setEthPrice', {ethPrice: '2000'});
   await env.run('provideLiquidity', { usdcAmount: 1000, timestamp: jan2027, account: account1});  // 12 month
   await env.run('provideLiquidity', { usdcAmount: 500, timestamp: may2026, account: account2});  // 4 month
   await env.run('borrow', { account: account3, timestamp: may2026, borrowAmount: 100, collateralAmount: 0.1, ltv: 50})

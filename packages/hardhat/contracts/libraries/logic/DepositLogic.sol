@@ -4,6 +4,7 @@ pragma solidity ^0.8.18;
 import {DataTypes} from '../data-structures/DataTypes.sol';
 import {ShrubLendMath} from "../math/ShrubLendMath.sol";
 import {LendingPlatformEvents} from '../data-structures/LendingPlatformEvents.sol';
+import {AaveAdapter} from '../adapters/AaveAdapter.sol';
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 
 import "../../interfaces/IMockAaveV3.sol";
@@ -173,7 +174,8 @@ library DepositLogic {
         uint256 poolShareTokenAmount = depositInternal(newTimestamp, principalWad, interestWad, _lendingPools, ethPrice);
         // Send ETH Yield to user
         if (ethWithdrawn > 0) {
-            _wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
+            AaveAdapter.withdrawEth(ethWithdrawn, msg.sender, _wrappedTokenGateway);
+//            _wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
         }
 //        event NewDeposit(address poolShareTokenAddress, address depositor, uint256 principalAmount, uint256 interestAmount, uint256 tokenAmount);
         emit LendingPlatformEvents.NewDeposit(
@@ -198,7 +200,8 @@ library DepositLogic {
         //console.log("usdcWithdrawn: %s, usdcInterest: %s, ethWithdrawn: %s", usdcWithdrawn, usdcInterest, ethWithdrawn);
         usdc.transfer(msg.sender, usdcInterest + usdcWithdrawn);
         if (ethWithdrawn > 0) {
-            _wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
+            AaveAdapter.withdrawEth(ethWithdrawn, msg.sender, _wrappedTokenGateway);
+//            _wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
         }
     }
 }

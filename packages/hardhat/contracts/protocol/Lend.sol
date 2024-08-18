@@ -41,6 +41,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBorrowPositionToken.sol";
 import "../interfaces/IMockAaveV3.sol";
 import "../interfaces/IAETH.sol";
+import "../interfaces/IWETH.sol";
+import "../interfaces/IComet.sol";
 
 import "hardhat/console.sol";
 
@@ -75,6 +77,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
     AggregatorV3Interface public ethUsdcPriceFeed;  // Chainlink interface
     AggregatorV3Interface public usdEthPriceFeed;  // Chainlink interface
     AggregatorV3Interface public usdUsdcPriceFeed;  // Chainlink interface
+    IWETH public weth;  // Compound V3 WETH
+    IComet public comp;  // Compount V3
 
     // uint public bpTotalPoolShares; // Wad
 
@@ -88,8 +92,11 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         usdEthPriceFeed = AggregatorV3Interface(addresses[6]);
         usdUsdcPriceFeed = AggregatorV3Interface(addresses[7]);
         lendState.lastSnapshotDate = HelpersLogic.currentTimestamp();
+        weth = IWETH(0x2D5ee574e710219a521449679A4A7f2B43f046ad);
+        comp = IComet(0x2943ac1216979aD8dB76D9147F64E61adc126e96);
 
         aeth.approve(address(wrappedTokenGateway), type(uint256).max);
+        weth.approve(address(comp), type(uint256).max);
     }
 
     // --- Admin Functions ---
@@ -288,7 +295,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
             activePools,
             borrowingPools,
             lendingPools,
-            activePoolIndex
+            activePoolIndex,
+            comp,
+            weth
         );
     }
 
