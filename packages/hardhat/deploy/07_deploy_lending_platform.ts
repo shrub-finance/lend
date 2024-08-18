@@ -61,6 +61,7 @@ func.dependencies = [
   "USDCoin",
   "AETH",
   "MockAaveV3",
+  "CWETH",
   "MockChainlinkAggregatorUsdcEth",
   "MockChainlinkAggregatorUsdcUsd",
   "MockChainlinkAggregatorEthUsd",

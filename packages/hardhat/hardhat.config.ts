@@ -79,13 +79,18 @@ extendEnvironment((hre) => {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.18",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 1 
-      }
-    }
+    compilers: [
+      {
+        version: "0.8.18",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1
+          }
+        }
+      },
+      { version: "0.4.18" }
+    ]
   },
   defaultNetwork: "hardhat",
   networks: {
