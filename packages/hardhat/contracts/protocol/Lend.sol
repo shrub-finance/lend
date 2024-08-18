@@ -257,7 +257,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
             tokenAmount,
             getEthPrice(),
             lendingPools,
-            wrappedTokenGateway
+            wrappedTokenGateway,
+            cweth,
+            weth
         );
     }
 
@@ -270,7 +272,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
             _poolShareTokenAmount,
             lendingPools,
             usdc,
-            wrappedTokenGateway
+            wrappedTokenGateway,
+            cweth,
+            weth
         );
     }
 
@@ -315,7 +319,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
                 usdc: usdc,
                 bpt: bpt,
                 wrappedTokenGateway: wrappedTokenGateway,
-                comp: cweth,
+                cweth: cweth,
                 weth: weth
 //        uint256 principal; // Amount of USDC with 6 decimal places
 //        uint256 collateral; // Amount of ETH collateral with 18 decimal places

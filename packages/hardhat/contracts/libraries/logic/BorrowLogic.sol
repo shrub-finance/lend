@@ -48,7 +48,7 @@ library BorrowLogic {
 //        console.log("_principal: %s, _collateral: %s, _ltv: %s", _principal, _collateral, _ltv);
 //        console.log("_timestamp: %s, ethPrice: %s", _timestamp, ethPrice);
 
-        CompoundAdapter.depositEth(params.comp, params.weth);
+        CompoundAdapter.depositEth(params.cweth, params.weth);
 //        AaveAdapter.depositEth(wrappedTokenGateway);
 //        wrappedTokenGateway.depositETH{value: _collateral}(
 //            Constants.AAVE_AETH_POOL,  // This is the address of the Aave-v3 pool - it is not used

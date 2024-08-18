@@ -5,9 +5,13 @@ import {DataTypes} from '../data-structures/DataTypes.sol';
 import {ShrubLendMath} from "../math/ShrubLendMath.sol";
 import {LendingPlatformEvents} from '../data-structures/LendingPlatformEvents.sol';
 import {AaveAdapter} from '../adapters/AaveAdapter.sol';
+import {CompoundAdapter} from "../adapters/CompoundAdapter.sol";
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 
 import "../../interfaces/IMockAaveV3.sol";
+import "../../interfaces/IComet.sol";
+import "../../interfaces/IWETH.sol";
+
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 library DepositLogic {
@@ -159,7 +163,9 @@ library DepositLogic {
         uint tokenAmount,
         uint ethPrice,
         mapping(uint40 => DataTypes.LendingPool) storage _lendingPools,
-        IMockAaveV3 _wrappedTokenGateway
+        IMockAaveV3 _wrappedTokenGateway,
+        IComet cweth,
+        IWETH weth
     ) internal {
         //console.log("running extendDeposit");
         // Check that user owns this amount on poolShareTokens
@@ -174,7 +180,8 @@ library DepositLogic {
         uint256 poolShareTokenAmount = depositInternal(newTimestamp, principalWad, interestWad, _lendingPools, ethPrice);
         // Send ETH Yield to user
         if (ethWithdrawn > 0) {
-            AaveAdapter.withdrawEth(ethWithdrawn, msg.sender, _wrappedTokenGateway);
+            CompoundAdapter.withdrawEth(ethWithdrawn, msg.sender, cweth, weth);
+//            AaveAdapter.withdrawEth(ethWithdrawn, msg.sender, _wrappedTokenGateway);
 //            _wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
         }
 //        event NewDeposit(address poolShareTokenAddress, address depositor, uint256 principalAmount, uint256 interestAmount, uint256 tokenAmount);
@@ -192,7 +199,9 @@ library DepositLogic {
         uint256 _poolShareTokenAmount,
         mapping(uint40 => DataTypes.LendingPool) storage _lendingPools,
         IERC20 usdc,
-        IMockAaveV3 _wrappedTokenGateway
+        IMockAaveV3 _wrappedTokenGateway,
+        IComet cweth,
+        IWETH weth
     ) internal {
         //console.log("running withdraw - _timestamp: %s, _poolShareTokenAmount: %s", _timestamp, _poolShareTokenAmount);
         require(_lendingPools[_timestamp].finalized, "Pool must be finalized before withdraw");
@@ -200,7 +209,8 @@ library DepositLogic {
         //console.log("usdcWithdrawn: %s, usdcInterest: %s, ethWithdrawn: %s", usdcWithdrawn, usdcInterest, ethWithdrawn);
         usdc.transfer(msg.sender, usdcInterest + usdcWithdrawn);
         if (ethWithdrawn > 0) {
-            AaveAdapter.withdrawEth(ethWithdrawn, msg.sender, _wrappedTokenGateway);
+            CompoundAdapter.withdrawEth(ethWithdrawn, msg.sender, cweth, weth);
+//            AaveAdapter.withdrawEth(ethWithdrawn, msg.sender, _wrappedTokenGateway);
 //            _wrappedTokenGateway.withdrawETH(address(0), ethWithdrawn, msg.sender);
         }
     }

@@ -104,7 +104,7 @@ library MethodParams {
         IERC20 usdc;
         IBorrowPositionToken bpt;
         IMockAaveV3 wrappedTokenGateway;
-        IComet comp;
+        IComet cweth;
         IWETH weth;
     }
 }
