@@ -27,4 +27,14 @@ a {
   stroke: #0A4736;
 }
 
+@media (max-width: 640px) {
+  img.tw-connected-wallet__wallet-icon {
+    display: none;
+  }
+
+  img.tw-connected-wallet__network-icon {
+    display: none;
+  }
+}
+
 
