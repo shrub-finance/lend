@@ -2,6 +2,8 @@ import usdcAbi from "./abis/FiatTokenV2_2.json";
 import priceFeedAbi from "./abis/EACAggregatorProxy.json";
 import wethGatewayAbi from "./abis/WrappedTokenGatewayV3.json";
 import aToken from "./abis/AToken.json";
+import weth9Abi from "./abis/Weth9.json";
+import cometAbi from "./abis/Comet.json"
 
 // If an address is included for a contract for a network than rather than deploying the contract on the network
 // deployments.save will be called setting the abi to the specified address
@@ -54,6 +56,18 @@ export const contractAddresses: {
       sepolia: "0xA2F78ab2355fe2f984D808B5CeE7FD0A93D5270E",
     }
   },
+  WETH9: {
+    abi: weth9Abi,
+    networks: {
+      sepolia: "0x2D5ee574e710219a521449679A4A7f2B43f046ad"
+    }
+  },
+  CWETH: {
+    abi: cometAbi,
+    networks: {
+      sepolia: "0x2943ac1216979aD8dB76D9147F64E61adc126e96",
+    }
+  }
 };
 
 // Use this to test localhost with single price feed ETH / USDC

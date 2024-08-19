@@ -14,6 +14,7 @@ import {LendingPlatformEvents} from '../data-structures/LendingPlatformEvents.so
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/IAETH.sol";
+import "../../interfaces/IComet.sol";
 
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
@@ -103,7 +104,8 @@ library AdminLogic {
         uint40 _timestamp,
         address shrubTreasury,
         IAETH aeth,
-        IERC20 usdc
+        IERC20 usdc,
+        IComet cweth
     ) external {
         DataTypes.LendingPool storage lendingPool = lendingPools[_timestamp];
         require(lendingPool.poolShareToken != PoolShareToken(address(0)), "Pool does not exist");
@@ -113,7 +115,9 @@ library AdminLogic {
         lendingPool.finalized = true;
         // Send funds to Shrub
         console.log("timestamp: %s, shrubYield: %s, shrubInterest: %s", _timestamp, lendingPool.shrubYield, lendingPool.shrubInterest);
-        aeth.transfer(shrubTreasury, lendingPool.shrubYield);
+        // TODO make this flexible for aave/compound
+        cweth.transfer(shrubTreasury, lendingPool.shrubYield);
+//        aeth.transfer(shrubTreasury, lendingPool.shrubYield);
         usdc.transfer(shrubTreasury, ShrubLendMath.wadToUsdc(lendingPool.shrubInterest));
         emit LendingPlatformEvents.FinalizeLendingPool(address(lendingPool.poolShareToken), lendingPool.shrubInterest, lendingPool.shrubYield);
     }
@@ -171,7 +175,9 @@ library AdminLogic {
         );
 //        Get the current balance of bpTotalPoolShares (it is local)
         // calculate the accumYield for all BP (current balance - snapshot balance)
-        vars.aEthYieldSinceLastSnapshot = params.aeth.balanceOf(address(this)) + lendState.claimedCollateralSinceSnapshot - lendState.newCollateralSinceSnapshot - lendState.aEthSnapshotBalance;
+        // TODO: Make this flex for aave/compound
+//        vars.aEthYieldSinceLastSnapshot = params.aeth.balanceOf(address(this)) + lendState.claimedCollateralSinceSnapshot - lendState.newCollateralSinceSnapshot - lendState.aEthSnapshotBalance;
+        vars.aEthYieldSinceLastSnapshot = params.cweth.balanceOf(address(this)) + lendState.claimedCollateralSinceSnapshot - lendState.newCollateralSinceSnapshot - lendState.aEthSnapshotBalance;
         console.log("aEthYieldSinceLastSnapshot: %s", vars.aEthYieldSinceLastSnapshot);
         // An array of LendingPool to keep track of all of the increments in memory before a final write to the lending pool
         // The element of the array maps to the activePools timestamp
@@ -248,7 +254,9 @@ library AdminLogic {
         }
         // set the last snapshot date to now
         lendState.lastSnapshotDate = HelpersLogic.currentTimestamp();
-        lendState.aEthSnapshotBalance = params.aeth.balanceOf(address(this));
+        // TODO: Make this flex for compound/aave
+        lendState.aEthSnapshotBalance = params.cweth.balanceOf(address(this));
+//        lendState.aEthSnapshotBalance = params.aeth.balanceOf(address(this));
         console.log("aEthSnapshotBalance set to: %s", lendState.aEthSnapshotBalance);
         console.log("lastSnapshotDate set to: %s", lendState.lastSnapshotDate);
 

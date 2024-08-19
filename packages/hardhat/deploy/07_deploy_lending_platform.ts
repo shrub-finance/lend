@@ -18,6 +18,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       shrubTreasury,
       isSingleChainlinkPriceFeed ? ethers.ZeroAddress : allDeployments.MockChainlinkAggregatorEthUsd.address,
       isSingleChainlinkPriceFeed ? ethers.ZeroAddress : allDeployments.MockChainlinkAggregatorUsdcUsd.address,
+      allDeployments.WETH9.address,
+      allDeployments.CWETH.address
   ];
 
   const deployResult = await deployAndVerify("LendingPlatform", {
@@ -36,6 +38,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       RepayLogic: allDeployments.RepayLogic.address,
       LiquidationLogic: allDeployments.LiquidationLogic.address,
       PriceFeedLogic: allDeployments.PriceFeedLogic.address,
+      CompoundAdapter: allDeployments.CompoundAdapter.address,
+      AaveAdapter: allDeployments.AaveAdapter.address,
     },
     args: [
         addresses
@@ -61,6 +65,7 @@ func.dependencies = [
   "USDCoin",
   "AETH",
   "MockAaveV3",
+  "CWETH",
   "MockChainlinkAggregatorUsdcEth",
   "MockChainlinkAggregatorUsdcUsd",
   "MockChainlinkAggregatorEthUsd",

@@ -9,6 +9,7 @@ export function getContractAddresses(chainId: number) {
   return {
     usdcAddress: data.contracts.USDCoin.address,
     aethAddress: data.contracts.AETH.address,
+    cwethAddress: data.contracts.CWETH.address,
     lendingPlatformAddress: data.contracts.LendingPlatform.address,
   }
 }
@@ -18,6 +19,7 @@ export function getContractAbis(chainId: number) {
   return {
     usdcAbi: data.contracts.USDCoin.abi,
     aethAbi: data.contracts.AETH.abi,
+    cwethAbi: data.contracts.CWETH.abi,
     lendingPlatformAbi: data.contracts.LendingPlatform.abi,
   }
 }

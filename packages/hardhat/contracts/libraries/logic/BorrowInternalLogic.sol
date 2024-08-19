@@ -8,7 +8,6 @@ import {LendingPlatformEvents} from '../data-structures/LendingPlatformEvents.so
 import {ShrubView} from '../view/ShrubView.sol';
 import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRayMath.sol";
 
-import "../../interfaces/IMockAaveV3.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/IBorrowPositionToken.sol";
 

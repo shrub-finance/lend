@@ -27,6 +27,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const priceFeedLogic = await deployAndVerify("PriceFeedLogic", { from: deployer, log: true, args: [] });
   const supplyLogic = await deployAndVerify("SupplyLogic", { from: deployer, log: true, args: [] });
 
+  // ADAPTERS
+  const aaveAdapter = await deployAndVerify("AaveAdapter", { from: deployer, log: true, args: [] });
+  const compoundAdapter = await deployAndVerify("CompoundAdapter", { from: deployer, log: true, args: [] });
+
 };
 export default func;
 func.id = "deploy_libraries"; // id to prevent re-execution

@@ -8,11 +8,17 @@ import {WadRayMath} from "@aave/core-v3/contracts/protocol/libraries/math/WadRay
 import {PercentageMath} from "@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol";
 import {Constants} from "../configuration/Constants.sol";
 import {ShrubView} from "../view/ShrubView.sol";
+import {AaveAdapter} from '../adapters/AaveAdapter.sol';
+import {CompoundAdapter} from "../adapters/CompoundAdapter.sol";
 
-import "../../interfaces/IMockAaveV3.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../interfaces/IMockAaveV3.sol";
 import "../../interfaces/IBorrowPositionToken.sol";
 import "../../interfaces/IAETH.sol";
+import "../../interfaces/IComet.sol";
+import "../../interfaces/IWETH.sol";
+
+import "hardhat/console.sol";
 
 library RepayLogic {
     function partialRepayBorrow(
@@ -99,7 +105,7 @@ library RepayLogic {
         // Update Borrowing Pool principal, collateral
         tempBorrowingPool.principal -= bd.principal;
         tempBorrowingPool.collateral -= bd.collateral;
-        //console.log("borrowingPool with endDate: %s updated to principal: %s, collateral: %s", bd.endDate, tempBorrowingPool.principal, tempBorrowingPool.collateral);
+        console.log("borrowingPool with endDate: %s updated to principal: %s, collateral: %s", bd.endDate, tempBorrowingPool.principal, tempBorrowingPool.collateral);
         // Update Borrowing Pool poolShareAmount
         //console.log('aEthSnapshotBalance: %s', lendState.aEthSnapshotBalance);
         //console.log("bd.collateral: %s, bpTotalPoolShares: %s, aEthSnapshotBalance: %s", bd.collateral, lendState.bpTotalPoolShares, lendState.aEthSnapshotBalance);
@@ -108,20 +114,24 @@ library RepayLogic {
             WadRayMath.wadMul(bd.collateral, lendState.bpTotalPoolShares),
             lendState.aEthSnapshotBalance + lendState.newCollateralSinceSnapshot - lendState.claimedCollateralSinceSnapshot
         );
-        //console.log('deltaBpPoolShares: %s', deltaBpPoolShares);
-        //console.log('borrowing pool with endDate %s has poolShareAmount: %s', bd.endDate, tempBorrowingPool.poolShareAmount);
-        //console.log("about to decrement above pool...");
+        console.log('deltaBpPoolShares: %s', deltaBpPoolShares);
+        console.log('borrowing pool with endDate %s has poolShareAmount: %s', bd.endDate, tempBorrowingPool.poolShareAmount);
+        console.log("about to decrement above pool...");
         tempBorrowingPool.poolShareAmount -= deltaBpPoolShares;
         //console.log("poolShareAmount of borrowingPool with timestamp: %s decremented by %s, now %s", bd.endDate, deltaBpPoolShares, tempBorrowingPool.poolShareAmount);
-//        //console.log("borrowingPool with endDate: %s updated to poolShareAmount: %s", bd.endDate, tempBorrowingPool.poolShareAmount);
+        console.log("borrowingPool with endDate: %s updated to poolShareAmount: %s", bd.endDate, tempBorrowingPool.poolShareAmount);
         // Update bpTotalPoolShares
         lendState.bpTotalPoolShares -= deltaBpPoolShares;
+        console.log("1");
         //console.log("bpTotalPoolShares updated to: %s", lendState.bpTotalPoolShares);
         lendState.claimedCollateralSinceSnapshot += bd.collateral;
+        console.log("2");
         //console.log("claimedCollateralSinceSnapshot updated to: %s", lendState.claimedCollateralSinceSnapshot);
         freedCollateral = bd.collateral;
+        console.log("3");
         // Write borrowing pool back to storage
         borrowingPools[bd.endDate] = tempBorrowingPool;
+        console.log("4");
         // Emit event for tracking/analytics/subgraph
         emit LendingPlatformEvents.RepayBorrow(params.tokenId, bd.principal + interest, freedCollateral, params.beneficiary);
     }
@@ -132,6 +142,8 @@ library RepayLogic {
         IMockAaveV3 wrappedTokenGateway,
         IERC20 usdc,
         IBorrowPositionToken bpt,
+        IComet cweth,
+        IWETH weth,
         DataTypes.LendState storage lendState,
         DataTypes.PlatformConfiguration storage config,
         mapping(uint40 => DataTypes.BorrowingPool) storage borrowingPools
@@ -151,7 +163,10 @@ library RepayLogic {
             borrowingPools
         );
         // freedCollateral will always be greater than 0
-        wrappedTokenGateway.withdrawETH(address(0), freedCollateral, beneficiary);
+        console.log("5");
+        CompoundAdapter.withdrawEth(freedCollateral, msg.sender, cweth, weth);
+//        AaveAdapter.withdrawEth(freedCollateral, msg.sender, wrappedTokenGateway);
+//        wrappedTokenGateway.withdrawETH(address(0), freedCollateral, beneficiary);
         //console.log("sending %s ETH to %s", freedCollateral, beneficiary);
     }
 
