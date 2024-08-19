@@ -16,6 +16,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//import "hardhat/console.sol";
 
 pragma solidity ^0.4.18;
 
@@ -40,9 +41,17 @@ contract WETH9 {
         Deposit(msg.sender, msg.value);
     }
     function withdraw(uint wad) public {
+//        console.log("withdraw 1");
         require(balanceOf[msg.sender] >= wad);
+//        console.log("withdraw 2");
         balanceOf[msg.sender] -= wad;
+//        console.log("withdraw 3");
+//        console.log("wad - %s", wad);
+//        console.log("balance - %s", address(this).balance);
+//        console.log("msg.sender - %s", msg.sender);
+//        console.log("address(this) - %s", address(this));
         msg.sender.transfer(wad);
+//        console.log("withdraw 4");
         Withdrawal(msg.sender, wad);
     }
 

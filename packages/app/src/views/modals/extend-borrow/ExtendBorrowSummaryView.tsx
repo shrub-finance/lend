@@ -48,9 +48,9 @@ const ExtendBorrowSummaryView: React.FC<
   additionalCollateral,
 }) => {
   const { chainId } = getChainInfo();
-  const { usdcAddress, lendingPlatformAddress, aethAddress } =
+  const { usdcAddress, lendingPlatformAddress, aethAddress, cwethAddress } =
     getContractAddresses(chainId);
-  const { usdcAbi, lendingPlatformAbi, aethAbi } = getContractAbis(chainId);
+  const { usdcAbi, lendingPlatformAbi, aethAbi, cwethAbi } = getContractAbis(chainId);
   const { ethPrice, isLoading, error } = useEthPrice(
     lendingPlatformAddress,
     lendingPlatformAbi,
@@ -82,6 +82,7 @@ const ExtendBorrowSummaryView: React.FC<
     isLoading: usdcIsLoading,
     error: usdcError,
   } = useContract(usdcAddress, usdcAbi);
+  // TODO: Make this work with compound and aave
   const {
     contract: aeth,
     isLoading: aethIsLoading,

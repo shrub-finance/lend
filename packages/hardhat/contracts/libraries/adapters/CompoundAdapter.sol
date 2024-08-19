@@ -5,6 +5,8 @@ import {Constants} from "../configuration/Constants.sol";
 import "../../interfaces/IComet.sol";
 import "../../interfaces/IWETH.sol";
 
+import "hardhat/console.sol";
+
 library CompoundAdapter {
 
     function depositEth(
@@ -27,9 +29,17 @@ library CompoundAdapter {
         IComet cweth,
         IWETH weth
     ) internal {
+//        console.log("running CompoundAdapter.withdrawEth");
+//        console.log("6");
         cweth.withdraw(address(weth), amount);
+//        console.log("7");
+//        console.log("amount: %n", amount);
+//        console.log("weth balance: %n", weth.balanceOf(address(this)));
         weth.withdraw(amount);
-        weth.transfer(beneficiary, amount);
+//        console.log("8");
+//        weth.transfer(beneficiary, amount);
+        payable(beneficiary).transfer(amount);
+//        console.log("9");
 //        _wrappedTokenGateway.withdrawETH(address(0), amount, beneficiary);
     }
 

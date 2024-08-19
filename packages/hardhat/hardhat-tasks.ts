@@ -18,6 +18,7 @@ async function getDeployedContracts(env: HardhatRuntimeEnvironment) {
     const {ethers, deployments} = env;
     return {
         aeth: await ethers.getContractAt("AETH", (await deployments.get('AETH')).address),
+        cweth: await ethers.getContractAt("CWETH", (await deployments.get('CWETH')).address),
         usdc: await ethers.getContractAt("USDCoin", (await deployments.get('USDCoin')).address),
         bpt: await ethers.getContractAt("BorrowPositionToken", (await deployments.get('BorrowPositionToken')).address),
         lendingPlatform: await ethers.getContractAt("LendingPlatform", (await deployments.get('LendingPlatform')).address),
@@ -249,7 +250,7 @@ task("extendBorrow", "extend an existing borrow")
         const additionalRepayment = taskArgs.additionalRepayment;
 
         const {ethers, deployments, getNamedAccounts} = env;
-        const {lendingPlatform, usdc, aeth, bpt} = await getDeployedContracts(env);
+        const {lendingPlatform, usdc, aeth, bpt, cweth} = await getDeployedContracts(env);
 
         const ltv = ethers.parseUnits(taskArgs.ltv.toString(), 2);
 
@@ -259,8 +260,8 @@ task("extendBorrow", "extend an existing borrow")
         const borrowDebt = await lendingPlatform.getBorrowDebt(tokenId);
         const borrowDetails = await bpt.getBorrow(tokenId);
         const usdcAllowance = await usdc.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
-        const aethAllowance = await aeth.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
-        const aethBalance = await aeth.balanceOf(borrowerAccount.getAddress());
+        const aethAllowance = await cweth.allowance(borrowerAccount.getAddress(), lendingPlatform.getAddress());
+        const aethBalance = await cweth.balanceOf(borrowerAccount.getAddress());
         const flashLoanAmount = borrowDetails.collateral + parsedAdditionalCollateral - aethBalance > 0n ?
             borrowDetails.collateral + parsedAdditionalCollateral - aethBalance :
             0n
@@ -277,7 +278,7 @@ task("extendBorrow", "extend an existing borrow")
         });
         await env.run('approveErc20', {
             account: borrowerAccount.address,
-            tokenAddress: await aeth.getAddress(),
+            tokenAddress: await cweth.getAddress(),
             spendAddress: await lendingPlatform.getAddress(),
             requiredAmount: ethers.formatUnits(aethRequirement, 18)
         });

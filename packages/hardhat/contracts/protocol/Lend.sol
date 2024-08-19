@@ -97,6 +97,8 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
 
         aeth.approve(address(wrappedTokenGateway), type(uint256).max);
         weth.approve(address(cweth), type(uint256).max);
+        weth.approve(address(weth), type(uint256).max);
+//        cweth.approve(address(weth), type(uint256).max);
     }
 
     // --- Admin Functions ---
@@ -105,7 +107,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
     }
 
     function finalizeLendingPool(uint40 _timestamp) public onlyOwner {
-        AdminLogic.finalizeLendingPool(lendingPools, _timestamp, shrubTreasury, aeth, usdc);
+        AdminLogic.finalizeLendingPool(lendingPools, _timestamp, shrubTreasury, aeth, usdc, cweth);
     }
 
     function takeSnapshot() public onlyOwner {
@@ -116,6 +118,7 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
                 bpt: bpt,
                 shrubTreasury: shrubTreasury,
                 usdc: usdc,
+                cweth: cweth,
                 shrubInterestFee: PlatformConfig.config.SHRUB_INTEREST_FEE,  // Percentage of interest paid by the borrower that is allocated to Shrub Treasury (percentage)
                 shrubYieldFee: PlatformConfig.config.SHRUB_YIELD_FEE  // Percentage of yield earned on aETH collateral that is allocated to Shrub Treasury (percentage)
             }),
@@ -408,7 +411,9 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
                 ethPrice: getEthPrice(),
                 usdc: usdc,
                 bpt: bpt,
-                aeth: aeth
+                aeth: aeth,
+                cweth: cweth,
+                isComp: true
             }),
             lendState,
             PlatformConfig.config,
@@ -580,7 +585,12 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         return string(str);
     }
 
-    fallback() external {
+//    fallback() external {
+        // This will log the call data in your local Hardhat Network console
+        //console.log(bytesToString(msg.data));
+//    }
+
+    fallback() external payable{
         // This will log the call data in your local Hardhat Network console
         //console.log(bytesToString(msg.data));
     }

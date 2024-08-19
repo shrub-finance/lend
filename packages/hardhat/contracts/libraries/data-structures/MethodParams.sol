@@ -49,6 +49,8 @@ library MethodParams {
         IERC20 usdc;
         IBorrowPositionToken bpt;
         IAETH aeth;
+        IComet cweth;
+        bool isComp;
     }
 
     struct BorrowInternalParams {
@@ -87,6 +89,7 @@ library MethodParams {
     struct takeSnapshotParams {
         uint40[] activePools;
         IAETH aeth;
+        IComet cweth;
         IBorrowPositionToken bpt;
         address shrubTreasury;
         IERC20 usdc;

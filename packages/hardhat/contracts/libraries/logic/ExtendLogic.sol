@@ -67,9 +67,17 @@ library ExtendLogic {
         if (local.newCollateral > params.aeth.balanceOf(msg.sender)) {
             local.flashLoanAmount = local.newCollateral - params.aeth.balanceOf(msg.sender);
             // Transfer aETH from this contract to sender as a flash loan
-            params.aeth.transfer(msg.sender, local.flashLoanAmount);
+            if (params.isComp) {
+                params.cweth.transfer(msg.sender, local.flashLoanAmount);
+            } else {
+                params.aeth.transfer(msg.sender, local.flashLoanAmount);
+            }
         }
-        params.aeth.transferFrom(msg.sender, address(this), local.newCollateral);
+        if (params.isComp) {
+            params.cweth.transferFrom(msg.sender, address(this), local.newCollateral);
+        } else {
+            params.aeth.transferFrom(msg.sender, address(this), local.newCollateral);
+        }
         BorrowInternalLogic.borrowInternal(
             MethodParams.BorrowInternalParams({
                 principal: local.newPrincipal,
@@ -103,9 +111,17 @@ library ExtendLogic {
             config,
             borrowingPools
         );
-        params.aeth.transfer(msg.sender, local.freedCollateral);
+        if (params.isComp) {
+            params.cweth.transfer(msg.sender, local.freedCollateral);
+        } else {
+            params.aeth.transfer(msg.sender, local.freedCollateral);
+        }
         if (local.flashLoanAmount > 0) {
-            params.aeth.transferFrom(msg.sender, address(this), local.flashLoanAmount);
+            if (params.isComp) {
+                params.cweth.transferFrom(msg.sender, address(this), local.flashLoanAmount);
+            } else {
+                params.aeth.transferFrom(msg.sender, address(this), local.flashLoanAmount);
+            }
         }
     }
 
