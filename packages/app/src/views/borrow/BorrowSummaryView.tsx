@@ -148,13 +148,14 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       />
                     </div>
                     <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">
-                      You are borrowing <strong>{amount} USDC</strong> and
-                      giving{" "}
-                      <strong>
+                      You are borrowing {amount} USDC and
+                      providing{" "}
                         {ethers.utils.formatEther(requiredCollateral)} ETH
-                      </strong>{" "}
+                      {" "}
                       as collateral. The collateral will be locked until the
-                      borrow is fully paid, and then returned to you.
+                      borrow is fully paid. The interest rate of{" "}
+                      {interestRate}% is guaranteed for 1 year
+                      and then may adjust to the rate at that time.
                     </p>
                   </>
                 )}
@@ -281,6 +282,13 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         <span className="font-semibold text-shrub-green-500">
                           {" "}
                           {interestRate}%
+                        </span>
+                      </div>
+                      <div className="flex flex-row  justify-between">
+                        <span className="">Interest Rate Renew</span>
+                        <span className="font-semibold text-shrub-green-500">
+                          {" "}
+                          {(new Date((new Date()).setUTCFullYear((new Date()).getUTCFullYear()+1))).toDateString()}
                         </span>
                       </div>
                       <div className="flex flex-row  justify-between">
