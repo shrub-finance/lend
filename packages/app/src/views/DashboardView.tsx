@@ -218,19 +218,19 @@ export const DashboardView: FC = ({}) => {
                       <Link href="/borrow" passHref>
                         <button
                           type="button"
-                          className="text-shrub-grey-900 mr-2 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2"
+                          className="text-white mr-2 bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2"
                         >
                           Borrow
                         </button>
                       </Link>
-                      <Link href="/deposit" passHref>
-                        <button
-                          type="button"
-                          className="text-white bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 "
-                        >
-                          Deposit
-                        </button>
-                      </Link>
+                      {/*<Link href="/deposit" passHref>*/}
+                      {/*  <button*/}
+                      {/*    type="button"*/}
+                      {/*    className="text-white bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2 "*/}
+                      {/*  >*/}
+                      {/*    Deposit*/}
+                      {/*  </button>*/}
+                      {/*</Link>*/}
                     </span>
                   </div>
                   {/* repay modal */}
@@ -296,371 +296,371 @@ export const DashboardView: FC = ({}) => {
                 <div className="form-control w-full mt-6">
                   <div>
                     <ul className="flex flex-col gap-4">
-                      <li className="mr-4">
-                        <div className="relative overflow-x-auto border rounded-2xl">
-                          <table className="w-full text-left text-shrub-grey  ">
-                            <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white  ">
-                              Deposits
-                              {/*<span className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full  ">*/}
-                              {/*  Total of {dummyEarningPools} Earning Pools*/}
-                              {/*</span>*/}
-                            </caption>
-                            <thead className="text-xs bg-shrub-grey-light  border border-shrub-grey-light2">
-                              <tr>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
-                                  Current Balance
-                                </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
-                                  Interest Earned
-                                </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
-                                  Net Deposited
-                                </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
-                                  APR
-                                </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
-                                  Unlock Date
-                                </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                ></th>
-                              </tr>
-                            </thead>
-                            <tbody className="text-lg">
-                              {/*Making a copy of store so that it can be sorted (store is read-only)*/}
-                              {[...getUserData(store, walletAddress).deposits]
-                                .sort(
-                                  (a, b) =>
-                                    parseInt(a.lendingPool.timestamp) -
-                                    parseInt(b.lendingPool.timestamp),
-                                )
-                                .map(
-                                  // Sort by timestamp before mapping
-                                  (storeDeposit, index) => {
-                                    let lendingPoolTokenSupply: ethers.BigNumber;
-                                    let lendingPoolTokenAmount: ethers.BigNumber;
-                                    let positionEthYield: ethers.BigNumber;
-                                    let positionUsdcInterest: ethers.BigNumber;
-                                    let positionPrincipal: ethers.BigNumber;
-                                    if (
-                                      storeDeposit.amount &&
-                                      storeDeposit.lendingPool.tokenSupply
-                                    ) {
-                                      lendingPoolTokenSupply =
-                                        ethers.BigNumber.from(
-                                          storeDeposit.lendingPool.tokenSupply,
-                                        );
-                                      lendingPoolTokenAmount =
-                                        ethers.BigNumber.from(
-                                          storeDeposit.amount,
-                                        );
-                                      positionEthYield = wadDiv(
-                                        wadMul(
-                                          ethers.BigNumber.from(
-                                            storeDeposit.lendingPool
-                                              .totalEthYield,
-                                          ),
-                                          lendingPoolTokenAmount,
-                                        ),
-                                        lendingPoolTokenSupply,
-                                      );
-                                      positionUsdcInterest = wadDiv(
-                                        wadMul(
-                                          ethers.BigNumber.from(
-                                            storeDeposit.lendingPool
-                                              .totalUsdcInterest,
-                                          ),
-                                          lendingPoolTokenAmount,
-                                        ),
-                                        lendingPoolTokenSupply,
-                                      );
-                                      positionPrincipal = wadDiv(
-                                        wadMul(
-                                          ethers.BigNumber.from(
-                                            storeDeposit.lendingPool
-                                              .totalPrincipal,
-                                          ),
-                                          lendingPoolTokenAmount,
-                                        ),
-                                        lendingPoolTokenSupply,
-                                      );
-                                    }
-                                    const deposit: DepositObj = {
-                                      id: storeDeposit.id,
-                                      endDate: fromEthDate(
-                                        Number(
-                                          storeDeposit.lendingPool.timestamp,
-                                        ),
-                                      ),
-                                      // updated: fromEthDate(storeDeposit.updated),
-                                      depositsUsdc: storeDeposit.depositsUsdc
-                                        ? ethers.BigNumber.from(
-                                            storeDeposit.depositsUsdc,
-                                          )
-                                        : Zero,
-                                      withdrawsUsdc: storeDeposit.withdrawsUsdc
-                                        ? ethers.BigNumber.from(
-                                            storeDeposit.withdrawsUsdc,
-                                          )
-                                        : Zero,
-                                      // apy: ethers.BigNumber.from(storeDeposit.apy),
-                                      lendingPoolTokenAddress:
-                                        storeDeposit.lendingPool.id,
-                                      lendingPoolTokenAmount,
-                                      positionEthYield,
-                                      positionUsdcInterest,
-                                      positionPrincipal,
-                                    };
-                                    const endDatePlusBuffer = new Date(
-                                      deposit.endDate,
-                                    );
-                                    endDatePlusBuffer.setUTCMilliseconds(
-                                      endDatePlusBuffer.getUTCMilliseconds() +
-                                        LENDING_POOL_UNLOCK_BUFFER,
-                                    );
-                                    const netDeposits =
-                                      deposit.depositsUsdc.sub(
-                                        deposit.withdrawsUsdc,
-                                      );
-                                    const currentBalance =
-                                      storeDeposit.currentBalanceOverride
-                                        ? ethers.BigNumber.from(
-                                            storeDeposit.currentBalanceOverride,
-                                          )
-                                        : deposit.positionPrincipal
-                                            .add(deposit.positionUsdcInterest)
-                                            .add(
-                                              ethInUsdc(
-                                                deposit.positionEthYield,
-                                                ethPrice,
-                                              ),
-                                            );
-                                    const interestEarned =
-                                      storeDeposit.interestEarnedOverride
-                                        ? ethers.BigNumber.from(
-                                            storeDeposit.interestEarnedOverride,
-                                          )
-                                        : currentBalance.sub(netDeposits);
-                                    return (
-                                      <tr
-                                        key={`earnRow-${index}`}
-                                        className="bg-white border-b  "
-                                      >
-                                        <td className="px-6 py-4 text-sm font-bold">
-                                          {wallet ? (
-                                            <p>
-                                              {" "}
-                                              <Image
-                                                src="/usdc-logo.svg"
-                                                alt="usdc logo"
-                                                className="w-6 mr-2 inline align-middle"
-                                                width="40"
-                                                height="40"
-                                              />
-                                              {formatLargeUsdc(currentBalance)}{" "}
-                                              USDC
-                                              {storeDeposit.status ===
-                                                "pending" && (
-                                                <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full  ">
-                                                  <span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>
-                                                  Pending
-                                                </span>
-                                              )}
-                                              {storeDeposit.status ===
-                                                "failed" && (
-                                                <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full  ">
-                                                  <span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>
-                                                  Failed
-                                                </span>
-                                              )}
-                                              {storeDeposit.status ===
-                                                "confirmed" && (
-                                                <span className=" ml-2 inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full  ">
-                                                  <span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
-                                                  Confirmed
-                                                </span>
-                                              )}
-                                              {storeDeposit.status ===
-                                                "extending" && (
-                                                <span className=" ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full  ">
-                                                  <span className="w-2 h-2 me-1 bg-amber-500 rounded-full"></span>
-                                                  Extending
-                                                </span>
-                                              )}
-                                              {storeDeposit.status ===
-                                                "extended" && (
-                                                <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full  ">
-                                                  <span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>
-                                                  Extended
-                                                </span>
-                                              )}
-                                              {storeDeposit.status ===
-                                                "withdrawing" && (
-                                                <span className=" ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                                  <span className="w-2 h-2 me-1 bg-pink-500 rounded-full"></span>
-                                                  Withdrawing
-                                                </span>
-                                              )}
-                                              {storeDeposit.status ===
-                                                "withdrawn" && (
-                                                <span className=" ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                                  <span className="w-2 h-2 me-1 bg-pink-500 rounded-full"></span>
-                                                  Withdrawn
-                                                </span>
-                                              )}
-                                            </p>
-                                          ) : (
-                                            <p className="text-sm">
-                                              Loading ETH balance...
-                                            </p>
-                                          )}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-bold">
-                                          {formatLargeUsdc(interestEarned)}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-bold">
-                                          {formatLargeUsdc(netDeposits)} USDC
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-bold">
-                                          <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full  ">
-                                            {storeDeposit.apy
-                                              ? storeDeposit.apy
-                                              : "X"}
-                                            %
-                                          </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-bold">
-                                          {endDatePlusBuffer.toLocaleString()}
-                                        </td>
-                                        <td className="px-1 py-4 text-sm font-bold">
-                                          <div className="flex items-center justify-center space-x-2 h-full p-2">
-                                            <Tooltip
-                                              text="This deposit is already for the longest time period."
-                                              conditionalText="Extend feature in unavailable right at the moment."
-                                              condition={!!storeDeposit.status}
-                                              showOnDisabled
-                                            >
-                                              <button
-                                                type="button"
-                                                className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"
-                                                disabled={
-                                                  (storeDeposit.lendingPool
-                                                    .timestamp &&
-                                                    fromEthDate(
-                                                      parseInt(
-                                                        storeDeposit.lendingPool
-                                                          .timestamp,
-                                                      ),
-                                                    )?.getTime() ===
-                                                      store.platformData.activePoolTimestamps[
-                                                        store.platformData
-                                                          .activePoolTimestamps
-                                                          .length - 1
-                                                      ]?.getTime()) ||
-                                                  !!storeDeposit.tempData ||
-                                                  !!storeDeposit.status
-                                                }
-                                                onClick={() => {
-                                                  setExtendDepositModalOpen(
-                                                    true,
-                                                  );
-                                                  setSelectedDeposit(deposit);
-                                                }}
-                                              >
-                                                {/*Corresponding modal at the top*/}
-                                                Extend
-                                              </button>
-                                            </Tooltip>
-                                            {!storeDeposit.lendingPool
-                                              .finalized ? (
-                                              <a
-                                                onMouseOver={() =>
-                                                  setCurrentHovered(index)
-                                                }
-                                                onMouseOut={() =>
-                                                  setCurrentHovered(null)
-                                                }
-                                                href="https://app.uniswap.org/"
-                                                target="_blank"
-                                                type="button"
-                                                className={`flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 ${
-                                                  storeDeposit.tempData ||
-                                                  storeDeposit.status
-                                                    ? "pointer-events-none opacity-50 cursor-not-allowed"
-                                                    : ""
-                                                }`}
-                                                onClick={(e) => {
-                                                  if (
-                                                    storeDeposit.tempData ||
-                                                    storeDeposit.status
-                                                  ) {
-                                                    e.preventDefault();
-                                                  }
-                                                }}
-                                              >
-                                                {currentHovered === index ? (
-                                                  <Image
-                                                    src="/up-right-arrow-light.svg"
-                                                    alt="down arrow"
-                                                    width={20}
-                                                    height={20}
-                                                    className="mr-2"
-                                                  />
-                                                ) : (
-                                                  <Image
-                                                    src="/up-right-arrow.svg"
-                                                    alt="down arrow"
-                                                    width={20}
-                                                    height={20}
-                                                    className="mr-2"
-                                                  />
-                                                )}
-                                                Trade
-                                              </a>
-                                            ) : (
-                                              <button
-                                                type="button"
-                                                className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"
-                                                disabled={
-                                                  !!storeDeposit.tempData ||
-                                                  !!storeDeposit.status
-                                                }
-                                                onClick={() => {
-                                                  setWithdrawModalOpen(true);
-                                                  setSelectedDeposit(deposit);
-                                                }}
-                                              >
-                                                {/*Corresponding modal at the top*/}
-                                                Withdraw
-                                              </button>
-                                            )}
-                                          </div>
-                                        </td>
-                                      </tr>
-                                    );
-                                  },
-                                )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </li>
+                      {/*<li className="mr-4">*/}
+                      {/*  <div className="relative overflow-x-auto border rounded-2xl">*/}
+                      {/*    <table className="w-full text-left text-shrub-grey  ">*/}
+                      {/*      <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white  ">*/}
+                      {/*        Deposits*/}
+                      {/*        /!*<span className=" leading-5 inline-block bg-shrub-grey-light3 text-shrub-green-500 text-xs font-medium ml-2 px-2 py-0.5 rounded-full  ">*!/*/}
+                      {/*        /!*  Total of {dummyEarningPools} Earning Pools*!/*/}
+                      {/*        /!*</span>*!/*/}
+                      {/*      </caption>*/}
+                      {/*      <thead className="text-xs bg-shrub-grey-light  border border-shrub-grey-light2">*/}
+                      {/*        <tr>*/}
+                      {/*          <th*/}
+                      {/*            scope="col"*/}
+                      {/*            className="px-6 py-3 text-shrub-grey font-medium"*/}
+                      {/*          >*/}
+                      {/*            Current Balance*/}
+                      {/*          </th>*/}
+                      {/*          <th*/}
+                      {/*            scope="col"*/}
+                      {/*            className="px-6 py-3 text-shrub-grey font-medium"*/}
+                      {/*          >*/}
+                      {/*            Interest Earned*/}
+                      {/*          </th>*/}
+                      {/*          <th*/}
+                      {/*            scope="col"*/}
+                      {/*            className="px-6 py-3 text-shrub-grey font-medium"*/}
+                      {/*          >*/}
+                      {/*            Net Deposited*/}
+                      {/*          </th>*/}
+                      {/*          <th*/}
+                      {/*            scope="col"*/}
+                      {/*            className="px-6 py-3 text-shrub-grey font-medium"*/}
+                      {/*          >*/}
+                      {/*            APR*/}
+                      {/*          </th>*/}
+                      {/*          <th*/}
+                      {/*            scope="col"*/}
+                      {/*            className="px-6 py-3 text-shrub-grey font-medium"*/}
+                      {/*          >*/}
+                      {/*            Unlock Date*/}
+                      {/*          </th>*/}
+                      {/*          <th*/}
+                      {/*            scope="col"*/}
+                      {/*            className="px-6 py-3 text-shrub-grey font-medium"*/}
+                      {/*          ></th>*/}
+                      {/*        </tr>*/}
+                      {/*      </thead>*/}
+                      {/*      <tbody className="text-lg">*/}
+                      {/*        /!*Making a copy of store so that it can be sorted (store is read-only)*!/*/}
+                      {/*        {[...getUserData(store, walletAddress).deposits]*/}
+                      {/*          .sort(*/}
+                      {/*            (a, b) =>*/}
+                      {/*              parseInt(a.lendingPool.timestamp) -*/}
+                      {/*              parseInt(b.lendingPool.timestamp),*/}
+                      {/*          )*/}
+                      {/*          .map(*/}
+                      {/*            // Sort by timestamp before mapping*/}
+                      {/*            (storeDeposit, index) => {*/}
+                      {/*              let lendingPoolTokenSupply: ethers.BigNumber;*/}
+                      {/*              let lendingPoolTokenAmount: ethers.BigNumber;*/}
+                      {/*              let positionEthYield: ethers.BigNumber;*/}
+                      {/*              let positionUsdcInterest: ethers.BigNumber;*/}
+                      {/*              let positionPrincipal: ethers.BigNumber;*/}
+                      {/*              if (*/}
+                      {/*                storeDeposit.amount &&*/}
+                      {/*                storeDeposit.lendingPool.tokenSupply*/}
+                      {/*              ) {*/}
+                      {/*                lendingPoolTokenSupply =*/}
+                      {/*                  ethers.BigNumber.from(*/}
+                      {/*                    storeDeposit.lendingPool.tokenSupply,*/}
+                      {/*                  );*/}
+                      {/*                lendingPoolTokenAmount =*/}
+                      {/*                  ethers.BigNumber.from(*/}
+                      {/*                    storeDeposit.amount,*/}
+                      {/*                  );*/}
+                      {/*                positionEthYield = wadDiv(*/}
+                      {/*                  wadMul(*/}
+                      {/*                    ethers.BigNumber.from(*/}
+                      {/*                      storeDeposit.lendingPool*/}
+                      {/*                        .totalEthYield,*/}
+                      {/*                    ),*/}
+                      {/*                    lendingPoolTokenAmount,*/}
+                      {/*                  ),*/}
+                      {/*                  lendingPoolTokenSupply,*/}
+                      {/*                );*/}
+                      {/*                positionUsdcInterest = wadDiv(*/}
+                      {/*                  wadMul(*/}
+                      {/*                    ethers.BigNumber.from(*/}
+                      {/*                      storeDeposit.lendingPool*/}
+                      {/*                        .totalUsdcInterest,*/}
+                      {/*                    ),*/}
+                      {/*                    lendingPoolTokenAmount,*/}
+                      {/*                  ),*/}
+                      {/*                  lendingPoolTokenSupply,*/}
+                      {/*                );*/}
+                      {/*                positionPrincipal = wadDiv(*/}
+                      {/*                  wadMul(*/}
+                      {/*                    ethers.BigNumber.from(*/}
+                      {/*                      storeDeposit.lendingPool*/}
+                      {/*                        .totalPrincipal,*/}
+                      {/*                    ),*/}
+                      {/*                    lendingPoolTokenAmount,*/}
+                      {/*                  ),*/}
+                      {/*                  lendingPoolTokenSupply,*/}
+                      {/*                );*/}
+                      {/*              }*/}
+                      {/*              const deposit: DepositObj = {*/}
+                      {/*                id: storeDeposit.id,*/}
+                      {/*                endDate: fromEthDate(*/}
+                      {/*                  Number(*/}
+                      {/*                    storeDeposit.lendingPool.timestamp,*/}
+                      {/*                  ),*/}
+                      {/*                ),*/}
+                      {/*                // updated: fromEthDate(storeDeposit.updated),*/}
+                      {/*                depositsUsdc: storeDeposit.depositsUsdc*/}
+                      {/*                  ? ethers.BigNumber.from(*/}
+                      {/*                      storeDeposit.depositsUsdc,*/}
+                      {/*                    )*/}
+                      {/*                  : Zero,*/}
+                      {/*                withdrawsUsdc: storeDeposit.withdrawsUsdc*/}
+                      {/*                  ? ethers.BigNumber.from(*/}
+                      {/*                      storeDeposit.withdrawsUsdc,*/}
+                      {/*                    )*/}
+                      {/*                  : Zero,*/}
+                      {/*                // apy: ethers.BigNumber.from(storeDeposit.apy),*/}
+                      {/*                lendingPoolTokenAddress:*/}
+                      {/*                  storeDeposit.lendingPool.id,*/}
+                      {/*                lendingPoolTokenAmount,*/}
+                      {/*                positionEthYield,*/}
+                      {/*                positionUsdcInterest,*/}
+                      {/*                positionPrincipal,*/}
+                      {/*              };*/}
+                      {/*              const endDatePlusBuffer = new Date(*/}
+                      {/*                deposit.endDate,*/}
+                      {/*              );*/}
+                      {/*              endDatePlusBuffer.setUTCMilliseconds(*/}
+                      {/*                endDatePlusBuffer.getUTCMilliseconds() +*/}
+                      {/*                  LENDING_POOL_UNLOCK_BUFFER,*/}
+                      {/*              );*/}
+                      {/*              const netDeposits =*/}
+                      {/*                deposit.depositsUsdc.sub(*/}
+                      {/*                  deposit.withdrawsUsdc,*/}
+                      {/*                );*/}
+                      {/*              const currentBalance =*/}
+                      {/*                storeDeposit.currentBalanceOverride*/}
+                      {/*                  ? ethers.BigNumber.from(*/}
+                      {/*                      storeDeposit.currentBalanceOverride,*/}
+                      {/*                    )*/}
+                      {/*                  : deposit.positionPrincipal*/}
+                      {/*                      .add(deposit.positionUsdcInterest)*/}
+                      {/*                      .add(*/}
+                      {/*                        ethInUsdc(*/}
+                      {/*                          deposit.positionEthYield,*/}
+                      {/*                          ethPrice,*/}
+                      {/*                        ),*/}
+                      {/*                      );*/}
+                      {/*              const interestEarned =*/}
+                      {/*                storeDeposit.interestEarnedOverride*/}
+                      {/*                  ? ethers.BigNumber.from(*/}
+                      {/*                      storeDeposit.interestEarnedOverride,*/}
+                      {/*                    )*/}
+                      {/*                  : currentBalance.sub(netDeposits);*/}
+                      {/*              return (*/}
+                      {/*                <tr*/}
+                      {/*                  key={`earnRow-${index}`}*/}
+                      {/*                  className="bg-white border-b  "*/}
+                      {/*                >*/}
+                      {/*                  <td className="px-6 py-4 text-sm font-bold">*/}
+                      {/*                    {wallet ? (*/}
+                      {/*                      <p>*/}
+                      {/*                        {" "}*/}
+                      {/*                        <Image*/}
+                      {/*                          src="/usdc-logo.svg"*/}
+                      {/*                          alt="usdc logo"*/}
+                      {/*                          className="w-6 mr-2 inline align-middle"*/}
+                      {/*                          width="40"*/}
+                      {/*                          height="40"*/}
+                      {/*                        />*/}
+                      {/*                        {formatLargeUsdc(currentBalance)}{" "}*/}
+                      {/*                        USDC*/}
+                      {/*                        {storeDeposit.status ===*/}
+                      {/*                          "pending" && (*/}
+                      {/*                          <span className=" ml-2 inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full  ">*/}
+                      {/*                            <span className="w-2 h-2 me-1 bg-yellow-500 rounded-full"></span>*/}
+                      {/*                            Pending*/}
+                      {/*                          </span>*/}
+                      {/*                        )}*/}
+                      {/*                        {storeDeposit.status ===*/}
+                      {/*                          "failed" && (*/}
+                      {/*                          <span className=" ml-2 inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full  ">*/}
+                      {/*                            <span className="w-2 h-2 me-1 bg-red-500 rounded-full"></span>*/}
+                      {/*                            Failed*/}
+                      {/*                          </span>*/}
+                      {/*                        )}*/}
+                      {/*                        {storeDeposit.status ===*/}
+                      {/*                          "confirmed" && (*/}
+                      {/*                          <span className=" ml-2 inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full  ">*/}
+                      {/*                            <span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>*/}
+                      {/*                            Confirmed*/}
+                      {/*                          </span>*/}
+                      {/*                        )}*/}
+                      {/*                        {storeDeposit.status ===*/}
+                      {/*                          "extending" && (*/}
+                      {/*                          <span className=" ml-2 inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full  ">*/}
+                      {/*                            <span className="w-2 h-2 me-1 bg-amber-500 rounded-full"></span>*/}
+                      {/*                            Extending*/}
+                      {/*                          </span>*/}
+                      {/*                        )}*/}
+                      {/*                        {storeDeposit.status ===*/}
+                      {/*                          "extended" && (*/}
+                      {/*                          <span className=" ml-2 inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full  ">*/}
+                      {/*                            <span className="w-2 h-2 me-1 bg-blue-500 rounded-full"></span>*/}
+                      {/*                            Extended*/}
+                      {/*                          </span>*/}
+                      {/*                        )}*/}
+                      {/*                        {storeDeposit.status ===*/}
+                      {/*                          "withdrawing" && (*/}
+                      {/*                          <span className=" ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full">*/}
+                      {/*                            <span className="w-2 h-2 me-1 bg-pink-500 rounded-full"></span>*/}
+                      {/*                            Withdrawing*/}
+                      {/*                          </span>*/}
+                      {/*                        )}*/}
+                      {/*                        {storeDeposit.status ===*/}
+                      {/*                          "withdrawn" && (*/}
+                      {/*                          <span className=" ml-2 inline-flex items-center bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full">*/}
+                      {/*                            <span className="w-2 h-2 me-1 bg-pink-500 rounded-full"></span>*/}
+                      {/*                            Withdrawn*/}
+                      {/*                          </span>*/}
+                      {/*                        )}*/}
+                      {/*                      </p>*/}
+                      {/*                    ) : (*/}
+                      {/*                      <p className="text-sm">*/}
+                      {/*                        Loading ETH balance...*/}
+                      {/*                      </p>*/}
+                      {/*                    )}*/}
+                      {/*                  </td>*/}
+                      {/*                  <td className="px-6 py-4 text-sm font-bold">*/}
+                      {/*                    {formatLargeUsdc(interestEarned)}*/}
+                      {/*                  </td>*/}
+                      {/*                  <td className="px-6 py-4 text-sm font-bold">*/}
+                      {/*                    {formatLargeUsdc(netDeposits)} USDC*/}
+                      {/*                  </td>*/}
+                      {/*                  <td className="px-6 py-4 text-sm font-bold">*/}
+                      {/*                    <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full  ">*/}
+                      {/*                      {storeDeposit.apy*/}
+                      {/*                        ? storeDeposit.apy*/}
+                      {/*                        : "X"}*/}
+                      {/*                      %*/}
+                      {/*                    </span>*/}
+                      {/*                  </td>*/}
+                      {/*                  <td className="px-6 py-4 text-sm font-bold">*/}
+                      {/*                    {endDatePlusBuffer.toLocaleString()}*/}
+                      {/*                  </td>*/}
+                      {/*                  <td className="px-1 py-4 text-sm font-bold">*/}
+                      {/*                    <div className="flex items-center justify-center space-x-2 h-full p-2">*/}
+                      {/*                      <Tooltip*/}
+                      {/*                        text="This deposit is already for the longest time period."*/}
+                      {/*                        conditionalText="Extend feature in unavailable right at the moment."*/}
+                      {/*                        condition={!!storeDeposit.status}*/}
+                      {/*                        showOnDisabled*/}
+                      {/*                      >*/}
+                      {/*                        <button*/}
+                      {/*                          type="button"*/}
+                      {/*                          className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"*/}
+                      {/*                          disabled={*/}
+                      {/*                            (storeDeposit.lendingPool*/}
+                      {/*                              .timestamp &&*/}
+                      {/*                              fromEthDate(*/}
+                      {/*                                parseInt(*/}
+                      {/*                                  storeDeposit.lendingPool*/}
+                      {/*                                    .timestamp,*/}
+                      {/*                                ),*/}
+                      {/*                              )?.getTime() ===*/}
+                      {/*                                store.platformData.activePoolTimestamps[*/}
+                      {/*                                  store.platformData*/}
+                      {/*                                    .activePoolTimestamps*/}
+                      {/*                                    .length - 1*/}
+                      {/*                                ]?.getTime()) ||*/}
+                      {/*                            !!storeDeposit.tempData ||*/}
+                      {/*                            !!storeDeposit.status*/}
+                      {/*                          }*/}
+                      {/*                          onClick={() => {*/}
+                      {/*                            setExtendDepositModalOpen(*/}
+                      {/*                              true,*/}
+                      {/*                            );*/}
+                      {/*                            setSelectedDeposit(deposit);*/}
+                      {/*                          }}*/}
+                      {/*                        >*/}
+                      {/*                          /!*Corresponding modal at the top*!/*/}
+                      {/*                          Extend*/}
+                      {/*                        </button>*/}
+                      {/*                      </Tooltip>*/}
+                      {/*                      {!storeDeposit.lendingPool*/}
+                      {/*                        .finalized ? (*/}
+                      {/*                        <a*/}
+                      {/*                          onMouseOver={() =>*/}
+                      {/*                            setCurrentHovered(index)*/}
+                      {/*                          }*/}
+                      {/*                          onMouseOut={() =>*/}
+                      {/*                            setCurrentHovered(null)*/}
+                      {/*                          }*/}
+                      {/*                          href="https://app.uniswap.org/"*/}
+                      {/*                          target="_blank"*/}
+                      {/*                          type="button"*/}
+                      {/*                          className={`flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 ${*/}
+                      {/*                            storeDeposit.tempData ||*/}
+                      {/*                            storeDeposit.status*/}
+                      {/*                              ? "pointer-events-none opacity-50 cursor-not-allowed"*/}
+                      {/*                              : ""*/}
+                      {/*                          }`}*/}
+                      {/*                          onClick={(e) => {*/}
+                      {/*                            if (*/}
+                      {/*                              storeDeposit.tempData ||*/}
+                      {/*                              storeDeposit.status*/}
+                      {/*                            ) {*/}
+                      {/*                              e.preventDefault();*/}
+                      {/*                            }*/}
+                      {/*                          }}*/}
+                      {/*                        >*/}
+                      {/*                          {currentHovered === index ? (*/}
+                      {/*                            <Image*/}
+                      {/*                              src="/up-right-arrow-light.svg"*/}
+                      {/*                              alt="down arrow"*/}
+                      {/*                              width={20}*/}
+                      {/*                              height={20}*/}
+                      {/*                              className="mr-2"*/}
+                      {/*                            />*/}
+                      {/*                          ) : (*/}
+                      {/*                            <Image*/}
+                      {/*                              src="/up-right-arrow.svg"*/}
+                      {/*                              alt="down arrow"*/}
+                      {/*                              width={20}*/}
+                      {/*                              height={20}*/}
+                      {/*                              className="mr-2"*/}
+                      {/*                            />*/}
+                      {/*                          )}*/}
+                      {/*                          Trade*/}
+                      {/*                        </a>*/}
+                      {/*                      ) : (*/}
+                      {/*                        <button*/}
+                      {/*                          type="button"*/}
+                      {/*                          className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"*/}
+                      {/*                          disabled={*/}
+                      {/*                            !!storeDeposit.tempData ||*/}
+                      {/*                            !!storeDeposit.status*/}
+                      {/*                          }*/}
+                      {/*                          onClick={() => {*/}
+                      {/*                            setWithdrawModalOpen(true);*/}
+                      {/*                            setSelectedDeposit(deposit);*/}
+                      {/*                          }}*/}
+                      {/*                        >*/}
+                      {/*                          /!*Corresponding modal at the top*!/*/}
+                      {/*                          Withdraw*/}
+                      {/*                        </button>*/}
+                      {/*                      )}*/}
+                      {/*                    </div>*/}
+                      {/*                  </td>*/}
+                      {/*                </tr>*/}
+                      {/*              );*/}
+                      {/*            },*/}
+                      {/*          )}*/}
+                      {/*      </tbody>*/}
+                      {/*    </table>*/}
+                      {/*  </div>*/}
+                      {/*</li>*/}
                       <li className="mr-4">
                         <div className="relative overflow-x-auto border rounded-2xl">
                           <table className="w-full text-left text-shrub-grey">
