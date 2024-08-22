@@ -256,26 +256,26 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                           {ethers.utils.formatEther(requiredCollateral)} ETH
                         </span>
                       </div>
-                      <div className="flex flex-row  justify-between">
-                        <span className="">Start Date</span>
-                        <span>{currentDate.toDateString()}</span>
-                      </div>
-                      <div
-                        className="flex flex-row justify-between cursor-pointer"
-                        onClick={backtoBorrowDuration}
-                      >
-                        <span className="">Due Date</span>
-                        <span>
-                          {endDate.toDateString()}
-                          <Image
-                            alt="edit icon"
-                            src="/edit.svg"
-                            className="w-5 inline align-baseline ml-2"
-                            width="20"
-                            height="20"
-                          />
-                        </span>
-                      </div>
+                      {/*<div className="flex flex-row  justify-between">*/}
+                      {/*  <span className="">Start Date</span>*/}
+                      {/*  <span>{currentDate.toDateString()}</span>*/}
+                      {/*</div>*/}
+                      {/*<div*/}
+                      {/*  className="flex flex-row justify-between cursor-pointer"*/}
+                      {/*  onClick={backtoBorrowDuration}*/}
+                      {/*>*/}
+                      {/*  <span className="">Due Date</span>*/}
+                      {/*  <span>*/}
+                      {/*    {endDate.toDateString()}*/}
+                      {/*    <Image*/}
+                      {/*      alt="edit icon"*/}
+                      {/*      src="/edit.svg"*/}
+                      {/*      className="w-5 inline align-baseline ml-2"*/}
+                      {/*      width="20"*/}
+                      {/*      height="20"*/}
+                      {/*    />*/}
+                      {/*  </span>*/}
+                      {/*</div>*/}
                       <div className="flex flex-row  justify-between">
                         <span className="">Interest Rate ✨</span>
                         <span className="font-semibold text-shrub-green-500">

@@ -33,11 +33,11 @@ export const AppBar: React.FC = () => {
             {/*  href="/dashboard"*/}
             {/*  navigationStarts={() => setIsNavOpen(false)}*/}
             {/*/>*/}
-            <NavElement
-              label="Deposit"
-              href="/deposit"
-              navigationStarts={() => setIsNavOpen(false)}
-            />
+            {/*<NavElement*/}
+            {/*  label="Deposit"*/}
+            {/*  href="/deposit"*/}
+            {/*  navigationStarts={() => setIsNavOpen(false)}*/}
+            {/*/>*/}
 
             <NavElement
               label="Borrow"

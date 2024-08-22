@@ -18,7 +18,8 @@ const Borrow: NextPage = (props) => {
   const handleBorrowViewChange = (interestRate, amount) => {
     setInterestRate(interestRate);
     setAmount(amount);
-    setBorrowView("duration");
+    // setBorrowView("duration");
+    setBorrowView("summary");
   };
 
   const handleTimestampChange = (timestamp: number) => {
@@ -27,9 +28,12 @@ const Borrow: NextPage = (props) => {
   };
 
   const handleBorrowScreensBackButtons = () => {
+    // if (borrowView === "summary") {
+    //   setBorrowView("duration");
+    // } else if (borrowView === "duration") {
+    //   setBorrowView("borrow");
+    // }
     if (borrowView === "summary") {
-      setBorrowView("duration");
-    } else if (borrowView === "duration") {
       setBorrowView("borrow");
     }
   };
