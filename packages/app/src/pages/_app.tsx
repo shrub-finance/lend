@@ -1,6 +1,7 @@
 import { AppProps } from "next/app";
 import Head from "next/head";
 import { FC } from "react";
+import ReactGA from 'react-ga4';
 import { AppBar } from "../components/AppBar";
 import { MobileMenu } from "../components/MobileMenu";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
@@ -17,6 +18,7 @@ const client = new ApolloClient({
   cache: new InMemoryCache(),
   connectToDevTools: process.env.NEXT_PUBLIC_ENVIRONMENT === "development",
 });
+ReactGA.initialize('G-CP99H9D71X');
 const App: FC<AppProps> = ({ Component, pageProps }) => {
   return (
     <>
