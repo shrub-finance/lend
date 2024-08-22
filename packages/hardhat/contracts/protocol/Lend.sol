@@ -289,28 +289,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
         uint16 _ltv,
         uint40 _timestamp
     ) public payable validateLtv(_ltv) nonReentrant {
-
-//        struct borrowParams {
-//        uint256 principal; // Amount of USDC with 6 decimal places
-//        uint256 collateral; // Amount of ETH collateral with 18 decimal places
-//        uint16 ltv;
-//        uint40 timestamp;
-//        uint256 ethPrice;
-//        uint40[] activePools; // Sorted ascending list of timestamps of active pools
-//        IERC20 usdc;
-//        IBorrowPositionToken bpt;
-//        IMockAaveV3 wrappedTokenGateway;
-//        IComet comp;
-//        IWETH weth;
-//        }
-//        MethodParams.borrowParams memory params,
-//        DataTypes.LendState storage lendState,
-//        mapping(uint40 => DataTypes.BorrowingPool) storage borrowingPools,
-//    mapping(uint40 => DataTypes.LendingPool) storage lendingPools,
-//    mapping(uint40 => uint256) storage activePoolIndex
-
-
-
         BorrowLogic.borrow(
             MethodParams.borrowParams({
                 principal: _principal,
@@ -324,19 +302,6 @@ contract LendingPlatform is Ownable, ReentrancyGuard, PlatformConfig{
                 wrappedTokenGateway: wrappedTokenGateway,
                 cweth: cweth,
                 weth: weth
-//        uint256 principal; // Amount of USDC with 6 decimal places
-//        uint256 collateral; // Amount of ETH collateral with 18 decimal places
-//        uint16 ltv;
-//        uint40 timestamp;
-//        uint256 ethPrice;
-//        uint40[] activePools; // Sorted ascending list of timestamps of active pools
-//        IERC20 usdc;
-//        IBorrowPositionToken bpt;
-//        IMockAaveV3 wrappedTokenGateway;
-//        IComet comp;
-//        IWETH weth;
-
-
             }),
             lendState,
             borrowingPools,

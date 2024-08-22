@@ -26,21 +26,6 @@ library BorrowLogic {
         mapping(uint40 => DataTypes.BorrowingPool) storage borrowingPools,
         mapping(uint40 => DataTypes.LendingPool) storage lendingPools,
         mapping(uint40 => uint256) storage activePoolIndex
-//        uint256 principal, // Amount of USDC with 6 decimal places
-//        uint256 collateral, // Amount of ETH collateral with 18 decimal places
-//        uint16 ltv,
-//        uint40 timestamp,
-//        uint256 ethPrice,
-//        IERC20 usdc,
-//        IBorrowPositionToken bpt,
-//        DataTypes.LendState storage lendState,
-//        IMockAaveV3 wrappedTokenGateway,
-//        uint40[] storage activePools,
-//        mapping(uint40 => DataTypes.BorrowingPool) storage borrowingPools,
-//        mapping(uint40 => DataTypes.LendingPool) storage lendingPools,
-//        mapping(uint40 => uint256) storage activePoolIndex,
-//        IComet comp,
-//        IWETH weth
     ) internal {
 //        console.log("msg.sender - %s", msg.sender);
 //        console.log("msg.value - %s", msg.value);

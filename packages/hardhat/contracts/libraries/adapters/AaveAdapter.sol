@@ -24,4 +24,10 @@ library AaveAdapter {
         _wrappedTokenGateway.withdrawETH(address(0), amount, beneficiary);
     }
 
+    function borrowUsdc(
+
+    ) internal {
+
+    }
+
 }
