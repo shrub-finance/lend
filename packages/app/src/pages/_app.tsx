@@ -22,6 +22,8 @@ const client = new ApolloClient({
 const App: FC<AppProps> = ({ Component, pageProps }) => {
   const router = useRouter();
   useEffect(() => {
+    if (!router.isReady) return; // Ensure the router is ready before initializing GA
+
     ReactGA.initialize("G-CP99H9D71X");
 
     const handleRouteChange = (url: string) => {
@@ -33,7 +35,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
     return () => {
       router.events.off("routeChangeComplete", handleRouteChange);
     };
-  }, [router.events]);
+  }, [router.isReady, router.events]); // Adding router.isReady to the dependency array
 
   return (
     <>
