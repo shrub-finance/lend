@@ -1,25 +1,40 @@
 import { AppProps } from "next/app";
 import Head from "next/head";
-import { FC } from "react";
-import ReactGA from 'react-ga4';
+import { FC, useEffect } from "react";
+import ReactGA from "react-ga4";
 import { AppBar } from "../components/AppBar";
 import { MobileMenu } from "../components/MobileMenu";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
-import { FinancialDataProvider } from '../components/FinancialDataContext';
-import {getChainInfo} from "../utils/chains";
+import { FinancialDataProvider } from "../components/FinancialDataContext";
+import { getChainInfo } from "../utils/chains";
+import { useRouter } from "next/router";
 
 require("../styles/globals.css");
 
-const {subgraphUrl, thirdwebActiveChain} = getChainInfo();
+const { subgraphUrl, thirdwebActiveChain } = getChainInfo();
 
 const client = new ApolloClient({
   uri: subgraphUrl,
   cache: new InMemoryCache(),
   connectToDevTools: process.env.NEXT_PUBLIC_ENVIRONMENT === "development",
 });
-ReactGA.initialize('G-CP99H9D71X');
 const App: FC<AppProps> = ({ Component, pageProps }) => {
+  const router = useRouter();
+  useEffect(() => {
+    ReactGA.initialize("G-CP99H9D71X");
+
+    const handleRouteChange = (url: string) => {
+      ReactGA.send({ hitType: "pageview", page: url });
+    };
+
+    router.events.on("routeChangeComplete", handleRouteChange);
+
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, [router.events]);
+
   return (
     <>
       <Head>
@@ -30,7 +45,8 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
         dAppMeta={{
           name: "Shrub Lend",
           description: "Simplified DeFi Lending and Borrowing",
-          logoUrl: "https://shrub.finance/static/media/logo-default.c2ca9b15.svg",
+          logoUrl:
+            "https://shrub.finance/static/media/logo-default.c2ca9b15.svg",
           url: "https://shrub.finance",
           isDarkMode: false,
         }}
