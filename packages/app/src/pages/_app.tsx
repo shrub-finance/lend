@@ -24,7 +24,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
   useEffect(() => {
     if (!router.isReady) return; // Ensure the router is ready before initializing GA
 
-    ReactGA.initialize("G-CP99H9D71X");
+    ReactGA.initialize("G-09PWY9YS4R");
 
     const handleRouteChange = (url: string) => {
       ReactGA.send({ hitType: "pageview", page: url });
