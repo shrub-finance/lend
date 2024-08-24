@@ -13,8 +13,6 @@
     "preinstall": "node -e 'if (!process.versions.node.startsWith(\"20\")) { console.log(\"You must use Node.js version 20.x\"); process.exit(1); }'",
     "app": "yarn workspace @shrub-lend/app dev",
     "build:app": "yarn workspace @shrub-lend/app build",
-    "website": "yarn workspace @shrub-lend/website dev",
-    "build:website": "yarn workspace @shrub-lend/website build",
     "hardhat": "yarn workspace @shrub-lend/hardhat hardhat",
     "test": "yarn workspace @shrub-lend/hardhat test",
     "compile": "yarn workspace @shrub-lend/hardhat compile",
