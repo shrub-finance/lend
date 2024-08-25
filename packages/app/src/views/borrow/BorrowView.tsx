@@ -247,20 +247,22 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                     value={format(borrowAmount)}
                   />
                   <ErrorDisplay errors={borrowErrors} />
-                  <label className="label">
-                    <span className="label-text-alt text-shrub-grey-200 text-sm font-light w-[72%] lg:w-auto">
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="label-text-alt text-shrub-grey-200 text-sm font-light">
                       Wallet balance:{" "}
                       {!ethBalanceIsLoading && (
-                        <span>{ethBalance.displayValue || 0} ETH</span>
+                        <span>
+                          <span>{ethBalance.displayValue || 0} ETH</span>
+                        </span>
                       )}
                     </span>
                     <button
-                      className="label-text-alt btn-sm text-shrub-green bg-green-50 p-2 rounded-md cursor-pointer text-xs"
+                      className="label-text-alt btn-sm text-shrub-green bg-green-50 px-2 py-1 ml-2 rounded-md cursor-pointer text-xs whitespace-nowrap"
                       onClick={fillMax}
                     >
                       ENTER MAX
                     </button>
-                  </label>
+                  </div>
                 </div>
 
                 {/*interest rate control*/}

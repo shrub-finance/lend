@@ -687,12 +687,12 @@ export const DashboardView: FC = ({}) => {
                                 >
                                   Amount Paid Back
                                 </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
-                                  Time until due date (days)
-                                </th>
+                                {/*<th*/}
+                                {/*  scope="col"*/}
+                                {/*  className="px-6 py-3 text-shrub-grey font-medium"*/}
+                                {/*>*/}
+                                {/*  Time until due date (days)*/}
+                                {/*</th>*/}
                                 <th
                                   scope="col"
                                   className="px-6 py-3 text-shrub-grey font-medium"
@@ -705,12 +705,12 @@ export const DashboardView: FC = ({}) => {
                                 >
                                   Amount Borrowed
                                 </th>
-                                <th
-                                  scope="col"
-                                  className="px-6 py-3 text-shrub-grey font-medium"
-                                >
-                                  Due Date
-                                </th>
+                                {/*<th*/}
+                                {/*  scope="col"*/}
+                                {/*  className="px-6 py-3 text-shrub-grey font-medium"*/}
+                                {/*>*/}
+                                {/*  Due Date*/}
+                                {/*</th>*/}
                               </tr>
                             </thead>
                             <tbody className="text-lg">
@@ -859,9 +859,9 @@ export const DashboardView: FC = ({}) => {
                                       <td className="px-6 py-4 text-sm font-bold">
                                         {formatLargeUsdc(borrow.paid)}
                                       </td>
-                                      <td className="px-6 py-4 text-sm font-bold">
-                                        {timeLeft}
-                                      </td>
+                                      {/*<td className="px-6 py-4 text-sm font-bold">*/}
+                                      {/*  {timeLeft}*/}
+                                      {/*</td>*/}
                                       <td>
                                         <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full  ">{`${formatPercentage(
                                           borrow.apy,
@@ -873,9 +873,9 @@ export const DashboardView: FC = ({}) => {
                                         )}{" "}
                                         USDC
                                       </td>
-                                      <td className="px-6 py-4 text-sm font-bold">
-                                        {borrow.endDate.toLocaleString()}
-                                      </td>
+                                      {/*<td className="px-6 py-4 text-sm font-bold">*/}
+                                      {/*  {borrow.endDate.toLocaleString()}*/}
+                                      {/*</td>*/}
                                       <td className="px-1 py-4 text-sm font-bold">
                                         <div className="flex items-center justify-center space-x-2 h-full p-2">
                                           <Tooltip
