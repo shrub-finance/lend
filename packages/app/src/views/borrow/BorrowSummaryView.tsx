@@ -148,14 +148,12 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       />
                     </div>
                     <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">
-                      You are borrowing {amount} USDC and
-                      providing{" "}
-                        {ethers.utils.formatEther(requiredCollateral)} ETH
-                      {" "}
-                      as collateral. The collateral will be locked until the
-                      borrow is fully paid. The interest rate of{" "}
-                      {interestRate}% is guaranteed for 1 year
-                      and then may adjust to the rate at that time.
+                      You are borrowing {amount} USDC and providing{" "}
+                      {ethers.utils.formatEther(requiredCollateral)} ETH as
+                      collateral. The collateral will be locked until the borrow
+                      is fully paid. The interest rate of {interestRate}% is
+                      guaranteed for 1 year and then may adjust to the rate at
+                      that time.
                     </p>
                   </>
                 )}
@@ -285,25 +283,38 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         </span>
                       </div>
                       <div className="flex flex-row  justify-between">
-                        <span className="">Interest Rate Renew</span>
+                        <span className="">Interest Rate Renews</span>
                         <span className="font-semibold text-shrub-green-500">
                           {" "}
-                          {(new Date((new Date()).setUTCFullYear((new Date()).getUTCFullYear()+1))).toDateString()}
+                          {/*{new Date(*/}
+                          {/*  new Date().setUTCFullYear(*/}
+                          {/*    new Date().getUTCFullYear() + 1,*/}
+                          {/*  ),*/}
+                          {/*).toDateString()}*/}
+                          {new Date(
+                            new Date().setUTCFullYear(
+                              new Date().getUTCFullYear() + 1,
+                            ),
+                          ).toLocaleDateString("en-US", {
+                            month: "short",
+                            // day: "numeric",
+                            year: "numeric",
+                          })}
                         </span>
                       </div>
-                      <div className="flex flex-row  justify-between">
-                        <span className="">Wallet</span>
-                        <span>
-                          {truncateEthAddress(walletAddress)}
-                          <Image
-                            alt="copy icon"
-                            src="/copy.svg"
-                            className="w-6 hidden md:inline align-baseline ml-2"
-                            width="24"
-                            height="24"
-                          />
-                        </span>
-                      </div>
+                      {/*<div className="flex flex-row  justify-between">*/}
+                      {/*  <span className="">Wallet</span>*/}
+                      {/*  <span>*/}
+                      {/*    {truncateEthAddress(walletAddress)}*/}
+                      {/*    <Image*/}
+                      {/*      alt="copy icon"*/}
+                      {/*      src="/copy.svg"*/}
+                      {/*      className="w-6 hidden md:inline align-baseline ml-2"*/}
+                      {/*      width="24"*/}
+                      {/*      height="24"*/}
+                      {/*    />*/}
+                      {/*  </span>*/}
+                      {/*</div>*/}
                       <div className="flex flex-row  justify-between">
                         <span className="">Contract Address</span>
                         <span>
@@ -325,14 +336,14 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 {/*total section*/}
                 {!borrowActionInitiated && !borrowButtonPressed && (
                   <>
-                    <div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">
-                      <div className="flex flex-row justify-between ">
-                        <span className="">Due today</span>
-                        <span>
-                          {ethers.utils.formatEther(requiredCollateral)} ETH
-                        </span>
-                      </div>
-                    </div>
+                    {/*<div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">*/}
+                    {/*  <div className="flex flex-row justify-between ">*/}
+                    {/*    <span className="">Due today</span>*/}
+                    {/*    <span>*/}
+                    {/*      {ethers.utils.formatEther(requiredCollateral)} ETH*/}
+                    {/*    </span>*/}
+                    {/*  </div>*/}
+                    {/*</div>*/}
                     {/*borrow button*/}
                     <Web3Button
                       contractAddress={lendingPlatformAddress}

@@ -323,7 +323,8 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                     </div>
                     <div className="card w-full bg-teal-50 border border-shrub-green p-10">
                       {Number(borrowAmount) ? (
-                        <span className="sm: text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">
+                        // <span className="text-4xl text-shrub-green-500 font-bold text-center">
+                        <span className="text-2xl sm:text-4xl text-shrub-green-500 font-bold text-center">
                           {ethers.utils.formatEther(requiredCollateral)} ETH
                         </span>
                       ) : (
