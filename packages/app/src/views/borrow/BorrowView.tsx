@@ -247,13 +247,12 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                     value={format(borrowAmount)}
                   />
                   <ErrorDisplay errors={borrowErrors} />
-                  <div className="flex items-center justify-between mt-2">
+                  {/*hidden for now*/}
+                  <div className="flex items-center justify-between invisible mt-0 sm:mt-2">
                     <span className="label-text-alt text-shrub-grey-200 text-sm font-light">
                       Wallet balance:{" "}
                       {!ethBalanceIsLoading && (
-                        <span>
-                          <span>{ethBalance.displayValue || 0} ETH</span>
-                        </span>
+                        <span>{ethBalance.displayValue || 0} ETH</span>
                       )}
                     </span>
                     <button
