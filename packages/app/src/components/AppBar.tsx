@@ -37,7 +37,7 @@ export const AppBar: React.FC = () => {
           </div>
         </div>
         <div className="navbar-start">
-          <div className="hidden md:inline-flex align-items-center justify-items gap-4">
+          <div className="hidden md:inline-flex align-items-center justify-items">
             <NavElement
               label="Dashboard"
               href="/dashboard"
@@ -55,11 +55,7 @@ export const AppBar: React.FC = () => {
           <div className="md:inline-flex align-items-center justify-items gap-6">
             <ConnectWallet
               btnTitle="Connect Wallet"
-              className=" !border !border-shrub-green !bg-shrub-green-900 !rounded-3xl !text-white !text-[16px] lg:!p-[12px]"
-              style={{
-                border: "1px #16735B solid !important",
-                padding: "10px",
-              }}
+              className=" !bg-shrub-green-500 !rounded-3xl !text-white !text-[14px] lg:!py-[10px] lg:!px-[16px] !font-semibold !leading-[20px]"
             />
           </div>
         </div>

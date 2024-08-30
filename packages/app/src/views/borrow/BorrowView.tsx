@@ -205,10 +205,12 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
             </div>
           )}
           {/*heading*/}
-          <h1 className=" text-5xl font-bold ">Borrow</h1>
-          <p className="text-lg font-light pt-2">
+          <h1 className="text-[36px] font-bold leading-[44px] tracking-tightest">
+            Borrow
+          </h1>
+          <p className="text-[16px] font-normal leading-[24px] text-left">
             Borrow USDC on Shrub with fixed-rates as low as
-            <span className="font-semibold"> 0%</span>
+            <span className="font-bold"> 0 - 8% APR</span>
           </p>
         </div>
 
@@ -220,26 +222,26 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                 {/*amount control*/}
                 <div className="form-control w-full">
                   <label className="label relative">
-                    <span className="label-text text-shrub-blue text-md">
-                      Amount
+                    <span className="text-[16px] font-semibold leading-[24px] text-left">
+                      Enter borrow amount
                     </span>
-                    <span className="label-text-alt  text-xl font-semibold absolute right-4 top-[57px]">
-                      <Image
-                        alt="usdc logo"
-                        src="/usdc-logo.svg"
-                        className="w-[22px] mr-1 inline align-sub"
-                        width="40"
-                        height="40"
-                      />
-                      USDC
-                    </span>
+                    {/*<span className="label-text-alt  text-xl font-semibold absolute right-4 top-[57px]">*/}
+                    {/*  <Image*/}
+                    {/*    alt="usdc logo"*/}
+                    {/*    src="/usdc-logo.svg"*/}
+                    {/*    className="w-[22px] mr-1 inline align-sub"*/}
+                    {/*    width="40"*/}
+                    {/*    height="40"*/}
+                    {/*  />*/}
+                    {/*  USDC*/}
+                    {/*</span>*/}
                   </label>
                   <input
                     type="text"
-                    placeholder="Enter amount"
+                    placeholder="$0"
                     name="amount"
                     id="amount"
-                    className="input input-bordered w-full h-[70px] bg-white border-solid border border-shrub-grey-50 text-lg focus:outline-none focus:shadow-shrub-thin focus:border-shrub-green-50"
+                    className="input w-full h-[70px] bg-white border-none text-[78px] focus:outline-none caret-shrub"
                     onChange={(e) => {
                       handleAmountChange(e);
                       setShowBorrowAPYSection(true);
@@ -247,8 +249,8 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                     value={format(borrowAmount)}
                   />
                   <ErrorDisplay errors={borrowErrors} />
-                  {/*hidden for now*/}
-                  <div className="flex items-center justify-between invisible mt-0 sm:mt-2">
+                  {/*enter max section is hidden for now*/}
+                  <div className="flex items-center justify-between mt-0 sm:mt-2">
                     <span className="label-text-alt text-shrub-grey-200 text-sm font-light">
                       Wallet balance:{" "}
                       {!ethBalanceIsLoading && (
@@ -256,7 +258,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                       )}
                     </span>
                     <button
-                      className="label-text-alt btn-sm text-shrub-green bg-green-50 px-2 py-1 ml-2 rounded-md cursor-pointer text-xs whitespace-nowrap"
+                      className="label-text-alt w-[66px] h-[40px] px-4 py-2 gap-2 rounded-tl-[30px] rounded-tr-none rounded-br-none rounded-bl-none opacity-0 bg-shrub-grey-light2 cursor-pointer"
                       onClick={fillMax}
                     >
                       ENTER MAX
