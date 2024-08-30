@@ -2,14 +2,24 @@ import React, { useState } from "react";
 import NavElement from "./nav-element";
 import { ConnectWallet } from "@thirdweb-dev/react";
 import Image from "next/image";
+import ReactGA from "react-ga4";
 
 export const AppBar: React.FC = () => {
   const [isNavOpen, setIsNavOpen] = useState(false);
+
+  const handleNavClick = (label) => {
+    ReactGA.event({
+      category: "Navigation",
+      action: `Click_${label}`,
+      label: `NavElement_${label}`,
+    });
+    setIsNavOpen(false);
+  };
+
   return (
     <div>
-      {/* NavBar / Header */}
-      <div className="navbar flex h-20 flex-row md:mb-2  bg-black text-neutral-content drop-shadow-md">
-        <div className="">
+      <div className="navbar flex h-20 flex-row md:mb-2 bg-black text-neutral-content drop-shadow-md">
+        <div>
           <div className="sm:inline w-22 h-22 md:max-w-22">
             <NavElement
               chiplabel="isLogo"
@@ -22,27 +32,21 @@ export const AppBar: React.FC = () => {
                 />
               }
               href={"/"}
-              navigationStarts={() => setIsNavOpen(false)}
+              navigationStarts={() => handleNavClick("Logo")}
             />
           </div>
         </div>
         <div className="navbar-start">
           <div className="hidden md:inline-flex align-items-center justify-items gap-4">
-            {/*<NavElement*/}
-            {/*  label="Dashboard"*/}
-            {/*  href="/dashboard"*/}
-            {/*  navigationStarts={() => setIsNavOpen(false)}*/}
-            {/*/>*/}
-            {/*<NavElement*/}
-            {/*  label="Deposit"*/}
-            {/*  href="/deposit"*/}
-            {/*  navigationStarts={() => setIsNavOpen(false)}*/}
-            {/*/>*/}
-
+            <NavElement
+              label="Dashboard"
+              href="/dashboard"
+              navigationStarts={() => handleNavClick("Dashboard")}
+            />
             <NavElement
               label="Borrow"
               href="/borrow"
-              navigationStarts={() => setIsNavOpen(false)}
+              navigationStarts={() => handleNavClick("Borrow")}
             />
           </div>
         </div>
