@@ -2,17 +2,19 @@ import React, { useState } from "react";
 import NavElement from "./nav-element";
 import { ConnectWallet } from "@thirdweb-dev/react";
 import Image from "next/image";
-import ReactGA from "react-ga4";
+import {ga4events} from "../utils/ga4events";
 
 export const AppBar: React.FC = () => {
   const [isNavOpen, setIsNavOpen] = useState(false);
 
   const handleNavClick = (label) => {
-    ReactGA.event({
-      category: "Navigation",
-      action: `Click_${label}`,
-      label: `NavElement_${label}`,
-    });
+    if (label === 'Dashboard') {
+      ga4events.topNavDashboard();
+    } else if (label === 'Borrow') {
+      ga4events.topNavBorrow();
+    } else if (label === 'Logo') {
+      ga4events.topNavLogo();
+    }
     setIsNavOpen(false);
   };
 
