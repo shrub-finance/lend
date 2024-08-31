@@ -165,7 +165,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       {/*spinner*/}
                       <div
                         role="status"
-                        className="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin"
+                        className="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green-900 to-shrub-green-50 animate-spin"
                       >
                         <div className="w-[205px] h-[205px] rounded-full bg-white"></div>
                       </div>
@@ -349,7 +349,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       contractAddress={lendingPlatformAddress}
                       isDisabled={latestBorrow?.status === "pending"}
                       contractAbi={lendingPlatformAbi}
-                      className="!btn !btn-block !bg-shrub-green !border-0 !normal-case !text-xl !text-white hover:!bg-shrub-green-500 !mb-4 web3button"
+                      className="!h-[59px] !rounded-full !bg-shrub-green-900 !border-0 !normal-case !text-xl !text-white hover:!bg-shrub-green-500 !mb-4 web3button"
                       action={async (lendingPlatform) => {
                         setLocalError("");
                         // @ts-ignore
@@ -437,14 +437,14 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   <TransactionButton
                     txHash={txHash}
                     chainId={chainId}
-                    className="btn-block bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green hover:border-shrub-green hover:text-white"
+                    className="h-[59px] rounded-full bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green-900 hover:border-shrub-green hover:text-white"
                   />
                 )}
                 {/*confirm in wallet button*/}
                 {borrowButtonPressed && !borrowActionInitiated && (
                   <button
                     disabled={true}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
+                    className="h-[59px] rounded-full bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
                   >
                     Confirm in Wallet...
                   </button>
@@ -454,7 +454,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   latestBorrow?.status === "confirmed") && (
                   <button
                     onClick={handleViewDash}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
+                    className="h-[59px] rounded-full bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
                   >
                     View in Dashboard
                   </button>
@@ -463,7 +463,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 {!borrowActionInitiated && !borrowButtonPressed && (
                   <button
                     onClick={onCancel}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
+                    className="h-[59px] rounded-full bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
                   >
                     Cancel
                   </button>

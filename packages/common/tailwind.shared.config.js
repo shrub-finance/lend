@@ -36,17 +36,6 @@ const sharedConfig = {
       },
     },
   },
-  plugins: [
-    function ({ addUtilities }) {
-      const newUtilities = {
-        ".caret-shrub": {
-          "caret-color": "#219f80", // Customize this to your desired green shade
-        },
-      };
-
-      addUtilities(newUtilities);
-    },
-  ],
 };
 
 export default sharedConfig;
