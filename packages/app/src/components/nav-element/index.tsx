@@ -31,10 +31,10 @@ const NavElement = ({
     if (divRef.current) {
       if (chiplabel !== "isLogo") {
         divRef.current.className = cn(
-          "transition-all duration-300 ease-out ",
+          "transition-all duration-300 ease-out",
           isActive
             ? "bg-shrub-grey-900 text-shrub-green rounded-btn font-semibold px-[12px] py-[8px]"
-            : "group-hover:bg-shrub-grey-900 hover:text-shrub-green rounded-btn px-[12px] py-[8px]",
+            : "group-hover:bg-shrub-grey-900 hover:text-shrub-green-400 rounded-btn px-[12px] py-[8px]",
         );
       }
     }
@@ -57,12 +57,12 @@ const NavElement = ({
       {/*logo*/}
       <div className="flex flex-row items-center gap-3" ref={divRef}>
         {chiplabel !== "isLogo" ? (
-          <Text className="text-lg font-medium btn-sm px-5 py-1">
+          <Text className="px-5 py-1 text-[16px] font-semibold leading-[24px] text-left">
             {" "}
             {label}{" "}
           </Text>
         ) : (
-          <div className="lg:mr-12 lg:pl-10 mr-0 ml-4">{label}</div>
+          <div className="lg:mr-12 lg:pl-2 mr-0 ml-4">{label}</div>
         )}
       </div>
     </Link>

@@ -209,7 +209,7 @@ export const DashboardView: FC = ({}) => {
                 <div className="flex-col gap-2">
                   <div className="flex flex-row text-lg ">
                     <span className="w-[500px]">
-                      <h1 className=" text-[36px] font-semibold self-start leading-9">
+                      <h1 className="text-[36px] font-semibold self-start leading-9">
                         Dashboard
                       </h1>
                     </span>
@@ -218,7 +218,7 @@ export const DashboardView: FC = ({}) => {
                       <Link href="/borrow" passHref>
                         <button
                           type="button"
-                          className="text-white mr-2 bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none hover:bg-shrub-grey-100 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5  mb-2"
+                          className="ml-4 text-white mr-2 bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-300 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2"
                         >
                           Borrow
                         </button>
@@ -283,11 +283,11 @@ export const DashboardView: FC = ({}) => {
                     />
                   </Modal>
                   <div className="card w-full py-4">
-                    <span className="text-left">
-                      <h3 className="font-normal  pb-5 text-shrub-grey">
-                        {" "}
-                        Welcome back!
-                      </h3>
+                    <span className="text-left font-normal text-xs text-shrub-grey">
+                      {/*<h3 className="font-normal  pb-5 text-shrub-grey">*/}
+                      {/*  {" "}*/}
+                      {/*  Welcome back!*/}
+                      {/*</h3>*/}
                       ETH Price: {ethers.utils.formatUnits(ethPrice, 8)} USDC
                     </span>
                     {/*<span>{fromEthDate(blockchainTime).toLocaleString()}</span>*/}
