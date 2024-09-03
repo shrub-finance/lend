@@ -107,14 +107,14 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
       return;
     }
 
-    if (
-      requiredCollateral &&
-      ethBalance?.value &&
-      requiredCollateral.gt(ethBalance.value)
-    ) {
-      setBorrowError("borrow", "ETH wallet balance insufficient.");
-      return;
-    }
+    // if (
+    //   requiredCollateral &&
+    //   ethBalance?.value &&
+    //   requiredCollateral.gt(ethBalance.value)
+    // ) {
+    //   setBorrowError("borrow", "ETH wallet balance insufficient.");
+    //   return;
+    // }
 
     const isValidInput = /^([0-9]+(\.[0-9]{1,6})?|\.[0-9]{1,6})$/.test(
       rawValue,
