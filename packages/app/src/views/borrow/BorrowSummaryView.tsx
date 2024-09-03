@@ -147,7 +147,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         height="40"
                       />
                     </div>
-                    <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">
+                    <p className="text-shrub-grey-700 text-md text-left font-light pt-8 max-w-[550px]">
                       You are borrowing {amount} USDC and providing{" "}
                       {ethers.utils.formatEther(requiredCollateral)} ETH as
                       collateral. The collateral will be locked until the borrow
@@ -184,7 +184,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         fill="none"
                         viewBox="0 0 24 24"
                         strokeWidth={1}
-                        stroke="#38f6c9"
+                        stroke="#0A4736"
                         className="w-[300px] h-[300px]"
                       >
                         <path
