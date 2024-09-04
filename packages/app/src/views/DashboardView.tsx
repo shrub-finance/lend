@@ -877,62 +877,60 @@ export const DashboardView: FC = ({}) => {
                                       {/*  {borrow.endDate.toLocaleString()}*/}
                                       {/*</td>*/}
                                       <td className="px-1 py-4 text-sm font-bold">
-                                        <div className="flex items-center justify-center space-x-2 h-full p-2">
-                                          <Tooltip
-                                            text="This borrow is already for the longest time period."
-                                            conditionalText="Extend feature in unavailable right at the moment."
-                                            condition={!!storeBorrow.status}
-                                            showOnDisabled
+                                        {/*<div className="flex items-center justify-center space-x-2 h-full p-2">*/}
+                                        {/*<Tooltip*/}
+                                        {/*  text="This borrow is already for the longest time period."*/}
+                                        {/*  conditionalText="Extend feature in unavailable right at the moment."*/}
+                                        {/*  condition={!!storeBorrow.status}*/}
+                                        {/*  showOnDisabled*/}
+                                        {/*>*/}
+                                        {/*  <button*/}
+                                        {/*    type="button"*/}
+                                        {/*    className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"*/}
+                                        {/*    disabled={*/}
+                                        {/*      (store.platformData*/}
+                                        {/*        .activePoolTimestamps*/}
+                                        {/*        .length &&*/}
+                                        {/*        store.platformData.activePoolTimestamps[*/}
+                                        {/*          store.platformData*/}
+                                        {/*            .activePoolTimestamps*/}
+                                        {/*            .length - 1*/}
+                                        {/*        ]?.getTime() ===*/}
+                                        {/*          borrow?.endDate?.getTime()) ||*/}
+                                        {/*      !!storeBorrow.tempData ||*/}
+                                        {/*      !!storeBorrow.status*/}
+                                        {/*    }*/}
+                                        {/*    onClick={() => {*/}
+                                        {/*      setExtendBorrowModalOpen(true);*/}
+                                        {/*      setSelectedBorrow(borrow);*/}
+                                        {/*    }}*/}
+                                        {/*  >*/}
+                                        {/*    /!*Corresponding modal at the top*!/*/}
+                                        {/*    Extend*/}
+                                        {/*  </button>*/}
+                                        {/*</Tooltip>*/}
+                                        <Tooltip
+                                          text=""
+                                          conditionalText="Repay not available at the moment."
+                                          condition={!!storeBorrow.status}
+                                          showOnDisabled
+                                        >
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setRepayModalOpen(true);
+                                              setSelectedBorrowForRepay(borrow);
+                                            }}
+                                            className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"
+                                            disabled={
+                                              !!storeBorrow.tempData ||
+                                              !!storeBorrow.status
+                                            }
                                           >
-                                            <button
-                                              type="button"
-                                              className="text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"
-                                              disabled={
-                                                (store.platformData
-                                                  .activePoolTimestamps
-                                                  .length &&
-                                                  store.platformData.activePoolTimestamps[
-                                                    store.platformData
-                                                      .activePoolTimestamps
-                                                      .length - 1
-                                                  ]?.getTime() ===
-                                                    borrow?.endDate?.getTime()) ||
-                                                !!storeBorrow.tempData ||
-                                                !!storeBorrow.status
-                                              }
-                                              onClick={() => {
-                                                setExtendBorrowModalOpen(true);
-                                                setSelectedBorrow(borrow);
-                                              }}
-                                            >
-                                              {/*Corresponding modal at the top*/}
-                                              Extend
-                                            </button>
-                                          </Tooltip>
-                                          <Tooltip
-                                            text=""
-                                            conditionalText="Repay not available at the moment."
-                                            condition={!!storeBorrow.status}
-                                            showOnDisabled
-                                          >
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                setRepayModalOpen(true);
-                                                setSelectedBorrowForRepay(
-                                                  borrow,
-                                                );
-                                              }}
-                                              className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"
-                                              disabled={
-                                                !!storeBorrow.tempData ||
-                                                !!storeBorrow.status
-                                              }
-                                            >
-                                              Repay
-                                            </button>
-                                          </Tooltip>
-                                        </div>
+                                            Repay
+                                          </button>
+                                        </Tooltip>
+                                        {/*</div>*/}
                                       </td>
                                     </tr>
                                   );

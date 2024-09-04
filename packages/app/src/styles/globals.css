@@ -43,4 +43,8 @@ input, textarea {
   }
 }
 
+.tw-connected-wallet__address {
+  color: white !important;
+}
+
 
