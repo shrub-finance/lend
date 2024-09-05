@@ -18,6 +18,7 @@ import { useValidation } from "../../hooks/useValidation";
 import ErrorDisplay from "../../components/ErrorDisplay";
 import { getChainInfo } from "../../utils/chains";
 import Tooltip from "../../components/Tooltip";
+import { ga4events } from "../../utils/ga4events";
 
 interface BorrowViewProps {
   onBorrowViewChange: (interestRate, amount) => void;
@@ -327,6 +328,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                             checked={rate === selectedInterestRate}
                             onChange={() => {
                               setSelectedInterestRate(rate);
+                              ga4events.depositInterest(parseFloat(rate));
                             }}
                             required
                           />
@@ -382,7 +384,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                 {/*cta*/}
                 <Tooltip text="Enter amount to proceed" showOnDisabled>
                   <button
-                    className="w-full h-[59px] px-5 py-3 bg-shrub-green-900 rounded-full text-white font-semibold leading-[24px] disabled:bg-shrub-grey-50
+                    className="w-full h-[59px] px-5 py-3 bg-shrub-green-900 rounded-full text-white font-semibold leading-[24px] hover:!bg-shrub-green-500 disabled:bg-shrub-grey-50
                   disabled:border-shrub-grey-100
                   disabled:text-white
                   disabled:border"
@@ -392,7 +394,10 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                       requiredCollateral.lte(Zero) ||
                       isValidationError
                     }
-                    onClick={handleBorrowContinue}
+                    onClick={() => {
+                      ga4events.depositConfirm();
+                      handleBorrowContinue();
+                    }}
                   >
                     Continue
                   </button>

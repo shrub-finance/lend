@@ -1,19 +1,24 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import {BorrowView} from "../views/borrow/BorrowView";
-import {BorrowDurationView} from "../views/borrow/BorrowDurationView";
-import {BorrowSummaryView} from "../views/borrow/BorrowSummaryView";
-import {useState} from "react";
-import { ethers } from 'ethers';
-import { Zero } from '../constants';
+import { BorrowView } from "../views/borrow/BorrowView";
+import { BorrowDurationView } from "../views/borrow/BorrowDurationView";
+import { BorrowSummaryView } from "../views/borrow/BorrowSummaryView";
+import { useState } from "react";
+import { ethers } from "ethers";
+import { Zero } from "../constants";
+import { ga4events } from "../utils/ga4events";
 
 const Borrow: NextPage = (props) => {
-
-  const [requiredCollateral, setRequiredCollateral] = useState<ethers.BigNumber>(Zero);
+  const [requiredCollateral, setRequiredCollateral] =
+    useState<ethers.BigNumber>(Zero);
   const [timestamp, setTimestamp] = useState(0);
-  const [interestRate, setInterestRate] = useState<string | undefined>(undefined);
+  const [interestRate, setInterestRate] = useState<string | undefined>(
+    undefined,
+  );
   const [amount, setAmount] = useState<string | undefined>(undefined);
-  const [borrowView, setBorrowView] = useState<"borrow" | "duration" | "summary">("borrow");
+  const [borrowView, setBorrowView] = useState<
+    "borrow" | "duration" | "summary"
+  >("borrow");
 
   const handleBorrowViewChange = (interestRate, amount) => {
     setInterestRate(interestRate);
@@ -34,28 +39,46 @@ const Borrow: NextPage = (props) => {
     //   setBorrowView("borrow");
     // }
     if (borrowView === "summary") {
+      ga4events.summaryBack();
       setBorrowView("borrow");
     }
   };
 
   const handleCancel = () => {
     setBorrowView("borrow");
-    
   };
 
   return (
     <>
       <Head>
         <title>Shrub Lend - Borrow</title>
-        <meta
-          name="description"
-          content="Shrub Lend"
-        />
+        <meta name="description" content="Shrub Lend" />
       </Head>
       <div>
-        {borrowView === "borrow" && <BorrowView onBorrowViewChange={handleBorrowViewChange} requiredCollateral={requiredCollateral} setRequiredCollateral={setRequiredCollateral}/>}
-        {borrowView === "duration" && <BorrowDurationView requiredCollateral={requiredCollateral} onDurationChange={handleTimestampChange} onBackDuration={handleBorrowScreensBackButtons}/>}
-        {borrowView === "summary" && <BorrowSummaryView timestamp={timestamp} requiredCollateral={requiredCollateral} interestRate={interestRate} amount={amount} backtoBorrowDuration={handleBorrowScreensBackButtons} onCancel={handleCancel} />}
+        {borrowView === "borrow" && (
+          <BorrowView
+            onBorrowViewChange={handleBorrowViewChange}
+            requiredCollateral={requiredCollateral}
+            setRequiredCollateral={setRequiredCollateral}
+          />
+        )}
+        {borrowView === "duration" && (
+          <BorrowDurationView
+            requiredCollateral={requiredCollateral}
+            onDurationChange={handleTimestampChange}
+            onBackDuration={handleBorrowScreensBackButtons}
+          />
+        )}
+        {borrowView === "summary" && (
+          <BorrowSummaryView
+            timestamp={timestamp}
+            requiredCollateral={requiredCollateral}
+            interestRate={interestRate}
+            amount={amount}
+            backtoBorrowDuration={handleBorrowScreensBackButtons}
+            onCancel={handleCancel}
+          />
+        )}
       </div>
     </>
   );

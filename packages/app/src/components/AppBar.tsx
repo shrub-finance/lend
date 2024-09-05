@@ -2,22 +2,25 @@ import React, { useState } from "react";
 import NavElement from "./nav-element";
 import { ConnectWallet } from "@thirdweb-dev/react";
 import Image from "next/image";
-import {ga4events} from "../utils/ga4events";
+import { ga4events } from "../utils/ga4events";
 
 export const AppBar: React.FC = () => {
   const [isNavOpen, setIsNavOpen] = useState(false);
 
   const handleNavClick = (label) => {
-    if (label === 'Dashboard') {
+    if (label === "Dashboard") {
       ga4events.topNavDashboard();
-    } else if (label === 'Borrow') {
+    } else if (label === "Borrow") {
       ga4events.topNavBorrow();
-    } else if (label === 'Logo') {
+    } else if (label === "Logo") {
       ga4events.topNavLogo();
     }
     setIsNavOpen(false);
   };
 
+  const handleWalletConnectClick = () => {
+    ga4events.topNavConnectWallet();
+  };
   return (
     <div>
       <div className="navbar flex h-20 flex-row md:mb-2 bg-black text-neutral-content drop-shadow-md">
@@ -55,10 +58,25 @@ export const AppBar: React.FC = () => {
 
         <div className="navbar-end">
           <div className="md:inline-flex align-items-center justify-items gap-6">
-            <ConnectWallet
-              btnTitle="Connect Wallet"
-              className=" !bg-shrub-green-500 !rounded-3xl !text-white !text-[14px] lg:!py-[10px] lg:!px-[16px] !font-semibold !leading-[20px]"
-            />
+            <div
+              onClick={handleWalletConnectClick}
+              style={{ cursor: "pointer" }}
+            >
+              <ConnectWallet
+                btnTitle="Connect Wallet"
+                className="!bg-shrub-green-500 !rounded-3xl !text-white !text-[14px] lg:!py-[10px] lg:!px-[16px] !font-semibold !leading-[20px]"
+                auth={{
+                  loginOptional: true,
+                  onLogin: () => {
+                    ga4events.walletLogin();
+                    ga4events.walletConnected(); //fired after login
+                  },
+                  onLogout: () => {
+                    ga4events.walletLogout();
+                  },
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
