@@ -45,6 +45,11 @@ input, textarea {
 
 .tw-connected-wallet__address {
   color: white !important;
+  line-height: 1.2 !important;
+}
+
+.tw-connected-wallet__balance {
+  line-height: 1.2 !important;
 }
 
 

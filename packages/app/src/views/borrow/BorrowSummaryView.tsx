@@ -17,6 +17,8 @@ import Image from "next/image";
 import { Borrow } from "../../types/types";
 import { getChainInfo } from "../../utils/chains";
 import TransactionButton from "../../components/TxButton";
+import { ga4events } from "../../utils/ga4events";
+import Confetti from "react-confetti";
 
 interface BorrowSummaryViewProps {
   requiredCollateral: ethers.BigNumber;
@@ -42,10 +44,9 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const handleViewDash = async () => {
     await router.push("/dashboard");
   };
-
   const { store, dispatch } = useFinancialData();
-
   const [borrowActionInitiated, setBorrowActionInitiated] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [borrowButtonPressed, setBorrowButtonPressed] = useState(false);
   const [latestBorrowId, setLatestBorrowId] = useState<string>();
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -71,6 +72,14 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const { lendingPlatformAddress } = getContractAddresses(chainId);
   const { lendingPlatformAbi } = getContractAbis(chainId);
 
+  const handleCopyClick = () => {
+    setCopied(false);
+    ga4events.summaryContractAddressCopy();
+    navigator.clipboard.writeText(lendingPlatformAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1000);
+  };
+
   return (
     <div className="md:hero mx-auto p-4 max-w-[680px]">
       <div className="md:hero-content flex flex-col">
@@ -79,7 +88,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
           {/*errors*/}
           {localError && (
             <div
-              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50   flex items-center"
+              className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 flex items-center"
               role="alert"
             >
               <svg
@@ -147,7 +156,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         height="40"
                       />
                     </div>
-                    <p className="text-shrub-grey-700 text-md text-left font-light pt-8 max-w-[550px]">
+                    <p className="text-shrub-grey-700 sm:text-lg text-sm text-left font-light pt-8 max-w-[550px]">
                       You are borrowing {amount} USDC and providing{" "}
                       {ethers.utils.formatEther(requiredCollateral)} ETH as
                       collateral. The collateral will be locked until the borrow
@@ -202,7 +211,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     {latestBorrow?.status === "confirmed" && (
                       <>
                         <p className="text-lg font-bold pb-2 text-left">
-                          Borrow Successful!{" "}
+                          Borrow Successful{" "}
                         </p>
                         <p
                           role="status"
@@ -315,20 +324,41 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       {/*    />*/}
                       {/*  </span>*/}
                       {/*</div>*/}
-                      <div className="flex flex-row  justify-between">
+
+                      <div className="flex flex-row justify-between items-center relative">
                         <span className="">Contract Address</span>
-                        <span>
-                          {truncateEthAddress(lendingPlatformAddress)}
-                          <Image
-                            alt="copy icon"
-                            src="/copy.svg"
-                            className="w-6 hidden md:inline align-baseline ml-2"
-                            width="24"
-                            height="24"
-                          />
+
+                        {/* Container for icon and text with relative positioning */}
+                        <span
+                          className="flex items-center relative cursor-pointer"
+                          onClick={handleCopyClick}
+                        >
+                          <span
+                            className={`flex items-center transition-opacity duration-500 ${
+                              copied ? "opacity-0" : "opacity-100"
+                            }`}
+                          >
+                            {truncateEthAddress(lendingPlatformAddress)}
+                            <Image
+                              alt="copy icon"
+                              src="/copy.svg"
+                              className="w-6 md:inline align-baseline ml-2"
+                              width="24"
+                              height="24"
+                            />
+                          </span>
+
+                          <span
+                            className={`absolute font-semibold left-[80px] text-shrub-green-500 transition-opacity duration-500 ${
+                              copied ? "opacity-100" : "opacity-0"
+                            }`}
+                          >
+                            Copied!
+                          </span>
                         </span>
                       </div>
                     </div>
+
                     {/*divider*/}
                     <div className="divider h-0.5 w-full bg-shrub-grey-light3 my-8"></div>
                   </>
@@ -349,8 +379,9 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       contractAddress={lendingPlatformAddress}
                       isDisabled={latestBorrow?.status === "pending"}
                       contractAbi={lendingPlatformAbi}
-                      className="!h-[59px] !rounded-full !bg-shrub-green-900 !border-0 !normal-case !text-xl !text-white hover:!bg-shrub-green-500 !mb-4 web3button"
+                      className="!w-full !h-[59px] px-5 py-3 !rounded-full !bg-shrub-green-900 !border-0  !font-semibold !leading-[24px] !text-white hover:!bg-shrub-green-500 !mb-4 web3button"
                       action={async (lendingPlatform) => {
+                        ga4events.summaryConnectWallet();
                         setLocalError("");
                         // @ts-ignore
                         return await lendingPlatform?.contractWrapper?.writeContract.borrow(
@@ -364,6 +395,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         );
                       }}
                       onSubmit={() => {
+                        ga4events.summaryBorrow();
                         setBorrowButtonPressed(true);
                       }}
                       onSuccess={async (tx) => {
@@ -437,14 +469,14 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   <TransactionButton
                     txHash={txHash}
                     chainId={chainId}
-                    className="h-[59px] rounded-full bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green-900 hover:border-shrub-green hover:text-white"
+                    className="w-full h-[59px] px-5 py-3 bg-white rounded-full font-semibold leading-[24px] border text-shrub-grey-700 border-shrub-grey-50 mb-4 normal-case text-[16px] hover:bg-shrub-green-900 hover:text-white"
                   />
                 )}
                 {/*confirm in wallet button*/}
                 {borrowButtonPressed && !borrowActionInitiated && (
                   <button
                     disabled={true}
-                    className="h-[59px] rounded-full bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
+                    className="w-full h-[59px] px-5 py-3 bg-white rounded-full font-semibold leading-[24px] border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 border-shrub-grey-50"
                   >
                     Confirm in Wallet...
                   </button>
@@ -454,7 +486,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   latestBorrow?.status === "confirmed") && (
                   <button
                     onClick={handleViewDash}
-                    className="h-[59px] rounded-full bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
+                    className="w-full h-[59px] px-5 py-3 font-semibold leading-[24px] rounded-full bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 border-shrub-grey-50"
                   >
                     View in Dashboard
                   </button>
@@ -462,8 +494,11 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 {/*cancel button*/}
                 {!borrowActionInitiated && !borrowButtonPressed && (
                   <button
-                    onClick={onCancel}
-                    className="h-[59px] rounded-full bg-white border text-shrub-grey-700 hover:bg-shrub-grey-100 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
+                    onClick={() => {
+                      ga4events.summaryCancel();
+                      onCancel();
+                    }}
+                    className="w-full h-[59px] px-5 py-3 bg-white rounded-full text-shrub-grey-700 border font-semibold leading-[24px] hover:bg-shrub-grey-100 hover:border-shrub-grey-50 "
                   >
                     Cancel
                   </button>
