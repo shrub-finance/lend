@@ -74,10 +74,18 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
 
   const handleCopyClick = () => {
     setCopied(false);
-    ga4events.summaryContractAddressCopy();
     navigator.clipboard.writeText(lendingPlatformAddress);
     setCopied(true);
+    ga4events.summaryContractAddressCopy();
     setTimeout(() => setCopied(false), 1000);
+  };
+
+  const handleWeb3ButtonClick = () => {
+    // Only record the event if there is no connected wallet
+    if (walletAddress) {
+      return;
+    }
+    ga4events.summaryConnectWallet();
   };
 
   return (
@@ -365,7 +373,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 )}
                 {/*total section*/}
                 {!borrowActionInitiated && !borrowButtonPressed && (
-                  <>
+                  <div onClick={handleWeb3ButtonClick}>
                     {/*<div className="flex flex-col gap-3 mb-6 text-shrub-grey-200 text-lg font-light">*/}
                     {/*  <div className="flex flex-row justify-between ">*/}
                     {/*    <span className="">Due today</span>*/}
@@ -381,7 +389,6 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       contractAbi={lendingPlatformAbi}
                       className="!w-full !h-[59px] px-5 py-3 !rounded-full !bg-shrub-green-900 !border-0  !font-semibold !leading-[24px] !text-white hover:!bg-shrub-green-500 !mb-4 web3button"
                       action={async (lendingPlatform) => {
-                        ga4events.summaryConnectWallet();
                         setLocalError("");
                         // @ts-ignore
                         return await lendingPlatform?.contractWrapper?.writeContract.borrow(
@@ -395,7 +402,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         );
                       }}
                       onSubmit={() => {
-                        ga4events.summaryBorrow();
+                        ga4events.summaryBorrow(amount);
                         setBorrowButtonPressed(true);
                       }}
                       onSuccess={async (tx) => {
@@ -462,7 +469,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                     >
                       Borrow
                     </Web3Button>
-                  </>
+                  </div>
                 )}
                 {/*tx explorer button*/}
                 {txHash && (

@@ -328,7 +328,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                             checked={rate === selectedInterestRate}
                             onChange={() => {
                               setSelectedInterestRate(rate);
-                              ga4events.depositInterest(parseFloat(rate));
+                              ga4events.depositInterest(rate);
                             }}
                             required
                           />

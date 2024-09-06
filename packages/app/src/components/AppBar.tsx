@@ -65,16 +65,6 @@ export const AppBar: React.FC = () => {
               <ConnectWallet
                 btnTitle="Connect Wallet"
                 className="!bg-shrub-green-500 !rounded-3xl !text-white !text-[14px] lg:!py-[10px] lg:!px-[16px] !font-semibold !leading-[20px]"
-                auth={{
-                  loginOptional: true,
-                  onLogin: () => {
-                    ga4events.walletLogin();
-                    ga4events.walletConnected(); //fired after login
-                  },
-                  onLogout: () => {
-                    ga4events.walletLogout();
-                  },
-                }}
               />
             </div>
           </div>
