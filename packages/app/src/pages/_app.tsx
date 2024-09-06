@@ -44,7 +44,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
         autoConnect={true}
         dAppMeta={{
           name: "Shrub Lend",
-          description: "Simplified DeFi Lending and Borrowing",
+          description: "Fixed-rate DeFi loans with Ethereum collateral",
           logoUrl:
             "https://shrub.finance/static/media/logo-default.c2ca9b15.svg",
           url: "https://shrub.finance",
