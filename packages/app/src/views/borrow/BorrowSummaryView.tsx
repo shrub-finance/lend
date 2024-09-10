@@ -334,37 +334,52 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       {/*</div>*/}
 
                       <div className="flex flex-row justify-between items-center relative">
-                        <span className="">Contract Address</span>
+                        <span>Contract Address</span>
 
-                        {/* Container for icon and text with relative positioning */}
                         <span
                           className="flex items-center relative cursor-pointer"
                           onClick={handleCopyClick}
                         >
-                          <span
-                            className={`flex items-center transition-opacity duration-500 ${
-                              copied ? "opacity-0" : "opacity-100"
-                            }`}
-                          >
-                            {truncateEthAddress(lendingPlatformAddress)}
-                            <Image
-                              alt="copy icon"
-                              src="/copy.svg"
-                              className="w-6 md:inline align-baseline ml-2"
-                              width="24"
-                              height="24"
-                            />
-                          </span>
+    <span
+      className={`flex items-center transition-opacity duration-500 ${
+        copied ? "opacity-0" : "opacity-100"
+      }`}
+    >
+      {truncateEthAddress(lendingPlatformAddress)}
+      <Image
+        alt="copy icon"
+        src="/copy.svg"
+        className="w-6 md:inline hidden align-baseline ml-2" // Hide on mobile, show on md+
+        width="24"
+        height="24"
+      />
+    </span>
 
-                          <span
-                            className={`absolute font-semibold left-[80px] text-shrub-green-500 transition-opacity duration-500 ${
-                              copied ? "opacity-100" : "opacity-0"
-                            }`}
-                          >
-                            Copied!
-                          </span>
-                        </span>
+    <span
+      className={`absolute flex items-center font-semibold sm:left-[61px] left-[31px] text-shrub-green-500 transition-opacity duration-500 ${
+        copied ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-5 w-5 mr-1" // Show checkmark on mobile
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M5 13l4 4L19 7"
+        />
+      </svg>
+      Copied!
+    </span>
+  </span>
                       </div>
+
+
                     </div>
 
                     {/*divider*/}

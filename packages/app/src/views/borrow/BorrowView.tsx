@@ -86,19 +86,33 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
     if (ethBalance?.value?.isZero()) {
       setBorrowError(
         "borrow",
-        "No ETH balance. Please add ETH to your wallet.",
+        "No ETH balance. Please add ETH to your wallet."
       );
       return;
     }
 
     let inputValue = event.target.value.trim();
 
+    // If the input starts with '.', prepend '0' for proper parsing
     if (inputValue.startsWith(".")) {
-      inputValue = "0" + inputValue; // Prepend '0' if input starts with '.'
+      inputValue = "0" + inputValue;
     }
 
     // Remove commas for numeric processing
     const rawValue = inputValue.replace(/,/g, "");
+
+    // Determine screen size and apply appropriate character limit
+    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    const characterLimit = isMobile ? 6 : 9; // 7 for mobile, 9 for larger screens
+
+    // Enforce the maximum length of 7 characters for mobile and 9 for larger screens
+    if (rawValue.length > characterLimit) {
+      setBorrowError(
+        "borrow",
+        `Input must be at most ${characterLimit} characters, including decimal.`
+      );
+      return;
+    }
 
     if (rawValue === "") {
       setBorrowAmount("");
@@ -108,26 +122,16 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
       return;
     }
 
-    // if (
-    //   requiredCollateral &&
-    //   ethBalance?.value &&
-    //   requiredCollateral.gt(ethBalance.value)
-    // ) {
-    //   setBorrowError("borrow", "ETH wallet balance insufficient.");
-    //   return;
-    // }
-
-    const isValidInput = /^([0-9]+(\.[0-9]{1,6})?|\.[0-9]{1,6})$/.test(
-      rawValue,
-    );
+    // Adjusted regex to ensure valid number format and allow up to 6 decimal places
+    const isValidInput = /^([0-9]+(\.[0-9]*)?|\.[0-9]*)$/.test(rawValue);
     const parsedValue = parseFloat(rawValue);
     const isInvalidOrZero =
       !isValidInput || isNaN(parsedValue) || parsedValue === 0;
 
-    if (isInvalidOrZero) {
+    if (isInvalidOrZero && rawValue !== "0.") {
       setBorrowError(
         "borrow",
-        "Must be a valid number, greater than 0, less than 6 decimal places",
+        `Must be a valid number, greater than 0, up to ${characterLimit} characters total.`
       );
     } else {
       clearBorrowError("borrow");
@@ -135,14 +139,21 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
 
     setBorrowAmount(rawValue);
 
-    const formattedValue = parsedValue.toLocaleString("en-US", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 6,
-    });
+    // Handle formatting for display value (leave it as is if there's a trailing decimal)
+    let formattedValue;
+    if (rawValue.endsWith(".")) {
+      formattedValue = rawValue; // Keep the trailing decimal
+    } else {
+      formattedValue = parsedValue.toLocaleString("en-US", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 6,
+      });
+    }
 
     // Set the formatted display value
     setDisplayAmount(formattedValue);
   };
+
 
   useEffect(() => {
     async function determineRequiredCollateral() {
@@ -276,7 +287,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                       name="amount"
                       id="amount"
                       ref={inputRef}
-                      className="input pl-12 pr-16 w-full h-[70px] bg-white border-none font-medium text-[78px] focus:outline-none"
+                      className="input pl-12 sm:pr-16 w-full h-[70px] bg-white border-none font-medium text-[78px] focus:outline-none"
                       onChange={(e) => {
                         handleAmountChange(e);
                         setShowBorrowAPYSection(true);
