@@ -164,13 +164,19 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         height="40"
                       />
                     </div>
-                    <p className="text-shrub-grey-700 sm:text-lg text-sm text-left font-light pt-8 max-w-[550px]">
-                      You are borrowing {amount} USDC and providing{" "}
-                      {ethers.utils.formatEther(requiredCollateral)} ETH as
-                      collateral. The collateral will be locked until the borrow
-                      is fully paid. The interest rate of {interestRate}% is
-                      guaranteed for 1 year and then may adjust to the rate at
-                      that time.
+                    <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">
+                      You are borrowing{" "}
+                      <span className="font-semibold">{amount} USDC</span> and
+                      providing{" "}
+                      <span className="font-semibold">
+                        {ethers.utils.formatEther(requiredCollateral)} ETH
+                      </span>{" "}
+                      as collateral. The collateral will be locked until the
+                      borrow is fully paid. The interest rate of{" "}
+                      <span className="font-semibold">{interestRate}%</span> is
+                      guaranteed for
+                      <span className="font-semibold"> 1 year </span>
+                      and then may adjust to the rate at that time.
                     </p>
                   </>
                 )}
@@ -340,46 +346,44 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                           className="flex items-center relative cursor-pointer"
                           onClick={handleCopyClick}
                         >
-    <span
-      className={`flex items-center transition-opacity duration-500 ${
-        copied ? "opacity-0" : "opacity-100"
-      }`}
-    >
-      {truncateEthAddress(lendingPlatformAddress)}
-      <Image
-        alt="copy icon"
-        src="/copy.svg"
-        className="w-6 md:inline hidden align-baseline ml-2" // Hide on mobile, show on md+
-        width="24"
-        height="24"
-      />
-    </span>
+                          <span
+                            className={`flex items-center transition-opacity duration-500 ${
+                              copied ? "opacity-0" : "opacity-100"
+                            }`}
+                          >
+                            {truncateEthAddress(lendingPlatformAddress)}
+                            <Image
+                              alt="copy icon"
+                              src="/copy.svg"
+                              className="w-6 md:inline hidden align-baseline ml-2" // Hide on mobile, show on md+
+                              width="24"
+                              height="24"
+                            />
+                          </span>
 
-    <span
-      className={`absolute flex items-center font-semibold sm:left-[61px] left-[31px] text-shrub-green-500 transition-opacity duration-500 ${
-        copied ? "opacity-100" : "opacity-0"
-      }`}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5 mr-1" // Show checkmark on mobile
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M5 13l4 4L19 7"
-        />
-      </svg>
-      Copied!
-    </span>
-  </span>
+                          <span
+                            className={`absolute flex items-center font-semibold sm:left-[61px] left-[31px] text-shrub-green-500 transition-opacity duration-500 ${
+                              copied ? "opacity-100" : "opacity-0"
+                            }`}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5 mr-1" // Show checkmark on mobile
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                            Copied!
+                          </span>
+                        </span>
                       </div>
-
-
                     </div>
 
                     {/*divider*/}

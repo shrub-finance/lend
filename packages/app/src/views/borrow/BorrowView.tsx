@@ -118,11 +118,17 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
 
     // Adjusted regex to ensure valid number format and allow decimal places without character limit
     const isValidInput = /^([0-9]+(\.[0-9]*)?|\.[0-9]*)$/.test(rawValue);
-    const parsedValue = parseFloat(rawValue);
-    const isInvalidOrZero =
-      !isValidInput || isNaN(parsedValue) || parsedValue === 0;
 
-    if (isInvalidOrZero && rawValue !== "0.") {
+    // Prevent formatting if the user is typing a valid number with a decimal (e.g., "1.", "1.0", "1.02")
+    const parsedValue = parseFloat(rawValue);
+
+    // Allow "0." and other valid intermediate inputs like "1.0", "1.02", etc.
+    const isInvalidOrZero =
+      !isValidInput ||
+      isNaN(parsedValue) ||
+      (parsedValue === 0 && rawValue !== "0" && rawValue !== "0.");
+
+    if (isInvalidOrZero) {
       setBorrowError("borrow", "Must be a valid number greater than 0.");
     } else {
       clearBorrowError("borrow");
@@ -132,9 +138,15 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
 
     // Handle formatting for display value (leave it as is if there's a trailing decimal)
     let formattedValue;
-    if (rawValue.endsWith(".")) {
-      formattedValue = rawValue; // Keep the trailing decimal (e.g., "1.")
+
+    // Keep the raw input if there's a trailing decimal or if the input includes a decimal but is incomplete
+    if (
+      rawValue.endsWith(".") ||
+      (rawValue.includes(".") && rawValue.match(/\.\d*0+$/))
+    ) {
+      formattedValue = rawValue; // Preserve trailing decimal and zeros
     } else {
+      // Only format for display if the input is fully valid and does not include trailing decimal or zeros
       formattedValue = parsedValue.toLocaleString("en-US", {
         minimumFractionDigits: 0,
         maximumFractionDigits: 6, // Adjust display for up to 6 decimal places
