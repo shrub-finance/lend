@@ -48,6 +48,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
   const [borrowActionInitiated, setBorrowActionInitiated] = useState(false);
   const [copied, setCopied] = useState(false);
   const [borrowButtonPressed, setBorrowButtonPressed] = useState(false);
+  const [confetti, setConfetti] = useState(false);
   const [latestBorrowId, setLatestBorrowId] = useState<string>();
   const [txHash, setTxHash] = useState<string | null>(null);
 
@@ -67,6 +68,19 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
       if (element) element.scrollIntoView({ behavior: "smooth" });
     }
   }, [localError]);
+
+  // Handle confetti timeout
+  useEffect(() => {
+    let confettiTimeout;
+    if (confetti) {
+      confettiTimeout = setTimeout(() => {
+        setConfetti(false); // Stop confetti after 6 seconds
+      }, 5000);
+    }
+
+    // Cleanup timeout when component unmounts or if confetti changes
+    return () => clearTimeout(confettiTimeout);
+  }, [confetti, borrowActionInitiated]);
 
   const { chainId } = getChainInfo();
   const { lendingPlatformAddress } = getContractAddresses(chainId);
@@ -224,8 +238,9 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   <>
                     {latestBorrow?.status === "confirmed" && (
                       <>
+                        {confetti && <Confetti />}
                         <p className="text-lg font-bold pb-2 text-left">
-                          Borrow Successful{" "}
+                          Borrow Successful!
                         </p>
                         <p
                           role="status"
@@ -469,6 +484,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                               status: "confirmed",
                             },
                           });
+                          setConfetti(true);
                         } catch (e) {
                           console.log("Transaction failed:", e);
                           dispatch({
@@ -512,7 +528,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                   latestBorrow?.status === "confirmed") && (
                   <button
                     onClick={handleViewDash}
-                    className="w-full h-[59px] px-5 py-3 font-semibold leading-[24px] rounded-full bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 border-shrub-grey-50"
+                    className="w-full h-[59px] px-5 py-3 font-semibold leading-[24px] rounded-full bg-white border text-shrub-grey-700 hover:bg-shrub-green-900 hover:text-white border-shrub-grey-50"
                   >
                     View in Dashboard
                   </button>
