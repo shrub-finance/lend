@@ -374,10 +374,14 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                 {/*cta*/}
                 <Tooltip text="Enter amount to proceed" showOnDisabled>
                   <button
-                    className="w-full h-[59px] px-5 py-3 bg-shrub-green-900 rounded-full text-white font-semibold leading-[24px] hover:!bg-shrub-green-500 disabled:bg-shrub-grey-50
-                  disabled:border-shrub-grey-100
-                  disabled:text-white
-                  disabled:border"
+                    className="w-full h-[59px] px-5 py-3 bg-shrub-green-500 rounded-full text-white font-semibold leading-[24px]
+                      hover:!bg-shrub-green-700
+                      disabled:bg-shrub-grey-50
+                      disabled:border-shrub-grey-100
+                      disabled:text-white
+                      disabled:border
+                      transition-all duration-[300ms] ease-in-out
+                    "
                     disabled={
                       Number(borrowAmount) <= 0 ||
                       selectedInterestRate === "" ||
