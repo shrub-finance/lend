@@ -19,6 +19,7 @@ import { getChainInfo } from "../../utils/chains";
 import TransactionButton from "../../components/TxButton";
 import { ga4events } from "../../utils/ga4events";
 import Confetti from "react-confetti";
+import { Button } from "components/Button";
 
 interface BorrowSummaryViewProps {
   requiredCollateral: ethers.BigNumber;
@@ -421,7 +422,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       contractAddress={lendingPlatformAddress}
                       isDisabled={latestBorrow?.status === "pending"}
                       contractAbi={lendingPlatformAbi}
-                      className="!w-full !h-[59px] px-5 py-3 !rounded-full !bg-shrub-green-900 !border-0  !font-semibold !leading-[24px] !text-white hover:!bg-shrub-green-500 !mb-4 web3button"
+                      className="!w-full !h-[59px] px-5 py-3 !rounded-full !bg-shrub-green-500 !border-0  !font-semibold !leading-[24px] !text-white hover:!bg-shrub-green-700 !mb-4 web3button !transition-all !duration-[300ms] !ease-in-out"
                       action={async (lendingPlatform) => {
                         setLocalError("");
                         // @ts-ignore
@@ -516,34 +517,33 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 )}
                 {/*confirm in wallet button*/}
                 {borrowButtonPressed && !borrowActionInitiated && (
-                  <button
+                  <Button
+                    text='Confirm in Wallet...'
+                    type='secondary'
                     disabled={true}
-                    className="w-full h-[59px] px-5 py-3 bg-white rounded-full font-semibold leading-[24px] border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 border-shrub-grey-50"
-                  >
-                    Confirm in Wallet...
-                  </button>
+                    onClick={() => {}}
+                    additionalClasses="border-0"
+                  />
                 )}
                 {/*view in dashboard button*/}
                 {(borrowActionInitiated ||
                   latestBorrow?.status === "confirmed") && (
-                  <button
-                    onClick={handleViewDash}
-                    className="w-full h-[59px] px-5 py-3 font-semibold leading-[24px] rounded-full bg-white border text-shrub-grey-700 hover:bg-shrub-green-900 hover:text-white border-shrub-grey-50"
-                  >
-                    View in Dashboard
-                  </button>
+                    <Button
+                      text='View in Dashboard'
+                      type='info'
+                      onClick={handleViewDash}
+                    />
                 )}
                 {/*cancel button*/}
                 {!borrowActionInitiated && !borrowButtonPressed && (
-                  <button
+                  <Button
+                    type='secondary'
+                    text='Cancel'
                     onClick={() => {
                       ga4events.summaryCancel();
                       onCancel();
                     }}
-                    className="w-full h-[59px] px-5 py-3 bg-white rounded-full text-shrub-grey-700 border font-semibold leading-[24px] hover:bg-shrub-grey-100 hover:border-shrub-grey-50 "
-                  >
-                    Cancel
-                  </button>
+                  />
                 )}
               </div>
             </div>

@@ -20,6 +20,7 @@ import { getChainInfo } from "../../utils/chains";
 import Tooltip from "../../components/Tooltip";
 import { ga4events } from "../../utils/ga4events";
 import { InterestRateButton } from "./InterestRateButton";
+import { Button } from "components/Button";
 
 interface BorrowViewProps {
   onBorrowViewChange: (interestRate, amount) => void;
@@ -373,15 +374,9 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                 <div className="divider h-[1px] w-full bg-shrub-grey-light2 my-8"></div>
                 {/*cta*/}
                 <Tooltip text="Enter amount to proceed" showOnDisabled>
-                  <button
-                    className="w-full h-[59px] px-5 py-3 bg-shrub-green-500 rounded-full text-white font-semibold leading-[24px]
-                      hover:!bg-shrub-green-700
-                      disabled:bg-shrub-grey-50
-                      disabled:border-shrub-grey-100
-                      disabled:text-white
-                      disabled:border
-                      transition-all duration-[300ms] ease-in-out
-                    "
+                  <Button
+                    type='primary'
+                    text='Continue'
                     disabled={
                       Number(borrowAmount) <= 0 ||
                       selectedInterestRate === "" ||
@@ -392,9 +387,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                       ga4events.depositConfirm();
                       handleBorrowContinue();
                     }}
-                  >
-                    Continue
-                  </button>
+                  />
                 </Tooltip>
               </div>
             </div>

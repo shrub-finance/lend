@@ -43,6 +43,9 @@ import { UserHistoryView } from "./user-history/UserHistoryView";
 import { getChainInfo } from "../utils/chains";
 import Tooltip from "../components/Tooltip";
 import { useEthPrice } from "../hooks/useEthPriceFromShrub";
+import { Button } from "components/Button";
+import { useRouter } from "next/router";
+
 export const DashboardView: FC = ({}) => {
   const { chainId } = getChainInfo();
   const { lendingPlatformAddress } = getContractAddresses(chainId);
@@ -80,6 +83,12 @@ export const DashboardView: FC = ({}) => {
   const [selectedBorrowForRepay, setSelectedBorrowForRepay] = useState<
     BorrowObj | undefined
   >();
+
+  const router = useRouter()
+  const handleBorrow = async () => {
+    await router.push("/borrow");
+  }
+
   const handleRepay = () => {
     setRepayModalOpen(false);
   };
@@ -216,12 +225,14 @@ export const DashboardView: FC = ({}) => {
                     <span className="w-[500px]"></span>
                     <span>
                       <Link href="/borrow" passHref>
-                        <button
-                          type="button"
-                          className="ml-4 text-white mr-2 bg-shrub-green-500 border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-300 focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 mb-2"
-                        >
-                          Borrow
-                        </button>
+                        <Button
+                          type='primary'
+                          text='Borrow'
+                          onClick={handleBorrow}
+                          additionalClasses="px-5 py-2.5 ml-4 mr-2 focus:outline-none focus:ring-4 focus:ring-grey-200 text-sm mb-2"
+                          fill={false}
+                          boldText={false}
+                        />
                       </Link>
                       {/*<Link href="/deposit" passHref>*/}
                       {/*  <button*/}
@@ -915,20 +926,21 @@ export const DashboardView: FC = ({}) => {
                                           condition={!!storeBorrow.status}
                                           showOnDisabled
                                         >
-                                          <button
-                                            type="button"
+                                          <Button
+                                            type="info"
+                                            text="Repay"
                                             onClick={() => {
                                               setRepayModalOpen(true);
                                               setSelectedBorrowForRepay(borrow);
                                             }}
-                                            className="flex items-center justify-center text-shrub-grey-900 bg-white border border-shrub-grey-300 focus:outline-none hover:bg-shrub-green-500 hover:text-white focus:ring-4 focus:ring-grey-200 font-medium rounded-full text-sm px-5 py-2.5 disabled:bg-shrub-grey-50 disabled:text-white disabled:border disabled:border-shrub-grey-100"
                                             disabled={
                                               !!storeBorrow.tempData ||
                                               !!storeBorrow.status
                                             }
-                                          >
-                                            Repay
-                                          </button>
+                                            fill={false}
+                                            boldText={false}
+                                            additionalClasses="flex font-medium px-5 py-2.5"
+                                          />
                                         </Tooltip>
                                         {/*</div>*/}
                                       </td>
