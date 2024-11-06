@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from 'components/Button';
 
 interface TransactionButtonProps {
   txHash: string;
@@ -29,9 +30,12 @@ const handleTxLink = (txHash: string, chainId: number | undefined) => {
 };
 
 const TransactionButton: React.FC<TransactionButtonProps> = ({ txHash, chainId, className = '', buttonText = 'View Tx in Explorer', children }) => (
-  <button onClick={() => handleTxLink(txHash, chainId)} className={`btn ${className}`}>
-    {children || buttonText}
-  </button>
+  <Button
+    text={buttonText}
+    type='info'
+    onClick={() => handleTxLink(txHash, chainId)}
+    additionalClasses="mb-4"
+  />
 );
 
 export default TransactionButton;
