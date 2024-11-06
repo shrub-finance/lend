@@ -422,7 +422,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                       contractAddress={lendingPlatformAddress}
                       isDisabled={latestBorrow?.status === "pending"}
                       contractAbi={lendingPlatformAbi}
-                      className="!w-full !h-[59px] px-5 py-3 !rounded-full !bg-shrub-green-500 !border-0  !font-semibold !leading-[24px] !text-white hover:!bg-shrub-green-700 !mb-4 web3button !transition-all !duration-[300ms] !ease-in-out"
+                      className="!w-full !h-[59px] px-5 py-3 !rounded-full !bg-shrub-green-500 !border-0  !font-semibold !leading-[24px] !text-white hover:!bg-shrub-green-900 !mb-4 web3button !transition-all !duration-[300ms] !ease-in-out"
                       action={async (lendingPlatform) => {
                         setLocalError("");
                         // @ts-ignore
@@ -518,8 +518,8 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 {/*confirm in wallet button*/}
                 {borrowButtonPressed && !borrowActionInitiated && (
                   <Button
-                    text='Confirm in Wallet...'
-                    type='secondary'
+                    text="Confirm in Wallet..."
+                    type="secondary"
                     disabled={true}
                     onClick={() => {}}
                     additionalClasses="border-0"
@@ -528,17 +528,17 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                 {/*view in dashboard button*/}
                 {(borrowActionInitiated ||
                   latestBorrow?.status === "confirmed") && (
-                    <Button
-                      text='View in Dashboard'
-                      type='info'
-                      onClick={handleViewDash}
-                    />
+                  <Button
+                    text="View in Dashboard"
+                    type="info"
+                    onClick={handleViewDash}
+                  />
                 )}
                 {/*cancel button*/}
                 {!borrowActionInitiated && !borrowButtonPressed && (
                   <Button
-                    type='secondary'
-                    text='Cancel'
+                    type="secondary"
+                    text="Cancel"
                     onClick={() => {
                       ga4events.summaryCancel();
                       onCancel();
