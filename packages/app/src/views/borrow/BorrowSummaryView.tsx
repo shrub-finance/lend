@@ -20,6 +20,7 @@ import TransactionButton from "../../components/TxButton";
 import { ga4events } from "../../utils/ga4events";
 import Confetti from "react-confetti";
 import { Button } from "components/Button";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface BorrowSummaryViewProps {
   requiredCollateral: ethers.BigNumber;
@@ -362,42 +363,58 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                           className="flex items-center relative cursor-pointer"
                           onClick={handleCopyClick}
                         >
-                          <span
-                            className={`flex items-center transition-opacity duration-500 ${
-                              copied ? "opacity-0" : "opacity-100"
-                            }`}
-                          >
-                            {truncateEthAddress(lendingPlatformAddress)}
-                            <Image
-                              alt="copy icon"
-                              src="/copy.svg"
-                              className="w-6 md:inline hidden align-baseline ml-2" // Hide on mobile, show on md+
-                              width="24"
-                              height="24"
-                            />
-                          </span>
-
-                          <span
-                            className={`absolute flex items-center font-semibold sm:left-[61px] left-[31px] text-shrub-green-500 transition-opacity duration-500 ${
-                              copied ? "opacity-100" : "opacity-0"
-                            }`}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 mr-1" // Show checkmark on mobile
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
+                          <AnimatePresence>
+                            <motion.span
+                              initial={{ opacity: 1 }}
+                              animate={{ opacity: copied ? 0 : 1 }}
+                              transition={{
+                                duration: 0.4,
+                                ease: "easeInOut",
+                              }}
+                              className="flex items-center"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M5 13l4 4L19 7"
+                              {truncateEthAddress(lendingPlatformAddress)}
+                              <Image
+                                alt="copy icon"
+                                src="/copy.svg"
+                                className="w-6 md:inline hidden align-baseline ml-2"
+                                width="24"
+                                height="24"
                               />
-                            </svg>
-                            Copied!
-                          </span>
+                            </motion.span>
+                          </AnimatePresence>
+
+                          <AnimatePresence>
+                            {copied && (
+                              <motion.span
+                                key="copied"
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{
+                                  duration: 0.6,
+                                  ease: "easeInOut",
+                                }}
+                                className="absolute flex items-center font-semibold sm:left-[61px] left-[31px] text-shrub-green-500"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-5 w-5 mr-1"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                                Copied!
+                              </motion.span>
+                            )}
+                          </AnimatePresence>
                         </span>
                       </div>
                     </div>
