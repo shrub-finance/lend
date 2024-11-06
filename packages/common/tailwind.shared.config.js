@@ -14,7 +14,6 @@ const sharedConfig = {
         "shrub-green-300": "#219f80",
         "shrub-green-400": "#73e2a3",
         "shrub-green-500": "#17725C",
-        "shrub-green-700": "#115D49",
         "shrub-green-900": "#0A4736",
         "shrub-blue": "#101828",
         "shrub-grey": "#475467",
