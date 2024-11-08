@@ -4,7 +4,9 @@ import { useBalance, useContract } from "@thirdweb-dev/react";
 import { getContractAbis, getContractAddresses } from "../../utils/contracts";
 import { NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
 import {
+  ethInUsdc,
   EXCHANGE_RATE_BUFFER,
+  formatLargeUsdc,
   interestToLTV,
   isInvalidOrZero,
   ONE_HUNDRED_PERCENT,
@@ -21,6 +23,7 @@ import Tooltip from "../../components/Tooltip";
 import { ga4events } from "../../utils/ga4events";
 import { InterestRateButton } from "./InterestRateButton";
 import { Button } from "components/Button";
+import useEthPrice from "../../hooks/useEthPriceFromShrub";
 
 interface BorrowViewProps {
   onBorrowViewChange: (interestRate, amount) => void;
@@ -36,6 +39,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
   const { chainId } = getChainInfo();
   const { lendingPlatformAddress } = getContractAddresses(chainId);
   const { lendingPlatformAbi } = getContractAbis(chainId);
+  const { ethPrice } = useEthPrice(lendingPlatformAddress, lendingPlatformAbi);
 
   const [localError, setLocalError] = useState("");
   const handleErrorMessages = handleErrorMessagesFactory(setLocalError);
@@ -95,15 +99,17 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
 
     let inputValue = event.target.value.trim();
 
-    // If the input starts with '.', prepend '0' for proper parsing
     if (inputValue.startsWith(".")) {
       inputValue = "0" + inputValue;
     }
 
-    // Remove commas for numeric processing
+    if (/[^0-9.,]/.test(inputValue)) {
+      setBorrowError("borrow", "Only numeric values are allowed.");
+      return;
+    }
+
     const rawValue = inputValue.replace(/,/g, "");
 
-    // Ensure only one decimal point is allowed
     const decimalCount = (rawValue.match(/\./g) || []).length;
     if (decimalCount > 1) {
       setBorrowError("borrow", "Only one decimal point is allowed.");
@@ -118,13 +124,10 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
       return;
     }
 
-    // Adjusted regex to ensure valid number format and allow decimal places without character limit
     const isValidInput = /^([0-9]+(\.[0-9]*)?|\.[0-9]*)$/.test(rawValue);
 
-    // Prevent formatting if the user is typing a valid number with a decimal (e.g., "1.", "1.0", "1.02")
     const parsedValue = parseFloat(rawValue);
 
-    // Allow "0." and other valid intermediate inputs like "1.0", "1.02", etc.
     const isInvalidOrZero =
       !isValidInput ||
       isNaN(parsedValue) ||
@@ -138,24 +141,19 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
 
     setBorrowAmount(rawValue);
 
-    // Handle formatting for display value (leave it as is if there's a trailing decimal)
     let formattedValue;
 
-    // Keep the raw input if there's a trailing decimal or if the input includes a decimal but is incomplete
     if (
       rawValue.endsWith(".") ||
       (rawValue.includes(".") && rawValue.match(/\.\d*0+$/))
     ) {
-      formattedValue = rawValue; // Preserve trailing decimal and zeros
+      formattedValue = rawValue;
     } else {
-      // Only format for display if the input is fully valid and does not include trailing decimal or zeros
       formattedValue = parsedValue.toLocaleString("en-US", {
         minimumFractionDigits: 0,
-        maximumFractionDigits: 6, // Adjust display for up to 6 decimal places
+        maximumFractionDigits: 6,
       });
     }
-
-    // Set the formatted display value
     setDisplayAmount(formattedValue);
   };
 
@@ -333,7 +331,13 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                   <div>
                     <ul className="flex flex-row ">
                       {interestRates.map(({ id, rate }) => (
-                        <InterestRateButton id={id} rate={rate} selectedInterestRate={selectedInterestRate} setSelectedInterestRate={setSelectedInterestRate} />
+                        <InterestRateButton
+                          id={id}
+                          key={id}
+                          rate={rate}
+                          selectedInterestRate={selectedInterestRate}
+                          setSelectedInterestRate={setSelectedInterestRate}
+                        />
                       ))}
                     </ul>
                   </div>
@@ -357,15 +361,29 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                         ETH
                       </span>
                     </div>
-                    <div className="card w-full bg-teal-50 border border-shrub-green p-10">
+                    <div className="card w-full bg-teal-50 border border-shrub-green px-2">
                       {Number(borrowAmount) ? (
-                        // <span className="text-4xl text-shrub-green-500 font-bold text-center">
-                        <span className="text-2xl sm:text-5xl text-shrub-green-500 font-bold text-center">
+                        <span className="text-2xl sm:text-5xl text-shrub-green-500 font-bold text-center pt-8">
                           {ethers.utils.formatEther(requiredCollateral)} ETH
                         </span>
                       ) : (
-                        <span className="sm:text-4xl md:text-5xl text-shrub-green-500 font-bold text-center">
-                          ---- ETH
+                        <span className="sm:text-4xl md:text-5xl text-shrub-green-500 font-bold text-center pt-8">
+                          --- ETH
+                        </span>
+                      )}
+                      {Number(borrowAmount) ? (
+                        <span className="text-shrub-grey-100 font-semibold text-center flex flex-col items-center text-md pt-4 pb-4">
+                          $
+                          {Number(
+                            formatLargeUsdc(
+                              ethInUsdc(requiredCollateral, ethPrice),
+                            ),
+                          ).toFixed(2)}{" "}
+                          USD
+                        </span>
+                      ) : (
+                        <span className="text-shrub-green-500 font-normal text-center pt-4 pb-4">
+                          --- USD
                         </span>
                       )}
                     </div>
@@ -375,8 +393,8 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                 {/*cta*/}
                 <Tooltip text="Enter amount to proceed" showOnDisabled>
                   <Button
-                    type='primary'
-                    text='Continue'
+                    type="primary"
+                    text="Continue"
                     disabled={
                       Number(borrowAmount) <= 0 ||
                       selectedInterestRate === "" ||
