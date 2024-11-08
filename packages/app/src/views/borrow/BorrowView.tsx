@@ -99,15 +99,17 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
 
     let inputValue = event.target.value.trim();
 
-    // If the input starts with '.', prepend '0' for proper parsing
     if (inputValue.startsWith(".")) {
       inputValue = "0" + inputValue;
     }
 
-    // Remove commas for numeric processing
+    if (/[^0-9.,]/.test(inputValue)) {
+      setBorrowError("borrow", "Only numeric values are allowed.");
+      return;
+    }
+
     const rawValue = inputValue.replace(/,/g, "");
 
-    // Ensure only one decimal point is allowed
     const decimalCount = (rawValue.match(/\./g) || []).length;
     if (decimalCount > 1) {
       setBorrowError("borrow", "Only one decimal point is allowed.");
@@ -122,13 +124,10 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
       return;
     }
 
-    // Adjusted regex to ensure valid number format and allow decimal places without character limit
     const isValidInput = /^([0-9]+(\.[0-9]*)?|\.[0-9]*)$/.test(rawValue);
 
-    // Prevent formatting if the user is typing a valid number with a decimal (e.g., "1.", "1.0", "1.02")
     const parsedValue = parseFloat(rawValue);
 
-    // Allow "0." and other valid intermediate inputs like "1.0", "1.02", etc.
     const isInvalidOrZero =
       !isValidInput ||
       isNaN(parsedValue) ||
@@ -142,24 +141,19 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
 
     setBorrowAmount(rawValue);
 
-    // Handle formatting for display value (leave it as is if there's a trailing decimal)
     let formattedValue;
 
-    // Keep the raw input if there's a trailing decimal or if the input includes a decimal but is incomplete
     if (
       rawValue.endsWith(".") ||
       (rawValue.includes(".") && rawValue.match(/\.\d*0+$/))
     ) {
-      formattedValue = rawValue; // Preserve trailing decimal and zeros
+      formattedValue = rawValue;
     } else {
-      // Only format for display if the input is fully valid and does not include trailing decimal or zeros
       formattedValue = parsedValue.toLocaleString("en-US", {
         minimumFractionDigits: 0,
-        maximumFractionDigits: 6, // Adjust display for up to 6 decimal places
+        maximumFractionDigits: 6,
       });
     }
-
-    // Set the formatted display value
     setDisplayAmount(formattedValue);
   };
 

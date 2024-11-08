@@ -157,7 +157,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
           </h1>
         </div>
         {/*card starts*/}
-        <div className="relative group mt-4 w-full lg:min-w-[500px]">
+        <div className="relative group mt-4 w-full lg:max-w-[540px]">
           <div className="absolute -inset-1 shadow-shrub border rounded-3xl"></div>
           <div className="flex flex-col ">
             <div className="card w-full">
@@ -180,7 +180,7 @@ export const BorrowSummaryView: FC<BorrowSummaryViewProps> = ({
                         height="40"
                       />
                     </div>
-                    <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[550px]">
+                    <p className="text-shrub-grey-700 text-lg text-left font-light pt-8 max-w-[540px]">
                       You are borrowing{" "}
                       <span className="font-semibold">{amount} USDC</span> and
                       providing{" "}
