@@ -3,18 +3,18 @@ import Link from "next/link";
 import { useConnectedWallet, useAddress } from "@thirdweb-dev/react";
 import { getBlock } from "@thirdweb-dev/sdk";
 import { toEthDate, fromEthDate } from "@shrub-lend/common";
-import { getContractAbis, getContractAddresses } from "../utils/contracts";
+import { getContractAbis, getContractAddresses } from "../../utils/contracts";
 import { ethers } from "ethers";
 import Image from "next/image";
 import { secondsInDay } from "@shrub-lend/common";
-import { GLOBAL_DATA_QUERY } from "../constants/queries";
+import { GLOBAL_DATA_QUERY } from "../../constants/queries";
 import { useQuery } from "@apollo/client";
 import {
   getUserData,
   useFinancialData,
-} from "../components/FinancialDataContext";
-import Modal from "../components/Modal";
-import ExtendDepositView from "./modals/extend-deposit/ExtendDepositView";
+} from "../../components/FinancialDataContext";
+import Modal from "../../components/Modal";
+import ExtendDepositView from "../modals/extend-deposit/ExtendDepositView";
 import {
   durationWad,
   ethInUsdc,
@@ -24,9 +24,9 @@ import {
   percentMul,
   wadDiv,
   wadMul,
-} from "../utils/ethMethods";
-import { BorrowObj, DepositObj } from "../types/types";
-import ExtendBorrowView from "./modals/extend-borrow/ExtendBorrowView";
+} from "../../utils/ethMethods";
+import { BorrowObj, DepositObj } from "../../types/types";
+import ExtendBorrowView from "../modals/extend-borrow/ExtendBorrowView";
 import {
   EARLY_REPAYMENT_APY,
   EARLY_REPAYMENT_THRESHOLD,
@@ -36,13 +36,13 @@ import {
   threeMonth,
   twelveMonth,
   Zero,
-} from "../constants";
-import WithdrawView from "./modals/withdraw-deposit/WithdrawView";
-import RepayView from "./modals/repay-borrow/RepayView";
-import { UserHistoryView } from "./user-history/UserHistoryView";
-import { getChainInfo } from "../utils/chains";
-import Tooltip from "../components/Tooltip";
-import { useEthPrice } from "../hooks/useEthPriceFromShrub";
+} from "../../constants";
+import WithdrawView from "../modals/withdraw-deposit/WithdrawView";
+import RepayView from "../modals/repay-borrow/RepayView";
+import { UserHistoryView } from "../user-history/UserHistoryView";
+import { getChainInfo } from "../../utils/chains";
+import Tooltip from "../../components/Tooltip";
+import { useEthPrice } from "../../hooks/useEthPriceFromShrub";
 import { Button } from "components/Button";
 import { useRouter } from "next/router";
 

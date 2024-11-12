@@ -1,8 +1,8 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import {DashboardView} from "../views/dashboard/DashboardView";
+import {DashboardView} from "../views/dashboard/DashboardView.bak";
 
-const Dashboard: NextPage = (props) => {
+const DashboardBak: NextPage = (props) => {
   return (
     <div>
       <Head>
@@ -17,4 +17,4 @@ const Dashboard: NextPage = (props) => {
   );
 };
 
-export default Dashboard;
+export default DashboardBak;
