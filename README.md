@@ -13,11 +13,6 @@ overmind s
 In a different terminal:
 ```
 yarn local-initialize
-```
-
-
-To run subgraph locally:
-```
 yarn subgraph
 ```
 
