@@ -5,16 +5,29 @@ Node Version 20
 ```
 
 ## To run locally
+1- `cp packages/app/dotenv.example packages/app/.env`
+
+2- Run app stack
 ```
-cp packages/app/dotenv.example packages/app/.env
+yarn contracts 
+yarn app
+yarn graph-node
+```
+or with overmind:
+```
 overmind s
 ```
 
-In a different terminal:
+3- Init wallets
 ```
 yarn local-initialize
+```
+
+4- To run subgraph locally:
+```
 yarn subgraph
 ```
+
 
 ## FAQ
 - If you run into this error, try [resetting your metamask account](https://medium.com/@thelasthash/solved-nonce-too-high-error-with-metamask-and-hardhat-adc66f092cd)
