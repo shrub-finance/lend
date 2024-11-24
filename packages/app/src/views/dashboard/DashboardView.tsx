@@ -1,32 +1,26 @@
-import { FC } from "react";
+import React, { FC } from "react";
 import { Card } from "./Card";
-import { NATIVE_TOKEN_ADDRESS, useBalance } from "@thirdweb-dev/react";
-import { ethers } from "ethers";
 import { Borrowing } from "./Borrowing";
+import { WalletBalance } from "./WalletBalance";
+import { Earning } from "./Earning";
+import { WelcomeHeader } from "./WelcomeHeader";
 
 export const DashboardView: FC = ({}) => {
-  const { data: ethBalance, isLoading: ethBalanceIsLoading } =
-    useBalance(NATIVE_TOKEN_ADDRESS);
-
   return (
-    <div className='card px-8'>
-      <div className="grid grid-cols-3 gap-x-4">
-        <div className="col-span-2">
-          <Card>
-            ifondiondsf
-          </Card>
-          <Borrowing />
+    <React.Fragment>
+      <div className="absolute bg-black h-24 w-full" />
+      <div className='card px-8'>
+        <div className="grid grid-cols-7 gap-x-4">
+          <div className="col-span-5">
+            <WelcomeHeader />
+            <Earning />
+            <Borrowing />
+          </div>
+          <div className="col-span-2">
+            <WalletBalance />
+          </div>
         </div>
-        <Card>
-          <div className="text-sm text-gray-500">
-            Wallet Balance
-          </div>
-          <div className="text-2xl">
-            {!ethBalanceIsLoading && ethBalance.displayValue}
-          </div>
-        </Card>
       </div>
-
-    </div>
+    </React.Fragment>
   )
 };
