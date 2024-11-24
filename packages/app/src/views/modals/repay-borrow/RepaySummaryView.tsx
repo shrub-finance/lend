@@ -23,6 +23,7 @@ import { getChainInfo } from "../../../utils/chains";
 import { Borrow, BorrowObj } from "../../../types/types";
 import TransactionButton from "../../../components/TxButton";
 import Spinner from "../../../components/Spinner";
+import { Button } from "components/Button";
 
 interface RepaySummaryViewProps {
   borrow: BorrowObj;
@@ -466,12 +467,13 @@ const RepaySummaryView: React.FC<
               )}
               {/*view in dashboard button*/}
               {repayActionInitiated && (
-                <button
-                  onClick={onModalClose}
-                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-green hover:border-shrub-green hover:text-white normal-case text-xl border-shrub-grey-50"
-                >
-                  View in Dashboard{" "}
-                </button>
+                <>
+                  <Button
+                    type="info"
+                    text="View in Dashboard"
+                    onClick={onModalClose}
+                  />
+                </>
               )}
             </div>
           </div>

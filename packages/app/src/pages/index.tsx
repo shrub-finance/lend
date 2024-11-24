@@ -1,6 +1,6 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { DashboardView } from "../views/DashboardView";
+import { DashboardView } from "../views/dashboard/DashboardView";
 import Borrow from "./borrow";
 import Home from "./home";
 

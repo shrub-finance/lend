@@ -23,7 +23,7 @@ export const AppBar: React.FC = () => {
   };
   return (
     <div>
-      <div className="navbar flex h-20 flex-row md:mb-2 bg-black text-neutral-content drop-shadow-md">
+      <div className="navbar flex h-20 flex-row bg-black text-neutral-content drop-shadow-md">
         <div>
           <div className="sm:inline w-22 h-22 md:max-w-22">
             <NavElement
@@ -70,6 +70,7 @@ export const AppBar: React.FC = () => {
           </div>
         </div>
       </div>
+      <div className="absolute bg-black h-24 w-full" />
     </div>
   );
 };
