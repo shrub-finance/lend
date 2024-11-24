@@ -11,6 +11,8 @@ import { formatLargeUsdc } from 'utils/ethMethods';
 import { Card } from './Card';
 
 export const WalletBalance: FC = () => {
+  const [walletBalance, setWalletBalance] = useState<string>('0')
+
   const { data: ethBalance, isLoading: ethBalanceIsLoading } =
     useBalance(NATIVE_TOKEN_ADDRESS);
   const [convertedBalance, setConvertedBalance] = useState<string>('0')
@@ -46,13 +48,19 @@ export const WalletBalance: FC = () => {
     }
   }, [ethBalanceIsLoading])
 
+  useEffect(() => {
+    if(convertedBalance && !usdcBalanceIsLoading){
+      setWalletBalance((Number(convertedBalance) + Number(usdcBalance.displayValue)).toFixed(2))
+    }
+  }, [convertedBalance, usdcBalanceIsLoading])
+
   return (
     <Card>
       <div className="mx-auto p-6 bg-white rounded-lg">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold text-gray-700">
             <p>Wallet Balance</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">$4,234.00</p>
+            <p className="text-3xl font-bold text-gray-900 mt-2">${walletBalance}</p>
           </h2>
           <div className="p-2 bg-green-100 rounded-lg">
             <Image
@@ -76,7 +84,7 @@ export const WalletBalance: FC = () => {
                   width="24"
                   height="24"
                 />
-                {!usdcBalanceIsLoading && Number(usdcBalance.displayValue).toFixed(2)}
+                ${!usdcBalanceIsLoading && Number(usdcBalance.displayValue).toFixed(2)}
               </p>
             </div>
             <Button
@@ -100,7 +108,7 @@ export const WalletBalance: FC = () => {
                   width="24"
                   height="24"
                 />
-                {convertedBalance}
+                ${convertedBalance}
               </p>
             </div>
             <Button

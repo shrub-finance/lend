@@ -66,7 +66,7 @@ export const Earning: FC = ({}) => {
                       height="24"
                     />
                     <span className="pl-2">
-                      {Number(formatLargeUsdc(BigNumber.from(storeDeposit.depositsUsdc))).toFixed(2)}
+                      {Number(formatLargeUsdc(BigNumber.from(storeDeposit.depositsUsdc))).toFixed(2)} USDC
                     </span>
                   </td>
                   <td className={rowStyling}>

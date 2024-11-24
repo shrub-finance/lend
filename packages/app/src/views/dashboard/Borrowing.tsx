@@ -181,7 +181,7 @@ export const Borrowing: FC = ({}) => {
                       height="24"
                     />
                     <span className="pl-2">
-                      {Number(formatLargeUsdc(storeBorrow.originalPrincipal)).toFixed(2)}
+                      {Number(formatLargeUsdc(storeBorrow.originalPrincipal)).toFixed(2)} USDC
                     </span>
                   </td>
                   <td className={rowStyling}>
@@ -201,7 +201,7 @@ export const Borrowing: FC = ({}) => {
                       height="24"
                     />
                     <span className="pl-2">
-                      {(formatLargeUsdc(storeBorrow.originalPrincipal) - formatLargeUsdc(storeBorrow.paid)).toFixed(2)}
+                      {(formatLargeUsdc(storeBorrow.originalPrincipal) - formatLargeUsdc(storeBorrow.paid)).toFixed(2)} USDC
                     </span>
                   </td>
                   <td className={rowStyling}>
