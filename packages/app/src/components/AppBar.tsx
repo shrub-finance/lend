@@ -70,7 +70,7 @@ export const AppBar: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="absolute bg-black h-24 w-full" />
+      <div className="absolute bg-black w-full" />
     </div>
   );
 };

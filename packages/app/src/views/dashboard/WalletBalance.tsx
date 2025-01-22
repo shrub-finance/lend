@@ -7,7 +7,6 @@ import { useRouter } from 'next/router';
 import React, { FC, useEffect, useState } from 'react';
 import { getChainInfo } from 'utils/chains';
 import { getContractAddresses } from 'utils/contracts';
-import { formatLargeUsdc } from 'utils/ethMethods';
 import { Card } from './Card';
 
 export const WalletBalance: FC = () => {

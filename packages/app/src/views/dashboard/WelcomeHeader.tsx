@@ -19,11 +19,15 @@ export const WelcomeHeader: FC = ({}) => {
     let weightedGrowth = 0;
 
     deposits.forEach((deposit) => {
-      const depositAmount = Number(formatLargeUsdc(BigNumber.from(deposit.amount)))
-      const growth = Number(formatLargeUsdc(BigNumber.from(deposit.lendingPool.totalUsdcInterest)))
+      const depositAmount = deposit.amount ? Number(formatLargeUsdc(BigNumber.from(deposit.amount))) : 0;
+      const growth = deposit.lendingPool?.totalUsdcInterest
+        ? Number(formatLargeUsdc(BigNumber.from(deposit.lendingPool.totalUsdcInterest)))
+        : 0;
+
       totalDeposit += depositAmount; // Sum all deposits
       weightedGrowth += growth; // Weighted contribution of each APR
     });
+
 
     // Total growth percentage
     const totalGrowthPercentage = (weightedGrowth / totalDeposit) * 100;
