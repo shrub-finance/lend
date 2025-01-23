@@ -18,7 +18,6 @@
     "@thirdweb-dev/react": "3.14.17",
     "@thirdweb-dev/sdk": "^4.0.22",
     "@web3-react/core": "^8.2.3",
-    "axios": "^1.7.7",
     "daisyui": "^1.24.3",
     "date-fns": "^2.29.3",
     "ethers": "5",
