@@ -1,25 +1,21 @@
-import { NATIVE_TOKEN_ADDRESS, useBalance } from '@thirdweb-dev/react';
-import axios from 'axios';
 import { Button } from 'components/Button';
-import { ethers } from 'ethers';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { getChainInfo } from 'utils/chains';
 import { getContractAddresses } from 'utils/contracts';
 import { Card } from './Card';
+import { useBalance } from "@thirdweb-dev/react";
+import { NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
+import {ethers} from "ethers";
+
 
 export const WalletBalance: FC = () => {
-  const [walletBalance, setWalletBalance] = useState<string>('0')
-
-  const { data: ethBalance, isLoading: ethBalanceIsLoading } =
-    useBalance(NATIVE_TOKEN_ADDRESS);
   const [convertedBalance, setConvertedBalance] = useState<string>('0')
-
   const { chainId } = getChainInfo();
   const { usdcAddress } = getContractAddresses(chainId);
-  const { data: usdcBalance, isLoading: usdcBalanceIsLoading } =
-    useBalance(usdcAddress);
+  const { data: usdcBalance, isLoading: usdcBalanceIsLoading } = useBalance(usdcAddress);
+  const { data: ethBalance, isLoading: ethBalanceIsLoading } = useBalance(NATIVE_TOKEN_ADDRESS);
 
   const router = useRouter()
   const handleBorrow = async () => {
@@ -29,29 +25,6 @@ export const WalletBalance: FC = () => {
     await router.push("/deposit");
   }
 
-  useEffect(() => {
-    if(!ethBalanceIsLoading) {
-      axios.get(
-        "https://api.coingecko.com/api/v3/simple/price",
-        {
-          params: {
-            ids: "ethereum",
-            vs_currencies: "usd",
-          },
-        }
-      ).then((response) => {
-        const ethToUsdRate = response.data.ethereum.usd;
-        const usdcValue = parseFloat(ethers.utils.formatEther(ethBalance.value)) * ethToUsdRate;
-        setConvertedBalance(usdcValue.toFixed(2)); // Round to 2 decimal places
-      })
-    }
-  }, [ethBalanceIsLoading])
-
-  useEffect(() => {
-    if(convertedBalance && !usdcBalanceIsLoading){
-      setWalletBalance((Number(convertedBalance) + Number(usdcBalance.displayValue)).toFixed(2))
-    }
-  }, [convertedBalance, usdcBalanceIsLoading])
 
   return (
     <Card>
@@ -59,7 +32,10 @@ export const WalletBalance: FC = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold text-gray-700">
             <p>Wallet Balance</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">${walletBalance}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-2">
+              ${!ethBalanceIsLoading && Number(ethers.utils.formatEther(ethBalance?.value || "0")).toFixed(2)}
+            </p>
+
           </h2>
           <div className="p-2 bg-green-100 rounded-lg">
             <Image
