@@ -8,7 +8,7 @@
 # Documentation here: https://yarnpkg.com/features/zero-installs
 !/.yarn/cache
 #/.pnp.*
-/node_modules/
+**/node_modules/
 /.idea/
 /program/.yarn/
 /.yarn/
@@ -17,3 +17,6 @@ packages/hardhat/deployments/
 
 /packages/subgraph/subgraph.yaml
 .vercel
+.history
+.DS_Store
+

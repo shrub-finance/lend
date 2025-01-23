@@ -21,6 +21,8 @@ import useActiveLendingPools from "hooks/useActiveLendingPools";
 import TransactionButton from "../../components/TxButton";
 import Spinner from "../../components/Spinner";
 import { getChainInfo } from "../../utils/chains";
+import {Button} from "../../components/Button";
+import {ga4events} from "../../utils/ga4events";
 
 interface LendSummaryViewProps {
   timestamp: number;
@@ -198,7 +200,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({
                       {/*spinner*/}
                       <div
                         role="status"
-                        className="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green to-shrub-green-50 animate-spin"
+                        className="flex w-[230px] h-[230px] items-center justify-center rounded-full bg-gradient-to-tr from-shrub-green-900 to-shrub-green-50 animate-spin"
                       >
                         <div className="w-[205px] h-[205px] rounded-full bg-white"></div>
                       </div>
@@ -363,7 +365,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({
                         contractAddress={usdcAddress}
                         contractAbi={usdcAbi}
                         isDisabled={approveUSDCActionInitiated}
-                        className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
+                        className="!w-full !h-[59px] px-5 py-3 !rounded-full !bg-shrub-green-500 !border-0  !font-semibold !leading-[24px] !text-white hover:!bg-shrub-green-900 !mb-4 web3button !transition-all !duration-[300ms] !ease-in-out"
                         action={async (usdc) => {
                           setLocalError("");
                           // @ts-ignore
@@ -414,7 +416,7 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({
                         contractAddress={lendingPlatformAddress}
                         contractAbi={lendingPlatformAbi}
                         isDisabled={lendActionInitiated}
-                        className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4 web3button"
+                        className="!w-full !h-[59px] px-5 py-3 !rounded-full !bg-shrub-green-500 !border-0  !font-semibold !leading-[24px] !text-white hover:!bg-shrub-green-900 !mb-4 web3button !transition-all !duration-[300ms] !ease-in-out"
                         action={async (lendingPlatform) => {
                           console.log(`Contract Args:
                                   timestamp: ${timestamp}
@@ -538,23 +540,21 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({
                 {/*view in dashboard button*/}
                 {(lendActionInitiated ||
                   latestDeposit?.status === "confirmed") && (
-                  <button
-                    onClick={handleViewDash}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-green hover:border-shrub-green hover:text-white normal-case text-xl border-shrub-grey-50"
-                  >
-                    View in Dashboard
-                  </button>
+                  <Button
+                  text="View in Dashboard"
+                  type="info"
+                  onClick={handleViewDash}
+              />
                 )}
                 {/*cancel button*/}
                 {!lendActionInitiated &&
                   !depositButtonPressed &&
                   !approveButtonPressed && (
-                    <button
+                    <Button
+                      type="secondary"
+                      text="Cancel"
                       onClick={backOnDeposit}
-                      className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
-                    >
-                      Cancel
-                    </button>
+                    />
                   )}
               </div>
             </div>
