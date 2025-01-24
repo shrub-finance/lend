@@ -12,9 +12,9 @@ import RepayView from "views/modals/repay-borrow/RepayView"
 import { ethers } from "ethers"
 import { useQuery } from "@apollo/client"
 import { GLOBAL_DATA_QUERY } from "constants/queries"
-import { Zero } from "constants"
-import { EARLY_REPAYMENT_THRESHOLD } from "constants"
-import { EARLY_REPAYMENT_APY } from "constants"
+import {Zero} from "../../constants";
+import { EARLY_REPAYMENT_THRESHOLD } from "../../constants"
+import { EARLY_REPAYMENT_APY } from "../../constants"
 
 export const Borrowing: FC = ({}) => {
   const { store } = useFinancialData()
@@ -201,7 +201,7 @@ export const Borrowing: FC = ({}) => {
                       height="24"
                     />
                     <span className="pl-2">
-                      {(formatLargeUsdc(storeBorrow.originalPrincipal) - formatLargeUsdc(storeBorrow.paid)).toFixed(2)} USDC
+                      {Number(formatLargeUsdc(storeBorrow.originalPrincipal)) - Number(formatLargeUsdc(storeBorrow.paid))} USDC
                     </span>
                   </td>
                   <td className={rowStyling}>

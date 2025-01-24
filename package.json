@@ -6,9 +6,6 @@
   "npmClient": "yarn",
   "useWorkspaces": true,
   "private": true,
-  "engines": {
-    "node": "20.x"
-  },
   "scripts": {
     "preinstall": "node -e 'if (!process.versions.node.startsWith(\"20\")) { console.log(\"You must use Node.js version 20.x\"); process.exit(1); }'",
     "app": "yarn workspace @shrub-lend/app dev",
