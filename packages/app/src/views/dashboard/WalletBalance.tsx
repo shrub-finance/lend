@@ -3,11 +3,12 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import React, { FC, useState } from 'react';
 import { getChainInfo } from 'utils/chains';
-import { getContractAddresses } from 'utils/contracts';
+import {getContractAbis, getContractAddresses} from 'utils/contracts';
 import { Card } from './Card';
 import { useBalance } from "@thirdweb-dev/react";
 import { NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
 import {ethers} from "ethers";
+import {UserHistoryView} from "./UserHistoryView";
 
 
 export const WalletBalance: FC = () => {
@@ -24,6 +25,10 @@ export const WalletBalance: FC = () => {
   const handleDeposit = async () => {
     await router.push("/deposit");
   }
+  const { lendingPlatformAddress } = getContractAddresses(chainId);
+  const { lendingPlatformAbi } = getContractAbis(chainId);
+  const { data: usdcBalanceData, isLoading: usdcBalanceDataIsLoading } =
+    useBalance(usdcAddress);
 
 
   return (
@@ -33,7 +38,7 @@ export const WalletBalance: FC = () => {
           <h2 className="text-lg font-semibold text-gray-700">
             <p>Wallet Balance</p>
             <p className="text-3xl font-bold text-gray-900 mt-2">
-              ${!ethBalanceIsLoading && Number(ethers.utils.formatEther(ethBalance?.value || "0")).toFixed(2)}
+              {!ethBalanceIsLoading && Number(ethers.utils.formatEther(ethBalance?.value || "-")).toFixed(2)} ETH
             </p>
 
           </h2>
@@ -63,8 +68,8 @@ export const WalletBalance: FC = () => {
               </p>
             </div>
             <Button
-              type='primary'
-              text='Deposit'
+              type="primary"
+              text="Deposit"
               onClick={handleDeposit}
               additionalClasses="px-5 py-2.5 focus:outline-none focus:ring-4 focus:ring-grey-200 text-sm mb-2 right-0"
               fill={false}
@@ -87,8 +92,8 @@ export const WalletBalance: FC = () => {
               </p>
             </div>
             <Button
-              type='primary'
-              text='Borrow'
+              type="primary"
+              text="Borrow"
               onClick={handleBorrow}
               additionalClasses="px-5 py-2.5 focus:outline-none focus:ring-4 focus:ring-grey-200 text-sm mb-2 right-0"
               fill={false}
@@ -98,5 +103,6 @@ export const WalletBalance: FC = () => {
         </div>
       </div>
     </Card>
+
   );
 };

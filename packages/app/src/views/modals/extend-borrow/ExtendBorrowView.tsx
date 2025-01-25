@@ -16,7 +16,7 @@ import { formatDate } from '@shrub-lend/common';
 import {BorrowObj} from "../../../types/types";
 import {useFinancialData} from "../../../components/FinancialDataContext";
 import {getChainInfo} from "../../../utils/chains";
-import {useEthPrice} from "../../../hooks/useEthPriceFromShrub";
+import {useEthPrice} from "../../../hooks/useEthPrice";
 
 interface ExtendBorrowViewProps {
   setIsModalOpen: (isOpen: boolean) => void;

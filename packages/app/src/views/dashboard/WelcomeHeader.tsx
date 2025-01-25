@@ -14,7 +14,6 @@ export const WelcomeHeader: FC = ({}) => {
   const totalEarnings = totalDeposits.toFixed(2)
 
   function calculateTotalGrowth(deposits) {
-    // Calculate the weighted percentage growth
     let totalDeposit = 0;
     let weightedGrowth = 0;
 
@@ -24,16 +23,16 @@ export const WelcomeHeader: FC = ({}) => {
         ? Number(formatLargeUsdc(BigNumber.from(deposit.lendingPool.totalUsdcInterest)))
         : 0;
 
-      totalDeposit += depositAmount; // Sum all deposits
-      weightedGrowth += growth; // Weighted contribution of each APR
+      totalDeposit += depositAmount;
+      weightedGrowth += growth;
     });
 
+    if (totalDeposit === 0) return "0.00"; 
 
-    // Total growth percentage
     const totalGrowthPercentage = (weightedGrowth / totalDeposit) * 100;
-
-    return totalGrowthPercentage.toFixed(2); // Return as a percentage with 2 decimal places
+    return totalGrowthPercentage.toFixed(2);
   }
+
 
   return (
     <Card>
@@ -43,7 +42,7 @@ export const WelcomeHeader: FC = ({}) => {
         <div className="mt-4 flex items-center">
           <p className="text-4xl font-bold text-gray-900">${totalEarnings}</p>
           <div className="ml-4 flex items-center bg-green-100 text-green-600 text-sm font-medium px-3 py-1 rounded-full">
-            {calculateTotalGrowth(deposits)}%
+            {deposits && calculateTotalGrowth(deposits)}%
           </div>
         </div>
       </div>

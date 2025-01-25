@@ -23,7 +23,7 @@ import { useFinancialData } from "../../../components/FinancialDataContext";
 import { ethers } from "ethers";
 import { Zero } from "../../../constants";
 import { getChainInfo } from "../../../utils/chains";
-import { useEthPrice } from "../../../hooks/useEthPriceFromShrub";
+import { useEthPrice } from "../../../hooks/useEthPrice";
 import TransactionButton from "../../../components/TxButton";
 import Spinner from "../../../components/Spinner";
 
