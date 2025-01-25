@@ -23,7 +23,7 @@ import Tooltip from "../../components/Tooltip";
 import { ga4events } from "../../utils/ga4events";
 import { InterestRateButton } from "./InterestRateButton";
 import { Button } from "components/Button";
-import useEthPrice from "../../hooks/useEthPriceFromShrub";
+import useEthPrice from "../../hooks/useEthPrice";
 
 interface BorrowViewProps {
   onBorrowViewChange: (interestRate, amount) => void;

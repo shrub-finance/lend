@@ -24,7 +24,7 @@ import { useFinancialData } from "../../../components/FinancialDataContext";
 import { Borrow, BorrowObj } from "../../../types/types";
 import { Zero } from "../../../constants";
 import { getChainInfo } from "../../../utils/chains";
-import { useEthPrice } from "../../../hooks/useEthPriceFromShrub";
+import { useEthPrice } from "../../../hooks/useEthPrice";
 import Spinner from "../../../components/Spinner";
 
 interface ExtendBorrowSummaryProps {

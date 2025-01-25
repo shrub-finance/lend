@@ -16,7 +16,7 @@ import { Zero } from "../../../constants";
 import { useValidation } from "../../../hooks/useValidation";
 import ErrorDisplay from "../../../components/ErrorDisplay";
 import { getChainInfo } from "../../../utils/chains";
-import { useEthPrice } from "../../../hooks/useEthPriceFromShrub";
+import { useEthPrice } from "../../../hooks/useEthPrice";
 import { BorrowObj } from "../../../types/types";
 
 interface PartialRepayViewProps {

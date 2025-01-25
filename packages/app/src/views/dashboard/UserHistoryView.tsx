@@ -12,6 +12,7 @@ import {
 import { Zero } from "../../constants";
 import TransactionButton from "../../components/TxButton";
 import { getChainInfo } from "../../utils/chains";
+import {Card} from "./Card";
 
 interface UserHistoryViewProps {}
 
@@ -126,12 +127,12 @@ export const UserHistoryView: React.FC<UserHistoryViewProps> = ({}) => {
         </div>
       );
     } else {
-      return <div></div>;
+      return <></>;
     }
   }
 
   return (
-    <li className="mr-4">
+<Card>
       <div className="relative overflow-x-auto border rounded-2xl">
         <table className="w-full text-left text-shrub-grey">
           <caption className="p-5 text-lg font-semibold text-left rtl:text-right text-shrub-grey-900 bg-white">
@@ -184,6 +185,6 @@ export const UserHistoryView: React.FC<UserHistoryViewProps> = ({}) => {
           </tbody>
         </table>
       </div>
-    </li>
+</Card>
   );
 };
