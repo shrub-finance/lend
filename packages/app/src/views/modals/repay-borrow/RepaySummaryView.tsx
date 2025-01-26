@@ -292,7 +292,7 @@ const RepaySummaryView: React.FC<
                             contractAddress={usdcAddress}
                             contractAbi={usdcAbi}
                             isDisabled={approveUSDCActionInitiated}
-                            className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
+                            className="!bg-shrub-green-500 !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-900 !mb-4 !rounded-full !w-full !h-[59px] !px-5 !py-3 !text-[16px]"
                             action={async (usdc) => {
                               setLocalError("");
                               // @ts-ignore
