@@ -344,7 +344,7 @@ const RepaySummaryView: React.FC<
                             contractAddress={lendingPlatformAddress}
                             contractAbi={lendingPlatformAbi}
                             isDisabled={repayActionInitiated}
-                            className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
+                            className="!bg-shrub-green-500 !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-900 !mb-4 !rounded-full !w-full !h-[59px] !px-5 !py-3 !text-[16px]"
                             action={async (lendingPlatform) => {
                               setLocalError("");
                               // @ts-ignore
@@ -453,7 +453,7 @@ const RepaySummaryView: React.FC<
                 <TransactionButton
                   txHash={txHash}
                   chainId={chainId}
-                  className="btn-block bg-white border text-shrub-grey-700 normal-case text-xl border-shrub-grey-50 mb-4 hover:bg-shrub-green hover:border-shrub-green hover:text-white"
+                  className="w-full h-[59px] px-5 py-3 bg-white rounded-full font-semibold leading-[24px] border text-shrub-grey-700 border-shrub-grey-50 mb-4 normal-case text-[16px] hover:bg-shrub-green-900 hover:text-white"
                 />
               )}
               {/*confirm in wallet button*/}

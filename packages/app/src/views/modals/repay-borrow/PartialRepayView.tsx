@@ -18,6 +18,7 @@ import ErrorDisplay from "../../../components/ErrorDisplay";
 import { getChainInfo } from "../../../utils/chains";
 import { useEthPrice } from "../../../hooks/useEthPrice";
 import { BorrowObj } from "../../../types/types";
+import {Button} from "../../../components/Button";
 
 interface PartialRepayViewProps {
   borrow: BorrowObj;
@@ -158,14 +159,13 @@ const PartialRepayView: React.FC<PartialRepayViewProps> = ({
                   </div>
                 </div>
                 {/*CTA*/}
-                <button
-                  className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border"
+                <Button
+                  type="primary"
+                  text="Confirm"
                   onClick={() => {
                     setPartialPaymentRequested(true);
                   }}
-                >
-                  Confirm
-                </button>
+                />
               </div>
             </div>
           </div>
