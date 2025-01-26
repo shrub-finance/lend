@@ -25,6 +25,7 @@ import { getChainInfo } from "../../../utils/chains";
 import { useFinancialData } from "../../../components/FinancialDataContext";
 import TransactionButton from "../../../components/TxButton";
 import Spinner from "../../../components/Spinner";
+import {Button} from "../../../components/Button";
 
 interface ExtendDepositSummaryProps {
   deposit: DepositObj;
@@ -577,12 +578,13 @@ const ExtendDepositSummaryView: React.FC<
               {((extendDepositButtonPressed && !extendDepositActionInitiated) ||
                 (extendApproveButtonPressed &&
                   !approveUSDCActionInitiated)) && (
-                <button
+                <Button
+                  text="Confirm in Wallet..."
+                  type="secondary"
                   disabled={true}
-                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
-                >
-                  Confirm in Wallet...{" "}
-                </button>
+                  onClick={() => {}}
+                  additionalClasses="border-0"
+                />
               )}
               {/*view in dashboard button*/}
               {extendDepositActionInitiated && (

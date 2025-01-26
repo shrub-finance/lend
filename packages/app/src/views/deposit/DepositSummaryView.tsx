@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import {
   useAddress,
   useBalance,
@@ -530,12 +530,13 @@ export const DepositSummaryView: FC<LendSummaryViewProps> = ({
                 {/*confirm in wallet button*/}
                 {((depositButtonPressed && !lendActionInitiated) ||
                   (approveButtonPressed && !approveUSDCActionInitiated)) && (
-                  <button
+                  <Button
+                    text="Confirm in Wallet..."
+                    type="secondary"
                     disabled={true}
-                    className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
-                  >
-                    Confirm in Wallet...
-                  </button>
+                    onClick={() => {}}
+                    additionalClasses="border-0"
+                  />
                 )}
                 {/*view in dashboard button*/}
                 {(lendActionInitiated ||
