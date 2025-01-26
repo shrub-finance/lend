@@ -292,7 +292,7 @@ const RepaySummaryView: React.FC<
                             contractAddress={usdcAddress}
                             contractAbi={usdcAbi}
                             isDisabled={approveUSDCActionInitiated}
-                            className="!bg-shrub-green-500 !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-900 !mb-4 !rounded-full !w-full !h-[59px] !px-5 !py-3 !text-[16px]"
+                            className="!w-full !h-[59px] px-5 py-3 !rounded-full !bg-shrub-green-500 !border-0  !font-semibold !leading-[24px] !text-white hover:!bg-shrub-green-900 !mb-4 web3button !transition-all !duration-[300ms] !ease-in-out"
                             action={async (usdc) => {
                               setLocalError("");
                               // @ts-ignore
@@ -344,7 +344,7 @@ const RepaySummaryView: React.FC<
                             contractAddress={lendingPlatformAddress}
                             contractAbi={lendingPlatformAbi}
                             isDisabled={repayActionInitiated}
-                            className="!bg-shrub-green-500 !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-900 !mb-4 !rounded-full !w-full !h-[59px] !px-5 !py-3 !text-[16px]"
+                            className="!w-full !h-[59px] px-5 py-3 !rounded-full !bg-shrub-green-500 !border-0  !font-semibold !leading-[24px] !text-white hover:!bg-shrub-green-900 !mb-4 web3button !transition-all !duration-[300ms] !ease-in-out"
                             action={async (lendingPlatform) => {
                               setLocalError("");
                               // @ts-ignore
@@ -458,12 +458,13 @@ const RepaySummaryView: React.FC<
               )}
               {/*confirm in wallet button*/}
               {repayButtonPressed && !repayActionInitiated && (
-                <button
+                <Button
+                  text="Confirm in Wallet..."
+                  type="secondary"
                   disabled={true}
-                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-grey-light2 hover:border-shrub-grey-50 normal-case text-xl border-shrub-grey-50"
-                >
-                  Confirm in Wallet...{" "}
-                </button>
+                  onClick={() => {}}
+                  additionalClasses="border-0"
+                />
               )}
               {/*view in dashboard button*/}
               {repayActionInitiated && (
