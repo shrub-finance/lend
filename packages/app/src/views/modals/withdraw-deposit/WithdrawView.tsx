@@ -20,6 +20,7 @@ import { useQuery } from "@apollo/client";
 import { GET_LENDINGPOOL_QUERY } from "../../../constants/queries";
 import { getChainInfo } from "../../../utils/chains";
 import TransactionButton from "../../../components/TxButton";
+import {Button} from "../../../components/Button";
 
 interface WithdrawViewProps {
   deposit: DepositObj;
@@ -264,7 +265,7 @@ const WithdrawView: React.FC<WithdrawViewProps> = ({
                         lendingPoolLoading ||
                         !!lendingPoolError
                       }
-                      className="!btn !btn-block !bg-shrub-green !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-500 !mb-4"
+                      className="!btn !btn-block !bg-shrub-green-500 !border-0 !text-white !normal-case !text-xl hover:!bg-shrub-green-900 !mb-4"
                       action={async (lendingPlatform) => {
                         setLocalError("");
                         // @ts-ignore
@@ -396,12 +397,11 @@ const WithdrawView: React.FC<WithdrawViewProps> = ({
               )}
               {/*view in dashboard button*/}
               {withdrawActionInitiated && (
-                <button
+                <Button
+                  text="View in Dashboard"
+                  type="info"
                   onClick={onModalClose}
-                  className="btn btn-block bg-white border text-shrub-grey-700 hover:bg-shrub-green hover:border-shrub-green hover:text-white normal-case text-xl border-shrub-grey-50"
-                >
-                  View in Dashboard{" "}
-                </button>
+                />
               )}
             </div>
           </div>

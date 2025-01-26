@@ -4,6 +4,7 @@ import { formatLargeUsdc } from "../../../utils/ethMethods";
 import RepaySummaryView from "../repay-borrow/RepaySummaryView";
 import { BorrowObj } from "../../../types/types";
 import PartialRepayView from "../repay-borrow/PartialRepayView";
+import {Button} from "../../../components/Button";
 
 interface RepayViewProps {
   setIsModalOpen: (isOpen: boolean) => void;
@@ -173,14 +174,13 @@ const RepayView: React.FC<RepayViewProps & { onModalClose: () => void }> = ({
                 {isFullPay && (
                   <>
                     <div className="divider h-0.5 w-full bg-shrub-grey-light2 my-8"></div>
-                    <button
-                      className="btn btn-block bg-shrub-green border-0 hover:bg-shrub-green-500 text-xl text-white normal-case disabled:bg-shrub-grey-50 disabled:border-shrub-grey-100 disabled:text-white disabled:border"
+                    <Button
+                      type="primary"
+                      text="Confirm"
                       onClick={() => {
                         setRePayEditRequested(false);
                       }}
-                    >
-                      Confirm
-                    </button>
+                    />
                   </>
                 )}
               </div>
