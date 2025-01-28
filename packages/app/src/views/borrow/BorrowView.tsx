@@ -51,7 +51,6 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
   } = useValidation();
   const { data: ethBalance, isLoading: ethBalanceIsLoading } =
     useBalance(NATIVE_TOKEN_ADDRESS);
-  const [maxBorrow, setMaxBorrow] = useState(ethers.utils.parseEther("0"));
   const [borrowAmount, setBorrowAmount] = useState("");
   const [displayAmount, setDisplayAmount] = useState("");
 
@@ -84,10 +83,17 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
       });
       console.log("wallet not connected");
     } else {
-      console.log(ethers.utils.formatUnits(maxBorrow, 6));
-      setBorrowAmount(ethers.utils.formatUnits(maxBorrow, 6));
+      getMaxBorrow()
+      .then((m) => {
+        const amount = (Math.round(parseFloat(ethers.utils.formatUnits(m, 6)) * 100) / 100).toString()
+        setBorrowAmount(amount);
+        setDisplayAmount(amount);
+        setShowBorrowAPYSection(true);
+      })
+      .catch((e) => console.error(e));
     }
   }
+
   const handleAmountChange = (event) => {
     if (ethBalance?.value?.isZero()) {
       setBorrowError(
@@ -193,14 +199,6 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
     setRequiredCollateral,
   ]);
 
-  useEffect(() => {
-    getMaxBorrow()
-      .then((m) => {
-        setMaxBorrow(m);
-      })
-      .catch((e) => console.error(e));
-  }, [selectedInterestRate]);
-
   async function getMaxBorrow() {
     if (
       lendingPlatformIsLoading ||
@@ -297,7 +295,7 @@ export const BorrowView: React.FC<BorrowViewProps> = ({
                       value={format(displayAmount)}
                     />
                     <button
-                      className="hidden sm:block absolute right-4 top-1/2 transform -translate-y-1/2 bg-shrub-grey-light2 rounded-full px-4 py-2 font-semibold"
+                      className="hidden sm:block absolute right-0 top-1/2 transform -translate-y-1/2 bg-shrub-grey-light2 rounded-full px-4 py-2 font-semibold disabled:text-white"
                       onClick={fillMax}
                     >
                       Max
